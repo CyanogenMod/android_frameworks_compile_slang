@@ -1,5 +1,5 @@
 LOCAL_PATH := $(call my-dir)
-LLVM_ROOT_PATH := external/llvm/llvm
+LLVM_ROOT_PATH := external/llvm
 
 include $(LLVM_ROOT_PATH)/llvm.mk
 
@@ -9,6 +9,8 @@ include $(CLEAR_VARS)
 include $(CLEAR_TBLGEN_VARS)
 
 LOCAL_MODULE := slang
+
+LOCAL_MODULE_CLASS := EXECUTABLES
 
 TBLGEN_TABLES :=    \
 	DiagnosticCommonKinds.inc	\

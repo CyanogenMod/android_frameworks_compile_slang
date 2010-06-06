@@ -435,7 +435,7 @@ void RSReflection::genExportFunction(Context& C, const RSExportFunc* EF) {
     C.startFunction(Context::AM_Public, false, "void", "invoke_" + EF->getName(), Args);
 
     if(!EF->hasParam()) {
-        C.indent() << "invoke("RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName() << ");" << endl;
+        C.indent() << "invoke("RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName() << ", null);" << endl;
     } else {
         const RSExportRecordType* ERT = EF->getParamPacketType();
         std::string FieldPackerName = EF->getName() + "_fp";
@@ -443,7 +443,7 @@ void RSReflection::genExportFunction(Context& C, const RSExportFunc* EF) {
         if(genCreateFieldPacker(C, ERT, FieldPackerName.c_str()))
             genPackVarOfType(C, ERT, NULL, FieldPackerName.c_str());
 
-        C.indent() << "invokeData("RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName() << ", " << FieldPackerName << ");" << endl;
+        C.indent() << "invoke("RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName() << ", " << FieldPackerName << ");" << endl;
     }
 
     C.endFunction();
