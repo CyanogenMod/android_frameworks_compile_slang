@@ -1,5 +1,5 @@
 LOCAL_PATH := $(call my-dir)
-LLVM_ROOT_PATH := external/llvm
+LLVM_ROOT_PATH := external/llvm/llvm
 
 include $(LLVM_ROOT_PATH)/llvm.mk
 
