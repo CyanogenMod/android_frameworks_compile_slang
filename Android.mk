@@ -1,3 +1,5 @@
+ifneq ($(TARGET_SIMULATOR),true)
+
 LOCAL_PATH := $(call my-dir)
 LLVM_ROOT_PATH := external/llvm/llvm
 
@@ -69,3 +71,5 @@ LOCAL_LDLIBS := -ldl -lpthread
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
 include $(BUILD_HOST_EXECUTABLE)
+
+endif
