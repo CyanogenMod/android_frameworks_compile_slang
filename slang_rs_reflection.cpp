@@ -65,14 +65,14 @@ static const char* GetPrimitiveTypeName(const RSExportPrimitiveType* EPT) {
         "short",    /* RSExportPrimitiveType::DataTypeSigned16 */
         "int",      /* RSExportPrimitiveType::DataTypeSigned32 */
         "long",     /* RSExportPrimitiveType::DataTypeSigned64 */
-        "byte",     /* RSExportPrimitiveType::DataTypeUnsigned8 */
-        "short",    /* RSExportPrimitiveType::DataTypeUnsigned16 */
-        "int",      /* RSExportPrimitiveType::DataTypeUnsigned32 */
+        "short",    /* RSExportPrimitiveType::DataTypeUnsigned8 */
+        "int",      /* RSExportPrimitiveType::DataTypeUnsigned16 */
+        "long",     /* RSExportPrimitiveType::DataTypeUnsigned32 */
         "long",     /* RSExportPrimitiveType::DataTypeUnsigned64 */
 
-        "short",    /* RSExportPrimitiveType::DataTypeUnsigned565 */
-        "short",    /* RSExportPrimitiveType::DataTypeUnsigned5551 */
-        "short",    /* RSExportPrimitiveType::DataTypeUnsigned4444 */
+        "int",      /* RSExportPrimitiveType::DataTypeUnsigned565 */
+        "int",      /* RSExportPrimitiveType::DataTypeUnsigned5551 */
+        "int",      /* RSExportPrimitiveType::DataTypeUnsigned4444 */
 
         "Element",  /* RSExportPrimitiveType::DataTypeRSElement */
         "Type",     /* RSExportPrimitiveType::DataTypeRSType */
@@ -98,29 +98,33 @@ static const char* GetVectorTypeName(const RSExportVectorType* EVT) {
         /* 0 */ { "Byte2",  "Byte3",    "Byte4" },
         /* 1 */ { "Short2", "Short3",   "Short4" },
         /* 2 */ { "Int2",   "Int3",     "Int4" },
-        /* 3 */ { "Float2", "Float3",   "Float4" },
+        /* 3 */ { "Long2",  "Long3",    "Long4" },
+        /* 4 */ { "Float2", "Float3",   "Float4" },
     };
 
     const char** BaseElement;
 
     switch(EVT->getType()) {
         case RSExportPrimitiveType::DataTypeSigned8:
-        case RSExportPrimitiveType::DataTypeUnsigned8:
             BaseElement = VectorTypeJavaNameMap[0];
         break;
 
         case RSExportPrimitiveType::DataTypeSigned16:
-        case RSExportPrimitiveType::DataTypeUnsigned16:
+        case RSExportPrimitiveType::DataTypeUnsigned8:
             BaseElement = VectorTypeJavaNameMap[1];
         break;
 
         case RSExportPrimitiveType::DataTypeSigned32:
-        case RSExportPrimitiveType::DataTypeUnsigned32:
+        case RSExportPrimitiveType::DataTypeUnsigned16:
             BaseElement = VectorTypeJavaNameMap[2];
         break;
 
-        case RSExportPrimitiveType::DataTypeFloat32: 
+        case RSExportPrimitiveType::DataTypeUnsigned32:
             BaseElement = VectorTypeJavaNameMap[3];
+        break;
+
+        case RSExportPrimitiveType::DataTypeFloat32: 
+            BaseElement = VectorTypeJavaNameMap[4];
         break;
 
         default:
@@ -288,7 +292,7 @@ static const char* GetBuiltinElementConstruct(const RSExportType* ET) {
             }
         }
     } else if(ET->getClass() == RSExportType::ExportClassPointer) {
-        return "USER_U32";  /* tread pointer type variable as unsigned int (TODO: this is target dependent) */
+        return "USER_I32";  /* tread pointer type variable as unsigned int (TODO: this is target dependent) */
     }
 
     return NULL;
@@ -583,9 +587,9 @@ void RSReflection::genPackVarOfType(Context& C, const RSExportType* ET, const ch
             const RSExportType* PointeeType = static_cast<const RSExportPointerType*>(ET)->getPointeeType();
 
             if(PointeeType->getClass() != RSExportType::ExportClassRecord)
-                C.indent() << FieldPackerName << ".addU32(" << VarName << ".getPtr());" << endl;
+                C.indent() << FieldPackerName << ".addI32(" << VarName << ".getPtr());" << endl;
             else
-                C.indent() << FieldPackerName << ".addU32(" << VarName << ".getAllocation().getPtr());" << endl;
+                C.indent() << FieldPackerName << ".addI32(" << VarName << ".getAllocation().getPtr());" << endl;
         }
         break;
 
