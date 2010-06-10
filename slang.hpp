@@ -63,6 +63,8 @@ private:
     inline void createDiagnostic() {
         mDiagClient.reset(new DiagnosticBuffer());
         mDiagnostics.reset(new Diagnostic(mDiagClient.get()));
+        bool optionNotFound = mDiagnostics->setDiagnosticGroupMapping("implicit-function-declaration", clang::diag::MAP_ERROR);
+        assert(!optionNotFound && "Unable find option group implicit-function-declaration");
         return;
     }
 

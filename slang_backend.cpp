@@ -21,9 +21,6 @@
 #include "llvm/Bitcode/ReaderWriter.h"          /* for function createBitcodeWriterPass() */
 
 #include "clang/AST/Decl.h"             /* for class clang::*Decl */
-#include "clang/AST/Stmt.h"             /* for class clang::*Stmt */
-#include "clang/AST/StmtVisitor.h"      /* for class clang::StmtVisitor */
-#include "clang/AST/Expr.h"             /* for class clang::*Expr */
 #include "clang/AST/DeclGroup.h"        /* for class clang::DeclGroupRef */
 #include "clang/AST/ASTContext.h"       /* for class clang::ASTContext */
 
@@ -35,50 +32,6 @@
 
 #include "clang/CodeGen/ModuleBuilder.h"    /* for class clang::CodeGenerator */
 #include "clang/CodeGen/CodeGenOptions.h"   /* for class clang::CodeGenOptions */
-
-namespace {
-    using namespace clang;
-
-    class CheckFunctionCallVisitor : public StmtVisitor<CheckFunctionCallVisitor> {
-    private:
-        Diagnostic& mDiags;
-        SourceManager& mSourceMgr;
-
-    public:
-        CheckFunctionCallVisitor(Diagnostic& Diags, SourceManager& SourceMgr) : 
-            mDiags(Diags), 
-            mSourceMgr(SourceMgr) 
-        {
-            return;
-        }
-
-        void VisitStmt(Stmt* S);
-        void VisitCallExpr(CallExpr* Node);
-    };
-
-    void CheckFunctionCallVisitor::VisitStmt(Stmt* S) {
-        for(Stmt::child_iterator I = S->child_begin();
-            I != S->child_end();
-            I++)
-            if(*I)
-                Visit(*I);
-        return;
-    }
-
-    void CheckFunctionCallVisitor::VisitCallExpr(CallExpr* Node) {
-        if(Node != NULL) {
-            const FunctionDecl* Callee = Node->getDirectCallee();
-            if(Callee != NULL) {
-                if(!Callee->getBody() && !Callee->hasPrototype()) {
-                    /* Warn: Function has neither definition nore prototype */
-                    mDiags.Report(FullSourceLoc(Node->getLocStart(), mSourceMgr), 
-                                  mDiags.getCustomDiagID(Diagnostic::Warning, "no previous prototype for function '%0'")) << Callee->getName();
-                }
-            }
-        }
-        return;
-    }
-}
 
 namespace slang {
 
@@ -210,22 +163,6 @@ void Backend::HandleTopLevelDecl(DeclGroupRef D) {
 }
 
 void Backend::HandleTranslationUnit(ASTContext& Ctx) {
-    /* Warn if there's any function without prototype declaration or function definition called */
-    TranslationUnitDecl* TUDecl = Ctx.getTranslationUnitDecl();
-    for(DeclContext::decl_iterator DI = TUDecl->decls_begin();
-        DI != TUDecl->decls_end();
-        DI++)
-    {
-        if(DI->getKind() == Decl::Function) {
-            FunctionDecl* FD = static_cast<FunctionDecl*>(*DI);
-            Stmt* Body = FD->getBody();
-            if(Body != NULL) {
-                CheckFunctionCallVisitor FunctionCallChecker(mDiags, Ctx.getSourceManager());
-                FunctionCallChecker.Visit(Body);
-            }
-        }
-    }
-
     mGen->HandleTranslationUnit(Ctx);
 
     /*
