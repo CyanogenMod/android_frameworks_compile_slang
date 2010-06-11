@@ -49,7 +49,8 @@ public:
               const TargetOptions& TargetOpts,
               const PragmaList& Pragmas,
               llvm::raw_ostream* OS,
-              SlangCompilerOutputTy OutputType);
+              SlangCompilerOutputTy OutputType,
+              SourceManager& SourceMgr);
 
     virtual void HandleTopLevelDecl(DeclGroupRef D);
 

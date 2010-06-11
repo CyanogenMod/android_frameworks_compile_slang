@@ -13,6 +13,7 @@
 
 #include "clang/AST/ASTConsumer.h"          /* for class clang::ASTConsumer */
 #include "clang/CodeGen/CodeGenOptions.h"   /* for class clang::CodeGenOptions */
+#include "clang/Basic/SourceManager.h"      /* for class clang::SourceManager */
 
 namespace llvm {
 
@@ -45,6 +46,8 @@ class Backend : public ASTConsumer {
 private:
     const CodeGenOptions& mCodeGenOpts;
     const TargetOptions& mTargetOpts;
+
+    SourceManager& mSourceMgr;
 
     /* Output stream */
     llvm::raw_ostream* mpOS;
@@ -117,7 +120,8 @@ public:
             const TargetOptions& TargetOpts,
             const PragmaList& Pragmas,
             llvm::raw_ostream* OS,
-            SlangCompilerOutputTy OutputType);
+            SlangCompilerOutputTy OutputType,
+            SourceManager& SourceMgr);
 
     /*
      * Initialize - This is called to initialize the consumer, providing the

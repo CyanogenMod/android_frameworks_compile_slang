@@ -129,7 +129,8 @@ private:
                                    mTargetOpts,
                                    mPragmas,
                                    mOS.take(),
-                                   mOutputType));
+                                   mOutputType,
+                                   *mSourceMgr));
 
         return;
     }
@@ -141,7 +142,8 @@ private:
                                      mTargetOpts,
                                      mPragmas,
                                      mOS.take(),
-                                     mOutputType));
+                                     mOutputType,
+                                     *mSourceMgr));
 
         return;
     }

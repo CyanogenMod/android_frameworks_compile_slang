@@ -30,14 +30,16 @@ RSBackend::RSBackend(RSContext* Context,
                      const TargetOptions& TargetOpts,
                      const PragmaList& Pragmas,
                      llvm::raw_ostream* OS,
-                     SlangCompilerOutputTy OutputType) :
+                     SlangCompilerOutputTy OutputType,
+                     SourceManager& SourceMgr) :
     mContext(Context),
     Backend(Diags,
             CodeGenOpts,
             TargetOpts,
             Pragmas,
             OS,
-            OutputType),
+            OutputType,
+            SourceMgr),
     mExportVarMetadata(NULL)
 {
     return;

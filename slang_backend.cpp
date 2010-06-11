@@ -127,7 +127,8 @@ Backend::Backend(Diagnostic &Diags,
                  const TargetOptions& TargetOpts,
                  const PragmaList& Pragmas,
                  llvm::raw_ostream* OS,
-                 SlangCompilerOutputTy OutputType) :
+                 SlangCompilerOutputTy OutputType,
+                 SourceManager &SourceMgr) :
     ASTConsumer(),
     mLLVMContext(llvm::getGlobalContext()),
     mDiags(Diags),
@@ -141,7 +142,8 @@ Backend::Backend(Diagnostic &Diags,
     mGen(NULL),
     mPerFunctionPasses(NULL),
     mPerModulePasses(NULL),
-    mCodeGenPasses(NULL)
+    mCodeGenPasses(NULL),
+    mSourceMgr(SourceMgr)
 {
     FormattedOutStream.setStream(*mpOS, llvm::formatted_raw_ostream::PRESERVE_STREAM);
     mGen = CreateLLVMCodeGen(mDiags, "", mCodeGenOpts, mLLVMContext);
@@ -158,6 +160,17 @@ void Backend::Initialize(ASTContext &Ctx) {
 }
 
 void Backend::HandleTopLevelDecl(DeclGroupRef D) {
+    /* Disallow user-defined functions with prefix "rs" */
+    DeclGroupRef::iterator it;
+    for (it = D.begin(); it != D.end(); it++) {
+        FunctionDecl *FD = dyn_cast<FunctionDecl>(*it);
+        if (!FD || !FD->isThisDeclarationADefinition()) continue;
+        if (FD->getNameAsString().compare(0, 2, "rs") == 0) {
+            mDiags.Report(FullSourceLoc(FD->getLocStart(), mSourceMgr),
+                          mDiags.getCustomDiagID(Diagnostic::Error, "invalid function name prefix, \"rs\" is reserved: '%0'")) << FD->getNameAsString();
+        }
+    }
+
     mGen->HandleTopLevelDecl(D);
     return;
 }
