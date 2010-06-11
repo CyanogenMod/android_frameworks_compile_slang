@@ -54,6 +54,68 @@ public:
     }
 };
 
+class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
+public:
+    RSJavaPackageNamePragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
+
+    void HandlePragma(Preprocessor& PP, Token& FirstToken) {
+        /* FIXME: Need to check the extracted package name from paragma. Currently "all chars" specified in pragma will be regard as package name.
+         *
+         * 18.1 The Grammar of the Java Programming Language, http://java.sun.com/docs/books/jls/third_edition/html/syntax.html#18.1
+         *
+         * CompilationUnit:
+         *         [[Annotations] package QualifiedIdentifier   ;  ] {ImportDeclaration}
+         *         {TypeDeclaration}
+         *
+         * QualifiedIdentifier:
+         *         Identifier { . Identifier }
+         *
+         * Identifier:
+         *         IDENTIFIER
+         *
+         * 3.8 Identifiers, http://java.sun.com/docs/books/jls/third_edition/html/lexical.html#3.8
+         *
+         */
+
+        Token& PragmaToken = FirstToken;
+        std::string PackageName;
+
+        /* Skip first token, "java_package_name" */
+        PP.LexUnexpandedToken(PragmaToken);
+
+        /* Now, the current token must be tok::lpara */
+        if(PragmaToken.isNot(tok::l_paren))
+            return;
+
+        while(PragmaToken.isNot(tok::eom)) {
+            /* Lex variable name */
+            PP.LexUnexpandedToken(PragmaToken);
+
+            bool Invalid;
+            std::string Spelling = PP.getSpelling(PragmaToken, &Invalid);
+            if(!Invalid)
+                PackageName.append(Spelling);
+
+            /* Pre-mature end */
+            if(PragmaToken.is(tok::eom) || PragmaToken.is(tok::eof))
+                break;
+            else {
+                /* Next token is ')' (end of paragma) */
+                const Token& NextTok = PP.LookAhead(0);
+                if(NextTok.is(tok::r_paren)) {
+                    mContext->setReflectJavaPackageName(PackageName);
+                    /* Lex until meets tok::eom */
+                    do
+                        PP.LexUnexpandedToken(PragmaToken);
+                    while(PragmaToken.isNot(tok::eom));
+                    break;
+                }
+            }
+        }
+        return;
+    }
+};
+
 }   /* anonymous namespace */
 
 namespace slang {
@@ -78,6 +140,14 @@ RSPragmaHandler* RSPragmaHandler::CreatePragmaExportTypeHandler(RSContext* Conte
     IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("export_type");
     if(II != NULL)
         return new RSExportTypePragmaHandler(II, Context);
+    else
+        return NULL;
+}
+
+RSPragmaHandler* RSPragmaHandler::CreatePragmaJavaPackageNameHandler(RSContext* Context) {
+    IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("java_package_name");
+    if(II != NULL)
+        return new RSJavaPackageNamePragmaHandler(II, Context);
     else
         return NULL;
 }
