@@ -21,14 +21,15 @@ using namespace clang::idx;
 
 namespace slang {
 
-RSContext::RSContext(Preprocessor* PP, const TargetInfo* Target) : 
+RSContext::RSContext(Preprocessor* PP, const TargetInfo* Target) :
     mPP(PP),
     mTarget(Target),
     mTargetData(NULL),
     mLLVMContext(llvm::getGlobalContext()),
     mRSExportVarPragma(NULL),
     mRSExportFuncPragma(NULL),
-    mRSExportTypePragma(NULL)
+    mRSExportTypePragma(NULL),
+    mRSJavaPackageNamePragma(NULL)
 {
     /* For #pragma rs export_var */
     mRSExportVarPragma = RSPragmaHandler::CreatePragmaExportVarHandler(this);
@@ -45,6 +46,11 @@ RSContext::RSContext(Preprocessor* PP, const TargetInfo* Target) :
     if(mRSExportTypePragma != NULL)
         PP->AddPragmaHandler("rs", mRSExportTypePragma);
 
+    /* For #pragma rs java_package_name */
+    mRSJavaPackageNamePragma = RSPragmaHandler::CreatePragmaJavaPackageNameHandler(this);
+    if(mRSJavaPackageNamePragma != NULL)
+        PP->AddPragmaHandler("rs", mRSJavaPackageNamePragma);
+
     mTargetData = new llvm::TargetData(Slang::TargetDescription);
 
     return;
@@ -56,7 +62,7 @@ bool RSContext::processExportVar(const VarDecl* VD) {
     /* TODO: some check on variable */
 
     RSExportType* ET = RSExportType::CreateFromDecl(this, VD);
-    if(!ET) 
+    if(!ET)
         return false;
 
     RSExportVar* EV = new RSExportVar(this, VD, ET);
@@ -70,7 +76,7 @@ bool RSContext::processExportVar(const VarDecl* VD) {
 
 bool RSContext::processExportFunc(const FunctionDecl* FD) {
     assert(!FD->getName().empty() && "Function name should not be empty");
-    
+
     if(!FD->isThisDeclarationADefinition())
         return false;
 
@@ -107,7 +113,7 @@ bool RSContext::processExportType(ASTContext& Ctx, const llvm::StringRef& Name) 
 
     for(DeclContext::lookup_const_iterator I = R.first;
         I != R.second;
-        I++) 
+        I++)
     {
         NamedDecl* const ND = *I;
         ASTLocation* LastLoc = new ASTLocation(ND);
@@ -169,7 +175,7 @@ void RSContext::processExport(ASTContext& Ctx) {
         if(!processExportType(Ctx, EI->getKey()))
             printf("RSContext::processExport : failed to export type '%s'\n", EI->getKey().str().c_str());
 
-    
+
     return;
 }
 
@@ -184,9 +190,15 @@ bool RSContext::insertExportType(const llvm::StringRef& TypeName, RSExportType* 
     }
 }
 
-bool RSContext::reflectToJava(const char* OutputClassPath, const std::string& InputFileName, const std::string& OutputBCFileName) {
+bool RSContext::reflectToJava(const char* OutputPackageName, const std::string& InputFileName, const std::string& OutputBCFileName) {
+    if(OutputPackageName == NULL)
+        if(!mReflectJavaPackageName.empty())
+            OutputPackageName = mReflectJavaPackageName.c_str();
+        else
+            return true; /* no package name, just return */
+
     RSReflection* R = new RSReflection(this);
-    bool ret = R->reflect(OutputClassPath, InputFileName, OutputBCFileName); 
+    bool ret = R->reflect(OutputPackageName, InputFileName, OutputBCFileName);
     if(!ret)
         printf("RSContext::reflectToJava : failed to do reflection (%s)\n", R->getLastError());
     delete R;
@@ -194,14 +206,12 @@ bool RSContext::reflectToJava(const char* OutputClassPath, const std::string& In
 }
 
 RSContext::~RSContext() {
-    if(mRSExportVarPragma != NULL)
-        delete mRSExportVarPragma;
-    if(mRSExportFuncPragma != NULL)
-        delete mRSExportFuncPragma;
-    if(mRSExportTypePragma != NULL)
-        delete mRSExportTypePragma;
-    if(mTargetData != NULL)
-        delete mTargetData;
+    delete mRSExportVarPragma;
+    delete mRSExportFuncPragma;
+    delete mRSExportTypePragma;
+    delete mRSJavaPackageNamePragma;
+
+    delete mTargetData;
 }
 
 }   /* namespace slang */

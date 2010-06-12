@@ -36,6 +36,7 @@ public:
     static RSPragmaHandler* CreatePragmaExportVarHandler(RSContext* Context);
     static RSPragmaHandler* CreatePragmaExportFuncHandler(RSContext* Context);
     static RSPragmaHandler* CreatePragmaExportTypeHandler(RSContext* Context);
+    static RSPragmaHandler* CreatePragmaJavaPackageNameHandler(RSContext* Context);
 
     virtual void HandlePragma(Preprocessor& PP, Token& FirstToken) = 0;
 };

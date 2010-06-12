@@ -57,11 +57,14 @@ private:
     RSPragmaHandler* mRSExportVarPragma;
     RSPragmaHandler* mRSExportFuncPragma;
     RSPragmaHandler* mRSExportTypePragma;
+    RSPragmaHandler* mRSJavaPackageNamePragma;
 
     /* Remember the variables/types/elements annotated in #pragma to be exported */
     NeedExportVarSet mNeedExportVars;
     NeedExportFuncSet mNeedExportFuncs;
     NeedExportTypeSet mNeedExportTypes;
+
+    std::string mReflectJavaPackageName;
 
     bool processExportVar(const VarDecl* VD);
     bool processExportFunc(const FunctionDecl* FD);
@@ -82,6 +85,8 @@ public:
     inline void addExportVar(const std::string& S) { mNeedExportVars.insert(S); return; }
     inline void addExportFunc(const std::string& S) { mNeedExportFuncs.insert(S); return; }
     inline void addExportType(const std::string& S) { mNeedExportTypes.insert(S); return; }
+
+    inline void setReflectJavaPackageName(const std::string& S) { mReflectJavaPackageName = S; return; }
 
     void processExport(ASTContext& Ctx);
 
@@ -111,7 +116,7 @@ public:
      */
     bool insertExportType(const llvm::StringRef& TypeName, RSExportType* Type);
 
-    bool reflectToJava(const char* OutputClassPath, const std::string& InputFileName, const std::string& OutputBCFileName);
+    bool reflectToJava(const char* OutputPackageName, const std::string& InputFileName, const std::string& OutputBCFileName);
 
     ~RSContext();
 };

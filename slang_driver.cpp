@@ -529,8 +529,7 @@ int main(int argc, char** argv) {
             if(slangGetInfoLog(slang))
                 cout << slangGetInfoLog(slang);
 
-            if(JavaReflectionPackageName != NULL)
-                SLANG_CALL_AND_CHECK( slangReflectToJava(slang, JavaReflectionPackageName) );
+            SLANG_CALL_AND_CHECK( slangReflectToJava(slang, JavaReflectionPackageName) );
 
 on_slang_error:
             delete slang;
