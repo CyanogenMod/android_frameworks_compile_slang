@@ -167,7 +167,7 @@ void Backend::HandleTopLevelDecl(DeclGroupRef D) {
         if (!FD || !FD->isThisDeclarationADefinition()) continue;
         if (FD->getName().startswith("rs")) {
             mDiags.Report(FullSourceLoc(FD->getLocStart(), mSourceMgr),
-                          mDiags.getCustomDiagID(Diagnostic::Error, "invalid function name prefix, \"rs\" is reserved: '%0'")) << FD->getNameAsString();
+                          mDiags.getCustomDiagID(Diagnostic::Warning, "invalid function name prefix, \"rs\" is reserved: '%0'")) << FD->getNameAsString();
         }
     }
 
