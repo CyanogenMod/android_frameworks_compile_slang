@@ -16,10 +16,9 @@ void DiagnosticBuffer::HandleDiagnostic(Diagnostic::Level DiagLevel, const Diagn
     const FullSourceLoc& FSLoc = Info.getLocation();
     llvm::SmallString<100> Buf; /* 100 is enough for storing general diagnosis message */
 
-    if(FSLoc.isValid()) {
-        /* This is a diagnosis for a source code */
-        PresumedLoc PLoc = FSLoc.getManager().getPresumedLoc(FSLoc);
-        (*mSOS) << FSLoc.getManager().getBufferName(FSLoc) << ':' << PLoc.getLine() << ':' << PLoc.getColumn() << ": ";
+    if (FSLoc.isValid()) {
+        FSLoc.print(*mSOS, FSLoc.getManager());
+        (*mSOS) << ": ";
     }
 
     switch(DiagLevel) {
