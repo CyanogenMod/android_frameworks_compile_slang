@@ -49,8 +49,8 @@ static bool GetFileNameWithoutExtension(const std::string& FileName, std::string
         OutFileName = FileName;
 
     size_t DotPos = OutFileName.find_first_of('.');
-    if(DotPos != std::string::npos) 
-        OutFileName.erase(DotPos); 
+    if(DotPos != std::string::npos)
+        OutFileName.erase(DotPos);
 
     return true;
 }
@@ -123,7 +123,7 @@ static const char* GetVectorTypeName(const RSExportVectorType* EVT) {
             BaseElement = VectorTypeJavaNameMap[3];
         break;
 
-        case RSExportPrimitiveType::DataTypeFloat32: 
+        case RSExportPrimitiveType::DataTypeFloat32:
             BaseElement = VectorTypeJavaNameMap[4];
         break;
 
@@ -245,7 +245,7 @@ static const char* GetBuiltinElementConstruct(const RSExportType* ET) {
             if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveBuiltinElementConstructMap) / sizeof(const char*))))
                 return PrimitiveBuiltinElementConstructMap[ EPT->getType() ];
         } else if(EPT->getKind() == RSExportPrimitiveType::DataKindPixelA) {
-            if(EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8) 
+            if(EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
                 return "A_8";
         } else if(EPT->getKind() == RSExportPrimitiveType::DataKindPixelRGB) {
             if(EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned565)
@@ -359,7 +359,7 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
 
 /****************************** Methods to generate script class ******************************/
 bool RSReflection::genScriptClass(Context& C, const std::string& ClassName, std::string& ErrorMsg) {
-    if(!C.startClass(Context::AM_Public, false, ClassName, RS_SCRIPT_CLASS_SUPER_CLASS_NAME, ErrorMsg)) 
+    if(!C.startClass(Context::AM_Public, false, ClassName, RS_SCRIPT_CLASS_SUPER_CLASS_NAME, ErrorMsg))
         return false;
 
     genScriptClassConstructor(C);
@@ -383,11 +383,12 @@ bool RSReflection::genScriptClass(Context& C, const std::string& ClassName, std:
 
 void RSReflection::genScriptClassConstructor(Context& C) {
     C.indent() << "// Constructor" << endl;
-    C.startFunction(Context::AM_Public, false, NULL, C.getClassName(), 3, "RenderScript", "rs",
+    C.startFunction(Context::AM_Public, false, NULL, C.getClassName(), 4, "RenderScript", "rs",
                                                                           "Resources", "resources",
+                                                                          "int", "id",
                                                                           "boolean", "isRoot");
     /* Call constructor of super class */
-    C.indent() << "super(rs, resources, R.raw." << C.getResourceId() << ", isRoot);" << endl;
+    C.indent() << "super(rs, resources, id, isRoot);" << endl;
     C.endFunction();
     return;
 }
@@ -430,7 +431,7 @@ void RSReflection::genExportFunction(Context& C, const RSExportFunc* EF) {
 
     for(RSExportFunc::const_param_iterator I = EF->params_begin();
         I != EF->params_end();
-        I++) 
+        I++)
     {
         const RSExportFunc::Parameter* P = *I;
         Args.push_back( make_pair(GetTypeName(P->getType()), P->getName()) );
@@ -439,7 +440,7 @@ void RSReflection::genExportFunction(Context& C, const RSExportFunc* EF) {
     C.startFunction(Context::AM_Public, false, "void", "invoke_" + EF->getName(), Args);
 
     if(!EF->hasParam()) {
-        C.indent() << "invoke("RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName() << ", null);" << endl;
+        C.indent() << "invoke("RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName() << ");" << endl;
     } else {
         const RSExportRecordType* ERT = EF->getParamPacketType();
         std::string FieldPackerName = EF->getName() + "_fp";
@@ -643,7 +644,7 @@ void RSReflection::genPackVarOfType(Context& C, const RSExportType* ET, const ch
 bool RSReflection::genTypeClass(Context& C, const RSExportRecordType* ERT, std::string& ErrorMsg) {
     std::string ClassName = RS_TYPE_CLASS_NAME_PREFIX + ERT->getName();
 
-    if(!C.startClass(Context::AM_Public, false, ClassName, RS_TYPE_CLASS_SUPER_CLASS_NAME, ErrorMsg)) 
+    if(!C.startClass(Context::AM_Public, false, ClassName, RS_TYPE_CLASS_SUPER_CLASS_NAME, ErrorMsg))
         return false;
 
     if(!genTypeItemClass(C, ERT, ErrorMsg))
@@ -673,7 +674,7 @@ bool RSReflection::genTypeItemClass(Context& C, const RSExportRecordType* ERT, s
     C.out() << endl;
     for(RSExportRecordType::const_field_iterator FI = ERT->fields_begin();
         FI != ERT->fields_end();
-        FI++) 
+        FI++)
         C.indent() << GetTypeName((*FI)->getType()) << " " << (*FI)->getName() << ";" << endl;
 
     /* Constructor */
@@ -683,7 +684,7 @@ bool RSReflection::genTypeItemClass(Context& C, const RSExportRecordType* ERT, s
 
     for(RSExportRecordType::const_field_iterator FI = ERT->fields_begin();
         FI != ERT->fields_end();
-        FI++) 
+        FI++)
     {
         const RSExportRecordType::Field* F = *FI;
         if((F->getType()->getClass() == RSExportType::ExportClassVector) || (F->getType()->getClass() == RSExportType::ExportClassRecord))
@@ -737,7 +738,7 @@ void RSReflection::genTypeClasSet(Context& C, const RSExportRecordType* ERT) {
 
     C.indent() << "if (copyNow) ";
     C.startBlock();
-    
+
     C.indent() << "copyToArray(i, index);" << endl;
     C.indent() << "mAllocation.subData1D(index * "RS_TYPE_ITEM_CLASS_NAME".sizeof, "RS_TYPE_ITEM_CLASS_NAME".sizeof, "RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());" << endl;
 
@@ -828,7 +829,7 @@ void RSReflection::genAddElementToElementBuilder(Context& C, const RSExportType*
                 /* Pointer type variable should be resolved in GetBuiltinElementConstruct()  */
                 assert(false && "??");
             } else if(ET->getClass() == RSExportType::ExportClassRecord) {
-                /* 
+                /*
                  * Simalar to genPackVarOfType.
                  *
                  * TODO: Generalize these two function such that there's no duplicated codes.
@@ -838,9 +839,9 @@ void RSReflection::genAddElementToElementBuilder(Context& C, const RSExportType*
 
                 for(RSExportRecordType::const_field_iterator I = ERT->fields_begin();
                     I != ERT->fields_end();
-                    I++) 
-                {   
-                    const RSExportRecordType::Field* F = *I; 
+                    I++)
+                {
+                    const RSExportRecordType::Field* F = *I;
                     std::string FieldName;
                     size_t FieldOffset = F->getOffsetInParent();
                     size_t FieldStoreSize = RSExportType::GetTypeStoreSize(F->getType());
@@ -861,7 +862,7 @@ void RSReflection::genAddElementToElementBuilder(Context& C, const RSExportType*
                     genAddPaddingToElementBuiler(C, (FieldAllocSize - FieldStoreSize), ElementBuilderName, RenderScriptVar);
 
                     Pos = FieldOffset + FieldAllocSize;
-                }   
+                }
 
                 /* There maybe some padding after the struct */
                 genAddPaddingToElementBuiler(C, (RSExportType::GetTypeAllocSize(ERT) - Pos), ElementBuilderName, RenderScriptVar);
@@ -901,9 +902,9 @@ bool RSReflection::reflect(const char* OutputPackageName, const std::string& Inp
     if(ResourceId.empty())
         ResourceId = "<Resource ID>";
 
-    if((OutputPackageName == NULL) || (*OutputPackageName == '\0') || strcmp(OutputPackageName, "-") == 0) 
+    if((OutputPackageName == NULL) || (*OutputPackageName == '\0') || strcmp(OutputPackageName, "-") == 0)
         C = new Context("<Package Name>", ResourceId, true);
-    else 
+    else
         C = new Context(OutputPackageName, ResourceId, false);
 
     if(C != NULL) {
@@ -926,7 +927,7 @@ bool RSReflection::reflect(const char* OutputPackageName, const std::string& Inp
         /* class ScriptField_<TypeName> */
         for(RSContext::const_export_type_iterator TI = mRSContext->export_types_begin();
             TI != mRSContext->export_types_end();
-            TI++) 
+            TI++)
         {
             const RSExportType* ET = TI->getValue();
 
@@ -945,7 +946,7 @@ bool RSReflection::reflect(const char* OutputPackageName, const std::string& Inp
 }
 
 /****************************** RSReflection::Context ******************************/
-const char* const RSReflection::Context::LicenseNote = 
+const char* const RSReflection::Context::LicenseNote =
     "/*\n"
 	" * Copyright (C) 2010 The Android Open Source Project\n"
 	" *\n"
@@ -981,7 +982,7 @@ const char* RSReflection::Context::AccessModifierStr(AccessModifier AM) {
 }
 
 bool RSReflection::Context::startClass(AccessModifier AM, bool IsStatic, const std::string& ClassName, const char* SuperClassName, std::string& ErrorMsg) {
-    if(mVerbose) 
+    if(mVerbose)
         std::cout << "Generating " << ClassName << ".java ..." << endl;
 
     /* Open the file */
@@ -1070,11 +1071,11 @@ void RSReflection::Context::startFunction(AccessModifier AM, bool IsStatic, cons
     return;
 }
 
-void RSReflection::Context::startFunction(AccessModifier AM, 
-                                          bool IsStatic, 
-                                          const char* ReturnType, 
-                                          const std::string& FunctionName, 
-                                          const ArgTy& Args) 
+void RSReflection::Context::startFunction(AccessModifier AM,
+                                          bool IsStatic,
+                                          const char* ReturnType,
+                                          const std::string& FunctionName,
+                                          const ArgTy& Args)
 {
     indent() << AccessModifierStr(AM) << ((IsStatic) ? " static " : " ") << ((ReturnType) ? ReturnType : "") << " " << FunctionName << "(";
 
@@ -1083,7 +1084,7 @@ void RSReflection::Context::startFunction(AccessModifier AM,
         I != Args.end();
         I++)
     {
-        if(!FirstArg) 
+        if(!FirstArg)
             out() << ", ";
         else
             FirstArg = false;
