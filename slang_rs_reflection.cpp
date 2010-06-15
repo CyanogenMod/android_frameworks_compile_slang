@@ -468,7 +468,7 @@ void RSReflection::genPrimitiveTypeExportVariable(Context& C, const RSExportVar*
     C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << endl;
 
     if(EPT->isRSObjectType())
-        C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", v.getID());" << endl;
+        C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", (v == null) ? 0 : v.getID());" << endl;
     else
         C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", v);" << endl;
 
