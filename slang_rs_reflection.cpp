@@ -779,97 +779,98 @@ void RSReflection::genBuildElement(Context& C, const RSExportRecordType* ERT, co
 }
 
 #define EB_ADD(x, ...)  \
-        C.indent() << ElementBuilderName << ".add(Element." << x ##__VA_ARGS__ ", \"" << VarName << "\");" << endl
+    C.indent() << ElementBuilderName << ".add(Element." << x ##__VA_ARGS__ ", \"" << VarName << "\");" << endl
+
 void RSReflection::genAddElementToElementBuilder(Context& C, const RSExportType* ET, const std::string& VarName, const char* ElementBuilderName, const char* RenderScriptVar) {
-        const char* ElementConstruct = GetBuiltinElementConstruct(ET);
-        if(ElementConstruct != NULL) {
-            EB_ADD(ElementConstruct << "(" << RenderScriptVar << ")");
-        } else {
-            if((ET->getClass() == RSExportType::ExportClassPrimitive) || (ET->getClass() == RSExportType::ExportClassVector)) {
-                const RSExportPrimitiveType* EPT = static_cast<const RSExportPrimitiveType*>(ET);
-                const char* DataKindName = GetElementDataKindName(EPT->getKind());
-                const char* DataTypeName = GetElementDataTypeName(EPT->getType());
-                int Size = (ET->getClass() == RSExportType::ExportClassVector) ? static_cast<const RSExportVectorType*>(ET)->getNumElement() : 1;
+    const char* ElementConstruct = GetBuiltinElementConstruct(ET);
+    /*
+     if(ElementConstruct != NULL) {
+       EB_ADD(ElementConstruct << "(" << RenderScriptVar << ")");
+     } else {*/
+    if((ET->getClass() == RSExportType::ExportClassPrimitive) || (ET->getClass() == RSExportType::ExportClassVector)) {
+      const RSExportPrimitiveType* EPT = static_cast<const RSExportPrimitiveType*>(ET);
+      const char* DataKindName = GetElementDataKindName(EPT->getKind());
+      const char* DataTypeName = GetElementDataTypeName(EPT->getType());
+      int Size = (ET->getClass() == RSExportType::ExportClassVector) ? static_cast<const RSExportVectorType*>(ET)->getNumElement() : 1;
 
-                switch(EPT->getKind()) {
-                    case RSExportPrimitiveType::DataKindColor:
-                    case RSExportPrimitiveType::DataKindPosition:
-                    case RSExportPrimitiveType::DataKindTexture:
-                    case RSExportPrimitiveType::DataKindNormal:
-                    case RSExportPrimitiveType::DataKindPointSize:
-                        /* Element.createAttrib() */
-                        EB_ADD("createAttrib(" << RenderScriptVar << ", " << DataTypeName << ", " << DataKindName << ", " << Size << ")");
-                    break;
+      switch(EPT->getKind()) {
+        case RSExportPrimitiveType::DataKindColor:
+        case RSExportPrimitiveType::DataKindPosition:
+        case RSExportPrimitiveType::DataKindTexture:
+        case RSExportPrimitiveType::DataKindNormal:
+        case RSExportPrimitiveType::DataKindPointSize:
+          /* Element.createAttrib() */
+          EB_ADD("createAttrib(" << RenderScriptVar << ", " << DataTypeName << ", " << DataKindName << ", " << Size << ")");
+          break;
 
-                    case RSExportPrimitiveType::DataKindIndex:
-                        /* Element.createIndex() */
-                        EB_ADD("createAttrib(" << RenderScriptVar << ")");
-                    break;
+        case RSExportPrimitiveType::DataKindIndex:
+          /* Element.createIndex() */
+          EB_ADD("createAttrib(" << RenderScriptVar << ")");
+          break;
 
-                    case RSExportPrimitiveType::DataKindPixelL:
-                    case RSExportPrimitiveType::DataKindPixelA:
-                    case RSExportPrimitiveType::DataKindPixelLA:
-                    case RSExportPrimitiveType::DataKindPixelRGB:
-                    case RSExportPrimitiveType::DataKindPixelRGBA:
-                        /* Element.createPixel() */
-                        EB_ADD("createVector(" << RenderScriptVar << ", " << DataTypeName << ", " << DataKindName << ")");
-                    break;
+        case RSExportPrimitiveType::DataKindPixelL:
+        case RSExportPrimitiveType::DataKindPixelA:
+        case RSExportPrimitiveType::DataKindPixelLA:
+        case RSExportPrimitiveType::DataKindPixelRGB:
+        case RSExportPrimitiveType::DataKindPixelRGBA:
+          /* Element.createPixel() */
+          EB_ADD("createVector(" << RenderScriptVar << ", " << DataTypeName << ", " << DataKindName << ")");
+          break;
 
-                    case RSExportPrimitiveType::DataKindUser:
-                    default:
-                        if(EPT->getClass() == RSExportType::ExportClassPrimitive)
-                            /* Element.createUser() */
-                            EB_ADD("createUser(" << RenderScriptVar << ", " << DataTypeName << ")");
-                        else /* (ET->getClass() == RSExportType::ExportClassVector) must hold here */
-                            /* Element.createVector() */
-                            EB_ADD("createVector(" << RenderScriptVar << ", " << DataTypeName << ", " << Size << ")");
-                    break;
-                }
-            } else if(ET->getClass() == RSExportType::ExportClassPointer) {
-                /* Pointer type variable should be resolved in GetBuiltinElementConstruct()  */
-                assert(false && "??");
-            } else if(ET->getClass() == RSExportType::ExportClassRecord) {
-                /*
-                 * Simalar to genPackVarOfType.
-                 *
-                 * TODO: Generalize these two function such that there's no duplicated codes.
-                 */
-                const RSExportRecordType* ERT = static_cast<const RSExportRecordType*>(ET);
-                int Pos = 0;    /* relative pos from now on */
+        case RSExportPrimitiveType::DataKindUser:
+        default:
+          if(EPT->getClass() == RSExportType::ExportClassPrimitive)
+            /* Element.createUser() */
+            EB_ADD("createUser(" << RenderScriptVar << ", " << DataTypeName << ")");
+          else /* (ET->getClass() == RSExportType::ExportClassVector) must hold here */
+            /* Element.createVector() */
+            EB_ADD("createVector(" << RenderScriptVar << ", " << DataTypeName << ", " << Size << ")");
+          break;
+      }
+    } else if(ET->getClass() == RSExportType::ExportClassPointer) {
+      /* Pointer type variable should be resolved in GetBuiltinElementConstruct()  */
+      assert(false && "??");
+    } else if(ET->getClass() == RSExportType::ExportClassRecord) {
+      /*
+       * Simalar to genPackVarOfType.
+       *
+       * TODO: Generalize these two function such that there's no duplicated codes.
+       */
+      const RSExportRecordType* ERT = static_cast<const RSExportRecordType*>(ET);
+      int Pos = 0;    /* relative pos from now on */
 
-                for(RSExportRecordType::const_field_iterator I = ERT->fields_begin();
-                    I != ERT->fields_end();
-                    I++)
-                {
-                    const RSExportRecordType::Field* F = *I;
-                    std::string FieldName;
-                    size_t FieldOffset = F->getOffsetInParent();
-                    size_t FieldStoreSize = RSExportType::GetTypeStoreSize(F->getType());
-                    size_t FieldAllocSize = RSExportType::GetTypeAllocSize(F->getType());
+      for(RSExportRecordType::const_field_iterator I = ERT->fields_begin();
+          I != ERT->fields_end();
+          I++)
+      {
+        const RSExportRecordType::Field* F = *I;
+        std::string FieldName;
+        size_t FieldOffset = F->getOffsetInParent();
+        size_t FieldStoreSize = RSExportType::GetTypeStoreSize(F->getType());
+        size_t FieldAllocSize = RSExportType::GetTypeAllocSize(F->getType());
 
-                    if(!VarName.empty())
-                        FieldName = VarName + "." + F->getName();
-                    else
-                        FieldName = F->getName();
+        if(!VarName.empty())
+          FieldName = VarName + "." + F->getName();
+        else
+          FieldName = F->getName();
 
-                    /* alignment */
-                    genAddPaddingToElementBuiler(C, (FieldOffset - Pos), ElementBuilderName, RenderScriptVar);
+        /* alignment */
+        genAddPaddingToElementBuiler(C, (FieldOffset - Pos), ElementBuilderName, RenderScriptVar);
 
-                    /* eb.add(...) */
-                    genAddElementToElementBuilder(C, (*I)->getType(), FieldName, ElementBuilderName, RenderScriptVar);
+        /* eb.add(...) */
+        genAddElementToElementBuilder(C, (*I)->getType(), FieldName, ElementBuilderName, RenderScriptVar);
 
-                    /* there's padding within the field type */
-                    genAddPaddingToElementBuiler(C, (FieldAllocSize - FieldStoreSize), ElementBuilderName, RenderScriptVar);
+        /* there's padding within the field type */
+        genAddPaddingToElementBuiler(C, (FieldAllocSize - FieldStoreSize), ElementBuilderName, RenderScriptVar);
 
-                    Pos = FieldOffset + FieldAllocSize;
-                }
+        Pos = FieldOffset + FieldAllocSize;
+      }
 
-                /* There maybe some padding after the struct */
-                genAddPaddingToElementBuiler(C, (RSExportType::GetTypeAllocSize(ERT) - Pos), ElementBuilderName, RenderScriptVar);
-            } else {
-                assert(false && "Unknown class of type");
-            }
-        }
+      /* There maybe some padding after the struct */
+      genAddPaddingToElementBuiler(C, (RSExportType::GetTypeAllocSize(ERT) - Pos), ElementBuilderName, RenderScriptVar);
+    } else {
+      assert(false && "Unknown class of type");
+    }
 }
 
 void RSReflection::genAddPaddingToElementBuiler(Context& C, size_t PaddingSize, const char* ElementBuilderName, const char* RenderScriptVar) {
