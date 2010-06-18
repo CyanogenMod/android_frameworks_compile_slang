@@ -740,7 +740,8 @@ void RSReflection::genTypeClasSet(Context& C, const RSExportRecordType* ERT) {
     C.startBlock();
 
     C.indent() << "copyToArray(i, index);" << endl;
-    C.indent() << "mAllocation.subData1D(index * "RS_TYPE_ITEM_CLASS_NAME".sizeof, "RS_TYPE_ITEM_CLASS_NAME".sizeof, "RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());" << endl;
+    //C.indent() << "mAllocation.subData1D(index * "RS_TYPE_ITEM_CLASS_NAME".sizeof, "RS_TYPE_ITEM_CLASS_NAME".sizeof, "RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());" << endl;
+    C.indent() << "mAllocation.subData1D(index, 1, "RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());" << endl;
 
     C.endBlock();   /* end if (copyNow) */
 
