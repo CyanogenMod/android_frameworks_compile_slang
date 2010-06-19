@@ -702,13 +702,16 @@ bool RSReflection::genTypeItemClass(Context& C, const RSExportRecordType* ERT, s
 void RSReflection::genTypeClassConstructor(Context& C, const RSExportRecordType* ERT) {
     const char* RenderScriptVar = "rs";
 
+    C.startFunction(Context::AM_Public, true, "Element", "createElement", 1, "RenderScript", RenderScriptVar);
+    genBuildElement(C, ERT, RenderScriptVar);
+    C.endFunction();
+
     C.startFunction(Context::AM_Public, false, NULL, C.getClassName(), 2, "RenderScript", RenderScriptVar,
                                                                           "int", "count");
 
     C.indent() << RS_TYPE_ITEM_BUFFER_NAME" = null;" << endl;
     C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME" = null;" << endl;
-
-    genBuildElement(C, ERT, "mElement", RenderScriptVar);
+    C.indent() << "mElement = createElement(" << RenderScriptVar << ");" << endl;
     /* Call init() in super class */
     C.indent() << "init(" << RenderScriptVar << ", count);" << endl;
     C.endFunction();
@@ -762,20 +765,20 @@ void RSReflection::genTypeClasCopyAll(Context& C, const RSExportRecordType* ERT)
 /****************************** Methods to generate type class /end ******************************/
 
 /******************** Methods to create Element in Java of given record type ********************/
-void RSReflection::genBuildElement(Context& C, const RSExportRecordType* ERT, const char* ElementName, const char* RenderScriptVar) {
+void RSReflection::genBuildElement(Context& C, const RSExportRecordType* ERT, const char* RenderScriptVar) {
     const char* ElementBuilderName = "eb";
 
     /* Create element builder */
-    C.startBlock(true);
+    //    C.startBlock(true);
 
     C.indent() << "Element.Builder " << ElementBuilderName << " = new Element.Builder(" << RenderScriptVar << ");" << endl;
 
     /* eb.add(...) */
     genAddElementToElementBuilder(C, ERT, "", ElementBuilderName, RenderScriptVar);
 
-    C.indent() << ElementName << " = " << ElementBuilderName << ".create();" << endl;
+    C.indent() << "return " << ElementBuilderName << ".create();" << endl;
 
-    C.endBlock();
+    //   C.endBlock();
     return;
 }
 

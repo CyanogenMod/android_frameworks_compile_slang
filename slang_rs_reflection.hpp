@@ -66,31 +66,31 @@ private:
 
         static const char* AccessModifierStr(AccessModifier AM);
 
-        Context(const std::string& PackageName, const std::string& ResourceId, bool UseStdout) : 
+        Context(const std::string& PackageName, const std::string& ResourceId, bool UseStdout) :
             mPackageName(PackageName),
             mResourceId(ResourceId),
             mUseStdout(UseStdout),
             mVerbose(true)
-        { 
+        {
             clear();
-            return; 
+            return;
         }
 
         inline std::ostream& out() const { if(mUseStdout) return std::cout; else return mOF; }
-        inline std::ostream& indent() const { 
-            out() << mIndent; 
+        inline std::ostream& indent() const {
+            out() << mIndent;
             return out();
         }
 
-        inline void incIndentLevel() { 
-            mIndent.append(4, ' '); 
-            return; 
+        inline void incIndentLevel() {
+            mIndent.append(4, ' ');
+            return;
         }
 
-        inline void decIndentLevel() { 
-            assert(getIndentLevel() > 0 && "No indent"); 
-            mIndent.erase(0, 4); 
-            return; 
+        inline void decIndentLevel() {
+            assert(getIndentLevel() > 0 && "No indent");
+            mIndent.erase(0, 4);
+            return;
         }
 
         inline int getIndentLevel() {
@@ -114,7 +114,7 @@ private:
         void endClass();
 
         void startFunction(AccessModifier AM, bool IsStatic, const char* ReturnType, const std::string& FunctionName, int Argc, ...);
-        
+
         typedef std::vector<std::pair<std::string, std::string> > ArgTy;
         void startFunction(AccessModifier AM, bool IsStatic, const char* ReturnType, const std::string& FunctionName, const ArgTy& Args);
         void endFunction();
@@ -149,7 +149,7 @@ private:
     void genTypeClasSet(Context& C, const RSExportRecordType* ERT);
     void genTypeClasCopyAll(Context& C, const RSExportRecordType* ERT);
 
-    void genBuildElement(Context& C, const RSExportRecordType* ERT, const char* ElementName, const char* RenderScriptVar);
+    void genBuildElement(Context& C, const RSExportRecordType* ERT, const char* RenderScriptVar);
     void genAddElementToElementBuilder(Context& C, const RSExportType* ERT, const std::string& VarName, const char* ElementBuilderName, const char* RenderScriptVar);
     void genAddPaddingToElementBuiler(Context& C, size_t PaddingSize, const char* ElementBuilderName, const char* RenderScriptVar);
 
