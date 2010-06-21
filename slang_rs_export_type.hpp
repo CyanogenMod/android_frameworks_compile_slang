@@ -12,7 +12,7 @@
 #include "clang/AST/Type.h"         /* for clang::Type and clang::QualType */
 #include "clang/AST/Decl.h"         /* for clang::VarDecl and clang::DeclaratorDecl */
 
-#define GET_CANONICAL_TYPE(T)   (((T) == NULL) ? NULL : (T)->getCanonicalTypeInternal().getTypePtr()) 
+#define GET_CANONICAL_TYPE(T)   (((T) == NULL) ? NULL : (T)->getCanonicalTypeInternal().getTypePtr())
 #define UNSAFE_CAST_TYPE(TT, T) static_cast<TT*>(T->getCanonicalTypeInternal().getTypePtr())
 #define GET_EXT_VECTOR_ELEMENT_TYPE(T)  (((T) == NULL) ? NULL : GET_CANONICAL_TYPE((T)->getElementType().getTypePtr()))
 #define GET_POINTEE_TYPE(T) (((T) == NULL) ? NULL : GET_CANONICAL_TYPE((T)->getPointeeType().getTypePtr()))
@@ -50,10 +50,10 @@ private:
 protected:
     RSExportType(RSContext* Context, const llvm::StringRef& Name);
 
-    /* 
+    /*
      * Let's make it private since there're some prerequisites to call this function.
      *
-     * @T was normalized by calling RSExportType::TypeExportable(). 
+     * @T was normalized by calling RSExportType::TypeExportable().
      * @TypeName was retrieve from RSExportType::GetTypeName() before calling this.
      */
     static RSExportType* Create(RSContext* Context, const Type* T, const llvm::StringRef& TypeName);
@@ -62,7 +62,7 @@ protected:
     /* Return the type that can be used to create RSExportType, will always return the canonical type */
     static const Type* TypeExportable(const Type* T, llvm::SmallPtrSet<const Type*, 8>& SPS /* contain the checked type for recursion */);
 
-    /* This function convert the RSExportType to LLVM type. Actually, it should be "convert Clang type to LLVM type." 
+    /* This function convert the RSExportType to LLVM type. Actually, it should be "convert Clang type to LLVM type."
      *  However, clang doesn't make this API (lib/CodeGen/CodeGenTypes.h) public, we need to do by ourselves.
      *
      * Once we can get LLVM type, we can use LLVM to get alignment information, allocation size of a given type and structure
@@ -106,38 +106,40 @@ public:
         DataTypeUnknown = -1,
 
         //DataTypeFloat16 = 1,
-        DataTypeFloat32 = 2, 
-        //DataTypeFloat64 = 3, 
-        DataTypeSigned8 = 4, 
-        DataTypeSigned16 = 5, 
-        DataTypeSigned32 = 6, 
-        //DataTypeSigned64 = 7, 
-        DataTypeUnsigned8 = 8, 
-        DataTypeUnsigned16 = 9, 
-        DataTypeUnsigned32 = 10, 
-        //DataTypeUnSigned64 = 11, 
+        DataTypeFloat32 = 2,
+        //DataTypeFloat64 = 3,
+        DataTypeSigned8 = 4,
+        DataTypeSigned16 = 5,
+        DataTypeSigned32 = 6,
+        //DataTypeSigned64 = 7,
+        DataTypeUnsigned8 = 8,
+        DataTypeUnsigned16 = 9,
+        DataTypeUnsigned32 = 10,
+        //DataTypeUnSigned64 = 11,
 
-        DataTypeUnsigned565 = 12,
-        DataTypeUnsigned5551 = 13,
-        DataTypeUnsigned4444 = 14,
+        DataTypeBool = 12,
 
-        DataTypeRSElement = 15,
-        DataTypeRSType = 16,
-        DataTypeRSAllocation = 17,
-        DataTypeRSSampler = 18,
-        DataTypeRSScript = 19,
-        DataTypeRSMesh = 20,
-        DataTypeRSProgramFragment = 21,
-        DataTypeRSProgramVertex = 22,
-        DataTypeRSProgramRaster = 23,
-        DataTypeRSProgramStore = 24,       
+        DataTypeUnsigned565 = 13,
+        DataTypeUnsigned5551 = 14,
+        DataTypeUnsigned4444 = 15,
+
+        DataTypeRSElement = 16,
+        DataTypeRSType = 17,
+        DataTypeRSAllocation = 18,
+        DataTypeRSSampler = 19,
+        DataTypeRSScript = 20,
+        DataTypeRSMesh = 21,
+        DataTypeRSProgramFragment = 22,
+        DataTypeRSProgramVertex = 23,
+        DataTypeRSProgramRaster = 24,
+        DataTypeRSProgramStore = 25,
 
         DataTypeMax
     } DataType;
 
     /* From graphics/java/android/renderscript/Element.java: Element.DataKind */
     typedef enum {
-        DataKindUser = 0, 
+        DataKindUser = 0,
         DataKindColor = 1,
         DataKindPosition = 2,
         DataKindTexture = 3,
@@ -162,9 +164,9 @@ private:
     static llvm::Type* RSObjectLLVMType;
 
     static const size_t SizeOfDataTypeInBytes[];
-    /* 
-     * @T was normalized by calling RSExportType::TypeExportable() before calling this. 
-     * @TypeName was retrieved from RSExportType::GetTypeName() before calling this 
+    /*
+     * @T was normalized by calling RSExportType::TypeExportable() before calling this.
+     * @TypeName was retrieved from RSExportType::GetTypeName() before calling this
      */
     static RSExportPrimitiveType* Create(RSContext* Context, const Type* T, const llvm::StringRef& TypeName, DataKind DK = DataKindUser, bool Normalized = false);
 
@@ -208,16 +210,16 @@ private:
     const RSExportType* mPointeeType;
 
     RSExportPointerType(RSContext* Context,
-                        const llvm::StringRef& Name, 
+                        const llvm::StringRef& Name,
                         const RSExportType* PointeeType) :
-        RSExportType(Context, Name), 
+        RSExportType(Context, Name),
         mPointeeType(PointeeType)
     {
         return;
     }
 
-    /* 
-     * @PT was normalized by calling RSExportType::TypeExportable() before calling this. 
+    /*
+     * @PT was normalized by calling RSExportType::TypeExportable() before calling this.
      */
     static RSExportPointerType* Create(RSContext* Context, const PointerType* PT, const llvm::StringRef& TypeName);
 
@@ -239,19 +241,19 @@ private:
     int mNumElement;   /* number of element */
 
     RSExportVectorType(RSContext* Context,
-                       const llvm::StringRef& Name, 
-                       DataType DT, 
-                       DataKind DK, 
+                       const llvm::StringRef& Name,
+                       DataType DT,
+                       DataKind DK,
                        bool Normalized,
-                       int NumElement) : 
+                       int NumElement) :
         RSExportPrimitiveType(Context, Name, DT, DK, Normalized),
         mNumElement(NumElement)
     {
         return;
     }
 
-    /* 
-     * @EVT was normalized by calling RSExportType::TypeExportable() before calling this. 
+    /*
+     * @EVT was normalized by calling RSExportType::TypeExportable() before calling this.
      */
     static RSExportVectorType* Create(RSContext* Context, const ExtVectorType* EVT, const llvm::StringRef& TypeName, DataKind DK = DataKindUser, bool Normalized = false);
 
@@ -282,8 +284,8 @@ public:
         std::string mName;
 
     public:
-        Field(const RSExportType* T, const llvm::StringRef& Name, const RSExportRecordType* Parent, unsigned int Index) : 
-            mType(T), 
+        Field(const RSExportType* T, const llvm::StringRef& Name, const RSExportRecordType* Parent, unsigned int Index) :
+            mType(T),
             mName(Name.data(), Name.size()),
             mParent(Parent),
             mIndex(Index)
@@ -308,20 +310,20 @@ private:
     bool mIsPacked;
     bool mIsArtificial; /* Artificial export struct type is not exported by user (and thus it won't get reflected) */
 
-    RSExportRecordType(RSContext* Context, 
+    RSExportRecordType(RSContext* Context,
                        const llvm::StringRef& Name,
                        bool IsPacked,
-                       bool IsArtificial = false) : 
-        RSExportType(Context, Name), 
-        mIsPacked(IsPacked), 
+                       bool IsArtificial = false) :
+        RSExportType(Context, Name),
+        mIsPacked(IsPacked),
         mIsArtificial(IsArtificial)
     {
         return;
     }
 
-    /* 
-     * @RT was normalized by calling RSExportType::TypeExportable() before calling this. 
-     * @TypeName was retrieved from RSExportType::GetTypeName() before calling this. 
+    /*
+     * @RT was normalized by calling RSExportType::TypeExportable() before calling this.
+     * @TypeName was retrieved from RSExportType::GetTypeName() before calling this.
      */
     static RSExportRecordType* Create(RSContext* Context, const RecordType* RT, const llvm::StringRef& TypeName, bool mIsArtificial = false);
 

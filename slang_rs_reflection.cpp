@@ -74,6 +74,8 @@ static const char* GetPrimitiveTypeName(const RSExportPrimitiveType* EPT) {
         "int",      /* RSExportPrimitiveType::DataTypeUnsigned5551 */
         "int",      /* RSExportPrimitiveType::DataTypeUnsigned4444 */
 
+        "bool",      /* RSExportPrimitiveType::DataTypeBool */
+
         "Element",  /* RSExportPrimitiveType::DataTypeRSElement */
         "Type",     /* RSExportPrimitiveType::DataTypeRSType */
         "Allocation",   /* RSExportPrimitiveType::DataTypeRSAllocation */
@@ -169,6 +171,8 @@ static const char* GetPackerAPIName(const RSExportPrimitiveType* EPT) {
         "addU16",   /* RSExportPrimitiveType::DataTypeUnsigned5551 */
         "addU16",   /* RSExportPrimitiveType::DataTypeUnsigned4444 */
 
+        "addBoolean",  /* RSExportPrimitiveType::DataTypeBool */
+
         "addObj",   /* RSExportPrimitiveType::DataTypeRSElement */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSType */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSAllocation */
@@ -242,6 +246,8 @@ static const char* GetBuiltinElementConstruct(const RSExportType* ET) {
                 NULL,   /* RSExportPrimitiveType::DataTypeUnsigned565 */
                 NULL,   /* RSExportPrimitiveType::DataTypeUnsigned5551 */
                 NULL,   /* RSExportPrimitiveType::DataTypeUnsigned4444 */
+
+                "BOOLEAN",  /* RSExportPrimitiveType::DataTypeBool */
 
                 "ELEMENT", /* RSExportPrimitiveType::DataTypeRSElement */
                 "TYPE",    /* RSExportPrimitiveType::DataTypeRSType */
@@ -351,6 +357,8 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
         "Element.DataType.UNSIGNED_5_6_5",   /* RSExportPrimitiveType::DataTypeUnsigned565 */
         "Element.DataType.UNSIGNED_5_5_5_1", /* RSExportPrimitiveType::DataTypeUnsigned5551 */
         "Element.DataType.UNSIGNED_4_4_4_4", /* RSExportPrimitiveType::DataTypeUnsigned4444 */
+
+        "Element.DataType.BOOLEAN",     /* RSExportPrimitiveType::DataTypeBool */
 
         "Element.DataType.RS_ELEMENT",  /* RSExportPrimitiveType::DataTypeRSElement */
         "Element.DataType.RS_TYPE",     /* RSExportPrimitiveType::DataTypeRSType */
