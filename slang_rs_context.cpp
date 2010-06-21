@@ -21,8 +21,9 @@ using namespace clang::idx;
 
 namespace slang {
 
-RSContext::RSContext(Preprocessor* PP, const TargetInfo* Target) :
+RSContext::RSContext(Preprocessor* PP, ASTContext* Ctx, const TargetInfo* Target) :
     mPP(PP),
+    mCtx(Ctx),
     mTarget(Target),
     mTargetData(NULL),
     mLLVMContext(llvm::getGlobalContext()),
@@ -51,6 +52,7 @@ RSContext::RSContext(Preprocessor* PP, const TargetInfo* Target) :
     if(mRSJavaPackageNamePragma != NULL)
         PP->AddPragmaHandler("rs", mRSJavaPackageNamePragma);
 
+    /* Prepare target data */
     mTargetData = new llvm::TargetData(Slang::TargetDescription);
 
     return;
@@ -95,8 +97,8 @@ bool RSContext::processExportFunc(const FunctionDecl* FD) {
 }
 
 
-bool RSContext::processExportType(ASTContext& Ctx, const llvm::StringRef& Name) {
-    TranslationUnitDecl* TUDecl = Ctx.getTranslationUnitDecl();
+bool RSContext::processExportType(const llvm::StringRef& Name) {
+    TranslationUnitDecl* TUDecl = mCtx->getTranslationUnitDecl();
 
     assert(TUDecl != NULL && "Translation unit declaration (top-level declaration) is null object");
 
@@ -109,7 +111,7 @@ bool RSContext::processExportType(ASTContext& Ctx, const llvm::StringRef& Name) 
     bool Done = false;
     RSExportType* ET = NULL;
 
-    RSExportPointerType::IntegerType = Ctx.IntTy.getTypePtr();
+    RSExportPointerType::IntegerType = mCtx->IntTy.getTypePtr();
 
     for(DeclContext::lookup_const_iterator I = R.first;
         I != R.second;
@@ -117,7 +119,7 @@ bool RSContext::processExportType(ASTContext& Ctx, const llvm::StringRef& Name) 
     {
         NamedDecl* const ND = *I;
         ASTLocation* LastLoc = new ASTLocation(ND);
-        ASTLocation AL = ResolveLocationInAST(Ctx, ND->getLocStart(), LastLoc);
+        ASTLocation AL = ResolveLocationInAST(*mCtx, ND->getLocStart(), LastLoc);
 
         delete LastLoc;
         if(AL.isDecl()) {
@@ -148,9 +150,9 @@ bool RSContext::processExportType(ASTContext& Ctx, const llvm::StringRef& Name) 
     return (ET != NULL);
 }
 
-void RSContext::processExport(ASTContext& Ctx) {
+void RSContext::processExport() {
     /* Export variable */
-    TranslationUnitDecl* TUDecl = Ctx.getTranslationUnitDecl();
+    TranslationUnitDecl* TUDecl = mCtx->getTranslationUnitDecl();
     for(DeclContext::decl_iterator DI = TUDecl->decls_begin();
         DI != TUDecl->decls_end();
         DI++)
@@ -172,7 +174,7 @@ void RSContext::processExport(ASTContext& Ctx) {
     for(NeedExportTypeSet::const_iterator EI = mNeedExportTypes.begin();
         EI != mNeedExportTypes.end();
         EI++)
-        if(!processExportType(Ctx, EI->getKey()))
+        if(!processExportType(EI->getKey()))
             printf("RSContext::processExport : failed to export type '%s'\n", EI->getKey().str().c_str());
 
 

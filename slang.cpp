@@ -189,8 +189,8 @@ int Slang::compile() {
 
     /* Here is per-compilation needed initialization */
     createPreprocessor();
-    createRSContext();
     createASTContext();
+    createRSContext();
     //createBackend();
     createRSBackend();
 

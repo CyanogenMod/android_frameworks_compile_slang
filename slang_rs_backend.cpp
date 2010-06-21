@@ -51,7 +51,8 @@ void RSBackend::HandleTopLevelDecl(DeclGroupRef D) {
 }
 
 void RSBackend::HandleTranslationUnitEx(ASTContext& Ctx) {
-    mContext->processExport(Ctx);
+    assert((&Ctx == mContext->getASTContext()) && "Unexpected AST context change during LLVM IR generation");
+    mContext->processExport();
 
     /* Dump export variable info */
     if(mContext->hasExportVar()) {

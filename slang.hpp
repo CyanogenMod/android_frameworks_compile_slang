@@ -101,14 +101,6 @@ private:
         return;
     }
 
-    /* Context of Slang compiler for RenderScript */
-    llvm::OwningPtr<RSContext> mRSContext;
-    inline void createRSContext() {
-        mRSContext.reset(new RSContext(mPP.get(),
-                                       mTarget.get()));
-        return;
-    }
-
     /* The AST context (the context to hold long-lived AST nodes) */
     llvm::OwningPtr<ASTContext> mASTContext;
     inline void createASTContext() {
@@ -118,6 +110,15 @@ private:
                                          mPP->getIdentifierTable(),
                                          mPP->getSelectorTable(),
                                          mPP->getBuiltinInfo()));
+        return;
+    }
+
+    /* Context for RenderScript */
+    llvm::OwningPtr<RSContext> mRSContext;
+    inline void createRSContext() {
+        mRSContext.reset(new RSContext(mPP.get(),
+                                       mASTContext.get(),
+                                       mTarget.get()));
         return;
     }
 

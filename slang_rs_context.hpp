@@ -49,6 +49,7 @@ public:
 
 private:
     Preprocessor* mPP;
+    ASTContext* mCtx;
     const TargetInfo* mTarget;
 
     llvm::TargetData* mTargetData;
@@ -68,16 +69,17 @@ private:
 
     bool processExportVar(const VarDecl* VD);
     bool processExportFunc(const FunctionDecl* FD);
-    bool processExportType(ASTContext& Ctx, const llvm::StringRef& Name);
+    bool processExportType(const llvm::StringRef& Name);
 
     ExportVarList mExportVars;
     ExportFuncList mExportFuncs;
     ExportTypeMap mExportTypes;
 
 public:
-    RSContext(Preprocessor* PP, const TargetInfo* Target);
+    RSContext(Preprocessor* PP, ASTContext* Ctx, const TargetInfo* Target);
 
     inline Preprocessor* getPreprocessor() const { return mPP; }
+    inline ASTContext* getASTContext() const { return mCtx; }
     inline const llvm::TargetData* getTargetData() const { return mTargetData; }
     inline llvm::LLVMContext& getLLVMContext() const { return mLLVMContext; }
     inline const SourceManager* getSourceManager() const { return &mPP->getSourceManager(); }
@@ -88,7 +90,7 @@ public:
 
     inline void setReflectJavaPackageName(const std::string& S) { mReflectJavaPackageName = S; return; }
 
-    void processExport(ASTContext& Ctx);
+    void processExport();
 
     typedef ExportVarList::const_iterator const_export_var_iterator;
     const_export_var_iterator export_vars_begin() const { return mExportVars.begin(); }

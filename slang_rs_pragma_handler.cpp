@@ -59,7 +59,7 @@ public:
     RSJavaPackageNamePragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
 
     void HandlePragma(Preprocessor& PP, Token& FirstToken) {
-        /* FIXME: Need to check the extracted package name from paragma. Currently "all chars" specified in pragma will be regard as package name.
+        /* FIXME: Need to validate the extracted package name from paragma. Currently "all chars" specified in pragma will be treated as package name.
          *
          * 18.1 The Grammar of the Java Programming Language, http://java.sun.com/docs/books/jls/third_edition/html/syntax.html#18.1
          *
@@ -88,7 +88,7 @@ public:
             return;
 
         while(PragmaToken.isNot(tok::eom)) {
-            /* Lex variable name */
+            /* Lex package name */
             PP.LexUnexpandedToken(PragmaToken);
 
             bool Invalid;
@@ -96,7 +96,7 @@ public:
             if(!Invalid)
                 PackageName.append(Spelling);
 
-            /* Pre-mature end */
+            /* Pre-mature end (syntax error will be triggered by preprocessor later) */
             if(PragmaToken.is(tok::eom) || PragmaToken.is(tok::eof))
                 break;
             else {
@@ -181,4 +181,3 @@ void RSPragmaHandler::handleItemListPragma(Preprocessor& PP, Token& FirstToken) 
 }
 
 }   /* namespace slang */
-
