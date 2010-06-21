@@ -137,6 +137,19 @@ static const char* GetVectorTypeName(const RSExportVectorType* EVT) {
     return BaseElement[EVT->getNumElement() - 2];
 }
 
+static const char* GetVectorAccessor(int Index) {
+    static const char* VectorAccessorMap[] = {
+        /* 0 */ "x",
+        /* 1 */ "y",
+        /* 2 */ "z",
+        /* 3 */ "w",
+    };
+
+    assert((Index >= 0) && (Index < (sizeof(VectorAccessorMap) / sizeof(const char*))) && "Out-of-bound index to access vector member");
+
+    return VectorAccessorMap[Index];
+}
+
 static const char* GetPackerAPIName(const RSExportPrimitiveType* EPT) {
     static const char* PrimitiveTypePackerAPINameMap[] = {
         "",
@@ -389,7 +402,119 @@ void RSReflection::genScriptClassConstructor(Context& C) {
                                                                           "boolean", "isRoot");
     /* Call constructor of super class */
     C.indent() << "super(rs, resources, id, isRoot);" << endl;
+
+    /* If an exported variable has initial value, reflect it */
+
+    for(RSContext::const_export_var_iterator I = mRSContext->export_vars_begin();
+        I != mRSContext->export_vars_end();
+        I++)
+    {
+        const RSExportVar* EV = *I;
+        if(!EV->getInit().isUninit())
+            genInitExportVariable(C, EV->getType(), EV->getName(), EV->getInit());
+    }
+
     C.endFunction();
+    return;
+}
+
+void RSReflection::genInitPrimitiveExportVariable(Context& C, const std::string& VarName, const APValue& Val) {
+    assert(!Val.isUninit() && "Not a valid initializer");
+
+    C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
+    switch(Val.getKind()) {
+        case APValue::Int: C.out() << Val.getInt().getSExtValue(); break;
+        case APValue::Float: C.out() << Val.getFloat().convertToDouble(); break;
+
+        case APValue::ComplexInt:
+        case APValue::ComplexFloat:
+        case APValue::LValue:
+        case APValue::Vector:
+            assert(false && "Primitive type cannot have such kind of initializer");
+        break;
+
+        default:
+            assert(false && "Unknown kind of initializer");
+        break;
+    }
+    C.out() << ";" << endl;
+
+    return;
+}
+
+void RSReflection::genInitExportVariable(Context& C, const RSExportType* ET, const std::string& VarName, const APValue& Val) {
+    assert(!Val.isUninit() && "Not a valid initializer");
+
+    switch(ET->getClass()) {
+        case RSExportType::ExportClassPrimitive:
+            genInitPrimitiveExportVariable(C, VarName, Val);
+        break;
+
+        case RSExportType::ExportClassPointer:
+            if(!Val.isInt() || Val.getInt().getSExtValue() != 0)
+                std::cout << "Initializer which is non-NULL to pointer type variable will be ignored" << endl;
+        break;
+
+        case RSExportType::ExportClassVector:
+        {
+            const RSExportVectorType* EVT = static_cast<const RSExportVectorType*>(ET);
+            switch(Val.getKind()) {
+                case APValue::Int:
+                case APValue::Float:
+                    for(int i=0;i<EVT->getNumElement();i++) {
+                        std::string Name =  VarName + "." + GetVectorAccessor(i);
+                        genInitPrimitiveExportVariable(C, Name, Val);
+                    }
+                break;
+
+                case APValue::Vector:
+                {
+                    C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = new " << GetVectorTypeName(EVT) << "();" << endl;
+
+                    unsigned NumElements = std::min(static_cast<unsigned>(EVT->getNumElement()), Val.getVectorLength());
+                    for(unsigned i=0;i<NumElements;i++) {
+                        const APValue& ElementVal = Val.getVectorElt(i);
+                        std::string Name =  VarName + "." + GetVectorAccessor(i);
+                        genInitPrimitiveExportVariable(C, Name, ElementVal);
+                    }
+                }
+                break;
+            }
+        }
+        break;
+
+        /* TODO: Resolving initializer of a record type variable is complex. It cannot obtain by just simply evaluating the initializer expression. */
+        case RSExportType::ExportClassRecord:
+        {
+            /*
+            unsigned InitIndex = 0;
+            const RSExportRecordType* ERT = static_cast<const RSExportRecordType*>(ET);
+
+            assert((Val.getKind() == APValue::Vector) && "Unexpected type of initializer for record type variable");
+
+            C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = new "RS_TYPE_CLASS_NAME_PREFIX << ERT->getName() <<  "."RS_TYPE_ITEM_CLASS_NAME"();" << endl;
+
+            for(RSExportRecordType::const_field_iterator I = ERT->fields_begin();
+                I != ERT->fields_end();
+                I++)
+            {
+                const RSExportRecordType::Field* F = *I;
+                std::string FieldName = VarName + "." + F->getName();
+
+                if(InitIndex > Val.getVectorLength())
+                    break;
+
+                genInitPrimitiveExportVariable(C, FieldName, Val.getVectorElt(InitIndex++));
+            }
+            */
+            assert(false && "Unsupported initializer for record type variable currently");
+        }
+        break;
+
+        default:
+            assert(false && "Unknown class of type");
+        break;
+    }
     return;
 }
 

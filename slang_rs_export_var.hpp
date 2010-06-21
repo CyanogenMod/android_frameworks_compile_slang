@@ -4,8 +4,13 @@
 #include "llvm/ADT/StringRef.h"     /* for class llvm::StringRef */
 
 #include "clang/AST/Decl.h"         /* for clang::VarDecl */
+#include "clang/AST/Expr.h"         /* for clang::Expr */
 
 #include <string>
+
+namespace clang {
+    class APValue;
+}
 
 namespace slang {
 
@@ -21,12 +26,16 @@ private:
     std::string mName;
     const RSExportType* mET;
 
+    Expr::EvalResult mInit;
+
     RSExportVar(RSContext* Context, const VarDecl* VD, const RSExportType* ET);
 
 public:
     inline const std::string& getName() const { return mName; }
     inline const RSExportType* getType() const { return mET; }
     inline RSContext* getRSContext() const { return mContext; }
+
+    inline const APValue& getInit() const { return mInit.Val; }
 
 };  /* RSExportVar */
 
