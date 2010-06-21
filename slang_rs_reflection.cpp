@@ -597,15 +597,17 @@ void RSReflection::genPrimitiveTypeExportVariable(Context& C, const RSExportVar*
     C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX << EV->getName() << ";" << endl;
 
     /* set_*() */
-    C.startFunction(Context::AM_Public, false, "void", "set_" + EV->getName(), 1, TypeName, "v");
-    C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << endl;
+    if(!EV->isConst()) {
+        C.startFunction(Context::AM_Public, false, "void", "set_" + EV->getName(), 1, TypeName, "v");
+        C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << endl;
 
-    if(EPT->isRSObjectType())
-        C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", (v == null) ? 0 : v.getID());" << endl;
-    else
-        C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", v);" << endl;
+        if(EPT->isRSObjectType())
+            C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", (v == null) ? 0 : v.getID());" << endl;
+        else
+            C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", v);" << endl;
 
-    C.endFunction();
+        C.endFunction();
+    }
 
     genGetExportVariable(C, TypeName, EV->getName());
 
@@ -652,14 +654,16 @@ void RSReflection::genVectorTypeExportVariable(Context& C, const RSExportVar* EV
     C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX << EV->getName() << ";" << endl;
 
     /* set_*() */
-    C.startFunction(Context::AM_Public, false, "void", "set_" + EV->getName(), 1, TypeName, "v");
-    C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << endl;
+    if(!EV->isConst()) {
+        C.startFunction(Context::AM_Public, false, "void", "set_" + EV->getName(), 1, TypeName, "v");
+        C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << endl;
 
-    if(genCreateFieldPacker(C, EVT, FieldPackerName))
-        genPackVarOfType(C, EVT, "v", FieldPackerName);
-    C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", " << FieldPackerName << ");" << endl;
+        if(genCreateFieldPacker(C, EVT, FieldPackerName))
+            genPackVarOfType(C, EVT, "v", FieldPackerName);
+        C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", " << FieldPackerName << ");" << endl;
 
-    C.endFunction();
+        C.endFunction();
+    }
 
     genGetExportVariable(C, TypeName, EV->getName());
     return;
@@ -675,14 +679,16 @@ void RSReflection::genRecordTypeExportVariable(Context& C, const RSExportVar* EV
     C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX << EV->getName() << ";" << endl;
 
     /* set_*() */
-    C.startFunction(Context::AM_Public, false, "void", "set_" + EV->getName(), 1, TypeName.c_str(), "v");
-    C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << endl;
+    if(!EV->isConst()) {
+        C.startFunction(Context::AM_Public, false, "void", "set_" + EV->getName(), 1, TypeName.c_str(), "v");
+        C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << endl;
 
-    if(genCreateFieldPacker(C, ERT, FieldPackerName))
-        genPackVarOfType(C, ERT, "v", FieldPackerName);
-    C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", " << FieldPackerName << ");" << endl;
+        if(genCreateFieldPacker(C, ERT, FieldPackerName))
+            genPackVarOfType(C, ERT, "v", FieldPackerName);
+        C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", " << FieldPackerName << ");" << endl;
 
-    C.endFunction();
+        C.endFunction();
+    }
 
     genGetExportVariable(C, TypeName.c_str(), EV->getName());
     return;
