@@ -32,9 +32,14 @@ protected:
     /* Handle pragma like #pragma rs [name] ([item #1],[item #2],...,[item #i]) */
     void handleItemListPragma(Preprocessor& PP, Token& FirstToken);
 
+    /* Handle pragma like #pragma rs [name] */
+    void handleNonParamPragma(Preprocessor& PP, Token& FirstToken);
+
 public:
     static RSPragmaHandler* CreatePragmaExportVarHandler(RSContext* Context);
+    static RSPragmaHandler* CreatePragmaExportVarAllHandler(RSContext* Context);
     static RSPragmaHandler* CreatePragmaExportFuncHandler(RSContext* Context);
+    static RSPragmaHandler* CreatePragmaExportFuncAllHandler(RSContext* Context);
     static RSPragmaHandler* CreatePragmaExportTypeHandler(RSContext* Context);
     static RSPragmaHandler* CreatePragmaJavaPackageNameHandler(RSContext* Context);
 

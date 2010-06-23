@@ -28,19 +28,33 @@ RSContext::RSContext(Preprocessor* PP, ASTContext* Ctx, const TargetInfo* Target
     mTargetData(NULL),
     mLLVMContext(llvm::getGlobalContext()),
     mRSExportVarPragma(NULL),
+    mRSExportVarAllPragma(NULL),
     mRSExportFuncPragma(NULL),
+    mRSExportFuncAllPragma(NULL),
     mRSExportTypePragma(NULL),
-    mRSJavaPackageNamePragma(NULL)
+    mRSJavaPackageNamePragma(NULL),
+    mExportAllStaticVars(false),
+    mExportAllStaticFuncs(false)
 {
     /* For #pragma rs export_var */
     mRSExportVarPragma = RSPragmaHandler::CreatePragmaExportVarHandler(this);
     if(mRSExportVarPragma != NULL)
         PP->AddPragmaHandler("rs", mRSExportVarPragma);
 
+    /* For #pragma rs export_var_all */
+    mRSExportVarAllPragma = RSPragmaHandler::CreatePragmaExportVarAllHandler(this);
+    if(mRSExportVarAllPragma != NULL)
+        PP->AddPragmaHandler("rs", mRSExportVarAllPragma);
+
     /* For #pragma rs export_func */
     mRSExportFuncPragma = RSPragmaHandler::CreatePragmaExportFuncHandler(this);
     if(mRSExportFuncPragma != NULL)
         PP->AddPragmaHandler("rs", mRSExportFuncPragma);
+
+    /* For #pragma rs export_func_all */
+    mRSExportFuncAllPragma = RSPragmaHandler::CreatePragmaExportFuncAllHandler(this);
+    if(mRSExportFuncAllPragma != NULL)
+        PP->AddPragmaHandler("rs", mRSExportFuncAllPragma);
 
     /* For #pragma rs export_type */
     mRSExportTypePragma = RSPragmaHandler::CreatePragmaExportTypeHandler(this);
@@ -159,14 +173,26 @@ void RSContext::processExport() {
     {
         if(DI->getKind() == Decl::Var) {
             VarDecl* VD = (VarDecl*) (*DI);
-            NeedExportVarSet::iterator EI = mNeedExportVars.find(VD->getName());
-            if(EI != mNeedExportVars.end() && processExportVar(VD))
-                mNeedExportVars.erase(EI);
+            if (mExportAllStaticVars && VD->getStorageClass() == VarDecl::None) {
+                if (!processExportVar(VD)) {
+                  printf("RSContext::processExport : failed to export var '%s'\n", VD->getNameAsCString());
+                }
+            } else {
+                NeedExportVarSet::iterator EI = mNeedExportVars.find(VD->getName());
+                if(EI != mNeedExportVars.end() && processExportVar(VD))
+                    mNeedExportVars.erase(EI);
+            }
         } else if(DI->getKind() == Decl::Function) {
             FunctionDecl* FD = (FunctionDecl*) (*DI);
-            NeedExportFuncSet::iterator EI = mNeedExportFuncs.find(FD->getName());
-            if(EI != mNeedExportFuncs.end() && processExportFunc(FD))
-                mNeedExportFuncs.erase(EI);
+            if (mExportAllStaticFuncs && FD->getStorageClass() == FunctionDecl::None) {
+                if (!processExportFunc(FD)) {
+                  printf("RSContext::processExport : failed to export func '%s'\n", FD->getNameAsCString());
+                }
+            } else {
+                NeedExportFuncSet::iterator EI = mNeedExportFuncs.find(FD->getName());
+                if(EI != mNeedExportFuncs.end() && processExportFunc(FD))
+                    mNeedExportFuncs.erase(EI);
+            }
         }
     }
 

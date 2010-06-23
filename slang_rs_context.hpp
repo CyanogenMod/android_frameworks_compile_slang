@@ -56,7 +56,9 @@ private:
     llvm::LLVMContext& mLLVMContext;
 
     RSPragmaHandler* mRSExportVarPragma;
+    RSPragmaHandler* mRSExportVarAllPragma;
     RSPragmaHandler* mRSExportFuncPragma;
+    RSPragmaHandler* mRSExportFuncAllPragma;
     RSPragmaHandler* mRSExportTypePragma;
     RSPragmaHandler* mRSJavaPackageNamePragma;
 
@@ -64,6 +66,8 @@ private:
     NeedExportVarSet mNeedExportVars;
     NeedExportFuncSet mNeedExportFuncs;
     NeedExportTypeSet mNeedExportTypes;
+    bool mExportAllStaticVars;
+    bool mExportAllStaticFuncs;
 
     std::string mReflectJavaPackageName;
 
@@ -88,6 +92,8 @@ public:
     inline void addExportFunc(const std::string& S) { mNeedExportFuncs.insert(S); return; }
     inline void addExportType(const std::string& S) { mNeedExportTypes.insert(S); return; }
 
+    inline void setExportAllStaticVars(bool flag) { mExportAllStaticVars = flag; }
+    inline void setExportAllStaticFuncs(bool flag) { mExportAllStaticFuncs = flag; }
     inline void setReflectJavaPackageName(const std::string& S) { mReflectJavaPackageName = S; return; }
 
     void processExport();
