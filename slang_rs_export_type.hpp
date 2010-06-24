@@ -200,7 +200,7 @@ public:
 
     inline DataType getType() const { return mType; }
     inline DataKind getKind() const { return mKind; }
-    inline bool isRSObjectType() const { return ((mType >= DataTypeRSElement) && (mType <= DataTypeRSProgramStore)); }
+    inline bool isRSObjectType() const { return ((mType >= DataTypeRSElement) && (mType < DataTypeMax)); }
 };  /* RSExportPrimitiveType */
 
 
