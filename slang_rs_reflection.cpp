@@ -86,6 +86,7 @@ static const char* GetPrimitiveTypeName(const RSExportPrimitiveType* EPT) {
         "ProgramVertex",    /* RSExportPrimitiveType::DataTypeRSProgramVertex */
         "ProgramRaster",    /* RSExportPrimitiveType::DataTypeRSProgramRaster */
         "ProgramStore",     /* RSExportPrimitiveType::DataTypeRSProgramStore */
+        "Font",     /* RSExportPrimitiveType::DataTypeRSFont */
     };
 
     if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveTypeJavaNameMap) / sizeof(const char*))))
@@ -183,6 +184,7 @@ static const char* GetPackerAPIName(const RSExportPrimitiveType* EPT) {
         "addObj",   /* RSExportPrimitiveType::DataTypeRSProgramVertex */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSProgramRaster */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSProgramStore */
+        "addObj",   /* RSExportPrimitiveType::DataTypeRSFont */
     };
 
     if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveTypePackerAPINameMap) / sizeof(const char*))))
@@ -259,6 +261,7 @@ static const char* GetBuiltinElementConstruct(const RSExportType* ET) {
                 "PROGRAM_VERTEX",      /* RSExportPrimitiveType::DataTypeRSProgramVertex */
                 "PROGRAM_RASTER",      /* RSExportPrimitiveType::DataTypeRSProgramRaster */
                 "PROGRAM_STORE",       /* RSExportPrimitiveType::DataTypeRSProgramStore */
+                "FONT",       /* RSExportPrimitiveType::DataTypeRSFont */
             };
 
             if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveBuiltinElementConstructMap) / sizeof(const char*))))
@@ -370,7 +373,7 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
         "Element.DataType.RS_PROGRAM_VERTEX",   /* RSExportPrimitiveType::DataTypeRSProgramVertex */
         "Element.DataType.RS_PROGRAM_RASTER",   /* RSExportPrimitiveType::DataTypeRSProgramRaster */
         "Element.DataType.RS_PROGRAM_STORE",    /* RSExportPrimitiveType::DataTypeRSProgramStore */
-        "Element.DataType.RS_FONT",    /* RSExportPrimitiveType::DataTypeRSFONT */
+        "Element.DataType.RS_FONT",    /* RSExportPrimitiveType::DataTypeRSFont */
     };
 
     if((DT >= 0) && (DT < (sizeof(ElementDataTypeNameMap) / sizeof(const char*))))
