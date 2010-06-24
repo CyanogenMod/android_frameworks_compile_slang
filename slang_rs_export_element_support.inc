@@ -22,6 +22,7 @@
 #   define ELEMENT_DATA_TYPE_RS_PROGRAM_VERTEX      RSExportPrimitiveType::DataTypeRSProgramVertex
 #   define ELEMENT_DATA_TYPE_RS_PROGRAM_RASTER      RSExportPrimitiveType::DataTypeRSProgramRaster
 #   define ELEMENT_DATA_TYPE_RS_PROGRAM_STORE       RSExportPrimitiveType::DataTypeRSProgramStore
+#   define ELEMENT_DATA_TYPE_RS_FONT                RSExportPrimitiveType::DataTypeRSFont
 
 #endif  /* USE_ELEMENT_TYPE_NAME */
 
@@ -122,6 +123,7 @@
     DEF_RS_OBJECT_TYPE(RS_PROGRAM_VERTEX, "rs_program_vertex")
     DEF_RS_OBJECT_TYPE(RS_PROGRAM_RASTER, "rs_program_raster")
     DEF_RS_OBJECT_TYPE(RS_PROGRAM_STORE, "rs_program_store")
+    DEF_RS_OBJECT_TYPE(RS_FONT, "rs_font")
 
 #   undef DEF_RS_OBJECT_TYPE
 #endif  /* DEF_RS_OBJECT_TYPE */
@@ -154,6 +156,7 @@
 #   undef ELEMENT_DATA_TYPE_RS_PROGRAM_VERTEX
 #   undef ELEMENT_DATA_TYPE_RS_PROGRAM_RASTER
 #   undef ELEMENT_DATA_TYPE_RS_PROGRAM_STORE
+#   undef ELEMENT_DATA_TYPE_RS_FONT
 
 #   undef USE_ELEMENT_DATA_TYPE
 

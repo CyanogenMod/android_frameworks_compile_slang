@@ -133,6 +133,7 @@ public:
         DataTypeRSProgramVertex = 23,
         DataTypeRSProgramRaster = 24,
         DataTypeRSProgramStore = 25,
+        DataTypeRSFont = 26,
 
         DataTypeMax
     } DataType;

@@ -355,6 +355,7 @@ const size_t RSExportPrimitiveType::SizeOfDataTypeInBytes[RSExportPrimitiveType:
     4, /* DataTypeRSProgramVertex */
     4, /* DataTypeRSProgramRaster */
     4, /* DataTypeRSProgramStore */       
+    4, /* DataTypeRSFont */       
     0
 };
 

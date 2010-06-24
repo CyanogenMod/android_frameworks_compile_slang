@@ -43,6 +43,7 @@ typedef struct { int* p; } __attribute__((packed, aligned(4))) rs_program_fragme
 typedef struct { int* p; } __attribute__((packed, aligned(4))) rs_program_vertex;
 typedef struct { int* p; } __attribute__((packed, aligned(4))) rs_program_raster;
 typedef struct { int* p; } __attribute__((packed, aligned(4))) rs_program_store;
+typedef struct { int* p; } __attribute__((packed, aligned(4))) rs_font;
 
 // RS_KIND_POSITION
 typedef float rs_position1;

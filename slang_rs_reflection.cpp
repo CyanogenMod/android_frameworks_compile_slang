@@ -370,6 +370,7 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
         "Element.DataType.RS_PROGRAM_VERTEX",   /* RSExportPrimitiveType::DataTypeRSProgramVertex */
         "Element.DataType.RS_PROGRAM_RASTER",   /* RSExportPrimitiveType::DataTypeRSProgramRaster */
         "Element.DataType.RS_PROGRAM_STORE",    /* RSExportPrimitiveType::DataTypeRSProgramStore */
+        "Element.DataType.RS_FONT",    /* RSExportPrimitiveType::DataTypeRSFONT */
     };
 
     if((DT >= 0) && (DT < (sizeof(ElementDataTypeNameMap) / sizeof(const char*))))
