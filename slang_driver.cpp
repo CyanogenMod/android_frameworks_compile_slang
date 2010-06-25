@@ -502,10 +502,13 @@ static void DestroyCommandOptions() {
     if(!(expr)) { \
         if(slangGetInfoLog(slang))  \
             cerr << slangGetInfoLog(slang); \
+        ret = 1;  \
         goto on_slang_error;    \
     } 
 
 int main(int argc, char** argv) {
+    int ret = 0;
+
     if(argc < 2) {
         cerr << argv[0] << ": "ERR_NO_INPUT_FILE << endl;
         return 1;
@@ -538,5 +541,5 @@ on_slang_error:
 
     DestroyCommandOptions();
 
-    return 0;
+    return ret;
 }
