@@ -74,7 +74,7 @@ static const char* GetPrimitiveTypeName(const RSExportPrimitiveType* EPT) {
         "int",      /* RSExportPrimitiveType::DataTypeUnsigned5551 */
         "int",      /* RSExportPrimitiveType::DataTypeUnsigned4444 */
 
-        "bool",      /* RSExportPrimitiveType::DataTypeBool */
+        "boolean",  /* RSExportPrimitiveType::DataTypeBool */
 
         "Element",  /* RSExportPrimitiveType::DataTypeRSElement */
         "Type",     /* RSExportPrimitiveType::DataTypeRSType */
@@ -89,8 +89,10 @@ static const char* GetPrimitiveTypeName(const RSExportPrimitiveType* EPT) {
         "Font",     /* RSExportPrimitiveType::DataTypeRSFont */
     };
 
-    if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveTypeJavaNameMap) / sizeof(const char*))))
+    if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveTypeJavaNameMap) / sizeof(const char*)))) {
+        // printf("Type %d\n", EPT->getType());
         return PrimitiveTypeJavaNameMap[ EPT->getType() ];
+    }
 
     assert(false && "GetPrimitiveTypeName : Unknown primitive data type");
     return NULL;
@@ -128,6 +130,10 @@ static const char* GetVectorTypeName(const RSExportVectorType* EVT) {
 
         case RSExportPrimitiveType::DataTypeFloat32:
             BaseElement = VectorTypeJavaNameMap[4];
+        break;
+
+        case RSExportPrimitiveType::DataTypeBool:
+            BaseElement = VectorTypeJavaNameMap[0];
         break;
 
         default:

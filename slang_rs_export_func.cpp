@@ -16,7 +16,7 @@ RSExportFunc* RSExportFunc::Create(RSContext* Context, const FunctionDecl* FD) {
 
     /* Check whether the parameters passed to the function is exportable */
     for(int i=0;i<FD->getNumParams();i++) {
-        const ParmVarDecl* PVD = FD->getParamDecl(i); 
+        const ParmVarDecl* PVD = FD->getParamDecl(i);
         const llvm::StringRef ParamName = PVD->getName();
 
         assert(!ParamName.empty() && "Parameter must have a name");
@@ -29,7 +29,7 @@ RSExportFunc* RSExportFunc::Create(RSContext* Context, const FunctionDecl* FD) {
         if(PET != NULL) {
             F->mParams.push_back(new Parameter(PET, ParamName));
         } else {
-            printf("Note: parameter '%s' in function '%s' uses unsupported type", ParamName.str().c_str(), Name.str().c_str());
+            printf("Note: parameter '%s' in function '%s' uses unsupported type\n", ParamName.str().c_str(), Name.str().c_str());
             delete F;
             return NULL;
         }
@@ -63,7 +63,7 @@ RSExportFunc::~RSExportFunc() {
 
     if(mParamPacketType != NULL)
         delete mParamPacketType;
-    
+
     return;
 }
 

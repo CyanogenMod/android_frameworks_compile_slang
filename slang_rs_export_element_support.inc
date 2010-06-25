@@ -12,6 +12,7 @@
 #   define ELEMENT_DATA_TYPE_UNSIGNED_565   RSExportPrimitiveType::DataTypeUnsigned565
 #   define ELEMENT_DATA_TYPE_UNSIGNED_5551  RSExportPrimitiveType::DataTypeUnsigned5551
 #   define ELEMENT_DATA_TYPE_UNSIGNED_4444  RSExportPrimitiveType::DataTypeUnsigned4444
+#   define ELEMENT_DATA_TYPE_BOOL           RSExportPrimitiveType::DataTypeBool
 #   define ELEMENT_DATA_TYPE_RS_ELEMENT     RSExportPrimitiveType::DataTypeRSElement
 #   define ELEMENT_DATA_TYPE_RS_TYPE        RSExportPrimitiveType::DataTypeRSType
 #   define ELEMENT_DATA_TYPE_RS_ALLOCATION  RSExportPrimitiveType::DataTypeRSAllocation
@@ -25,6 +26,7 @@
 #   define ELEMENT_DATA_TYPE_RS_FONT                RSExportPrimitiveType::DataTypeRSFont
 
 #endif  /* USE_ELEMENT_TYPE_NAME */
+
 
 #ifdef USE_ELEMENT_DATA_KIND
 
@@ -107,6 +109,7 @@
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_565, "u565")
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_5551, "u5551")
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_4444, "u4444")
+    DEF_PRIMITIVE_DATA_TYPE(BOOL, "bool")
 
 #   undef DEF_PRIMITIVE_DATA_TYPE
 #endif  /* DEF_PRIMITIVE_DATA_TYPE */
@@ -146,6 +149,7 @@
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_565
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_5551
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_4444
+#   undef ELEMENT_DATA_TYPE_BOOL
 #   undef ELEMENT_DATA_TYPE_RS_ELEMENT
 #   undef ELEMENT_DATA_TYPE_RS_TYPE
 #   undef ELEMENT_DATA_TYPE_RS_ALLOCATION

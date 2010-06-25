@@ -16,7 +16,7 @@ namespace slang {
 bool RSExportType::NormalizeType(const Type*& T, llvm::StringRef& TypeName) {
     llvm::SmallPtrSet<const Type*, 8> SPS = llvm::SmallPtrSet<const Type*, 8>();
 
-    if((T = RSExportType::TypeExportable(T, SPS)) == NULL) 
+    if((T = RSExportType::TypeExportable(T, SPS)) == NULL)
         /* TODO: warning the user: type not exportable */
         return false;
 
@@ -60,6 +60,7 @@ llvm::StringRef RSExportType::GetTypeName(const Type* T) {
                     else if(type == RSExportPrimitiveType::DataTypeSigned8) return "char";  \
                     else if(type == RSExportPrimitiveType::DataTypeSigned16) return "short";    \
                     else if(type == RSExportPrimitiveType::DataTypeSigned32) return "int";  \
+                    else if(type == RSExportPrimitiveType::DataTypeBool) return "bool";  \
                     else assert(false && "Unknow data type of supported builtin");  \
                 break;
 #include "slang_rs_export_type_support.inc"
@@ -74,7 +75,7 @@ llvm::StringRef RSExportType::GetTypeName(const Type* T) {
             const RecordDecl* RD = T->getAsStructureType()->getDecl();
             llvm::StringRef Name = RD->getName();
             if(Name.empty()) {
-                if(RD->getTypedefForAnonDecl() != NULL) 
+                if(RD->getTypedefForAnonDecl() != NULL)
                     Name = RD->getTypedefForAnonDecl()->getName();
 
                 if(Name.empty())
@@ -129,7 +130,7 @@ const Type* RSExportType::TypeExportable(const Type* T, llvm::SmallPtrSet<const 
 
     if(SPS.count(T))
         return T;
-        
+
     switch(T->getTypeClass()) {
         case Type::Builtin:
         {
@@ -160,9 +161,9 @@ const Type* RSExportType::TypeExportable(const Type* T, llvm::SmallPtrSet<const 
                 RD = RD->getDefinition();
 
             /* Fast check */
-            if(RD->hasFlexibleArrayMember() || RD->hasObjectMember()) 
+            if(RD->hasFlexibleArrayMember() || RD->hasObjectMember())
                 return NULL;
-            
+
             /* Insert myself into checking set */
             SPS.insert(T);
 
@@ -174,7 +175,7 @@ const Type* RSExportType::TypeExportable(const Type* T, llvm::SmallPtrSet<const 
                 const Type* FT = GetTypeOfDecl(*F);
                 FT = GET_CANONICAL_TYPE(FT);
 
-                if(!TypeExportable(FT, SPS)) 
+                if(!TypeExportable(FT, SPS))
                     /*  TODO: warning: unsupported field type */
                     return NULL;
             }
@@ -217,13 +218,13 @@ const Type* RSExportType::TypeExportable(const Type* T, llvm::SmallPtrSet<const 
 }
 
 RSExportType* RSExportType::Create(RSContext* Context, const Type* T, const llvm::StringRef& TypeName) {
-    /* 
-     * Lookup the context to see whether the type was processed before. 
-     *  Newly create RSExportType will insert into context in RSExportType::RSExportType() 
+    /*
+     * Lookup the context to see whether the type was processed before.
+     *  Newly create RSExportType will insert into context in RSExportType::RSExportType()
      */
     RSContext::export_type_iterator ETI = Context->findExportType(TypeName);
 
-    if(ETI != Context->export_types_end()) 
+    if(ETI != Context->export_types_end())
         return ETI->second;
 
     RSExportType* ET = NULL;
@@ -257,7 +258,7 @@ RSExportType* RSExportType::Create(RSContext* Context, const Type* T, const llvm
 
     return ET;
 }
-    
+
 RSExportType* RSExportType::Create(RSContext* Context, const Type* T) {
     llvm::StringRef TypeName;
     if(NormalizeType(T, TypeName))
@@ -278,14 +279,14 @@ size_t RSExportType::GetTypeAllocSize(const RSExportType* ET) {
     return ET->getRSContext()->getTargetData()->getTypeAllocSize(ET->getLLVMType());
 }
 
-RSExportType::RSExportType(RSContext* Context, const llvm::StringRef& Name) : 
-    mContext(Context), 
-    mName(Name.data(), Name.size()), /* make a copy on Name since data of @Name which is stored in ASTContext will be destroyed later */ 
+RSExportType::RSExportType(RSContext* Context, const llvm::StringRef& Name) :
+    mContext(Context),
+    mName(Name.data(), Name.size()), /* make a copy on Name since data of @Name which is stored in ASTContext will be destroyed later */
     mLLVMType(NULL)
-{   
+{
     /* TODO: need to check whether the insertion is successful or not */
     Context->insertExportType(Name, this);
-    return; 
+    return;
 }
 
 /****************************** RSExportPrimitiveType ******************************/
@@ -327,41 +328,43 @@ RSExportPrimitiveType::DataType RSExportPrimitiveType::GetRSObjectType(const Typ
     return GetRSObjectType( RSExportType::GetTypeName(T) );
 }
 
-const size_t RSExportPrimitiveType::SizeOfDataTypeInBytes[RSExportPrimitiveType::DataTypeMax + 1] = {
+const size_t RSExportPrimitiveType::SizeOfDataTypeInBits[RSExportPrimitiveType::DataTypeMax + 1] = {
     0,
-    2, /* DataTypeFloat16 */
-    4, /* DataTypeFloat32 */ 
-    8, /* DataTypeFloat64 */ 
-    1, /* DataTypeSigned8 */ 
-    2, /* DataTypeSigned16 */ 
-    4, /* DataTypeSigned32 */ 
-    8, /* DataTypeSigned64 */ 
-    1, /* DataTypeUnsigned8 */ 
-    2, /* DataTypeUnsigned16 */ 
-    4, /* DataTypeUnsigned32 */ 
-    8, /* DataTypeUnSigned64 */ 
+    16, /* DataTypeFloat16 */
+    32, /* DataTypeFloat32 */
+    64, /* DataTypeFloat64 */
+    8, /* DataTypeSigned8 */
+    16, /* DataTypeSigned16 */
+    32, /* DataTypeSigned32 */
+    64, /* DataTypeSigned64 */
+    8, /* DataTypeUnsigned8 */
+    16, /* DataTypeUnsigned16 */
+    32, /* DataTypeUnsigned32 */
+    64, /* DataTypeUnSigned64 */
 
-    2, /* DataTypeUnsigned565 */
-    2, /* DataTypeUnsigned5551 */
-    2, /* DataTypeUnsigned4444 */
+    16, /* DataTypeUnsigned565 */
+    16, /* DataTypeUnsigned5551 */
+    16, /* DataTypeUnsigned4444 */
 
-    4, /* DataTypeRSElement */
-    4, /* DataTypeRSType */
-    4, /* DataTypeRSAllocation */
-    4, /* DataTypeRSSampler */
-    4, /* DataTypeRSScript */
-    4, /* DataTypeRSMesh */
-    4, /* DataTypeRSProgramFragment */
-    4, /* DataTypeRSProgramVertex */
-    4, /* DataTypeRSProgramRaster */
-    4, /* DataTypeRSProgramStore */       
-    4, /* DataTypeRSFont */       
+    1, /* DataTypeBool */
+
+    32, /* DataTypeRSElement */
+    32, /* DataTypeRSType */
+    32, /* DataTypeRSAllocation */
+    32, /* DataTypeRSSampler */
+    32, /* DataTypeRSScript */
+    32, /* DataTypeRSMesh */
+    32, /* DataTypeRSProgramFragment */
+    32, /* DataTypeRSProgramVertex */
+    32, /* DataTypeRSProgramRaster */
+    32, /* DataTypeRSProgramStore */
+    32, /* DataTypeRSFont */
     0
 };
 
-size_t RSExportPrimitiveType::GetSizeInBytes(const RSExportPrimitiveType* EPT) {
-    assert(((EPT->getType() >= DataTypeFloat32) && (EPT->getType() < DataTypeMax)) && "RSExportPrimitiveType::GetSizeInBytes : unknown data type");
-    return SizeOfDataTypeInBytes[ static_cast<int>(EPT->getType()) ];
+size_t RSExportPrimitiveType::GetSizeInBits(const RSExportPrimitiveType* EPT) {
+    assert(((EPT->getType() >= DataTypeFloat32) && (EPT->getType() < DataTypeMax)) && "RSExportPrimitiveType::GetSizeInBits : unknown data type");
+    return SizeOfDataTypeInBits[ static_cast<int>(EPT->getType()) ];
 }
 
 RSExportPrimitiveType::DataType RSExportPrimitiveType::GetDataType(const Type* T) {
@@ -420,8 +423,8 @@ RSExportPrimitiveType* RSExportPrimitiveType::Create(RSContext* Context, const T
         return NULL;
 }
 
-RSExportType::ExportClass RSExportPrimitiveType::getClass() const { 
-    return RSExportType::ExportClassPrimitive; 
+RSExportType::ExportClass RSExportPrimitiveType::getClass() const {
+    return RSExportType::ExportClassPrimitive;
 }
 
 const llvm::Type* RSExportPrimitiveType::convertToLLVMType() const {
@@ -438,13 +441,13 @@ const llvm::Type* RSExportPrimitiveType::convertToLLVMType() const {
     }
 
     switch(mType) {
-        case DataTypeFloat32: 
-            return llvm::Type::getFloatTy(C); 
+        case DataTypeFloat32:
+            return llvm::Type::getFloatTy(C);
         break;
 
         case DataTypeSigned8:
         case DataTypeUnsigned8:
-            return llvm::Type::getInt8Ty(C); 
+            return llvm::Type::getInt8Ty(C);
         break;
 
         case DataTypeSigned16:
@@ -452,12 +455,16 @@ const llvm::Type* RSExportPrimitiveType::convertToLLVMType() const {
         case DataTypeUnsigned565:
         case DataTypeUnsigned5551:
         case DataTypeUnsigned4444:
-            return llvm::Type::getInt16Ty(C); 
+            return llvm::Type::getInt16Ty(C);
         break;
 
         case DataTypeSigned32:
         case DataTypeUnsigned32:
-            return llvm::Type::getInt32Ty(C); 
+            return llvm::Type::getInt32Ty(C);
+        break;
+
+        case DataTypeBool:
+            return llvm::Type::getInt1Ty(C);
         break;
 
         default:
@@ -492,7 +499,7 @@ RSExportPointerType* RSExportPointerType::Create(RSContext* Context, const Point
     return new RSExportPointerType(Context, TypeName, PointeeET);
 }
 
-RSExportType::ExportClass RSExportPointerType::getClass() const { 
+RSExportType::ExportClass RSExportPointerType::getClass() const {
     return RSExportType::ExportClassPointer;
 }
 
@@ -502,7 +509,7 @@ const llvm::Type* RSExportPointerType::convertToLLVMType() const {
 }
 
 /****************************** RSExportVectorType ******************************/
-const char* RSExportVectorType::VectorTypeNameStore[][3] = { 
+const char* RSExportVectorType::VectorTypeNameStore[][3] = {
     /* 0 */ { "char2",      "char3",    "char4" },
     /* 1 */ { "uchar2",     "uchar3",   "uchar4" },
     /* 2 */ { "short2",     "short3",   "short4" },
@@ -510,7 +517,7 @@ const char* RSExportVectorType::VectorTypeNameStore[][3] = {
     /* 4 */ { "int2",       "int3",     "int4" },
     /* 5 */ { "uint2",      "uint3",    "uint4" },
     /* 6 */ { "float2",     "float3",   "float4" },
-};  
+};
 
 llvm::StringRef RSExportVectorType::GetTypeName(const ExtVectorType* EVT) {
     const Type* ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
@@ -532,6 +539,7 @@ llvm::StringRef RSExportVectorType::GetTypeName(const ExtVectorType* EVT) {
             else if(type == RSExportPrimitiveType::DataTypeSigned32) BaseElement = VectorTypeNameStore[4];  \
             else if(type == RSExportPrimitiveType::DataTypeUnsigned32) BaseElement = VectorTypeNameStore[5];    \
             else if(type == RSExportPrimitiveType::DataTypeFloat32) BaseElement = VectorTypeNameStore[6];   \
+            else if(type == RSExportPrimitiveType::DataTypeBool) BaseElement = VectorTypeNameStore[0];   \
         break;
 #include "slang_rs_export_type_support.inc"
 
@@ -550,14 +558,14 @@ RSExportVectorType* RSExportVectorType::Create(RSContext* Context, const ExtVect
     const Type* ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
     RSExportPrimitiveType::DataType DT = RSExportPrimitiveType::GetDataType(ElementType);
 
-    if(DT != RSExportPrimitiveType::DataTypeUnknown) 
+    if(DT != RSExportPrimitiveType::DataTypeUnknown)
         return new RSExportVectorType(Context, TypeName, DT, DK, Normalized, EVT->getNumElements());
     else
         printf("RSExportVectorType::Create : unsupported base element type\n");
 }
 
-RSExportType::ExportClass RSExportVectorType::getClass() const { 
-    return RSExportType::ExportClassVector; 
+RSExportType::ExportClass RSExportVectorType::getClass() const {
+    return RSExportType::ExportClassVector;
 }
 
 const llvm::Type* RSExportVectorType::convertToLLVMType() const {
@@ -626,7 +634,7 @@ const llvm::Type* RSExportRecordType::convertToLLVMType() const {
     {
         const Field* F = *FI;
         const RSExportType* FET = F->getType();
-        
+
         FieldTypes.push_back(FET->getLLVMType());
     }
 

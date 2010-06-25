@@ -117,11 +117,11 @@ public:
         DataTypeUnsigned32 = 10,
         //DataTypeUnSigned64 = 11,
 
-        DataTypeBool = 12,
+        DataTypeUnsigned565 = 12,
+        DataTypeUnsigned5551 = 13,
+        DataTypeUnsigned4444 = 14,
 
-        DataTypeUnsigned565 = 13,
-        DataTypeUnsigned5551 = 14,
-        DataTypeUnsigned4444 = 15,
+        DataTypeBool = 15,
 
         DataTypeRSElement = 16,
         DataTypeRSType = 17,
@@ -164,7 +164,7 @@ private:
 
     static llvm::Type* RSObjectLLVMType;
 
-    static const size_t SizeOfDataTypeInBytes[];
+    static const size_t SizeOfDataTypeInBits[];
     /*
      * @T was normalized by calling RSExportType::TypeExportable() before calling this.
      * @TypeName was retrieved from RSExportType::GetTypeName() before calling this
@@ -194,7 +194,7 @@ public:
     static DataType GetRSObjectType(const llvm::StringRef& TypeName);
     static DataType GetRSObjectType(const Type* T);
 
-    static size_t GetSizeInBytes(const RSExportPrimitiveType* EPT);
+    static size_t GetSizeInBits(const RSExportPrimitiveType* EPT);
 
     virtual ExportClass getClass() const;
 
