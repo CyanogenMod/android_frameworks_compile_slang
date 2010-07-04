@@ -436,6 +436,22 @@ void RSReflection::genScriptClassConstructor(Context& C) {
     return;
 }
 
+void RSReflection::genInitBoolExportVariable(Context& C, const std::string& VarName, const APValue& Val) {
+    assert(!Val.isUninit() && "Not a valid initializer");
+
+    C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
+    assert((Val.getKind() == APValue::Int) && "Bool type has wrong initial APValue");
+
+    if (Val.getInt().getSExtValue() == 0) {
+        C.out() << "false";
+    } else {
+        C.out() << "true";
+    }
+    C.out() << ";" << endl;
+
+    return;
+}
+
 void RSReflection::genInitPrimitiveExportVariable(Context& C, const std::string& VarName, const APValue& Val) {
     assert(!Val.isUninit() && "Not a valid initializer");
 
@@ -464,9 +480,15 @@ void RSReflection::genInitExportVariable(Context& C, const RSExportType* ET, con
     assert(!Val.isUninit() && "Not a valid initializer");
 
     switch(ET->getClass()) {
-        case RSExportType::ExportClassPrimitive:
-            genInitPrimitiveExportVariable(C, VarName, Val);
-        break;
+        case RSExportType::ExportClassPrimitive: {
+            const RSExportPrimitiveType* EPT = static_cast<const RSExportPrimitiveType*>(ET);
+            if (EPT->getType() == RSExportPrimitiveType::DataTypeBool) {
+                genInitBoolExportVariable(C, VarName, Val);
+            } else {
+                genInitPrimitiveExportVariable(C, VarName, Val);
+            }
+            break;
+        }
 
         case RSExportType::ExportClassPointer:
             if(!Val.isInt() || Val.getInt().getSExtValue() != 0)

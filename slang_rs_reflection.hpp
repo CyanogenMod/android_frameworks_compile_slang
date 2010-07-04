@@ -133,6 +133,7 @@ private:
     bool genScriptClass(Context& C, const std::string& ClassName, std::string& ErrorMsg);
     void genScriptClassConstructor(Context& C);
 
+    void genInitBoolExportVariable(Context& C, const std::string& VarName, const APValue& Val);
     void genInitPrimitiveExportVariable(Context& C, const std::string& VarName, const APValue& Val);
     void genInitExportVariable(Context& C, const RSExportType* ET, const std::string& VarName, const APValue& Val);
     void genExportVariable(Context& C, const RSExportVar* EV);
