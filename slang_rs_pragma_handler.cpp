@@ -26,6 +26,16 @@ public:
     }
 };
 
+class RSExportVarAllPragmaHandler : public RSPragmaHandler {
+public:
+    RSExportVarAllPragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
+
+    void HandlePragma(Preprocessor& PP, Token& FirstToken) {
+        this->handleNonParamPragma(PP, FirstToken);
+        mContext->setExportAllStaticVars(true);
+    }
+};
+
 class RSExportFuncPragmaHandler : public RSPragmaHandler {
 private:
     void handleItem(const std::string& Item) {
@@ -37,6 +47,16 @@ public:
 
     void HandlePragma(Preprocessor& PP, Token& FirstToken) {
         this->handleItemListPragma(PP, FirstToken);
+    }
+};
+
+class RSExportFuncAllPragmaHandler : public RSPragmaHandler {
+public:
+    RSExportFuncAllPragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
+
+    void HandlePragma(Preprocessor& PP, Token& FirstToken) {
+        this->handleNonParamPragma(PP, FirstToken);
+        mContext->setExportAllStaticFuncs(true);
     }
 };
 
@@ -128,10 +148,26 @@ RSPragmaHandler* RSPragmaHandler::CreatePragmaExportVarHandler(RSContext* Contex
         return NULL;
 }
 
+RSPragmaHandler* RSPragmaHandler::CreatePragmaExportVarAllHandler(RSContext* Context) {
+    IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("export_var_all");
+    if(II != NULL)
+        return new RSExportVarAllPragmaHandler(II, Context);
+    else
+        return NULL;
+}
+
 RSPragmaHandler* RSPragmaHandler::CreatePragmaExportFuncHandler(RSContext* Context) {
     IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("export_func");
     if(II != NULL)
         return new RSExportFuncPragmaHandler(II, Context);
+    else
+        return NULL;
+}
+
+RSPragmaHandler* RSPragmaHandler::CreatePragmaExportFuncAllHandler(RSContext* Context) {
+    IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("export_func_all");
+    if(II != NULL)
+        return new RSExportFuncAllPragmaHandler(II, Context);
     else
         return NULL;
 }
@@ -177,6 +213,18 @@ void RSPragmaHandler::handleItemListPragma(Preprocessor& PP, Token& FirstToken) 
         if(PragmaToken.isNot(tok::comma))
             break;
     }
+    return;
+}
+
+void RSPragmaHandler::handleNonParamPragma(Preprocessor& PP, Token& FirstToken) {
+    Token& PragmaToken = FirstToken;
+
+    /* Skip first token, like "export_var_all" */
+    PP.LexUnexpandedToken(PragmaToken);
+
+    /* Should be end immediately */
+    if(PragmaToken.isNot(tok::eom))
+        printf("RSPragmaHandler::handleNonParamPragma: expected a tok::eom\n");
     return;
 }
 
