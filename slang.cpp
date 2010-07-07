@@ -92,7 +92,8 @@ void Slang::createTarget(const char* Triple, const char* CPU, const char** Featu
 }
 
 Slang::Slang(const char* Triple, const char* CPU, const char** Features) :
-    mOutputType(SlangCompilerOutput_Default)
+    mOutputType(SlangCompilerOutput_Default),
+    mAllowRSPrefix(false)
 {
     GlobalInitialization();
 
@@ -243,4 +244,3 @@ Slang::~Slang() {
 }
 
 }   /* namespace slang */
-

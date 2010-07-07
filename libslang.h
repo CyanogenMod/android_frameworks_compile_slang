@@ -22,6 +22,8 @@ extern "C" {
 
 SlangCompiler* slangCreateCompiler(const char* targetTriple, const char* targetCPU, const char** targetFeatures);
 
+void slangAllowRSPrefix();
+
 int slangSetSourceFromMemory(SlangCompiler* compiler, const char* text, size_t textLength);
 int slangSetSourceFromFile(SlangCompiler* compiler, const char* fileName);
 

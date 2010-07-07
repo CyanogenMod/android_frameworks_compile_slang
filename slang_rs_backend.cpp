@@ -31,7 +31,8 @@ RSBackend::RSBackend(RSContext* Context,
                      const PragmaList& Pragmas,
                      llvm::raw_ostream* OS,
                      SlangCompilerOutputTy OutputType,
-                     SourceManager& SourceMgr) :
+                     SourceManager& SourceMgr,
+                     bool AllowRSPrefix) :
     mContext(Context),
     Backend(Diags,
             CodeGenOpts,
@@ -39,7 +40,8 @@ RSBackend::RSBackend(RSContext* Context,
             Pragmas,
             OS,
             OutputType,
-            SourceMgr),
+            SourceMgr,
+            AllowRSPrefix),
     mExportVarMetadata(NULL)
 {
     return;

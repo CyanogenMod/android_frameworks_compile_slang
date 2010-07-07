@@ -49,6 +49,8 @@ private:
 
     SourceManager& mSourceMgr;
 
+    bool mAllowRSPrefix;
+
     /* Output stream */
     llvm::raw_ostream* mpOS;
     SlangCompilerOutputTy mOutputType;
@@ -121,7 +123,8 @@ public:
             const PragmaList& Pragmas,
             llvm::raw_ostream* OS,
             SlangCompilerOutputTy OutputType,
-            SourceManager& SourceMgr);
+            SourceManager& SourceMgr,
+            bool AllowRSPrefix);
 
     /*
      * Initialize - This is called to initialize the consumer, providing the

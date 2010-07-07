@@ -128,7 +128,8 @@ Backend::Backend(Diagnostic &Diags,
                  const PragmaList& Pragmas,
                  llvm::raw_ostream* OS,
                  SlangCompilerOutputTy OutputType,
-                 SourceManager &SourceMgr) :
+                 SourceManager &SourceMgr,
+                 bool AllowRSPrefix) :
     ASTConsumer(),
     mLLVMContext(llvm::getGlobalContext()),
     mDiags(Diags),
@@ -143,7 +144,8 @@ Backend::Backend(Diagnostic &Diags,
     mPerFunctionPasses(NULL),
     mPerModulePasses(NULL),
     mCodeGenPasses(NULL),
-    mSourceMgr(SourceMgr)
+    mSourceMgr(SourceMgr),
+    mAllowRSPrefix(AllowRSPrefix)
 {
     FormattedOutStream.setStream(*mpOS, llvm::formatted_raw_ostream::PRESERVE_STREAM);
     mGen = CreateLLVMCodeGen(mDiags, "", mCodeGenOpts, mLLVMContext);
@@ -161,13 +163,15 @@ void Backend::Initialize(ASTContext &Ctx) {
 
 void Backend::HandleTopLevelDecl(DeclGroupRef D) {
     /* Disallow user-defined functions with prefix "rs" */
-    DeclGroupRef::iterator it;
-    for (it = D.begin(); it != D.end(); it++) {
-        FunctionDecl *FD = dyn_cast<FunctionDecl>(*it);
-        if (!FD || !FD->isThisDeclarationADefinition()) continue;
-        if (FD->getName().startswith("rs")) {
-            mDiags.Report(FullSourceLoc(FD->getLocStart(), mSourceMgr),
-                          mDiags.getCustomDiagID(Diagnostic::Warning, "invalid function name prefix, \"rs\" is reserved: '%0'")) << FD->getNameAsString();
+    if (!mAllowRSPrefix) {
+        DeclGroupRef::iterator it;
+        for (it = D.begin(); it != D.end(); it++) {
+            FunctionDecl *FD = dyn_cast<FunctionDecl>(*it);
+            if (!FD || !FD->isThisDeclarationADefinition()) continue;
+            if (FD->getName().startswith("rs")) {
+                mDiags.Report(FullSourceLoc(FD->getLocStart(), mSourceMgr),
+                              mDiags.getCustomDiagID(Diagnostic::Error, "invalid function name prefix, \"rs\" is reserved: '%0'")) << FD->getNameAsString();
+            }
         }
     }
 
