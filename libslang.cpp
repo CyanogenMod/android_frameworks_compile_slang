@@ -8,6 +8,12 @@ extern "C" SlangCompiler* slangCreateCompiler(const char* targetTriple, const ch
     return (SlangCompiler*) slang;
 }
 
+extern "C" void slangAllowRSPrefix(SlangCompiler* compiler) {
+    Slang* slang = (Slang*) compiler;
+    if(slang != NULL)
+        slang->allowRSPrefix();
+}
+
 extern "C" int slangSetSourceFromMemory(SlangCompiler* compiler, const char* text, size_t textLength) {
     Slang* slang = (Slang*) compiler;
     if(slang != NULL)

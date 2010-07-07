@@ -131,7 +131,8 @@ private:
                                    mPragmas,
                                    mOS.take(),
                                    mOutputType,
-                                   *mSourceMgr));
+                                   *mSourceMgr,
+                                   mAllowRSPrefix));
 
         return;
     }
@@ -144,7 +145,8 @@ private:
                                      mPragmas,
                                      mOS.take(),
                                      mOutputType,
-                                     *mSourceMgr));
+                                     *mSourceMgr,
+                                     mAllowRSPrefix));
 
         return;
     }
@@ -157,6 +159,8 @@ private:
 
     /* Output stream */
     llvm::OwningPtr<llvm::raw_ostream> mOS;
+
+    bool mAllowRSPrefix;
 
 public:
     static const std::string TargetDescription;
@@ -180,6 +184,10 @@ public:
     }
 
     bool setOutput(const char* outputFile);
+
+    inline void allowRSPrefix() {
+        mAllowRSPrefix = true;
+    }
 
     int compile();
 

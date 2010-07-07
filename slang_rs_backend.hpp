@@ -50,7 +50,8 @@ public:
               const PragmaList& Pragmas,
               llvm::raw_ostream* OS,
               SlangCompilerOutputTy OutputType,
-              SourceManager& SourceMgr);
+              SourceManager& SourceMgr,
+              bool AllowRSPrefix);
 
     virtual void HandleTopLevelDecl(DeclGroupRef D);
 

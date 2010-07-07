@@ -173,16 +173,19 @@ static const char* JavaReflectionPackageName;
 static const char* InputFileName;
 static bool Verbose;
 static const char* FeatureEnabledList[MaxTargetFeature + 1];
+static int AllowRSPrefix = 0;
 
 /* Construct the command options table used in ParseOption::getopt_long */
 static void ConstructCommandOptions() {
     /* Basic slang command option */
     static struct option BasicSlangOpts[] = {
-        { "emit-llvm",      no_argument, (int*) &OutputFileType, SlangCompilerOutput_LL },
-        { "emit-bc",        no_argument, (int*) &OutputFileType, SlangCompilerOutput_Bitcode },
-        { "emit-asm",       no_argument, NULL, 'S' },
-        { "emit-obj",       no_argument, NULL, 'c' },
-        { "emit-nothing",   no_argument, (int*) &OutputFileType, SlangCompilerOutput_Nothing },
+        { "allow-rs-prefix", no_argument, &AllowRSPrefix, 1 },
+
+        { "emit-llvm",       no_argument, (int*) &OutputFileType, SlangCompilerOutput_LL },
+        { "emit-bc",         no_argument, (int*) &OutputFileType, SlangCompilerOutput_Bitcode },
+        { "emit-asm",        no_argument, NULL, 'S' },
+        { "emit-obj",        no_argument, NULL, 'c' },
+        { "emit-nothing",    no_argument, (int*) &OutputFileType, SlangCompilerOutput_Nothing },
 
         { "help",    no_argument, NULL, 'h' }, /* -h */
         { "verbose", no_argument, NULL, 'v' }, /* -v */
@@ -249,7 +252,8 @@ static void Usage(const char* CommandName) {
     cout << "Basic: " << endl;
 
     OUTPUT_OPTION("-h", "--help", "print this help");
-    OUTPUT_OPTION("-v", "--verbos", "be verbose");
+    OUTPUT_OPTION("-v", "--verbose", "be verbose");
+    OUTPUT_OPTION(NULL, "--allow-rs-prefix", "Allow user-defined function names with the \"rs\" prefix");
     OUTPUT_OPTION("-o", "--output=<FILE>", "write the output of compilation to FILE ('-' means stdout)");
     OUTPUT_OPTION("-j", "--output-java-reflection-package=<PACKAGE NAME>", "output reflection to Java for BCC exportables");
 
@@ -523,6 +527,9 @@ int main(int argc, char** argv) {
             SLANG_CALL_AND_CHECK( slangSetSourceFromFile(slang, InputFileName) );
 
             slangSetOutputType(slang, OutputFileType);
+
+            if (AllowRSPrefix)
+                slangAllowRSPrefix();
 
             SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, OutputFileName) );
 
