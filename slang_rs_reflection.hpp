@@ -28,7 +28,9 @@ private:
 
     class Context {
     private:
-        static const char* const LicenseNote;
+        static const char* const ApacheLicenseNote;
+        std::string mLicenseNote;
+
         static const char* const Import[];
 
         bool mUseStdout;
@@ -67,6 +69,7 @@ private:
         static const char* AccessModifierStr(AccessModifier AM);
 
         Context(const std::string& PackageName, const std::string& ResourceId, bool UseStdout) :
+            mLicenseNote(ApacheLicenseNote),
             mPackageName(PackageName),
             mResourceId(ResourceId),
             mUseStdout(UseStdout),
@@ -108,6 +111,10 @@ private:
         /* Will remove later due to field name information is not necessary for C-reflect-to-Java */
         inline std::string createPaddingField() {
             return "#padding_" + llvm::itostr(mPaddingFieldIndex++);
+        }
+
+        inline void setLicenseNote(const std::string& LicenseNote) {
+            mLicenseNote = LicenseNote;
         }
 
         bool startClass(AccessModifier AM, bool IsStatic, const std::string& ClassName, const char* SuperClassName, std::string& ErrorMsg);

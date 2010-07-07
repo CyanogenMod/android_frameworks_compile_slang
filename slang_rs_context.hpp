@@ -61,6 +61,7 @@ private:
     RSPragmaHandler* mRSExportFuncAllPragma;
     RSPragmaHandler* mRSExportTypePragma;
     RSPragmaHandler* mRSJavaPackageNamePragma;
+    RSPragmaHandler* mRSReflectLicensePragma;
 
     /* Remember the variables/types/elements annotated in #pragma to be exported */
     NeedExportVarSet mNeedExportVars;
@@ -69,6 +70,7 @@ private:
     bool mExportAllStaticVars;
     bool mExportAllStaticFuncs;
 
+    std::string* mLicenseNote;
     std::string mReflectJavaPackageName;
 
     bool processExportVar(const VarDecl* VD);
@@ -87,6 +89,9 @@ public:
     inline const llvm::TargetData* getTargetData() const { return mTargetData; }
     inline llvm::LLVMContext& getLLVMContext() const { return mLLVMContext; }
     inline const SourceManager* getSourceManager() const { return &mPP->getSourceManager(); }
+
+    inline void setLicenseNote(const std::string& S) { mLicenseNote = new std::string(S); }
+    inline const std::string* getLicenseNote() const { return mLicenseNote; }
 
     inline void addExportVar(const std::string& S) { mNeedExportVars.insert(S); return; }
     inline void addExportFunc(const std::string& S) { mNeedExportFuncs.insert(S); return; }

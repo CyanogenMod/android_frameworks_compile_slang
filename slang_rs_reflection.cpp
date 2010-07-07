@@ -1096,6 +1096,9 @@ bool RSReflection::reflect(const char* OutputPackageName, const std::string& Inp
         ScriptClassName.at(0) = toupper(ScriptClassName.at(0));
         ScriptClassName.insert(0, RS_SCRIPT_CLASS_NAME_PREFIX);
 
+        if (mRSContext->getLicenseNote() != NULL)
+            C->setLicenseNote(*mRSContext->getLicenseNote());
+
         if(!genScriptClass(*C, ScriptClassName, ErrorMsg)) {
             std::cerr << "Failed to generate class " << ScriptClassName << " (" << ErrorMsg << ")" << endl;
             return false;
@@ -1123,7 +1126,7 @@ bool RSReflection::reflect(const char* OutputPackageName, const std::string& Inp
 }
 
 /****************************** RSReflection::Context ******************************/
-const char* const RSReflection::Context::LicenseNote =
+const char* const RSReflection::Context::ApacheLicenseNote =
     "/*\n"
 	" * Copyright (C) 2010 The Android Open Source Project\n"
 	" *\n"
@@ -1138,7 +1141,8 @@ const char* const RSReflection::Context::LicenseNote =
 	" * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
 	" * See the License for the specific language governing permissions and\n"
 	" * limitations under the License.\n"
-	" */\n";
+	" */\n"
+	"\n";
 
 const char* const RSReflection::Context::Import[] = {
     /* RenderScript java class */
@@ -1173,7 +1177,7 @@ bool RSReflection::Context::startClass(AccessModifier AM, bool IsStatic, const s
     }
 
     /* License */
-    out() << LicenseNote << endl;
+    out() << mLicenseNote;
 
     /* Package */
     if(!mPackageName.empty())

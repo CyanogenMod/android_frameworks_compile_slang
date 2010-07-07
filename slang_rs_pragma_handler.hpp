@@ -35,6 +35,8 @@ protected:
     /* Handle pragma like #pragma rs [name] */
     void handleNonParamPragma(Preprocessor& PP, Token& FirstToken);
 
+    /* Handle pragma like #pragma rs [name] ("string literal") */
+    void handleOptionalStringLiateralParamPragma(Preprocessor& PP, Token& FirstToken);
 public:
     static RSPragmaHandler* CreatePragmaExportVarHandler(RSContext* Context);
     static RSPragmaHandler* CreatePragmaExportVarAllHandler(RSContext* Context);
@@ -42,6 +44,7 @@ public:
     static RSPragmaHandler* CreatePragmaExportFuncAllHandler(RSContext* Context);
     static RSPragmaHandler* CreatePragmaExportTypeHandler(RSContext* Context);
     static RSPragmaHandler* CreatePragmaJavaPackageNameHandler(RSContext* Context);
+    static RSPragmaHandler* CreatePragmaReflectLicenseHandler(RSContext* Context);
 
     virtual void HandlePragma(Preprocessor& PP, Token& FirstToken) = 0;
 };

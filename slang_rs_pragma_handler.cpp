@@ -3,7 +3,8 @@
 
 #include "clang/Lex/Preprocessor.h"         /* for class Preprocessor */
 #include "clang/Lex/Token.h"                /* for class Token */
-#include "clang/Basic/TokenKinds.h"                /* for class Token */
+#include "clang/Lex/LiteralSupport.h"       /* for class StringLiteralParser */
+#include "clang/Basic/TokenKinds.h"         /* for class Token */
 
 #include "clang/Basic/IdentifierTable.h"    /* for class IdentifierInfo */
 
@@ -136,6 +137,20 @@ public:
     }
 };
 
+class RSReflectLicensePragmaHandler : public RSPragmaHandler {
+private:
+    void handleItem(const std::string& Item) {
+        mContext->setLicenseNote(Item);
+    }
+
+public:
+    RSReflectLicensePragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
+
+    void HandlePragma(Preprocessor& PP, Token& FirstToken) {
+        this->handleOptionalStringLiateralParamPragma(PP, FirstToken);
+    }
+};
+
 }   /* anonymous namespace */
 
 namespace slang {
@@ -188,6 +203,14 @@ RSPragmaHandler* RSPragmaHandler::CreatePragmaJavaPackageNameHandler(RSContext* 
         return NULL;
 }
 
+RSPragmaHandler* RSPragmaHandler::CreatePragmaReflectLicenseHandler(RSContext* Context) {
+    IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("set_reflect_license");
+    if(II != NULL)
+        return new RSReflectLicensePragmaHandler(II, Context);
+    else
+        return NULL;
+}
+
 void RSPragmaHandler::handleItemListPragma(Preprocessor& PP, Token& FirstToken) {
     Token& PragmaToken = FirstToken;
 
@@ -226,6 +249,36 @@ void RSPragmaHandler::handleNonParamPragma(Preprocessor& PP, Token& FirstToken) 
     if(PragmaToken.isNot(tok::eom))
         printf("RSPragmaHandler::handleNonParamPragma: expected a tok::eom\n");
     return;
+}
+
+void RSPragmaHandler::handleOptionalStringLiateralParamPragma(Preprocessor& PP, Token& FirstToken) {
+    Token& PragmaToken = FirstToken;
+
+    /* Skip first token, like "set_reflect_license" */
+    PP.LexUnexpandedToken(PragmaToken);
+
+    /* Now, the current token must be tok::lpara */
+    if(PragmaToken.isNot(tok::l_paren))
+        return;
+
+    /* If not ')', eat the following string literal as the license */
+    PP.LexUnexpandedToken(PragmaToken);
+    if(PragmaToken.isNot(tok::r_paren)) {
+        /* Eat the whole string literal */
+        StringLiteralParser StringLiteral(&PragmaToken, 1, PP);
+        if (StringLiteral.hadError)
+            printf("RSPragmaHandler::handleOptionalStringLiateralParamPragma: illegal string literal\n");
+        else
+            this->handleItem( std::string(StringLiteral.GetString()) );
+
+        /* The current token should be tok::r_para */
+        PP.LexUnexpandedToken(PragmaToken);
+        if (PragmaToken.isNot(tok::r_paren))
+            printf("RSPragmaHandler::handleOptionalStringLiateralParamPragma: expected a ')'\n");
+    } else {
+        /* If no argument, remove the license */
+        this->handleItem( "" );
+    }
 }
 
 }   /* namespace slang */

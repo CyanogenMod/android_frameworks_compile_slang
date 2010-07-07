@@ -33,6 +33,7 @@ RSContext::RSContext(Preprocessor* PP, ASTContext* Ctx, const TargetInfo* Target
     mRSExportFuncAllPragma(NULL),
     mRSExportTypePragma(NULL),
     mRSJavaPackageNamePragma(NULL),
+    mRSReflectLicensePragma(NULL),
     mExportAllStaticVars(false),
     mExportAllStaticFuncs(false)
 {
@@ -65,6 +66,11 @@ RSContext::RSContext(Preprocessor* PP, ASTContext* Ctx, const TargetInfo* Target
     mRSJavaPackageNamePragma = RSPragmaHandler::CreatePragmaJavaPackageNameHandler(this);
     if(mRSJavaPackageNamePragma != NULL)
         PP->AddPragmaHandler("rs", mRSJavaPackageNamePragma);
+
+    /* For #pragma rs set_reflect_license */
+    mRSReflectLicensePragma = RSPragmaHandler::RSPragmaHandler::CreatePragmaReflectLicenseHandler(this);
+    if (mRSReflectLicensePragma != NULL)
+        PP->AddPragmaHandler("rs", mRSReflectLicensePragma);
 
     /* Prepare target data */
     mTargetData = new llvm::TargetData(Slang::TargetDescription);
@@ -171,22 +177,22 @@ void RSContext::processExport() {
         DI != TUDecl->decls_end();
         DI++)
     {
-        if(DI->getKind() == Decl::Var) {
+        if (DI->getKind() == Decl::Var) {
             VarDecl* VD = (VarDecl*) (*DI);
             if (mExportAllStaticVars && VD->getStorageClass() == VarDecl::None) {
                 if (!processExportVar(VD)) {
-                  printf("RSContext::processExport : failed to export var '%s'\n", VD->getNameAsCString());
+                    printf("RSContext::processExport : failed to export var '%s'\n", VD->getNameAsCString());
                 }
             } else {
                 NeedExportVarSet::iterator EI = mNeedExportVars.find(VD->getName());
                 if(EI != mNeedExportVars.end() && processExportVar(VD))
                     mNeedExportVars.erase(EI);
             }
-        } else if(DI->getKind() == Decl::Function) {
+        } else if (DI->getKind() == Decl::Function) {
             FunctionDecl* FD = (FunctionDecl*) (*DI);
             if (mExportAllStaticFuncs && FD->getStorageClass() == FunctionDecl::None) {
                 if (!processExportFunc(FD)) {
-                  printf("RSContext::processExport : failed to export func '%s'\n", FD->getNameAsCString());
+                    printf("RSContext::processExport : failed to export func '%s'\n", FD->getNameAsCString());
                 }
             } else {
                 NeedExportFuncSet::iterator EI = mNeedExportFuncs.find(FD->getName());
@@ -238,7 +244,9 @@ RSContext::~RSContext() {
     delete mRSExportFuncPragma;
     delete mRSExportTypePragma;
     delete mRSJavaPackageNamePragma;
+    delete mRSReflectLicensePragma;
 
+    delete mLicenseNote;
     delete mTargetData;
 }
 
