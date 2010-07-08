@@ -67,8 +67,8 @@ private:
     NeedExportVarSet mNeedExportVars;
     NeedExportFuncSet mNeedExportFuncs;
     NeedExportTypeSet mNeedExportTypes;
-    bool mExportAllStaticVars;
-    bool mExportAllStaticFuncs;
+    bool mExportAllNonStaticVars;
+    bool mExportAllNonStaticFuncs;
 
     std::string* mLicenseNote;
     std::string mReflectJavaPackageName;
@@ -97,8 +97,8 @@ public:
     inline void addExportFunc(const std::string& S) { mNeedExportFuncs.insert(S); return; }
     inline void addExportType(const std::string& S) { mNeedExportTypes.insert(S); return; }
 
-    inline void setExportAllStaticVars(bool flag) { mExportAllStaticVars = flag; }
-    inline void setExportAllStaticFuncs(bool flag) { mExportAllStaticFuncs = flag; }
+    inline void setExportAllNonStaticVars(bool flag) { mExportAllNonStaticVars = flag; }
+    inline void setExportAllNonStaticFuncs(bool flag) { mExportAllNonStaticFuncs = flag; }
     inline void setReflectJavaPackageName(const std::string& S) { mReflectJavaPackageName = S; return; }
 
     void processExport();

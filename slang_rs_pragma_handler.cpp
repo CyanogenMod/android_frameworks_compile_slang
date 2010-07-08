@@ -33,7 +33,7 @@ public:
 
     void HandlePragma(Preprocessor& PP, Token& FirstToken) {
         this->handleNonParamPragma(PP, FirstToken);
-        mContext->setExportAllStaticVars(true);
+        mContext->setExportAllNonStaticVars(true);
     }
 };
 
@@ -57,7 +57,7 @@ public:
 
     void HandlePragma(Preprocessor& PP, Token& FirstToken) {
         this->handleNonParamPragma(PP, FirstToken);
-        mContext->setExportAllStaticFuncs(true);
+        mContext->setExportAllNonStaticFuncs(true);
     }
 };
 

@@ -34,8 +34,8 @@ RSContext::RSContext(Preprocessor* PP, ASTContext* Ctx, const TargetInfo* Target
     mRSExportTypePragma(NULL),
     mRSJavaPackageNamePragma(NULL),
     mRSReflectLicensePragma(NULL),
-    mExportAllStaticVars(false),
-    mExportAllStaticFuncs(false)
+    mExportAllNonStaticVars(false),
+    mExportAllNonStaticFuncs(false)
 {
     /* For #pragma rs export_var */
     mRSExportVarPragma = RSPragmaHandler::CreatePragmaExportVarHandler(this);
@@ -179,7 +179,7 @@ void RSContext::processExport() {
     {
         if (DI->getKind() == Decl::Var) {
             VarDecl* VD = (VarDecl*) (*DI);
-            if (mExportAllStaticVars && VD->getStorageClass() == VarDecl::None) {
+            if (mExportAllNonStaticVars && VD->getStorageClass() == VarDecl::None) {
                 if (!processExportVar(VD)) {
                     printf("RSContext::processExport : failed to export var '%s'\n", VD->getNameAsCString());
                 }
@@ -190,7 +190,7 @@ void RSContext::processExport() {
             }
         } else if (DI->getKind() == Decl::Function) {
             FunctionDecl* FD = (FunctionDecl*) (*DI);
-            if (mExportAllStaticFuncs && FD->getStorageClass() == FunctionDecl::None) {
+            if (mExportAllNonStaticFuncs && FD->getStorageClass() == FunctionDecl::None) {
                 if (!processExportFunc(FD)) {
                     printf("RSContext::processExport : failed to export func '%s'\n", FD->getNameAsCString());
                 }
