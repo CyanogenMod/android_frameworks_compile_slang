@@ -81,7 +81,7 @@ static const char* GetPrimitiveTypeName(const RSExportPrimitiveType* EPT) {
         "Allocation",   /* RSExportPrimitiveType::DataTypeRSAllocation */
         "Sampler",  /* RSExportPrimitiveType::DataTypeRSSampler */
         "Script",   /* RSExportPrimitiveType::DataTypeRSScript */
-        "SimpleMesh",       /* RSExportPrimitiveType::DataTypeRSSimpleMesh */
+        "Mesh",       /* RSExportPrimitiveType::DataTypeRSMesh */
         "ProgramFragment",  /* RSExportPrimitiveType::DataTypeRSProgramFragment */
         "ProgramVertex",    /* RSExportPrimitiveType::DataTypeRSProgramVertex */
         "ProgramRaster",    /* RSExportPrimitiveType::DataTypeRSProgramRaster */
@@ -185,7 +185,7 @@ static const char* GetPackerAPIName(const RSExportPrimitiveType* EPT) {
         "addObj",   /* RSExportPrimitiveType::DataTypeRSAllocation */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSSampler */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSScript */
-        "addObj",   /* RSExportPrimitiveType::DataTypeRSSimpleMesh */
+        "addObj",   /* RSExportPrimitiveType::DataTypeRSMesh */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSProgramFragment */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSProgramVertex */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSProgramRaster */
@@ -262,7 +262,7 @@ static const char* GetBuiltinElementConstruct(const RSExportType* ET) {
                 "ALLOCATION",  /* RSExportPrimitiveType::DataTypeRSAllocation */
                 "SAMPLER",     /* RSExportPrimitiveType::DataTypeRSSampler */
                 "SCRIPT",      /* RSExportPrimitiveType::DataTypeRSScript */
-                "MESH",        /* RSExportPrimitiveType::DataTypeRSSimpleMesh */
+                "MESH",        /* RSExportPrimitiveType::DataTypeRSMesh */
                 "PROGRAM_FRAGMENT",    /* RSExportPrimitiveType::DataTypeRSProgramFragment */
                 "PROGRAM_VERTEX",      /* RSExportPrimitiveType::DataTypeRSProgramVertex */
                 "PROGRAM_RASTER",      /* RSExportPrimitiveType::DataTypeRSProgramRaster */
@@ -374,7 +374,7 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
         "Element.DataType.RS_ALLOCATION",   /* RSExportPrimitiveType::DataTypeRSAllocation */
         "Element.DataType.RS_SAMPLER",      /* RSExportPrimitiveType::DataTypeRSSampler */
         "Element.DataType.RS_SCRIPT",       /* RSExportPrimitiveType::DataTypeRSScript */
-        "Element.DataType.RS_MESH",         /* RSExportPrimitiveType::DataTypeRSSimpleMesh */
+        "Element.DataType.RS_MESH",         /* RSExportPrimitiveType::DataTypeRSMesh */
         "Element.DataType.RS_PROGRAM_FRAGMENT", /* RSExportPrimitiveType::DataTypeRSProgramFragment */
         "Element.DataType.RS_PROGRAM_VERTEX",   /* RSExportPrimitiveType::DataTypeRSProgramVertex */
         "Element.DataType.RS_PROGRAM_RASTER",   /* RSExportPrimitiveType::DataTypeRSProgramRaster */
