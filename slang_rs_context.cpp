@@ -12,6 +12,7 @@
 #include "clang/AST/DeclBase.h"         /* for class clang::Decl and clang::DeclContext */
 #include "clang/AST/ASTContext.h"       /* for class clang::ASTContext */
 #include "clang/Basic/TargetInfo.h"     /* for class clang::TargetInfo */
+#include "clang/Basic/Linkage.h"        /* for class clang::Linkage */
 #include "clang/Index/ASTLocation.h"    /* for class clang::idx::ASTLocation */
 
 #include "llvm/LLVMContext.h"           /* for function llvm::getGlobalContext() */
@@ -179,7 +180,7 @@ void RSContext::processExport() {
     {
         if (DI->getKind() == Decl::Var) {
             VarDecl* VD = (VarDecl*) (*DI);
-            if (mExportAllNonStaticVars && VD->getStorageClass() == VarDecl::None) {
+            if (mExportAllNonStaticVars && VD->getLinkage() == ExternalLinkage) {
                 if (!processExportVar(VD)) {
                     printf("RSContext::processExport : failed to export var '%s'\n", VD->getNameAsCString());
                 }
@@ -190,7 +191,7 @@ void RSContext::processExport() {
             }
         } else if (DI->getKind() == Decl::Function) {
             FunctionDecl* FD = (FunctionDecl*) (*DI);
-            if (mExportAllNonStaticFuncs && FD->getStorageClass() == FunctionDecl::None) {
+            if (mExportAllNonStaticFuncs && FD->getLinkage() == ExternalLinkage) {
                 if (!processExportFunc(FD)) {
                     printf("RSContext::processExport : failed to export func '%s'\n", FD->getNameAsCString());
                 }
