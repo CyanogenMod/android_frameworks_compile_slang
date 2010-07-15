@@ -52,11 +52,11 @@ static const TargetArch TargetArchTable[] = {
 };
 
 #if defined(__arm__)
-#   define HOST_ARCH                        MK_TARGET_ARCH(X86) 
+#   define HOST_ARCH                        MK_TARGET_ARCH(X86)
 #elif defined(__i386__)
-#   define HOST_ARCH                        MK_TARGET_ARCH(ARM) 
-#elif defined(__x86_64__)                   
-#   define HOST_ARCH                        MK_TARGET_ARCH(X64) 
+#   define HOST_ARCH                        MK_TARGET_ARCH(ARM)
+#elif defined(__x86_64__)
+#   define HOST_ARCH                        MK_TARGET_ARCH(X64)
 #else
 #   error "We can not find default triple string for your host machine, please define it by yourself via option '--triple' or '-t'"
 #endif
@@ -71,7 +71,7 @@ typedef enum {
     MK_TARGET_FEATURE(target, id),
 #define HOOK_TARGET_FIRST_FEATURE(target, id, key, description) \
     target ## FeatureStart,    \
-    MK_TARGET_FEATURE(target, id) = target ## FeatureStart,    
+    MK_TARGET_FEATURE(target, id) = target ## FeatureStart,
 #   include "target.inc"
 
     MaxTargetFeature
@@ -89,7 +89,7 @@ typedef enum {
 } TargetFeatureBit;
 
 typedef struct {
-    TargetArchEnum Arch; 
+    TargetArchEnum Arch;
     TargetFeatureEnum Key;
     TargetFeatureBit Bit;
     const char* Name;
@@ -105,7 +105,7 @@ static const TargetFeature TargetFeatureTable[] = {
 };
 
 typedef struct {
-    TargetArchEnum Arch; 
+    TargetArchEnum Arch;
     const char* Name;
     const char* Desc;
     unsigned int FeatureEnabled;
@@ -170,6 +170,7 @@ static TargetFeatureEnum EnableFeatureValue, DisableFeatureValue;
 static SlangCompilerOutputTy OutputFileType;
 static const char* OutputFileName;
 static const char* JavaReflectionPackageName;
+static const char* JavaReflectionPathName;
 static const char* InputFileName;
 static bool Verbose;
 static const char* FeatureEnabledList[MaxTargetFeature + 1];
@@ -194,7 +195,8 @@ static void ConstructCommandOptions() {
         { "cpu",    required_argument, NULL, 'u' }, /* -u */
         { "triple", required_argument, NULL, 't' }, /* -t */
 
-        { "output-java-reflection-class", required_argument, NULL, 'j'}   /* -j */
+        { "output-java-reflection-class", required_argument, NULL, 'j'},   /* -j */
+        { "output-java-reflection-path", required_argument, NULL, 'p'},   /* -p */
     };
 
     const int NumberOfBasicOptions = sizeof(BasicSlangOpts) / sizeof(struct option);
@@ -255,7 +257,8 @@ static void Usage(const char* CommandName) {
     OUTPUT_OPTION("-v", "--verbose", "be verbose");
     OUTPUT_OPTION(NULL, "--allow-rs-prefix", "Allow user-defined function names with the \"rs\" prefix");
     OUTPUT_OPTION("-o", "--output=<FILE>", "write the output of compilation to FILE ('-' means stdout)");
-    OUTPUT_OPTION("-j", "--output-java-reflection-package=<PACKAGE NAME>", "output reflection to Java for BCC exportables");
+    OUTPUT_OPTION("-j", "--output-java-reflection-class=<PACKAGE NAME>", "output reflection of exportables in the native domain into Java");
+    OUTPUT_OPTION("-p", "--output-java-reflection-path=<PATH NAME>", "output reflection of exportables at this path");
 
     cout << endl;
 
@@ -275,7 +278,7 @@ static void Usage(const char* CommandName) {
     cout << endl;
     cout << "\tAvailable CPU:" << endl;
 
-    for(int i=0;i<NUM_TARGET_CPU;i++) 
+    for(int i=0;i<NUM_TARGET_CPU;i++)
         cout << "\t" << setw(13) << right << TargetCPUTable[i].Name << left << ": (" << TargetArchTable[(TargetCPUTable[i].Arch)].Name << ") " << TargetCPUTable[i].Desc << endl;
 
     cout << endl;
@@ -315,6 +318,7 @@ static bool ParseOption(int Argc, char** Argv) {
     OutputFileType = SlangCompilerOutput_Default;
     OutputFileName = DEFAULT_OUTPUT_FILENAME;
     JavaReflectionPackageName = NULL;
+    JavaReflectionPathName = NULL;
     InputFileName = NULL;
     Verbose = false;
     FeatureEnabledList[0] = NULL;
@@ -332,7 +336,7 @@ static bool ParseOption(int Argc, char** Argv) {
     /* Turn off the error message output by getopt_long */
     opterr = 0;
 
-    while((ch = getopt_long(Argc, Argv, "Schvo:u:t:j:", SlangOpts, NULL)) != -1) {
+    while((ch = getopt_long(Argc, Argv, "Schvo:u:t:j:p:", SlangOpts, NULL)) != -1) {
         switch(ch) {
             case 'S':
                 OutputFileType = SlangCompilerOutput_Assembly;
@@ -348,6 +352,10 @@ static bool ParseOption(int Argc, char** Argv) {
 
             case 'j':
                 JavaReflectionPackageName = optarg;
+            break;
+
+            case 'p':
+                JavaReflectionPathName = optarg;
             break;
 
             case 'u':
@@ -366,7 +374,7 @@ static bool ParseOption(int Argc, char** Argv) {
                         WARN2(MISMATCH_CPU_TARGET_ARCH, TargetArchTable[CPU->Arch].Name, TargetArchTable[ExpectedArch].Name);
                         break;
                     }
-                        
+
                     /* Get CPU Feature and enable its available feature */
                     FeatureEnableBits |= CPU->FeatureEnabled;
                 }
@@ -393,14 +401,14 @@ static bool ParseOption(int Argc, char** Argv) {
                     const TargetFeature* FeatureSelected = &TargetFeatureTable[ ((IsDisable) ? DisableFeatureValue : EnableFeatureValue) ];
                     assert(FeatureSelected != NULL && "Unexpected target feature! (not presented in table but parsed!?)");
 
-                    if(ExpectedArch == ArchNone) 
+                    if(ExpectedArch == ArchNone)
                         ExpectedArch = FeatureSelected->Arch;
                     else if(FeatureSelected->Arch != ExpectedArch) {
                         WARN2(MISMATCH_FEATURE_TARGET_ARCH, TargetArchTable[FeatureSelected->Arch].Name, TargetArchTable[ExpectedArch].Name);
                         break;
                     }
 
-                    if(optarg != NULL && atoi(optarg) == 0) 
+                    if(optarg != NULL && atoi(optarg) == 0)
                         IsDisable = !IsDisable;
 
                     if(IsDisable)
@@ -455,7 +463,7 @@ static bool ParseOption(int Argc, char** Argv) {
         return false;
     }
 
-    if(Argc > 1) 
+    if(Argc > 1)
         WARN(MULTIPLE_INPUT_FILES);
     InputFileName = Argv[optind];
 
@@ -466,15 +474,15 @@ static bool ParseOption(int Argc, char** Argv) {
             cout << "Use CPU: " << CPU->Name << endl;
         cout << "Use triple string: " << TripleString << endl;
         cout << "Expected architecture: " << TargetArchTable[ExpectedArch].Name << endl;
-        
+
         cout << "Enable target feature: " << endl;
-        for(int i=0;FeatureEnabledList[i]!=NULL;i++) 
+        for(int i=0;FeatureEnabledList[i]!=NULL;i++)
             if(*FeatureEnabledList[i] == '+')
                 cout << "\t" << &FeatureEnabledList[i][1] << endl;
         cout << endl;
 
         cout << "Disable target feature: " << endl;
-        for(int i=0;FeatureEnabledList[i]!=NULL;i++) 
+        for(int i=0;FeatureEnabledList[i]!=NULL;i++)
             if(*FeatureEnabledList[i] == '-')
                 cout << "\t" << &FeatureEnabledList[i][1] << endl;
         cout << endl;
@@ -508,7 +516,7 @@ static void DestroyCommandOptions() {
             cerr << slangGetInfoLog(slang); \
         ret = 1;  \
         goto on_slang_error;    \
-    } 
+    }
 
 int main(int argc, char** argv) {
     int ret = 0;
@@ -538,6 +546,8 @@ int main(int argc, char** argv) {
             /* output log anyway */
             if(slangGetInfoLog(slang))
                 cout << slangGetInfoLog(slang);
+
+            SLANG_CALL_AND_CHECK( slangReflectToJavaPath(slang, JavaReflectionPathName) );
 
             SLANG_CALL_AND_CHECK( slangReflectToJava(slang, JavaReflectionPackageName) );
 

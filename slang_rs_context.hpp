@@ -25,7 +25,7 @@ class ASTContext;
 class TargetInfo;
 class FunctionDecl;
 class SourceManager;
-    
+
 }   /* namespace clang */
 
 namespace slang {
@@ -72,6 +72,7 @@ private:
 
     std::string* mLicenseNote;
     std::string mReflectJavaPackageName;
+    std::string mReflectJavaPathName;
 
     bool processExportVar(const VarDecl* VD);
     bool processExportFunc(const FunctionDecl* FD);
@@ -100,6 +101,8 @@ public:
     inline void setExportAllNonStaticVars(bool flag) { mExportAllNonStaticVars = flag; }
     inline void setExportAllNonStaticFuncs(bool flag) { mExportAllNonStaticFuncs = flag; }
     inline void setReflectJavaPackageName(const std::string& S) { mReflectJavaPackageName = S; return; }
+    inline void setReflectJavaPathName(const std::string& S) { mReflectJavaPathName = S; return; }
+    inline std::string getReflectJavaPathName() const { return mReflectJavaPathName; }
 
     void processExport();
 
@@ -122,7 +125,7 @@ public:
     inline bool hasExportType() const { return !mExportTypes.empty(); }
     export_type_iterator findExportType(const llvm::StringRef& TypeName) { return mExportTypes.find(TypeName); }
     const_export_type_iterator findExportType(const llvm::StringRef& TypeName) const { return mExportTypes.find(TypeName); }
-    /* 
+    /*
      * Insert the specified Typename/Type pair into the map. If the key
      *  already exists in the map, return false and ignore the request, otherwise
      *  insert it and return true.
@@ -130,6 +133,7 @@ public:
     bool insertExportType(const llvm::StringRef& TypeName, RSExportType* Type);
 
     bool reflectToJava(const char* OutputPackageName, const std::string& InputFileName, const std::string& OutputBCFileName);
+    bool reflectToJavaPath(const char* OutputPathName);
 
     ~RSContext();
 };

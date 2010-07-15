@@ -192,6 +192,7 @@ public:
     int compile();
 
     bool reflectToJava(const char* outputPackageName);
+    bool reflectToJavaPath(const char* outputPathName);
 
     inline const char* getErrorMessage() {
         return mDiagClient->str().c_str();

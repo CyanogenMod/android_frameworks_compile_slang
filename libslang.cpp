@@ -69,6 +69,14 @@ extern "C" int slangReflectToJava(SlangCompiler* compiler, const char* packageNa
         return 0;
 }
 
+extern "C" int slangReflectToJavaPath(SlangCompiler* compiler, const char* pathName) {
+    Slang* slang = (Slang*) compiler;
+    if(slang != NULL)
+        return slang->reflectToJavaPath(pathName);
+    else
+        return 0;
+}
+
 extern "C" const char* slangGetInfoLog(SlangCompiler* compiler) {
     Slang* slang = (Slang*) compiler;
     if(slang != NULL)

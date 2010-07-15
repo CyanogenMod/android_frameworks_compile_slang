@@ -390,6 +390,16 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
 
 /****************************** Methods to generate script class ******************************/
 bool RSReflection::genScriptClass(Context& C, const std::string& ClassName, std::string& ErrorMsg) {
+    /* Open the file */
+    if(!C.mUseStdout) {
+        C.mOF.clear();
+        C.mOF.open(( mRSContext->getReflectJavaPathName() + "/" + ClassName + ".java" ).c_str());
+        if(!C.mOF.good()) {
+            ErrorMsg = "failed to open file '" + ClassName + ".java' for write";
+            return false;
+        }
+    }
+
     if(!C.startClass(Context::AM_Public, false, ClassName, RS_SCRIPT_CLASS_SUPER_CLASS_NAME, ErrorMsg))
         return false;
 
@@ -815,6 +825,16 @@ void RSReflection::genPackVarOfType(Context& C, const RSExportType* ET, const ch
 bool RSReflection::genTypeClass(Context& C, const RSExportRecordType* ERT, std::string& ErrorMsg) {
     std::string ClassName = RS_TYPE_CLASS_NAME_PREFIX + ERT->getName();
 
+    /* Open the file */
+    if(!C.mUseStdout) {
+        C.mOF.clear();
+        C.mOF.open(( mRSContext->getReflectJavaPathName() + "/" + ClassName + ".java" ).c_str());
+        if(!C.mOF.good()) {
+            ErrorMsg = "failed to open file '" + mRSContext->getReflectJavaPathName() + "/" + ClassName + ".java' for write";
+            return false;
+        }
+    }
+
     if(!C.startClass(Context::AM_Public, false, ClassName, RS_TYPE_CLASS_SUPER_CLASS_NAME, ErrorMsg))
         return false;
 
@@ -1165,16 +1185,6 @@ const char* RSReflection::Context::AccessModifierStr(AccessModifier AM) {
 bool RSReflection::Context::startClass(AccessModifier AM, bool IsStatic, const std::string& ClassName, const char* SuperClassName, std::string& ErrorMsg) {
     if(mVerbose)
         std::cout << "Generating " << ClassName << ".java ..." << endl;
-
-    /* Open the file */
-    if(!mUseStdout) {
-        mOF.clear();
-        mOF.open((ClassName + ".java").c_str());
-        if(!mOF.good()) {
-            ErrorMsg = "failed to open file '" + ClassName + ".java' for write";
-            return false;
-        }
-    }
 
     /* License */
     out() << mLicenseNote;

@@ -240,6 +240,14 @@ bool RSContext::reflectToJava(const char* OutputPackageName, const std::string& 
     return ret;
 }
 
+bool RSContext::reflectToJavaPath(const char* OutputPathName) {
+    if(OutputPathName == NULL)
+        return true; /* no path name, just return */
+
+    setReflectJavaPathName(std::string(OutputPathName));
+    return true;
+}
+
 RSContext::~RSContext() {
     delete mRSExportVarPragma;
     delete mRSExportFuncPragma;

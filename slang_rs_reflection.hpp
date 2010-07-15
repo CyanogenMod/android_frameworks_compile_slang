@@ -33,9 +33,6 @@ private:
 
         static const char* const Import[];
 
-        bool mUseStdout;
-        mutable std::ofstream mOF;
-
         bool mVerbose;
 
         std::string mPackageName;
@@ -65,6 +62,9 @@ private:
             AM_Protected,
             AM_Private
         } AccessModifier;
+
+        bool mUseStdout;
+        mutable std::ofstream mOF;
 
         static const char* AccessModifierStr(AccessModifier AM);
 

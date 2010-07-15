@@ -219,6 +219,13 @@ bool Slang::reflectToJava(const char* outputPackageName) {
         return false;
 }
 
+bool Slang::reflectToJavaPath(const char* outputPathName) {
+    if(mRSContext.get())
+        return mRSContext->reflectToJavaPath(outputPathName);
+    else
+        return false;
+}
+
 void Slang::getPragmas(size_t* actualStringCount, size_t maxStringCount, char** strings) {
     int stringCount = mPragmas.size() * 2;
 

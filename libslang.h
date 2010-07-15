@@ -35,6 +35,7 @@ int slangSetOutputToFile(SlangCompiler* compiler, const char* fileName);
 int slangCompile(SlangCompiler* compiler);
 
 int slangReflectToJava(SlangCompiler* compiler, const char* packageName);
+int slangReflectToJavaPath(SlangCompiler* compiler, const char* pathName);
 
 const char* slangGetInfoLog(SlangCompiler* compiler);
 void slangGetPragmas(SlangCompiler* compiler, size_t* actualStringCount, size_t maxStringCount, char** strings);
