@@ -153,8 +153,34 @@ void Slang::setOutputType(SlangCompilerOutputTy outputType) {
     return;
 }
 
+static void _mkdir_given_a_file(const char *file) {
+    char tmp[256];
+    char *p = NULL;
+    size_t len;
+
+    if (strlen(file) > 255) {
+      printf("File name too long\n");
+      exit(1);
+    }
+    snprintf(tmp, sizeof(tmp), "%s", file);
+    len = strlen(tmp);
+
+    if (tmp[len - 1] == '/')
+        tmp[len - 1] = 0;
+
+    for (p = tmp + 1; *p; p++) {
+        if (*p == '/') {
+            *p = 0;
+            mkdir(tmp, S_IRWXU);
+            *p = '/';
+        }
+    }
+}
+
 bool Slang::setOutput(const char* outputFile) {
     std::string Error;
+
+    _mkdir_given_a_file(outputFile);
 
     switch(mOutputType) {
         case SlangCompilerOutput_Assembly:

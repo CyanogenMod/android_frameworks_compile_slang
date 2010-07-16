@@ -395,7 +395,12 @@ static void _mkdir(const char *dir) {
     char *p = NULL;
     size_t len;
 
-    snprintf(tmp, sizeof(tmp),"%s",dir);
+    if (strlen(dir) > 255) {
+      printf("dir name too long\n");
+      exit(1);
+    }
+
+    snprintf(tmp, sizeof(tmp), "%s", dir);
     len = strlen(tmp);
 
     if (tmp[len - 1] == '/')
