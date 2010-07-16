@@ -390,18 +390,17 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
         return NULL;
 }
 
-static void _mkdir(const char *dir) {
-    char tmp[256];
-    char *p = NULL;
-    size_t len;
+static void _mkdir(const std::string &path) {
+    char buf[256];
+    char *tmp, *p = NULL;
+    size_t len = path.size();
 
-    if (strlen(dir) > 255) {
-      printf("dir name too long\n");
-      exit(1);
-    }
+    if (len + 1 <= sizeof(buf))
+        tmp = buf;
+    else
+        tmp = new char [len + 1];
 
-    snprintf(tmp, sizeof(tmp), "%s", dir);
-    len = strlen(tmp);
+    strcpy(tmp, path.c_str());
 
     if (tmp[len - 1] == '/')
         tmp[len - 1] = 0;
@@ -414,6 +413,9 @@ static void _mkdir(const char *dir) {
         }
     }
     mkdir(tmp, S_IRWXU);
+
+    if (tmp != buf)
+        delete[] tmp;
 }
 
 bool RSReflection::openScriptFile(Context&C, const std::string& ClassName, std::string& ErrorMsg) {
@@ -428,7 +430,7 @@ bool RSReflection::openScriptFile(Context&C, const std::string& ClassName, std::
 
         _path.insert(0, mRSContext->getReflectJavaPathName());
 
-        _mkdir( _path.c_str() );
+        _mkdir(_path);
         C.mOF.open(( _path + "/" + ClassName + ".java" ).c_str());
         if(!C.mOF.good()) {
             ErrorMsg = "failed to open file '" + _path + "/" + ClassName + ".java' for write";
