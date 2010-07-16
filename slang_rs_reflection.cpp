@@ -8,6 +8,8 @@
 #include <utility>
 #include <cstdarg>
 
+#include <sys/stat.h>
+
 using std::make_pair;
 using std::endl;
 
@@ -388,16 +390,55 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
         return NULL;
 }
 
+static void _mkdir(const char *dir) {
+    char tmp[256];
+    char *p = NULL;
+    size_t len;
+
+    snprintf(tmp, sizeof(tmp),"%s",dir);
+    len = strlen(tmp);
+
+    if (tmp[len - 1] == '/')
+        tmp[len - 1] = 0;
+
+    for (p = tmp + 1; *p; p++) {
+        if (*p == '/') {
+            *p = 0;
+            mkdir(tmp, S_IRWXU);
+            *p = '/';
+        }
+    }
+    mkdir(tmp, S_IRWXU);
+}
+
+bool RSReflection::openScriptFile(Context&C, const std::string& ClassName, std::string& ErrorMsg) {
+    if(!C.mUseStdout) {
+        C.mOF.clear();
+        std::string _path = "/" + C.getPackageName();
+        for (std::string::iterator it = _path.begin(); it != _path.end(); it++ ) {
+            if ( *it == '.') {
+                *it = '/';
+            }
+        }
+
+        _path.insert(0, mRSContext->getReflectJavaPathName());
+
+        _mkdir( _path.c_str() );
+        C.mOF.open(( _path + "/" + ClassName + ".java" ).c_str());
+        if(!C.mOF.good()) {
+            ErrorMsg = "failed to open file '" + _path + "/" + ClassName + ".java' for write";
+
+            return false;
+        }
+    }
+    return true;
+}
+
 /****************************** Methods to generate script class ******************************/
 bool RSReflection::genScriptClass(Context& C, const std::string& ClassName, std::string& ErrorMsg) {
     /* Open the file */
-    if(!C.mUseStdout) {
-        C.mOF.clear();
-        C.mOF.open(( mRSContext->getReflectJavaPathName() + "/" + ClassName + ".java" ).c_str());
-        if(!C.mOF.good()) {
-            ErrorMsg = "failed to open file '" + ClassName + ".java' for write";
-            return false;
-        }
+    if (!openScriptFile(C, ClassName, ErrorMsg)) {
+        return false;
     }
 
     if(!C.startClass(Context::AM_Public, false, ClassName, RS_SCRIPT_CLASS_SUPER_CLASS_NAME, ErrorMsg))
@@ -826,13 +867,8 @@ bool RSReflection::genTypeClass(Context& C, const RSExportRecordType* ERT, std::
     std::string ClassName = RS_TYPE_CLASS_NAME_PREFIX + ERT->getName();
 
     /* Open the file */
-    if(!C.mUseStdout) {
-        C.mOF.clear();
-        C.mOF.open(( mRSContext->getReflectJavaPathName() + "/" + ClassName + ".java" ).c_str());
-        if(!C.mOF.good()) {
-            ErrorMsg = "failed to open file '" + mRSContext->getReflectJavaPathName() + "/" + ClassName + ".java' for write";
-            return false;
-        }
+    if (!openScriptFile(C, ClassName, ErrorMsg)) {
+        return false;
     }
 
     if(!C.startClass(Context::AM_Public, false, ClassName, RS_TYPE_CLASS_SUPER_CLASS_NAME, ErrorMsg))

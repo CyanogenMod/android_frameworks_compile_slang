@@ -137,6 +137,7 @@ private:
         void endTypeClass();
     };
 
+    bool openScriptFile(Context& C, const std::string& ClassName, std::string& ErrorMsg);
     bool genScriptClass(Context& C, const std::string& ClassName, std::string& ErrorMsg);
     void genScriptClassConstructor(Context& C);
 
