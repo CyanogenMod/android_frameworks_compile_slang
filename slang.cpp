@@ -154,16 +154,16 @@ void Slang::setOutputType(SlangCompilerOutputTy outputType) {
 }
 
 static void _mkdir_given_a_file(const char *file) {
-    char tmp[256];
-    char *p = NULL;
-    size_t len;
+    char buf[256];
+    char *tmp, *p = NULL;
+    size_t len = strlen(file);
 
-    if (strlen(file) > 255) {
-      printf("File name too long\n");
-      exit(1);
-    }
-    snprintf(tmp, sizeof(tmp), "%s", file);
-    len = strlen(tmp);
+    if (len + 1 <= sizeof(buf))
+        tmp = buf;
+    else
+        tmp = new char [len + 1];
+
+    strcpy(tmp, file);
 
     if (tmp[len - 1] == '/')
         tmp[len - 1] = 0;
@@ -175,6 +175,9 @@ static void _mkdir_given_a_file(const char *file) {
             *p = '/';
         }
     }
+
+    if (tmp != buf)
+        delete[] tmp;
 }
 
 bool Slang::setOutput(const char* outputFile) {
