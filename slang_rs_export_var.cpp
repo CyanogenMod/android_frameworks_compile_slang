@@ -11,10 +11,12 @@ namespace slang {
 RSExportVar::RSExportVar(RSContext* Context, const VarDecl* VD, const RSExportType* ET) :
     mContext(Context),
     mName(VD->getName().data(), VD->getName().size()),
-    mET(ET)
+    mET(ET),
+    mIsConst(false)
 {
+  /* mInit - Evaluate initializer expression */
   const Expr* Initializer = VD->getAnyInitializer();
-  if(Initializer != NULL)
+  if(Initializer != NULL) {
     switch(ET->getClass()) {
       case RSExportType::ExportClassPrimitive:
       case RSExportType::ExportClassVector:
@@ -37,7 +39,14 @@ RSExportVar::RSExportVar(RSContext* Context, const VarDecl* VD, const RSExportTy
         assert(false && "Unknown class of type");
         break;
     }
+  }
 
+  /* mIsConst - Is it a constant? */
+  QualType QT = VD->getTypeSourceInfo()->getType();
+  if (!QT.isNull()) {
+    mIsConst = QT.isConstQualified();
+  }
+ 
   return;
 }
 
