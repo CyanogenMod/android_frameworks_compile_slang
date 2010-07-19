@@ -1,4 +1,7 @@
 #include "slang.hpp"
+
+#include <stdlib.h>                     /* for getenv */
+
 #include "libslang.h"
 
 #include "llvm/ADT/Twine.h"     /* for class llvm::Twine */
@@ -89,6 +92,35 @@ void Slang::createTarget(const char* Triple, const char* CPU, const char** Featu
             mTargetOpts.Features.push_back(Features[i]);
 
     return;
+}
+
+void Slang::createPreprocessor() {
+  HeaderSearch* HS = new HeaderSearch(*mFileMgr); /* Default only search header file in current dir */
+
+  mPP.reset(new Preprocessor( *mDiagnostics,
+                              LangOpts,
+                              *mTarget,
+                              *mSourceMgr,
+                              *HS,
+                              NULL,
+                              true /* OwnsHeaderSearch */));
+  /* Initialize the prepocessor */
+  mPragmas.clear();
+  mPP->AddPragmaHandler(NULL, new PragmaRecorder(mPragmas));
+
+  /* Like ApplyHeaderSearchOptions in InitHeaderSearch.cpp */
+  const char*inclDir = getenv("ANDROID_BUILD_TOP");
+
+  printf("%s\n", inclDir);
+  if (inclDir) {
+    std::vector<DirectoryLookup> SearchList;
+    if (const DirectoryEntry *DE = mFileMgr->getDirectory(inclDir, inclDir + strlen(inclDir))) {
+      SearchList.push_back(DirectoryLookup(DE, SrcMgr::C_System, false, false));
+      HS->SetSearchPaths(SearchList, 1, false);
+    }
+  }
+
+  return;
 }
 
 Slang::Slang(const char* Triple, const char* CPU, const char** Features) :

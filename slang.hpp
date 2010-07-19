@@ -85,21 +85,7 @@ private:
 
     /* The preprocessor (source code preprocessor) */
     llvm::OwningPtr<Preprocessor> mPP;
-    inline void createPreprocessor() {
-        HeaderSearch* HeaderInfo = new HeaderSearch(*mFileMgr); /* Default only search header file in current dir */
-        mPP.reset(new Preprocessor( *mDiagnostics,
-                                    LangOpts,
-                                    *mTarget,
-                                    *mSourceMgr,
-                                    *HeaderInfo,
-                                    NULL,
-                                    true /* OwnsHeaderSearch */));
-        /* Initialize the prepocessor */
-        mPragmas.clear();
-        mPP->AddPragmaHandler(NULL, new PragmaRecorder(mPragmas));
-        /* ApplyHeaderSearchOptions */
-        return;
-    }
+    void createPreprocessor();
 
     /* The AST context (the context to hold long-lived AST nodes) */
     llvm::OwningPtr<ASTContext> mASTContext;

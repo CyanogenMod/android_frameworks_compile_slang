@@ -428,7 +428,12 @@ bool RSReflection::openScriptFile(Context&C, const std::string& ClassName, std::
             }
         }
 
-        _path.insert(0, mRSContext->getReflectJavaPathName());
+        std::string prefix = mRSContext->getReflectJavaPathName();
+        if (prefix.empty()) {
+            _path.insert(0, 1, '.');
+        } else {
+            _path.insert(0, mRSContext->getReflectJavaPathName());
+        }
 
         _mkdir(_path);
         C.mOF.open(( _path + "/" + ClassName + ".java" ).c_str());
