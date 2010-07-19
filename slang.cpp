@@ -111,8 +111,12 @@ void Slang::createPreprocessor() {
   /* Like ApplyHeaderSearchOptions in InitHeaderSearch.cpp */
   const char*inclDir = getenv("ANDROID_BUILD_TOP");
   if (inclDir) {
+    char *dirPath = new char[strlen(inclDir) + 33];
+    strcpy(dirPath, inclDir);
+    strcpy(dirPath + strlen(inclDir), "/frameworks/base/libs/rs/scriptc");
+
     std::vector<DirectoryLookup> SearchList;
-    if (const DirectoryEntry *DE = mFileMgr->getDirectory(inclDir, inclDir + strlen(inclDir))) {
+    if (const DirectoryEntry *DE = mFileMgr->getDirectory(dirPath, dirPath + strlen(dirPath))) {
       SearchList.push_back(DirectoryLookup(DE, SrcMgr::C_System, false, false));
       HS->SetSearchPaths(SearchList, 1, false);
     }
