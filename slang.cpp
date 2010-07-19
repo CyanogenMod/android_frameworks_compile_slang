@@ -110,8 +110,6 @@ void Slang::createPreprocessor() {
 
   /* Like ApplyHeaderSearchOptions in InitHeaderSearch.cpp */
   const char*inclDir = getenv("ANDROID_BUILD_TOP");
-
-  printf("%s\n", inclDir);
   if (inclDir) {
     std::vector<DirectoryLookup> SearchList;
     if (const DirectoryEntry *DE = mFileMgr->getDirectory(inclDir, inclDir + strlen(inclDir))) {
