@@ -109,18 +109,38 @@ void Slang::createPreprocessor() {
   mPP->AddPragmaHandler(NULL, new PragmaRecorder(mPragmas));
 
   /* Like ApplyHeaderSearchOptions in InitHeaderSearch.cpp */
-  const char*inclDir = getenv("ANDROID_BUILD_TOP");
+  const char *inclDir = getenv("ANDROID_BUILD_TOP");
+  std::vector<DirectoryLookup> SearchList;
   if (inclDir) {
     char *dirPath = new char[strlen(inclDir) + 33];
     strcpy(dirPath, inclDir);
     strcpy(dirPath + strlen(inclDir), "/frameworks/base/libs/rs/scriptc");
 
-    std::vector<DirectoryLookup> SearchList;
     if (const DirectoryEntry *DE = mFileMgr->getDirectory(dirPath, dirPath + strlen(dirPath))) {
       SearchList.push_back(DirectoryLookup(DE, SrcMgr::C_System, false, false));
-      HS->SetSearchPaths(SearchList, 1, false);
     }
   }
+
+  int siz = 256;
+  char *currDir = new char[siz];
+  while (!getcwd(currDir, siz)) {
+    siz *= 2;
+  }
+
+  if (siz - strlen(currDir) >= 33) {
+    strcpy(currDir + strlen(currDir), "/frameworks/base/libs/rs/scriptc");
+  } else {
+    char *tmp = new char[strlen(currDir) + 33];
+    strcpy(tmp, currDir);
+    strcpy(tmp + strlen(currDir), "/frameworks/base/libs/rs/scriptc");
+    currDir = tmp;
+  }
+
+  if (const DirectoryEntry *DE = mFileMgr->getDirectory(currDir, currDir + strlen(currDir))) {
+    SearchList.push_back(DirectoryLookup(DE, SrcMgr::C_System, false, false));
+  }
+
+  HS->SetSearchPaths(SearchList, 1, false);
 
   return;
 }
