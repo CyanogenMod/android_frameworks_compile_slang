@@ -1,4 +1,4 @@
-#
+ifneq ($(TARGET_SIMULATOR),true)
 
 LOCAL_PATH := $(call my-dir)
 LLVM_ROOT_PATH := external/llvm/llvm
@@ -38,7 +38,7 @@ LOCAL_STATIC_LIBRARIES :=	\
 	libLLVMipo	\
 	libLLVMBitWriter	\
 	libLLVMARMAsmPrinter	\
-   	libLLVMX86AsmPrinter	\
+	libLLVMX86AsmPrinter	\
 	libLLVMAsmPrinter	\
 	libLLVMMCParser	\
 	libLLVMARMCodeGen	\
@@ -72,3 +72,4 @@ include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
 include $(BUILD_HOST_EXECUTABLE)
 
+endif
