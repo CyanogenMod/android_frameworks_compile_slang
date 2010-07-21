@@ -22,6 +22,7 @@
 #include "clang/Lex/HeaderSearch.h"     /* for class clang::HeaderSearch */
 
 #include "clang/Basic/Diagnostic.h"     /* for class clang::Diagnostic, class clang::DiagnosticClient, class clang::DiagnosticInfo  */
+#include "clang/Sema/SemaDiagnostic.h"  /* for members of clang::diag */
 #include "clang/Basic/FileManager.h"    /* for class clang::FileManager and class clang::FileEntry */
 #include "clang/Basic/TargetOptions.h"  /* for class clang::TargetOptions */
 
@@ -65,6 +66,7 @@ private:
         mDiagnostics.reset(new Diagnostic(mDiagClient.get()));
         bool optionNotFound = mDiagnostics->setDiagnosticGroupMapping("implicit-function-declaration", clang::diag::MAP_ERROR);
         assert(!optionNotFound && "Unable find option group implicit-function-declaration");
+        mDiagnostics->setDiagnosticMapping(clang::diag::ext_typecheck_convert_discards_qualifiers, clang::diag::MAP_ERROR);
         return;
     }
 

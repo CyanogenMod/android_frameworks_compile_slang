@@ -16,7 +16,8 @@ LOCAL_MODULE_CLASS := EXECUTABLES
 
 TBLGEN_TABLES :=    \
 	DiagnosticCommonKinds.inc	\
-	DiagnosticFrontendKinds.inc
+	DiagnosticFrontendKinds.inc \
+	DiagnosticSemaKinds.inc
 
 LOCAL_SRC_FILES :=	\
 	slang_driver.cpp	\
