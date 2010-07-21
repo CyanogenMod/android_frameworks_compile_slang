@@ -108,6 +108,9 @@ void Slang::createPreprocessor() {
   mPragmas.clear();
   mPP->AddPragmaHandler(NULL, new PragmaRecorder(mPragmas));
 
+  std::string inclFiles("#include \"rs_types.rsh\"");
+  mPP->setPredefines(inclFiles + "\n" + "#include \"rs_math.rsh\"" + "\n");
+
   /* Like ApplyHeaderSearchOptions in InitHeaderSearch.cpp */
   const char *inclDir = getenv("ANDROID_BUILD_TOP");
   std::vector<DirectoryLookup> SearchList;
