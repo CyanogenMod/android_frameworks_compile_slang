@@ -9,6 +9,7 @@
 #include <cstdarg>
 
 #include <sys/stat.h>
+#include "llvm/ADT/APFloat.h"
 
 using std::make_pair;
 using std::endl;
@@ -520,18 +521,27 @@ void RSReflection::genInitPrimitiveExportVariable(Context& C, const std::string&
 
     C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
     switch(Val.getKind()) {
-        case APValue::Int: C.out() << Val.getInt().getSExtValue(); break;
-        case APValue::Float: C.out() << Val.getFloat().convertToDouble(); break;
+      case APValue::Int: C.out() << Val.getInt().getSExtValue(); break;
 
-        case APValue::ComplexInt:
-        case APValue::ComplexFloat:
-        case APValue::LValue:
-        case APValue::Vector:
-            assert(false && "Primitive type cannot have such kind of initializer");
+      case APValue::Float: {
+        llvm::APFloat apf = Val.getFloat();
+        if (apf.semanticsPrecision(apf.getSemantics()) == 24 /*llvm::APFloat::IEEEsingle*/) {
+          C.out() << apf.convertToFloat();
+        } else {
+          C.out() << apf.convertToDouble();
+        }
+        break;
+      }
+
+      case APValue::ComplexInt:
+      case APValue::ComplexFloat:
+      case APValue::LValue:
+      case APValue::Vector:
+        assert(false && "Primitive type cannot have such kind of initializer");
         break;
 
-        default:
-            assert(false && "Unknown kind of initializer");
+      default:
+        assert(false && "Unknown kind of initializer");
         break;
     }
     C.out() << ";" << endl;
