@@ -249,12 +249,12 @@ bool RSContext::reflectToJavaPath(const char* OutputPathName) {
 }
 
 RSContext::~RSContext() {
-    delete mRSExportVarPragma;
+  /*    delete mRSExportVarPragma;  // These are deleted by mPP.reset() that was invoked at the end of Slang::compile(). Doing it again in ~RSContext here will cause seg-faults
     delete mRSExportFuncPragma;
     delete mRSExportTypePragma;
     delete mRSJavaPackageNamePragma;
     delete mRSReflectLicensePragma;
-
+  */
     delete mLicenseNote;
     delete mTargetData;
 }
