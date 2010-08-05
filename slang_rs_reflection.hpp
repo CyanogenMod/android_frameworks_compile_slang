@@ -158,6 +158,7 @@ private:
     void genTypeClassConstructor(Context& C, const RSExportRecordType* ERT);
     void genTypeClassCopyToArray(Context& C, const RSExportRecordType* ERT);
     void genTypeClasSet(Context& C, const RSExportRecordType* ERT);
+    void genTypeClasGet(Context& C, const RSExportRecordType* ERT);
     void genTypeClasCopyAll(Context& C, const RSExportRecordType* ERT);
 
     void genBuildElement(Context& C, const RSExportRecordType* ERT, const char* RenderScriptVar);

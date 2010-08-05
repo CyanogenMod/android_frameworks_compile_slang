@@ -906,6 +906,7 @@ bool RSReflection::genTypeClass(Context& C, const RSExportRecordType* ERT, std::
     genTypeClassConstructor(C, ERT);
     genTypeClassCopyToArray(C, ERT);
     genTypeClasSet(C, ERT);
+    genTypeClasGet(C, ERT);
     genTypeClasCopyAll(C, ERT);
 
     C.endClass();
@@ -997,6 +998,14 @@ void RSReflection::genTypeClasSet(Context& C, const RSExportRecordType* ERT) {
 
     C.endBlock();   /* end if (copyNow) */
 
+    C.endFunction();
+    return;
+}
+
+void RSReflection::genTypeClasGet(Context& C, const RSExportRecordType* ERT) {
+    C.startFunction(Context::AM_Public, false, RS_TYPE_ITEM_CLASS_NAME, "get", 1, "int", "index");
+    C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return null;" << endl;
+    C.indent() << "return "RS_TYPE_ITEM_BUFFER_NAME"[index];" << endl;
     C.endFunction();
     return;
 }
