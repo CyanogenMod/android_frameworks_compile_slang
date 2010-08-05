@@ -8,6 +8,10 @@
 #include <iomanip>
 #include <iostream>
 
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+
 using namespace std;
 
 #define ERR_NO_INPUT_FILE           "no input file"
@@ -182,12 +186,14 @@ static std::string* OutputFileNames;
 static bool Verbose;
 static const char* FeatureEnabledList[MaxTargetFeature + 1];
 static int AllowRSPrefix = 0;
+static int NoLink = 0;
 
 /* Construct the command options table used in ParseOption::getopt_long */
 static void ConstructCommandOptions() {
   /* Basic slang command option */
   static struct option BasicSlangOpts[] = {
     { "allow-rs-prefix", no_argument, &AllowRSPrefix, 1 },
+    { "no-link", no_argument, &NoLink, 1 },
 
     { "emit-llvm",       no_argument, (int*) &OutputFileType, SlangCompilerOutput_LL },
     { "emit-bc",         no_argument, (int*) &OutputFileType, SlangCompilerOutput_Bitcode },
@@ -471,7 +477,8 @@ static bool ParseOption(int Argc, char** Argv) {
         if (slashed) {
           _outF.append(InputFileNames[count]);
         } else {
-          _outF.append("/" + InputFileNames[count]);
+          _outF.push_back('/');
+          _outF.append(InputFileNames[count]);
         }
       } else {
         if (slashed) {
@@ -538,6 +545,127 @@ static void DestroyCommandOptions() {
   return;
 }
 
+/*
+ * E.g., replace out/host/linux-x86/bin/slang to out/host/linux-x86/bin/<fileName>
+ */
+static const char* replaceLastPartWithFile(std::string& cmd, const char* fileName) {
+  size_t pos = cmd.rfind('/');
+  if (pos == std::string::npos) {
+    return fileName;
+  }
+
+  cmd.resize(pos+1);
+  cmd.append(fileName);
+  return cmd.c_str();
+  //  std::string returnFile = cmd.substr(0, pos+1).append(fileName);  // cmd.replace(pos+1, std::string::npos, fileName);
+}
+
+#define LINK_FILE "/external/llvm/slang/rsScriptC_Lib.bc"
+#define LINK_FILE_LENGTH 38
+
+static char* linkFile() {
+  char* dir = getenv("ANDROID_BUILD_TOP");
+  char* dirPath;
+  bool readyToLink = false;
+  if (dir) {
+    dirPath = new char[strlen(dir) + LINK_FILE_LENGTH];
+    strcpy(dirPath, dir);
+    strcpy(dirPath + strlen(dir), LINK_FILE);
+    if (open(dirPath, O_RDONLY) >= 0) {
+      readyToLink = true;
+    }
+  }
+
+  if (!readyToLink) {
+    /* try cwd */
+    int siz = 256;
+    dir = new char[siz];
+    while (!getcwd(dir, siz)) {
+      siz *= 2;
+      dir = new char[siz];
+    }
+    dirPath = new char[strlen(dir) + LINK_FILE_LENGTH];
+    strcpy(dirPath, dir);
+    strcpy(dirPath + strlen(dir), LINK_FILE);
+    if (open(dirPath, O_RDONLY) < 0) {
+      cerr << "Error: Couldn't load rs library bitcode file" << endl;
+      exit(1);
+    }
+  }
+  return dirPath;
+}
+
+#define LINK_FILE1 "/external/llvm/slang/rslib.bc"
+#define LINK_FILE1_LENGTH 30
+
+static char* linkFile1() {
+  char* dir = getenv("ANDROID_BUILD_TOP");
+  char* dirPath;
+  bool readyToLink = false;
+  if (dir) {
+    dirPath = new char[strlen(dir) + LINK_FILE1_LENGTH];
+    strcpy(dirPath, dir);
+    strcpy(dirPath + strlen(dir), LINK_FILE1);
+    if (open(dirPath, O_RDONLY) >= 0) {
+      readyToLink = true;
+    }
+  }
+
+  if (!readyToLink) {
+    /* try cwd */
+    int siz = 256;
+    dir = new char[siz];
+    while (!getcwd(dir, siz)) {
+      siz *= 2;
+      dir = new char[siz];
+    }
+    dirPath = new char[strlen(dir) + LINK_FILE1_LENGTH];
+    strcpy(dirPath, dir);
+    strcpy(dirPath + strlen(dir), LINK_FILE1);
+    if (open(dirPath, O_RDONLY) < 0) {
+      cerr << "Error: Couldn't load rs library bitcode file" << endl;
+      exit(1);
+    }
+  }
+  return dirPath;
+}
+
+static inline size_t lastSlashPos(std::string& in) {
+  size_t pos = in.rfind('/');
+  if (pos == std::string::npos) {
+    return 0;
+  } else {
+    return pos+1;
+  }
+}
+
+static int waitForChild(pid_t pid) {
+  pid_t w;
+  int childExitStatus;
+
+  do {
+    w = waitpid(pid, &childExitStatus, WUNTRACED | WCONTINUED);
+    if (w == -1) {
+      exit(1);
+    }
+    if (WIFEXITED(childExitStatus)) {
+      if (WEXITSTATUS(childExitStatus)) {
+        cerr << "Linking error" << endl;
+        exit(1);
+      }
+      return 0;
+    } else if (WIFSIGNALED(childExitStatus)) {
+      cerr << "Linking: Killed by signal " << WTERMSIG(childExitStatus) << endl;
+      exit(1);
+    } else if (WIFSTOPPED(childExitStatus)) {
+      cerr << "Linking: Stopped by signal " << WSTOPSIG(childExitStatus) << endl;
+    } else if (WIFCONTINUED(childExitStatus)) {
+      cerr << "LInking: Continued" << endl;
+    }
+  } while (!WIFEXITED(childExitStatus) && !WIFSIGNALED(childExitStatus));
+  return 0;
+}
+
 #define SLANG_CALL_AND_CHECK(expr)              \
   if(!(expr)) {                                 \
     if(slangGetInfoLog(slang))                  \
@@ -549,6 +677,8 @@ static void DestroyCommandOptions() {
 int main(int argc, char** argv) {
   int ret = 0;
   int count;
+  char* command = new char[strlen(argv[0])+1];
+  strcpy(command, argv[0]);
 
   if(argc < 2) {
     cerr << argv[0] << ": "ERR_NO_INPUT_FILE << endl;
@@ -563,19 +693,32 @@ int main(int argc, char** argv) {
       goto on_slang_error;
     }
 
+    slangSetOutputType(slang, OutputFileType);
+
+    if (AllowRSPrefix)
+      slangAllowRSPrefix();
+
     for (count = 0; count < FileCount; count++) {
       /* Start compilation */
 
       SLANG_CALL_AND_CHECK( slangSetSourceFromFile(slang, InputFileNames[count].c_str()) );
 
-      slangSetOutputType(slang, OutputFileType);
+      std::string beforeLink("/tmp/beforeLINK");
+      std::string afterLink("/tmp/afterLINK");
 
-      if (AllowRSPrefix)
-        slangAllowRSPrefix();
+      if (NoLink) {
+        SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, OutputFileNames[count].c_str()) );
+      } else {
+        beforeLink.append(  InputFileNames[count].substr( lastSlashPos(InputFileNames[count]) )  );
+        beforeLink.append(".bc");
 
-      SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, OutputFileNames[count].c_str()) );
+        SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, beforeLink.c_str()) );
 
-      SLANG_CALL_AND_CHECK( slangCompile(slang) == 0 );
+        afterLink.append(  InputFileNames[count].substr( lastSlashPos(InputFileNames[count]) )  );
+        afterLink.append(".bc");
+      }
+
+      SLANG_CALL_AND_CHECK( slangCompile(slang) <= 0 );
 
       /* Output log anyway */
       if(slangGetInfoLog(slang)) {
@@ -586,8 +729,47 @@ int main(int argc, char** argv) {
 
       SLANG_CALL_AND_CHECK( slangReflectToJava(slang, JavaReflectionPackageName) );
 
-      /* llvm-link and opt */
+      if (NoLink) {
+        continue;
+      }
 
+      // llvm-link
+      pid_t pid;
+      if ((pid = fork()) < 0) {
+        cerr << "Failed before llvm-link" << endl;
+        exit(1);
+      } else if (pid == 0) {
+        std::string cmd(command);
+        replaceLastPartWithFile(cmd, "llvm-link");
+
+        char* link0 = linkFile();
+        char* link1 = linkFile1();
+        //cerr << cmd << " -o " << afterLink.c_str() << " " << beforeLink.c_str() << " " << link0 << " " << link1 << endl;
+        execl(cmd.c_str(), cmd.c_str(), "-o", OutputFileNames[count].c_str()/*afterLink.c_str()*/, beforeLink.c_str(), link0, link1, NULL);
+      }
+
+      waitForChild(pid);
+
+      /*      // opt
+      if ((pid = fork()) < 0) {
+        cerr << "Failed before opt" << endl;
+        exit(1);
+      } else if (pid == 0) {
+        std::string cmd(command);
+        replaceLastPartWithFile(cmd, "opt");
+
+        const char* funcNames = slangExportFuncs(slang);
+        std::string internalize("-internalize-public-api-list=init,root");
+        if (funcNames) {
+          internalize.append(funcNames);
+        }
+
+        //cerr << cmd << " -std-link-opts " << internalize << " " << afterLink << " -o " << OutputFileNames[count] << endl;
+        //        execl("/bin/cp", "/bin/cp", afterLink.c_str(), OutputFileNames[count].c_str(), NULL);
+        execl(cmd.c_str(), cmd.c_str(), "-std-link-opts", internalize.c_str(), afterLink.c_str(), "-o", OutputFileNames[count].c_str(), NULL);
+      }
+
+      waitForChild(pid); */
     }
  on_slang_error:
     delete slang;
@@ -595,6 +777,7 @@ int main(int argc, char** argv) {
 
   DestroyCommandOptions();
 
+  if (ret) exit(1);
   return ret;
 }
 
@@ -621,6 +804,7 @@ static void Usage(const char* CommandName) {
   OUTPUT_OPTION("-h", "--help", "Print this help");
   OUTPUT_OPTION("-v", "--verbose", "Be verbose");
   OUTPUT_OPTION(NULL, "--allow-rs-prefix", "Allow user-defined function names with the \"rs\" prefix");
+  OUTPUT_OPTION(NULL, "--no-link", "Do not link the system bitcode libraries");
   OUTPUT_OPTION("-o", "--output-obj-path=<PATH>", "Write compilation output at this path ('-' means stdout)");
   OUTPUT_OPTION("-j", "--output-java-reflection-class=<PACKAGE NAME>", "Output reflection of exportables in the native domain into Java");
   OUTPUT_OPTION("-p", "--output-java-reflection-path=<PATH>", "Write reflection output at this path");

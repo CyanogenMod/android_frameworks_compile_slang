@@ -36,7 +36,8 @@ RSContext::RSContext(Preprocessor* PP, ASTContext* Ctx, const TargetInfo* Target
     mRSJavaPackageNamePragma(NULL),
     mRSReflectLicensePragma(NULL),
     mExportAllNonStaticVars(false),
-    mExportAllNonStaticFuncs(false)
+    mExportAllNonStaticFuncs(false),
+    mLicenseNote(NULL)
 {
     /* For #pragma rs export_var */
     mRSExportVarPragma = RSPragmaHandler::CreatePragmaExportVarHandler(this);

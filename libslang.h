@@ -40,6 +40,8 @@ int slangReflectToJavaPath(SlangCompiler* compiler, const char* pathName);
 const char* slangGetInfoLog(SlangCompiler* compiler);
 void slangGetPragmas(SlangCompiler* compiler, size_t* actualStringCount, size_t maxStringCount, char** strings);
 
+const char* slangExportFuncs(SlangCompiler* compiler);
+
 void slangReset(SlangCompiler* compiler);
 
 #ifdef __cplusplus

@@ -92,6 +92,13 @@ extern "C" void slangGetPragmas(SlangCompiler* compiler, size_t* actualStringCou
     return;
 }
 
+extern "C" const char* slangExportFuncs(SlangCompiler* compiler) {
+    Slang* slang = (Slang*) compiler;
+    if(slang != NULL)
+        return slang->exportFuncs();
+    return NULL;
+}
+
 extern "C" void slangReset(SlangCompiler* compiler) {
     Slang* slang = (Slang*) compiler;
     if(slang != NULL)

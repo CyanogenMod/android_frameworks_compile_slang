@@ -42,7 +42,9 @@ RSBackend::RSBackend(RSContext* Context,
             OutputType,
             SourceMgr,
             AllowRSPrefix),
-    mExportVarMetadata(NULL)
+    mExportVarMetadata(NULL),
+    mExportFuncMetadata(NULL),
+    mExportTypeMetadata(NULL)
 {
     return;
 }
@@ -74,7 +76,7 @@ void RSBackend::HandleTranslationUnitEx(ASTContext& Ctx) {
             ExportVarInfo.push_back( llvm::MDString::get(mLLVMContext, EV->getName().c_str()) );
 
             /* type name */
-            if(ET->getClass() == RSExportType::ExportClassPrimitive) 
+            if(ET->getClass() == RSExportType::ExportClassPrimitive)
                 ExportVarInfo.push_back( llvm::MDString::get(mLLVMContext, llvm::utostr_32(static_cast<const RSExportPrimitiveType*>(ET)->getType())) );
             else if(ET->getClass() == RSExportType::ExportClassPointer)
                 ExportVarInfo.push_back( llvm::MDString::get(mLLVMContext, ("*" + static_cast<const RSExportPointerType*>(ET)->getPointeeType()->getName()).c_str()) );
@@ -101,12 +103,12 @@ void RSBackend::HandleTranslationUnitEx(ASTContext& Ctx) {
             const RSExportFunc* EF = *I;
 
             /* function name */
-            if(!EF->hasParam()) 
+            if(!EF->hasParam())
                 ExportFuncInfo.push_back( llvm::MDString::get(mLLVMContext, EF->getName().c_str()) );
             else {
                 llvm::Function* F = mpModule->getFunction(EF->getName());
                 llvm::Function* HelperFunction;
-                const std::string HelperFunctionName = ".helper_" + EF->getName();
+                const std::string HelperFunctionName(".helper_" + EF->getName());
 
                 assert(F && "Function marked as exported disappeared in Bitcode");
 
@@ -138,7 +140,7 @@ void RSBackend::HandleTranslationUnitEx(ASTContext& Ctx) {
                         for(int i=0;i<EF->getNumParameters();i++) {
                             /* getelementptr */
                             Idx[1] = llvm::ConstantInt::get(llvm::Type::getInt32Ty(mLLVMContext), i);
-                            llvm::Value* Ptr = IB->CreateInBoundsGEP(HelperFunctionParameter, Idx, Idx + 2); 
+                            llvm::Value* Ptr = IB->CreateInBoundsGEP(HelperFunctionParameter, Idx, Idx + 2);
                             /* load */
                             llvm::Value* V = IB->CreateLoad(Ptr);
                             Params.push_back(V);
@@ -190,7 +192,8 @@ void RSBackend::HandleTranslationUnitEx(ASTContext& Ctx) {
                 mExportTypeMetadata->addOperand( llvm::MDNode::get(mLLVMContext, ExportTypeInfo.data(), ExportTypeInfo.size()) );
 
                 /* Now, export struct field information to %[struct name] */
-                std::string StructInfoMetadataName = "%" + ET->getName();
+                std::string StructInfoMetadataName("%");
+                StructInfoMetadataName.append(ET->getName());
                 llvm::NamedMDNode* StructInfoMetadata = llvm::NamedMDNode::Create(mLLVMContext, StructInfoMetadataName.c_str(), NULL, 0, mpModule);
                 llvm::SmallVector<llvm::Value*, 3> FieldInfo;
 

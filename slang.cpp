@@ -1,4 +1,5 @@
 #include "slang.hpp"
+#include "slang_rs_export_func.hpp"
 
 #include <stdlib.h>                     /* for getenv */
 
@@ -128,6 +129,7 @@ void Slang::createPreprocessor() {
   char *currDir = new char[siz];
   while (!getcwd(currDir, siz)) {
     siz *= 2;
+    currDir = new char[siz];
   }
 
   if (siz - strlen(currDir) >= 33) {
@@ -331,6 +333,20 @@ void Slang::getPragmas(size_t* actualStringCount, size_t maxStringCount, char** 
         }
 
     return;
+}
+
+typedef std::list<RSExportFunc*> ExportFuncList;
+
+const char* Slang::exportFuncs() {
+  std::string fNames;
+  for (RSContext::const_export_func_iterator I = mRSContext->export_funcs_begin();
+       I != mRSContext->export_funcs_end();
+       ++I) {
+    RSExportFunc* func = *I;
+    fNames.push_back(',');
+    fNames.append(func->getName());
+  }
+  return fNames.c_str();
 }
 
 Slang::~Slang() {

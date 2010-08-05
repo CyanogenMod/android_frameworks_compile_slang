@@ -188,6 +188,8 @@ public:
 
     void getPragmas(size_t* actualStringCount, size_t maxStringCount, char** strings);
 
+    const char* exportFuncs();
+
     /* Reset the slang compiler state such that it can be reused to compile another file */
     inline void reset() {
         /* Seems there's no way to clear the diagnostics. We just re-create it. */

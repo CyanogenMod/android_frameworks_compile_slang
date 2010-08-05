@@ -1174,8 +1174,9 @@ bool RSReflection::reflect(const char* OutputPackageName, const std::string& Inp
         ScriptClassName.at(0) = toupper(ScriptClassName.at(0));
         ScriptClassName.insert(0, RS_SCRIPT_CLASS_NAME_PREFIX);
 
-        if (mRSContext->getLicenseNote() != NULL)
-            C->setLicenseNote(*mRSContext->getLicenseNote());
+        if (mRSContext->getLicenseNote() != NULL) {
+          C->setLicenseNote(*(mRSContext->getLicenseNote()));
+        }
 
         if(!genScriptClass(*C, ScriptClassName, ErrorMsg)) {
             std::cerr << "Failed to generate class " << ScriptClassName << " (" << ErrorMsg << ")" << endl;
