@@ -289,6 +289,8 @@ int Slang::compile() {
 
     /* The compilation ended, clear up */
     mBackend.reset();
+    // Can't reset yet because the reflection later on still needs mRSContext
+    //    mRSContext.reset();
     mASTContext.reset();
     mPP.reset();
 
