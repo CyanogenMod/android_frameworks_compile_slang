@@ -10,6 +10,39 @@ include $(LLVM_ROOT_PATH)/llvm.mk
 include $(CLEAR_VARS)
 include $(CLEAR_TBLGEN_VARS)
 
+LOCAL_MODULE := llvm-rs-link
+
+LOCAL_MODULE_CLASS := EXECUTABLES
+
+LOCAL_SRC_FILES :=	\
+        llvm-rs-link.cpp
+
+LOCAL_STATIC_LIBRARIES :=	\
+        libLLVMLinker   \
+	libLLVMipo	\
+	libLLVMBitWriter	\
+        libLLVMBitReader        \
+	libLLVMScalarOpts	\
+	libLLVMInstCombine	\
+	libLLVMTransformUtils	\
+	libLLVMipa	\
+	libLLVMAnalysis	\
+	libLLVMTarget	\
+	libLLVMCore	\
+	libLLVMSupport	\
+	libLLVMSystem
+
+LOCAL_LDLIBS := -ldl -lpthread
+
+include $(LLVM_HOST_BUILD_MK)
+include $(LLVM_GEN_INTRINSICS_MK)
+include $(BUILD_HOST_EXECUTABLE)
+
+# Executable for host
+# ========================================================
+include $(CLEAR_VARS)
+include $(CLEAR_TBLGEN_VARS)
+
 LOCAL_MODULE := slang
 
 LOCAL_MODULE_CLASS := EXECUTABLES
@@ -68,8 +101,6 @@ LOCAL_STATIC_LIBRARIES :=	\
 	libLLVMSystem
 
 LOCAL_LDLIBS := -ldl -lpthread
-
-LOCAL_REQUIRED_MODULES := llvm-link
 
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)

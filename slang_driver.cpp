@@ -704,8 +704,6 @@ int main(int argc, char** argv) {
       SLANG_CALL_AND_CHECK( slangSetSourceFromFile(slang, InputFileNames[count].c_str()) );
 
       std::string beforeLink("/tmp/beforeLINK");
-      std::string afterLink("/tmp/afterLINK");
-
       if (NoLink) {
         SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, OutputFileNames[count].c_str()) );
       } else {
@@ -713,9 +711,6 @@ int main(int argc, char** argv) {
         beforeLink.append(".bc");
 
         SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, beforeLink.c_str()) );
-
-        afterLink.append(  InputFileNames[count].substr( lastSlashPos(InputFileNames[count]) )  );
-        afterLink.append(".bc");
       }
 
       SLANG_CALL_AND_CHECK( slangCompile(slang) <= 0 );
@@ -733,19 +728,18 @@ int main(int argc, char** argv) {
         continue;
       }
 
-      // llvm-link
+      // llvm-rs-link
       pid_t pid;
       if ((pid = fork()) < 0) {
-        cerr << "Failed before llvm-link" << endl;
+        cerr << "Failed before llvm-rs-link" << endl;
         exit(1);
       } else if (pid == 0) {
         std::string cmd(command);
-        replaceLastPartWithFile(cmd, "llvm-link");
+        replaceLastPartWithFile(cmd, "llvm-rs-link");
 
         char* link0 = linkFile();
         char* link1 = linkFile1();
-        //cerr << cmd << " -o " << afterLink.c_str() << " " << beforeLink.c_str() << " " << link0 << " " << link1 << endl;
-        execl(cmd.c_str(), cmd.c_str(), "-o", OutputFileNames[count].c_str()/*afterLink.c_str()*/, beforeLink.c_str(), link0, link1, NULL);
+        execl(cmd.c_str(), cmd.c_str(), "-o", OutputFileNames[count].c_str(), beforeLink.c_str(), link0, link1, NULL);
       }
 
       waitForChild(pid);
@@ -765,7 +759,6 @@ int main(int argc, char** argv) {
         }
 
         //cerr << cmd << " -std-link-opts " << internalize << " " << afterLink << " -o " << OutputFileNames[count] << endl;
-        //        execl("/bin/cp", "/bin/cp", afterLink.c_str(), OutputFileNames[count].c_str(), NULL);
         execl(cmd.c_str(), cmd.c_str(), "-std-link-opts", internalize.c_str(), afterLink.c_str(), "-o", OutputFileNames[count].c_str(), NULL);
       }
 
