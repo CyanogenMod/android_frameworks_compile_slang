@@ -102,7 +102,7 @@ LOCAL_STATIC_LIBRARIES :=	\
 
 LOCAL_LDLIBS := -ldl -lpthread
 
-LOCAL_REQUIRED_MODULE := llvm-rs-link
+LOCAL_REQUIRED_MODULES := llvm-rs-link
 
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
