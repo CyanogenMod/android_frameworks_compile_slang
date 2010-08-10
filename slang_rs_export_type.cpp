@@ -10,6 +10,8 @@
 #include "llvm/ADT/StringExtras.h"  /* for function llvm::utostr_32() */
 #include "llvm/Target/TargetData.h" /* for class llvm::TargetData and class llvm::StructLayout */
 
+#include "clang/AST/RecordLayout.h"
+
 namespace slang {
 
 /****************************** RSExportType ******************************/
@@ -276,7 +278,10 @@ size_t RSExportType::GetTypeStoreSize(const RSExportType* ET) {
 }
 
 size_t RSExportType::GetTypeAllocSize(const RSExportType* ET) {
-    return ET->getRSContext()->getTargetData()->getTypeAllocSize(ET->getLLVMType());
+    if(ET->getClass() == RSExportType::ExportClassRecord)
+        return static_cast<const RSExportRecordType*>(ET)->getAllocSize();
+    else
+        return ET->getRSContext()->getTargetData()->getTypeAllocSize(ET->getLLVMType());
 }
 
 RSExportType::RSExportType(RSContext* Context, const llvm::StringRef& Name) :
@@ -617,6 +622,10 @@ RSExportRecordType* RSExportRecordType::Create(RSContext* Context, const RecordT
             FAILED_CREATE_FIELD(FD->getName().str().c_str());
 #undef FAILED_CREATE_FIELD
     }
+
+
+    const ASTRecordLayout &ASTRL = Context->getASTContext()->getASTRecordLayout(RD);
+    ERT->AllocSize = (ASTRL.getSize() > ASTRL.getDataSize()) ? (ASTRL.getSize() >> 3) : (ASTRL.getDataSize() >> 3);
 
     return ERT;
 }

@@ -91,6 +91,7 @@ public:
 
     /* The size of allocation of specified RSExportType (alignment considered) */
     static size_t GetTypeAllocSize(const RSExportType* ET);
+    static unsigned char GetTypeAlignment(const RSExportType* ET);
 
     const std::string& getName() const { return mName; }
     inline RSContext* getRSContext() const { return mContext; }
@@ -310,6 +311,7 @@ private:
     std::list<const Field*> mFields;
     bool mIsPacked;
     bool mIsArtificial; /* Artificial export struct type is not exported by user (and thus it won't get reflected) */
+    size_t AllocSize;
 
     RSExportRecordType(RSContext* Context,
                        const llvm::StringRef& Name,
@@ -334,6 +336,7 @@ public:
 
     inline bool isPacked() const { return mIsPacked; }
     inline bool isArtificial() const { return mIsArtificial; }
+    inline size_t getAllocSize() const { return AllocSize; }
 
     ~RSExportRecordType() {
         for(std::list<const Field*>::iterator it = mFields.begin();

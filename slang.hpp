@@ -198,6 +198,7 @@ public:
         return;
     }
 
+  //  smallvector list_of_filename;
     ~Slang();
 };  /* class Slang */
 

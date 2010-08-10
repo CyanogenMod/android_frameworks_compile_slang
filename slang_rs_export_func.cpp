@@ -2,6 +2,8 @@
 #include "slang_rs_export_func.hpp"
 #include "slang_rs_export_type.hpp"
 
+#include "llvm/Target/TargetData.h" /* for class llvm::TargetData */
+
 #include "clang/AST/Decl.h"         /* for clang::*Decl */
 
 namespace slang {
@@ -48,6 +50,8 @@ const RSExportRecordType* RSExportFunc::getParamPacketType() const {
             PI != params_end();
             PI++, Index++)
             ParamPacketType->mFields.push_back( new RSExportRecordType::Field((*PI)->getType(), (*PI)->getName(), ParamPacketType, Index) );
+
+        ParamPacketType->AllocSize = mContext->getTargetData()->getTypeAllocSize(ParamPacketType->getLLVMType());
 
         mParamPacketType = ParamPacketType;
     }

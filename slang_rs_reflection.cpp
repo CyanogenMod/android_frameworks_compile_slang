@@ -1122,14 +1122,18 @@ void RSReflection::genAddElementToElementBuilder(Context& C, const RSExportType*
           /* eb.add(...) */
           genAddElementToElementBuilder(C, (*I)->getType(), FieldName, ElementBuilderName, RenderScriptVar);
 
-          /* there's padding within the field type */
+          /* There is padding within the field type */
           genAddPaddingToElementBuiler(C, (FieldAllocSize - FieldStoreSize), ElementBuilderName, RenderScriptVar);
 
           Pos = FieldOffset + FieldAllocSize;
         }
 
         /* There maybe some padding after the struct */
-        genAddPaddingToElementBuiler(C, (RSExportType::GetTypeAllocSize(ERT) - Pos), ElementBuilderName, RenderScriptVar);
+        //unsigned char align = RSExportType::GetTypeAlignment(ERT);
+        //size_t siz = RSExportType::GetTypeAllocSize(ERT);
+        size_t siz1 = RSExportType::GetTypeStoreSize(ERT);
+
+        genAddPaddingToElementBuiler(C, siz1 - Pos, ElementBuilderName, RenderScriptVar);
       } else {
         assert(false && "Unknown class of type");
       }
