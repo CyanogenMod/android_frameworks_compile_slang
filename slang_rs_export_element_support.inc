@@ -24,6 +24,9 @@
 #   define ELEMENT_DATA_TYPE_RS_PROGRAM_RASTER      RSExportPrimitiveType::DataTypeRSProgramRaster
 #   define ELEMENT_DATA_TYPE_RS_PROGRAM_STORE       RSExportPrimitiveType::DataTypeRSProgramStore
 #   define ELEMENT_DATA_TYPE_RS_FONT                RSExportPrimitiveType::DataTypeRSFont
+#   define ELEMENT_DATA_TYPE_RS_MATRIX2X2           RSExportPrimitiveType::DataTypeRSMatrix2x2
+#   define ELEMENT_DATA_TYPE_RS_MATRIX3X3           RSExportPrimitiveType::DataTypeRSMatrix3x3
+#   define ELEMENT_DATA_TYPE_RS_MATRIX4X4           RSExportPrimitiveType::DataTypeRSMatrix4x4
 
 #endif  /* USE_ELEMENT_TYPE_NAME */
 
@@ -127,6 +130,9 @@
     DEF_RS_OBJECT_TYPE(RS_PROGRAM_RASTER, "rs_program_raster")
     DEF_RS_OBJECT_TYPE(RS_PROGRAM_STORE, "rs_program_store")
     DEF_RS_OBJECT_TYPE(RS_FONT, "rs_font")
+    DEF_RS_OBJECT_TYPE(RS_MATRIX2X2, "rs_matrix2x2")
+    DEF_RS_OBJECT_TYPE(RS_MATRIX3X3, "rs_matrix3x3")
+    DEF_RS_OBJECT_TYPE(RS_MATRIX4X4, "rs_matrix4x4")
 
 #   undef DEF_RS_OBJECT_TYPE
 #endif  /* DEF_RS_OBJECT_TYPE */
@@ -161,6 +167,9 @@
 #   undef ELEMENT_DATA_TYPE_RS_PROGRAM_RASTER
 #   undef ELEMENT_DATA_TYPE_RS_PROGRAM_STORE
 #   undef ELEMENT_DATA_TYPE_RS_FONT
+#   undef ELEMENT_DATA_TYPE_RS_MATRIX2X2
+#   undef ELEMENT_DATA_TYPE_RS_MATRIX3X3
+#   undef ELEMENT_DATA_TYPE_RS_MATRIX4X4
 
 #   undef USE_ELEMENT_DATA_TYPE
 

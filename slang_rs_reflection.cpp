@@ -90,6 +90,9 @@ static const char* GetPrimitiveTypeName(const RSExportPrimitiveType* EPT) {
         "ProgramRaster",    /* RSExportPrimitiveType::DataTypeRSProgramRaster */
         "ProgramStore",     /* RSExportPrimitiveType::DataTypeRSProgramStore */
         "Font",     /* RSExportPrimitiveType::DataTypeRSFont */
+        "Matrix2f",     /* RSExportPrimitiveType::DataTypeRSMatrix2x2 */
+        "Matrix3f",     /* RSExportPrimitiveType::DataTypeRSMatrix3x3 */
+        "Matrix4f",     /* RSExportPrimitiveType::DataTypeRSMatrix4x4 */
     };
 
     if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveTypeJavaNameMap) / sizeof(const char*)))) {
@@ -194,6 +197,9 @@ static const char* GetPackerAPIName(const RSExportPrimitiveType* EPT) {
         "addObj",   /* RSExportPrimitiveType::DataTypeRSProgramRaster */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSProgramStore */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSFont */
+        "addObj",   /* RSExportPrimitiveType::DataTypeRSMatrix2x2 */
+        "addObj",   /* RSExportPrimitiveType::DataTypeRSMatrix3x3 */
+        "addObj",   /* RSExportPrimitiveType::DataTypeRSMatrix4x4 */
     };
 
     if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveTypePackerAPINameMap) / sizeof(const char*))))
@@ -271,6 +277,9 @@ static const char* GetBuiltinElementConstruct(const RSExportType* ET) {
                 "PROGRAM_RASTER",      /* RSExportPrimitiveType::DataTypeRSProgramRaster */
                 "PROGRAM_STORE",       /* RSExportPrimitiveType::DataTypeRSProgramStore */
                 "FONT",       /* RSExportPrimitiveType::DataTypeRSFont */
+                "MATRIX2X2",       /* RSExportPrimitiveType::DataTypeRSMatrix2x2 */
+                "MATRIX3X3",       /* RSExportPrimitiveType::DataTypeRSMatrix3x3 */
+                "MATRIX4X4",       /* RSExportPrimitiveType::DataTypeRSMatrix4x4 */
             };
 
             if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveBuiltinElementConstructMap) / sizeof(const char*))))
@@ -383,6 +392,9 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
         "Element.DataType.RS_PROGRAM_RASTER",   /* RSExportPrimitiveType::DataTypeRSProgramRaster */
         "Element.DataType.RS_PROGRAM_STORE",    /* RSExportPrimitiveType::DataTypeRSProgramStore */
         "Element.DataType.RS_FONT",    /* RSExportPrimitiveType::DataTypeRSFont */
+        "Element.DataType.RS_MATRIX2X2",    /* RSExportPrimitiveType::DataTypeRSMatrix2x2 */
+        "Element.DataType.RS_MATRIX3X3",    /* RSExportPrimitiveType::DataTypeRSMatrix3x3 */
+        "Element.DataType.RS_MATRIX4X4",    /* RSExportPrimitiveType::DataTypeRSMatrix4x4 */
     };
 
     if((DT >= 0) && (DT < (sizeof(ElementDataTypeNameMap) / sizeof(const char*))))

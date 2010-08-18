@@ -135,6 +135,9 @@ public:
         DataTypeRSProgramRaster = 24,
         DataTypeRSProgramStore = 25,
         DataTypeRSFont = 26,
+        DataTypeRSMatrix2x2 = 27,
+        DataTypeRSMatrix3x3 = 28,
+        DataTypeRSMatrix4x4 = 29,
 
         DataTypeMax
     } DataType;
