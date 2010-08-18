@@ -186,6 +186,7 @@ static std::string* OutputFileNames;
 static bool Verbose;
 static const char* FeatureEnabledList[MaxTargetFeature + 1];
 static int AllowRSPrefix = 0;
+static int Externalize = 0;
 static int NoLink = 0;
 
 /* Construct the command options table used in ParseOption::getopt_long */
@@ -193,6 +194,7 @@ static void ConstructCommandOptions() {
   /* Basic slang command option */
   static struct option BasicSlangOpts[] = {
     { "allow-rs-prefix", no_argument, &AllowRSPrefix, 1 },
+    { "externalize", no_argument, &Externalize, 1 },
     { "no-link", no_argument, &NoLink, 1 },
 
     { "emit-llvm",       no_argument, (int*) &OutputFileType, SlangCompilerOutput_LL },
@@ -739,7 +741,11 @@ int main(int argc, char** argv) {
 
         char* link0 = linkFile();
         char* link1 = linkFile1();
-        execl(cmd.c_str(), cmd.c_str(), "-o", OutputFileNames[count].c_str(), beforeLink.c_str(), link0, link1, NULL);
+        if (Externalize) {
+          execl(cmd.c_str(), cmd.c_str(), "-e", "-o", OutputFileNames[count].c_str(), beforeLink.c_str(), link0, link1, NULL);
+        } else {
+          execl(cmd.c_str(), cmd.c_str(), "-o", OutputFileNames[count].c_str(), beforeLink.c_str(), link0, link1, NULL);
+        }
       }
 
       waitForChild(pid);

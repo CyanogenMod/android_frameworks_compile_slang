@@ -30,6 +30,10 @@ static cl::opt<std::string>
 OutputFilename("o", cl::Required, cl::desc("Override output filename"),
                cl::value_desc("<output bitcode file>"));
 
+static cl::opt<bool>
+Externalize("e", cl::Optional, cl::desc("To externalize"),
+               cl::value_desc("<externalize>"));
+
 // GetExported - ...
 static void GetExported(NamedMDNode *N, std::vector<std::string> &Names) {
   for (int i = 0, e = N->getNumOperands(); i != e; ++i) {
@@ -92,7 +96,7 @@ static inline std::auto_ptr<Module> LoadFile(const char *argv0,
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;
 
-  cl::ParseCommandLineOptions(argc, argv, "slang linker\n");
+  cl::ParseCommandLineOptions(argc, argv, "llvm-rs-link\n");
 
   LLVMContext &Context = getGlobalContext();
   std::auto_ptr<Module> Composite = LoadFile(argv[0], InputFilenames[0],
@@ -138,18 +142,21 @@ int main(int argc, char **argv) {
       Passes.add(TD);
   }
 
-  std::vector<std::string> PublicAPINames;
-  PublicAPINames.push_back("init");
-  PublicAPINames.push_back("root");
-  GetExportedGlobals(Composite.get(), PublicAPINames);
+  if (!Externalize) {
+    std::vector<std::string> PublicAPINames;
+    PublicAPINames.push_back("init");
+    PublicAPINames.push_back("root");
+    GetExportedGlobals(Composite.get(), PublicAPINames);
 
-  std::vector<const char *> PublicAPINamesCStr;
-  for (int i = 0, e = PublicAPINames.size(); i != e; ++i) {
-    // errs() << "not internalizing: " << PublicAPINames[i] << '\n';
-    PublicAPINamesCStr.push_back(PublicAPINames[i].c_str());
+    std::vector<const char *> PublicAPINamesCStr;
+    for (int i = 0, e = PublicAPINames.size(); i != e; ++i) {
+      // errs() << "not internalizing: " << PublicAPINames[i] << '\n';
+      PublicAPINamesCStr.push_back(PublicAPINames[i].c_str());
+    }
+
+    Passes.add(createInternalizePass(PublicAPINamesCStr));
   }
 
-  Passes.add(createInternalizePass(PublicAPINamesCStr));
   createStandardLTOPasses(&Passes, false, true, false);
   Passes.run(*Composite.get());
 
