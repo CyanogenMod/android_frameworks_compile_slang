@@ -1183,9 +1183,9 @@ bool RSReflection::reflect(const char* OutputPackageName, const std::string& Inp
         ResourceId = "<Resource ID>";
 
     if((OutputPackageName == NULL) || (*OutputPackageName == '\0') || strcmp(OutputPackageName, "-") == 0)
-        C = new Context("<Package Name>", ResourceId, true);
+        C = new Context(InputFileName, "<Package Name>", ResourceId, true);
     else
-        C = new Context(OutputPackageName, ResourceId, false);
+        C = new Context(InputFileName, OutputPackageName, ResourceId, false);
 
     if(C != NULL) {
         std::string ErrorMsg, ScriptClassName;
@@ -1273,6 +1273,12 @@ bool RSReflection::Context::startClass(AccessModifier AM, bool IsStatic, const s
     /* License */
     out() << mLicenseNote;
 
+    /* Notice of generated file */
+    out() << "/*" << endl;
+    out() << " * This file is auto-generated. DO NOT MODIFY!" << endl;
+    out() << " * The source RenderScript file: " << mInputRSFile << endl;
+    out() << " */" << endl;
+
     /* Package */
     if(!mPackageName.empty())
         out() << "package " << mPackageName << ";" << endl;
@@ -1282,6 +1288,11 @@ bool RSReflection::Context::startClass(AccessModifier AM, bool IsStatic, const s
     for(int i=0;i<(sizeof(Import)/sizeof(const char*));i++)
         out() << "import " << Import[i] << ";" << endl;
     out() << endl;
+
+    /* All reflected classes should be annotated as hidden, so that they won't be exposed in SDK. */
+    out() << "/**" << endl;
+    out() << " * @hide" << endl;
+    out() << " */" << endl;
 
     out() << AccessModifierStr(AM) << ((IsStatic) ? " static" : "") << " class " << ClassName;
     if(SuperClassName != NULL)

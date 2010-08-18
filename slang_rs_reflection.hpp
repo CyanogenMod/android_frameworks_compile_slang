@@ -35,6 +35,8 @@ private:
 
         bool mVerbose;
 
+        std::string mInputRSFile;
+
         std::string mPackageName;
         std::string mResourceId;
 
@@ -68,8 +70,9 @@ private:
 
         static const char* AccessModifierStr(AccessModifier AM);
 
-        Context(const std::string& PackageName, const std::string& ResourceId, bool UseStdout) :
+        Context(const std::string& InputRSFile, const std::string& PackageName, const std::string& ResourceId, bool UseStdout) :
             mLicenseNote(ApacheLicenseNote),
+            mInputRSFile(InputRSFile),
             mPackageName(PackageName),
             mResourceId(ResourceId),
             mUseStdout(UseStdout),
