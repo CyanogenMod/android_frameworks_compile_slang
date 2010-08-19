@@ -742,9 +742,9 @@ int main(int argc, char** argv) {
         char* link0 = linkFile();
         char* link1 = linkFile1();
         if (Externalize) {
-          execl(cmd.c_str(), cmd.c_str(), "-e", "-o", OutputFileNames[count].c_str(), beforeLink.c_str(), link0, link1, NULL);
+          execl(cmd.c_str(), cmd.c_str(), "-e", "-o", OutputFileNames[count].c_str(), beforeLink.c_str(), link0, /*link1,*/ NULL);
         } else {
-          execl(cmd.c_str(), cmd.c_str(), "-o", OutputFileNames[count].c_str(), beforeLink.c_str(), link0, link1, NULL);
+          execl(cmd.c_str(), cmd.c_str(), "-o", OutputFileNames[count].c_str(), beforeLink.c_str(), link0, /*link1,*/ NULL);
         }
       }
 
