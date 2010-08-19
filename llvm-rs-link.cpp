@@ -31,8 +31,7 @@ OutputFilename("o", cl::Required, cl::desc("Override output filename"),
                cl::value_desc("<output bitcode file>"));
 
 static cl::opt<bool>
-Externalize("e", cl::Optional, cl::desc("To externalize"),
-               cl::value_desc("<externalize>"));
+Externalize("e", cl::Optional, cl::desc("To externalize"));
 
 // GetExported - ...
 static void GetExported(NamedMDNode *N, std::vector<std::string> &Names) {
