@@ -364,9 +364,9 @@ const size_t RSExportPrimitiveType::SizeOfDataTypeInBits[RSExportPrimitiveType::
     32, /* DataTypeRSProgramRaster */
     32, /* DataTypeRSProgramStore */
     32, /* DataTypeRSFont */
-    32, /* DataTypeRSMatrix2x2 */
-    32, /* DataTypeRSMatrix3x3 */
-    32, /* DataTypeRSMatrix4x4 */
+    128, /* DataTypeRSMatrix2x2 */
+    288, /* DataTypeRSMatrix3x3 */
+    512, /* DataTypeRSMatrix4x4 */
     0
 };
 
