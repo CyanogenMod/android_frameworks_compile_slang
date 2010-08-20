@@ -103,9 +103,10 @@ llvm::StringRef RSExportType::GetTypeName(const Type* T) {
             const Type* PT = GET_POINTEE_TYPE(T);
             llvm::StringRef PointeeName;
             if(NormalizeType(PT, PointeeName)) {
-                char* Name = new char[ 1 /* * */ + PointeeName.size() ];
+                char* Name = new char[ 1 /* * */ + PointeeName.size() + 1 ];
                 Name[0] = '*';
                 memcpy(Name + 1, PointeeName.data(), PointeeName.size());
+                Name[PointeeName.size() + 1] = '\0';
                 return Name;
             }
         }
