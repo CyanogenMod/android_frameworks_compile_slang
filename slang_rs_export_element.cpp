@@ -65,12 +65,18 @@ RSExportType* RSExportElement::Create(RSContext* Context, const Type* T, const E
         }
         break;
 
+        case Type::ConstantArray:
+          {
+            //XXX
+            break;
+          }
+
         case Type::ExtVector:
         {
             assert(EI->vsize > 1 && "Element not a vector class (please check your macro)");
-            RSExportVectorType* EVT = RSExportVectorType::Create(Context, 
-                                                                 static_cast<ExtVectorType*>(T->getCanonicalTypeInternal().getTypePtr()), 
-                                                                 TypeName, 
+            RSExportVectorType* EVT = RSExportVectorType::Create(Context,
+                                                                 static_cast<ExtVectorType*>(T->getCanonicalTypeInternal().getTypePtr()),
+                                                                 TypeName,
                                                                  EI->kind,
                                                                  EI->normalized);
             /* verify */
@@ -82,11 +88,34 @@ RSExportType* RSExportElement::Create(RSContext* Context, const Type* T, const E
 
         case Type::Record:
         {
-            /* Must be RS object type */
+          /* Must be RS object type */
+
+          if ( TypeName.equals(llvm::StringRef("rs_matrix2x2")) ||
+               TypeName.equals(llvm::StringRef("rs_matrix3x3")) ||
+               TypeName.equals(llvm::StringRef("rs_matrix4x4")) ) {
+
+            const clang::RecordType* RT = static_cast<const RecordType*> (T);
+            const RecordDecl* RD = RT->getDecl();
+            RD = RD->getDefinition();
+            //RSExportRecordType* ERT = new RSExportRecordType(Context, TypeName, RD->hasAttr<PackedAttr>());
+            RecordDecl::field_iterator fit = RD->field_begin();
+            FieldDecl* FD = *fit;
+            const Type* FT = RSExportType::GetTypeOfDecl(FD);
+            RSExportConstantArrayType* ECT = RSExportConstantArrayType::Create(Context, static_cast<const ConstantArrayType*> (FT), TypeName);
+            ET = ECT;
+
+            //RSExportType* FieldET = RSExportElement::CreateFromDecl(Context, FD);
+            //ERT->mFields.push_back( new Field(FieldET, FD->getName(), ERT, 0) );
+            //const ASTRecordLayout &ASTRL = Context->getASTContext()->getASTRecordLayout(RD);
+            //ERT->AllocSize = (ASTRL.getSize() > ASTRL.getDataSize()) ? (ASTRL.getSize() >> 3) : (ASTRL.getDataSize() >> 3);
+            //ET = ERT;
+
+          } else {
             RSExportPrimitiveType* EPT = RSExportPrimitiveType::Create(Context, T, TypeName, EI->kind, EI->normalized);
             /* verify */
             assert(EI->type == EPT->getType() && "Element has unexpected type");
             ET = EPT;
+          }
         }
         break;
 
@@ -94,7 +123,7 @@ RSExportType* RSExportElement::Create(RSContext* Context, const Type* T, const E
             /* TODO: warning: type is not exportable */
             printf("RSExportElement::Create : type '%s' is not exportable\n", T->getTypeClassName());
         break;
-    } 
+    }
 
     return ET;
 }
@@ -104,29 +133,32 @@ RSExportType* RSExportElement::CreateFromDecl(RSContext* Context, const Declarat
     const Type* CT = GET_CANONICAL_TYPE(T);
     const ElementInfo* EI = NULL;
 
-    /* Shortcut, rs element like rs_color4f should be the type of primitive or vector */
-    if((CT->getTypeClass() != Type::Builtin) && (CT->getTypeClass() != Type::ExtVector))
+    /* For rs element that's NOT like those rs_color4f..., just call Create(Context, T) without finding EI */
+    /* Note: Those rs_color4f kind of elements are either typed primitive or vector */
+    if ((CT->getTypeClass() != Type::Builtin) && (CT->getTypeClass() != Type::ExtVector) && (CT->getTypeClass() != Type::Record)) {
         return RSExportType::Create(Context, T);
+    }
 
-    /* Iterative query the name of type to see whether it's element name like rs_color4f or its alias (via typedef) */
-    while(T != CT) {
-        if(T->getTypeClass() != Type::Typedef) 
+    /* Iterative query the name of type to see whether it's an element name like rs_color4f or its alias (via typedef) */
+    while (T != CT) {
+        if (T->getTypeClass() != Type::Typedef) {
             break;
-        else {
+        } else {
             const TypedefType* TT = static_cast<const TypedefType*>(T);
             const TypedefDecl* TD = TT->getDecl();
             EI = GetElementInfo(TD->getName());
-            if(EI != NULL)
+            if (EI != NULL)
                 break;
-                
+
             T = TD->getUnderlyingType().getTypePtr();
         }
     }
 
-    if(EI == NULL)
+    if(EI == NULL) {
         return RSExportType::Create(Context, T);
-    else
+    } else {
         return RSExportElement::Create(Context, T, EI);
+    }
 }
 
 const RSExportElement::ElementInfo* RSExportElement::GetElementInfo(const llvm::StringRef& Name) {

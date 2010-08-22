@@ -25,7 +25,7 @@ bool RSExportType::NormalizeType(const Type*& T, llvm::StringRef& TypeName) {
     /* Get type name */
     TypeName = RSExportType::GetTypeName(T);
     if(TypeName.empty())
-        /* TODO: warning the user: the type is unnmaed */
+        /* TODO: warning the user: the type is unnamed */
         return false;
 
     return true;
@@ -109,6 +109,13 @@ llvm::StringRef RSExportType::GetTypeName(const Type* T) {
                 Name[PointeeName.size() + 1] = '\0';
                 return Name;
             }
+        }
+        break;
+
+        case Type::ConstantArray:
+        {
+            const ConstantArrayType* ECT = UNSAFE_CAST_TYPE(ConstantArrayType, T);
+            return RSExportConstantArrayType::GetTypeName(ECT);
         }
         break;
 
@@ -198,6 +205,22 @@ const Type* RSExportType::TypeExportable(const Type* T, llvm::SmallPtrSet<const 
         }
         break;
 
+        case Type::ConstantArray:
+        {
+            const ConstantArrayType* ECT = UNSAFE_CAST_TYPE(ConstantArrayType, T);
+            /* Check element numbers */
+            //            if (ECT->getNumElements() != 4 && ECT->getNumElements() != 9 && ECT->getNumElements() != 16) { /* only support 2x2, 3x3, 4x4 arrays */
+            //                return NULL;
+
+            /* Check base element type */
+            const Type* ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(ECT);
+
+            if((ElementType->getTypeClass() != Type::Builtin) || (TypeExportable(ElementType, SPS) == NULL))
+                return NULL;
+            return T;
+        }
+        break;
+
         case Type::ExtVector:
         {
             const ExtVectorType* EVT = UNSAFE_CAST_TYPE(ExtVectorType, T);
@@ -232,31 +255,52 @@ RSExportType* RSExportType::Create(RSContext* Context, const Type* T, const llvm
 
     RSExportType* ET = NULL;
     switch(T->getTypeClass()) {
-        case Type::Record:
-            if(RSExportPrimitiveType::GetRSObjectType(TypeName) != RSExportPrimitiveType::DataTypeUnknown)
-                ET = RSExportPrimitiveType::Create(Context, T, TypeName);
-            else
+        case Type::Record: {
+            RSExportPrimitiveType::DataType dt = RSExportPrimitiveType::GetRSObjectType(TypeName);
+            switch (dt) {
+              case RSExportPrimitiveType::DataTypeUnknown:    // User-defined types
                 ET = RSExportRecordType::Create(Context, T->getAsStructureType(), TypeName);
-        break;
-
+                break;
+              case RSExportPrimitiveType::DataTypeRSMatrix2x2:
+              case RSExportPrimitiveType::DataTypeRSMatrix3x3:
+              case RSExportPrimitiveType::DataTypeRSMatrix4x4: {
+                const clang::RecordType* RT = static_cast<const RecordType*> (T);
+                const RecordDecl* RD = RT->getDecl();
+                RD = RD->getDefinition();
+                RecordDecl::field_iterator fit = RD->field_begin();
+                FieldDecl* FD = *fit;
+                const Type* FT = RSExportType::GetTypeOfDecl(FD);
+                ET = RSExportConstantArrayType::Create(Context, static_cast<const ConstantArrayType*> (FT), TypeName);
+                break;
+              }
+              default:
+                ET = RSExportPrimitiveType::Create(Context, T, TypeName);
+                break;
+            }
+            break;
+        }
         case Type::Builtin:
             ET = RSExportPrimitiveType::Create(Context, T, TypeName);
-        break;
+            break;
 
         case Type::Pointer:
             ET = RSExportPointerType::Create(Context, UNSAFE_CAST_TYPE(PointerType, T), TypeName);
             /* free the name (allocated in RSExportType::GetTypeName) */
             delete [] TypeName.data();
-        break;
+            break;
+
+        case Type::ConstantArray:
+            ET = RSExportConstantArrayType::Create(Context, UNSAFE_CAST_TYPE(ConstantArrayType, T), TypeName);
+            break;
 
         case Type::ExtVector:
             ET = RSExportVectorType::Create(Context, UNSAFE_CAST_TYPE(ExtVectorType, T), TypeName);
-        break;
+            break;
 
         default:
             /* TODO: warning: type is not exportable */
             printf("RSExportType::Create : type '%s' is not exportable\n", T->getTypeClassName());
-        break;
+            break;
     }
 
     return ET;
@@ -515,6 +559,48 @@ RSExportType::ExportClass RSExportPointerType::getClass() const {
 const llvm::Type* RSExportPointerType::convertToLLVMType() const {
     const llvm::Type* PointeeType = mPointeeType->getLLVMType();
     return llvm::PointerType::getUnqual(PointeeType);
+}
+
+/****************************** RSExportConstantArrayType ******************************/
+llvm::StringRef RSExportConstantArrayType::GetTypeName(const ConstantArrayType* CT) {
+  llvm::APInt i = CT->getSize();
+  if (i == 4) {
+    return llvm::StringRef("rs_matrix2x2");
+  } else if (i == 9) {
+    return llvm::StringRef("rs_matrix3x3");
+  } else if (i == 16) {
+      return llvm::StringRef("rs_matrix4x4");
+  }
+  return llvm::StringRef();
+}
+
+RSExportConstantArrayType* RSExportConstantArrayType::Create(RSContext* Context, const ConstantArrayType* CT, const llvm::StringRef& TypeName, DataKind DK, bool Normalized) {
+    assert(CT != NULL && CT->getTypeClass() == Type::ConstantArray);
+
+    const Type* ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CT);
+    //    RSExportPrimitiveType::DataType DT = RSExportPrimitiveType::GetDataType(ElementType);
+    int64_t siz = CT->getSize().getSExtValue();
+    RSExportPrimitiveType::DataType DT;
+    if (siz == 4) {
+      DT = RSExportPrimitiveType::DataTypeRSMatrix2x2;
+    } else if (siz == 9) {
+      DT = RSExportPrimitiveType::DataTypeRSMatrix3x3;
+    } else if (siz == 16) {
+      DT = RSExportPrimitiveType::DataTypeRSMatrix4x4;
+    } else {
+      printf("RSExportConstantArrayType::Create : unsupported base element type\n");
+    }
+
+    return new RSExportConstantArrayType(Context, TypeName, DT, DK, Normalized, siz);
+}
+
+RSExportType::ExportClass RSExportConstantArrayType::getClass() const {
+    return RSExportType::ExportClassConstantArray;
+}
+
+const llvm::Type* RSExportConstantArrayType::convertToLLVMType() const {
+  llvm::LLVMContext& C = getRSContext()->getLLVMContext();
+  return llvm::ArrayType::get(llvm::Type::getFloatTy(C), mNumElement);
 }
 
 /****************************** RSExportVectorType ******************************/

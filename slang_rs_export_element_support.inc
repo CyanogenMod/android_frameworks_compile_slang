@@ -80,6 +80,11 @@
     /* RS_KIND_POINT_SIZE */
     DEF_ELEMENT("rs_point_size", POINT_SIZE, FLOAT_32, false, 3)
 
+    /* matrix */
+    DEF_ELEMENT("rs_matrix2x2", USER, FLOAT_32, false, 4)
+    DEF_ELEMENT("rs_matrix3x3", USER, FLOAT_32, false, 9)
+    DEF_ELEMENT("rs_matrix4x4", USER, FLOAT_32, false, 16)
+
 #endif  /* DEF_ELEMENT */
 
 #if 0

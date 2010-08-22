@@ -14,6 +14,7 @@
 
 #define GET_CANONICAL_TYPE(T)   (((T) == NULL) ? NULL : (T)->getCanonicalTypeInternal().getTypePtr())
 #define UNSAFE_CAST_TYPE(TT, T) static_cast<TT*>(T->getCanonicalTypeInternal().getTypePtr())
+#define GET_CONSTANT_ARRAY_ELEMENT_TYPE(T)  (((T) == NULL) ? NULL : GET_CANONICAL_TYPE((T)->getElementType().getTypePtr()))
 #define GET_EXT_VECTOR_ELEMENT_TYPE(T)  (((T) == NULL) ? NULL : GET_CANONICAL_TYPE((T)->getElementType().getTypePtr()))
 #define GET_POINTEE_TYPE(T) (((T) == NULL) ? NULL : GET_CANONICAL_TYPE((T)->getPointeeType().getTypePtr()))
 
@@ -25,6 +26,7 @@ namespace slang {
 
 class RSContext;
 class RSExportPrimitiveType;
+class RSExportConstantArrayType;
 class RSExportVectorType;
 class RSExportRecordType;
 class RSExportFunction;
@@ -37,6 +39,7 @@ public:
     typedef enum {
         ExportClassPrimitive,
         ExportClassPointer,
+        ExportClassConstantArray,
         ExportClassVector,
         ExportClassRecord
     } ExportClass;
@@ -236,6 +239,36 @@ public:
 
     inline const RSExportType* getPointeeType() const { return mPointeeType; }
 };  /* RSExportPointerType */
+
+
+class RSExportConstantArrayType : public RSExportPrimitiveType {
+  friend class RSExportType;
+  friend class RSExportElement;
+
+ private:
+    int mNumElement;   /* number of element */
+
+    RSExportConstantArrayType(RSContext* Context,
+                              const llvm::StringRef& Name,
+                              DataType DT,
+                              DataKind DK,
+                              bool Normalized,
+                              int NumElement) :
+        RSExportPrimitiveType(Context, Name, DT, DK, Normalized),
+        mNumElement(NumElement)
+    {
+        return;
+    }
+
+    static RSExportConstantArrayType* Create(RSContext* Context, const ConstantArrayType* ECT, const llvm::StringRef& TypeName, DataKind DK = DataKindUser, bool Normalized = false);
+    virtual const llvm::Type* convertToLLVMType() const;
+ public:
+    static llvm::StringRef GetTypeName(const ConstantArrayType* ECT);
+
+    virtual ExportClass getClass() const;
+
+    inline int getNumElement() const { return mNumElement; }
+};
 
 
 class RSExportVectorType : public RSExportPrimitiveType {

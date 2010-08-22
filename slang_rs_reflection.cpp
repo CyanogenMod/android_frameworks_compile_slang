@@ -212,6 +212,7 @@ static const char* GetPackerAPIName(const RSExportPrimitiveType* EPT) {
 static std::string GetTypeName(const RSExportType* ET) {
     switch(ET->getClass()) {
         case RSExportType::ExportClassPrimitive:
+        case RSExportType::ExportClassConstantArray:
             return GetPrimitiveTypeName(static_cast<const RSExportPrimitiveType*>(ET));
         break;
 
@@ -243,9 +244,9 @@ static std::string GetTypeName(const RSExportType* ET) {
 }
 
 static const char* GetBuiltinElementConstruct(const RSExportType* ET) {
-    if(ET->getClass() == RSExportType::ExportClassPrimitive) {
+    if (ET->getClass() == RSExportType::ExportClassPrimitive || ET->getClass() == RSExportType::ExportClassConstantArray) {
         const RSExportPrimitiveType* EPT = static_cast<const RSExportPrimitiveType*>(ET);
-        if(EPT->getKind() == RSExportPrimitiveType::DataKindUser) {
+        if (EPT->getKind() == RSExportPrimitiveType::DataKindUser) {
             static const char* PrimitiveBuiltinElementConstructMap[] = {
                 NULL,
                 NULL,
@@ -282,56 +283,56 @@ static const char* GetBuiltinElementConstruct(const RSExportType* ET) {
                 "MATRIX_4X4",       /* RSExportPrimitiveType::DataTypeRSMatrix4x4 */
             };
 
-            if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveBuiltinElementConstructMap) / sizeof(const char*))))
+            if ((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveBuiltinElementConstructMap) / sizeof(const char*))))
                 return PrimitiveBuiltinElementConstructMap[ EPT->getType() ];
-        } else if(EPT->getKind() == RSExportPrimitiveType::DataKindPixelA) {
-            if(EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
+        } else if (EPT->getKind() == RSExportPrimitiveType::DataKindPixelA) {
+            if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
                 return "A_8";
-        } else if(EPT->getKind() == RSExportPrimitiveType::DataKindPixelRGB) {
-            if(EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned565)
+        } else if (EPT->getKind() == RSExportPrimitiveType::DataKindPixelRGB) {
+            if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned565)
                 return "RGB_565";
-            else if(EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
+            else if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
                 return "RGB_888";
-        } else if(EPT->getKind() == RSExportPrimitiveType::DataKindPixelRGBA) {
-            if(EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned5551)
+        } else if (EPT->getKind() == RSExportPrimitiveType::DataKindPixelRGBA) {
+            if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned5551)
                 return "RGB_5551";
-            else if(EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned4444)
+            else if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned4444)
                 return "RGB_4444";
-            else if(EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
+            else if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
                 return "RGB_8888";
-        } else if(EPT->getKind() == RSExportPrimitiveType::DataKindIndex) {
-            if(EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned16)
+        } else if (EPT->getKind() == RSExportPrimitiveType::DataKindIndex) {
+            if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned16)
                 return "INDEX_16";
         }
-    } else if(ET->getClass() == RSExportType::ExportClassVector) {
+    } else if (ET->getClass() == RSExportType::ExportClassVector) {
         const RSExportVectorType* EVT = static_cast<const RSExportVectorType*>(ET);
-        if(EVT->getKind() == RSExportPrimitiveType::DataKindPosition) {
-            if(EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
-                if(EVT->getNumElement() == 2)
+        if (EVT->getKind() == RSExportPrimitiveType::DataKindPosition) {
+            if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
+                if (EVT->getNumElement() == 2)
                     return "ATTRIB_POSITION_2";
-                else if(EVT->getNumElement() == 3)
+                else if (EVT->getNumElement() == 3)
                     return "ATTRIB_POSITION_3";
             }
-        } else if(EVT->getKind() == RSExportPrimitiveType::DataKindTexture) {
-            if(EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
-                if(EVT->getNumElement() == 2)
+        } else if (EVT->getKind() == RSExportPrimitiveType::DataKindTexture) {
+            if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
+                if (EVT->getNumElement() == 2)
                     return "ATTRIB_TEXTURE_2";
             }
-        } else if(EVT->getKind() == RSExportPrimitiveType::DataKindNormal) {
-            if(EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
-                if(EVT->getNumElement() == 3)
+        } else if (EVT->getKind() == RSExportPrimitiveType::DataKindNormal) {
+            if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
+                if (EVT->getNumElement() == 3)
                     return "ATTRIB_NORMAL_3";
             }
-        } else if(EVT->getKind() == RSExportPrimitiveType::DataKindColor) {
-            if(EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
-                if(EVT->getNumElement() == 4)
+        } else if (EVT->getKind() == RSExportPrimitiveType::DataKindColor) {
+            if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
+                if (EVT->getNumElement() == 4)
                     return "ATTRIB_COLOR_F32_4";
-            } else if(EVT->getType() == RSExportPrimitiveType::DataTypeUnsigned8) {
-                if(EVT->getNumElement() == 4)
+            } else if (EVT->getType() == RSExportPrimitiveType::DataTypeUnsigned8) {
+                if (EVT->getNumElement() == 4)
                     return "ATTRIB_COLOR_U8_4";
             }
         }
-    } else if(ET->getClass() == RSExportType::ExportClassPointer) {
+    } else if (ET->getClass() == RSExportType::ExportClassPointer) {
         return "USER_I32";  /* tread pointer type variable as unsigned int (TODO: this is target dependent) */
     }
 
@@ -565,7 +566,9 @@ void RSReflection::genInitExportVariable(Context& C, const RSExportType* ET, con
     assert(!Val.isUninit() && "Not a valid initializer");
 
     switch(ET->getClass()) {
-        case RSExportType::ExportClassPrimitive: {
+        case RSExportType::ExportClassPrimitive:
+        case RSExportType::ExportClassConstantArray:
+        {
             const RSExportPrimitiveType* EPT = static_cast<const RSExportPrimitiveType*>(ET);
             if (EPT->getType() == RSExportPrimitiveType::DataTypeBool) {
                 genInitBoolExportVariable(C, VarName, Val);
@@ -650,6 +653,7 @@ void RSReflection::genExportVariable(Context& C, const RSExportVar* EV) {
 
     switch(ET->getClass()) {
         case RSExportType::ExportClassPrimitive:
+        case RSExportType::ExportClassConstantArray:
             genPrimitiveTypeExportVariable(C, EV);
         break;
 
@@ -706,7 +710,9 @@ void RSReflection::genExportFunction(Context& C, const RSExportFunc* EF) {
 }
 
 void RSReflection::genPrimitiveTypeExportVariable(Context& C, const RSExportVar* EV) {
-    assert((EV->getType()->getClass() == RSExportType::ExportClassPrimitive) && "Variable should be type of primitive here");
+    assert((  EV->getType()->getClass() == RSExportType::ExportClassPrimitive ||
+              EV->getType()->getClass() == RSExportType::ExportClassConstantArray
+           ) && "Variable should be type of primitive here");
 
     const RSExportPrimitiveType* EPT = static_cast<const RSExportPrimitiveType*>(EV->getType());
     const char* TypeName = GetPrimitiveTypeName(EPT);
@@ -834,6 +840,7 @@ bool RSReflection::genCreateFieldPacker(Context& C, const RSExportType* ET, cons
 void RSReflection::genPackVarOfType(Context& C, const RSExportType* ET, const char* VarName, const char* FieldPackerName) {
     switch(ET->getClass()) {
         case RSExportType::ExportClassPrimitive:
+        case RSExportType::ExportClassConstantArray:
         case RSExportType::ExportClassVector:
             C.indent() << FieldPackerName << "." << GetPackerAPIName(static_cast<const RSExportPrimitiveType*>(ET)) << "(" << VarName << ");" << endl;
         break;
@@ -936,8 +943,9 @@ bool RSReflection::genTypeItemClass(Context& C, const RSExportRecordType* ERT, s
     C.out() << endl;
     for(RSExportRecordType::const_field_iterator FI = ERT->fields_begin();
         FI != ERT->fields_end();
-        FI++)
+        FI++) {
         C.indent() << GetTypeName((*FI)->getType()) << " " << (*FI)->getName() << ";" << endl;
+    }
 
     /* Constructor */
     C.out() << endl;
@@ -949,8 +957,12 @@ bool RSReflection::genTypeItemClass(Context& C, const RSExportRecordType* ERT, s
         FI++)
     {
         const RSExportRecordType::Field* F = *FI;
-        if((F->getType()->getClass() == RSExportType::ExportClassVector) || (F->getType()->getClass() == RSExportType::ExportClassRecord))
-        C.indent() << F->getName() << " = new " << GetTypeName(F->getType()) << "();" << endl;
+        if( (F->getType()->getClass() == RSExportType::ExportClassVector) ||
+            (F->getType()->getClass() == RSExportType::ExportClassRecord) ||
+            (F->getType()->getClass() == RSExportType::ExportClassConstantArray)
+            ) {
+          C.indent() << F->getName() << " = new " << GetTypeName(F->getType()) << "();" << endl;
+        }
     }
 
     C.endBlock();   /* end Constructor */
@@ -1061,7 +1073,10 @@ void RSReflection::genAddElementToElementBuilder(Context& C, const RSExportType*
     if(ElementConstruct != NULL) {
       EB_ADD(ElementConstruct << "(" << RenderScriptVar << ")");
     } else {
-      if((ET->getClass() == RSExportType::ExportClassPrimitive) || (ET->getClass() == RSExportType::ExportClassVector)) {
+      if ((ET->getClass() == RSExportType::ExportClassPrimitive) ||
+          (ET->getClass() == RSExportType::ExportClassVector)    ||
+          (ET->getClass() == RSExportType::ExportClassConstantArray)
+          ) {
         const RSExportPrimitiveType* EPT = static_cast<const RSExportPrimitiveType*>(ET);
         const char* DataKindName = GetElementDataKindName(EPT->getKind());
         const char* DataTypeName = GetElementDataTypeName(EPT->getType());
@@ -1093,12 +1108,13 @@ void RSReflection::genAddElementToElementBuilder(Context& C, const RSExportType*
 
           case RSExportPrimitiveType::DataKindUser:
           default:
-            if(EPT->getClass() == RSExportType::ExportClassPrimitive)
+            if (EPT->getClass() == RSExportType::ExportClassPrimitive || EPT->getClass() == RSExportType::ExportClassConstantArray) {
               /* Element.createUser() */
               EB_ADD("createUser(" << RenderScriptVar << ", " << DataTypeName << ")");
-            else /* (ET->getClass() == RSExportType::ExportClassVector) must hold here */
+            } else {   /* (ET->getClass() == RSExportType::ExportClassVector) must hold here */
               /* Element.createVector() */
               EB_ADD("createVector(" << RenderScriptVar << ", " << DataTypeName << ", " << Size << ")");
+            }
             break;
         }
       } else if(ET->getClass() == RSExportType::ExportClassPointer) {

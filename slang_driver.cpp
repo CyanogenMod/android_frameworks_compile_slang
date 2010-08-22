@@ -550,15 +550,15 @@ static void DestroyCommandOptions() {
 /*
  * E.g., replace out/host/linux-x86/bin/slang to out/host/linux-x86/bin/<fileName>
  */
-static const char* replaceLastPartWithFile(std::string& cmd, const char* fileName) {
+static std::string& replaceLastPartWithFile(std::string& cmd, const char* fileName) {
   size_t pos = cmd.rfind('/');
   if (pos == std::string::npos) {
-    return fileName;
+    return *(new std::string(fileName));
   }
 
   cmd.resize(pos+1);
   cmd.append(fileName);
-  return cmd.c_str();
+  return cmd;
   //  std::string returnFile = cmd.substr(0, pos+1).append(fileName);  // cmd.replace(pos+1, std::string::npos, fileName);
 }
 
@@ -679,7 +679,7 @@ static int waitForChild(pid_t pid) {
 int main(int argc, char** argv) {
   int ret = 0;
   int count;
-  char* command = new char[strlen(argv[0])+1];
+  char* command = new char[strlen(argv[0])+16];
   strcpy(command, argv[0]);
 
   if(argc < 2) {
@@ -736,15 +736,18 @@ int main(int argc, char** argv) {
         cerr << "Failed before llvm-rs-link" << endl;
         exit(1);
       } else if (pid == 0) {
-        std::string cmd(command);
-        replaceLastPartWithFile(cmd, "llvm-rs-link");
+        std::string cmd0(command);
+        std::string cmd = replaceLastPartWithFile(cmd0, "llvm-rs-link");
 
         char* link0 = linkFile();
         char* link1 = linkFile1();
         if (Externalize) {
-          execl(cmd.c_str(), cmd.c_str(), "-e", "-o", OutputFileNames[count].c_str(), beforeLink.c_str(), link0, /*link1,*/ NULL);
+          char* cmdline[] = { (char*)cmd.c_str(), "-e", "-o", (char*)OutputFileNames[count].c_str(), (char*)beforeLink.c_str(), (char*)link0, /*link1,*/ NULL };
+          execvp(cmd.c_str(), cmdline);
         } else {
-          execl(cmd.c_str(), cmd.c_str(), "-o", OutputFileNames[count].c_str(), beforeLink.c_str(), link0, /*link1,*/ NULL);
+          //cerr << cmd << " -o " << OutputFileNames[count] << " " << beforeLink << " " << link0 << endl;
+          char* cmdline[] = { (char*)cmd.c_str(), "-o", (char*)OutputFileNames[count].c_str(), (char*)beforeLink.c_str(), (char*)link0, /*link1,*/ NULL };
+          execvp(cmd.c_str(), cmdline);
         }
       }
 
