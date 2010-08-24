@@ -705,11 +705,14 @@ int main(int argc, char** argv) {
 
       SLANG_CALL_AND_CHECK( slangSetSourceFromFile(slang, InputFileNames[count].c_str()) );
 
-      std::string beforeLink("/tmp/beforeLINK");
+      std::string beforeLink;
       if (NoLink) {
         SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, OutputFileNames[count].c_str()) );
       } else {
-        beforeLink.append(  InputFileNames[count].substr( lastSlashPos(InputFileNames[count]) )  );
+        std::string prefix = InputFileNames[count].substr( lastSlashPos(InputFileNames[count]), 5 );
+
+        char *beforeLinking = tempnam("/tmp", prefix.c_str());
+        beforeLink.assign(beforeLinking); // "/tmp/beforeLinking"
         beforeLink.append(".bc");
 
         SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, beforeLink.c_str()) );
