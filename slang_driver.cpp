@@ -550,10 +550,10 @@ static void DestroyCommandOptions() {
 /*
  * E.g., replace out/host/linux-x86/bin/slang to out/host/linux-x86/bin/<fileName>
  */
-static std::string& replaceLastPartWithFile(std::string& cmd, const char* fileName) {
+static std::string replaceLastPartWithFile(std::string& cmd, const char* fileName) {
   size_t pos = cmd.rfind('/');
   if (pos == std::string::npos) {
-    return *(new std::string(fileName));
+    return std::string(fileName);
   }
 
   cmd.resize(pos+1);
@@ -679,8 +679,9 @@ static int waitForChild(pid_t pid) {
 int main(int argc, char** argv) {
   int ret = 0;
   int count;
-  char* command = new char[strlen(argv[0])+16];
-  strcpy(command, argv[0]);
+
+  std::string command(argv[0]);
+  //  char* command = new char[strlen(argv[0])+16]; strcpy(command, argv[0]);
 
   if(argc < 2) {
     cerr << argv[0] << ": "ERR_NO_INPUT_FILE << endl;
@@ -739,8 +740,8 @@ int main(int argc, char** argv) {
         cerr << "Failed before llvm-rs-link" << endl;
         exit(1);
       } else if (pid == 0) {
-        std::string cmd0(command);
-        std::string cmd = replaceLastPartWithFile(cmd0, "llvm-rs-link");
+        std::string cmd(command);
+        cmd = replaceLastPartWithFile(cmd, "llvm-rs-link");
 
         char* link0 = linkFile();
         char* link1 = linkFile1();
