@@ -173,13 +173,17 @@ bool RSContext::processExportType(const llvm::StringRef& Name) {
 }
 
 void RSContext::processExport() {
-    /* Export variable */
+    if (mNeedExportVars.empty() && mNeedExportFuncs.empty()) {
+        printf("note: Missing #pragma rs export_ vars and #pragma rs export_func -> Automatically export non-statics vars/funcs\n");
+        mExportAllNonStaticVars = true;
+        mExportAllNonStaticFuncs = true;
+    }
     TranslationUnitDecl* TUDecl = mCtx->getTranslationUnitDecl();
-    for(DeclContext::decl_iterator DI = TUDecl->decls_begin();
+    for (DeclContext::decl_iterator DI = TUDecl->decls_begin();
         DI != TUDecl->decls_end();
-        DI++)
-    {
+        DI++) {
         if (DI->getKind() == Decl::Var) {
+            /* Export variables */
             VarDecl* VD = (VarDecl*) (*DI);
             if (mExportAllNonStaticVars && VD->getLinkage() == ExternalLinkage) {
                 if (!processExportVar(VD)) {
@@ -187,10 +191,12 @@ void RSContext::processExport() {
                 }
             } else {
                 NeedExportVarSet::iterator EI = mNeedExportVars.find(VD->getName());
-                if(EI != mNeedExportVars.end() && processExportVar(VD))
+                if (EI != mNeedExportVars.end() && processExportVar(VD)) {
                     mNeedExportVars.erase(EI);
+                }
             }
         } else if (DI->getKind() == Decl::Function) {
+            /* Export functions */
             FunctionDecl* FD = (FunctionDecl*) (*DI);
             if (mExportAllNonStaticFuncs && FD->getLinkage() == ExternalLinkage) {
                 if (!processExportFunc(FD)) {
@@ -198,19 +204,21 @@ void RSContext::processExport() {
                 }
             } else {
                 NeedExportFuncSet::iterator EI = mNeedExportFuncs.find(FD->getName());
-                if(EI != mNeedExportFuncs.end() && processExportFunc(FD))
+                if (EI != mNeedExportFuncs.end() && processExportFunc(FD))
                     mNeedExportFuncs.erase(EI);
             }
         }
     }
 
     /* Finally, export type forcely set to be exported by user */
-    for(NeedExportTypeSet::const_iterator EI = mNeedExportTypes.begin();
-        EI != mNeedExportTypes.end();
-        EI++)
-        if(!processExportType(EI->getKey()))
-            printf("RSContext::processExport : failed to export type '%s'\n", EI->getKey().str().c_str());
+    for (NeedExportTypeSet::const_iterator EI = mNeedExportTypes.begin();
+         EI != mNeedExportTypes.end();
+         EI++) {
+      if (!processExportType(EI->getKey())) {
+        printf("RSContext::processExport : failed to export type '%s'\n", EI->getKey().str().c_str());
 
+      }
+    }
 
     return;
 }
