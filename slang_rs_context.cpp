@@ -173,10 +173,10 @@ bool RSContext::processExportType(const llvm::StringRef& Name) {
 }
 
 void RSContext::processExport() {
-    if (mNeedExportVars.empty() && mNeedExportFuncs.empty()) {
-        printf("note: Missing #pragma rs export_ vars and #pragma rs export_func -> Automatically export non-statics vars/funcs\n");
-        mExportAllNonStaticVars = true;
-        mExportAllNonStaticFuncs = true;
+    if (mNeedExportVars.empty() && mNeedExportFuncs.empty() && !mExportAllNonStaticVars && !mExportAllNonStaticFuncs) {
+        printf("note: No reflection because there are no #pragma rs export_var(...), #pragma rs export_func(...), #pragma rs export_var_all, or #pragma rs export_func_all\n");
+        //mExportAllNonStaticVars = true;
+        //mExportAllNonStaticFuncs = true;
     }
     TranslationUnitDecl* TUDecl = mCtx->getTranslationUnitDecl();
     for (DeclContext::decl_iterator DI = TUDecl->decls_begin();
