@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <vector>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -180,6 +181,8 @@ static const char* JavaReflectionPackageName;
 static const char* JavaReflectionPathName;
 static const char* OutputPathName;
 
+static std::vector<std::string> IncludePaths;
+
 static std::string* InputFileNames;
 static std::string* OutputFileNames;
 
@@ -212,6 +215,8 @@ static void ConstructCommandOptions() {
 
     { "output-java-reflection-class", required_argument, NULL, 'j'},   /* -j */
     { "output-java-reflection-path", required_argument, NULL, 'p'},   /* -p */
+
+    { "include-path", required_argument, NULL, 'I'},  /* -I */
   };
 
   const int NumberOfBasicOptions = sizeof(BasicSlangOpts) / sizeof(struct option);
@@ -304,6 +309,8 @@ static bool ParseOption(int Argc, char** Argv) {
   JavaReflectionPathName = NULL;
   OutputPathName = NULL;
 
+  IncludePaths.clear();
+
   InputFileNames = NULL;
   OutputFileNames = NULL;
 
@@ -323,7 +330,7 @@ static bool ParseOption(int Argc, char** Argv) {
   /* Turn off the error message output by getopt_long */
   opterr = 0;
 
-  while((ch = getopt_long(Argc, Argv, "Schvo:u:t:j:p:", SlangOpts, NULL)) != -1) {
+  while((ch = getopt_long(Argc, Argv, "Schvo:u:t:j:p:I:", SlangOpts, NULL)) != -1) {
     switch(ch) {
       case 'S':
         OutputFileType = SlangCompilerOutput_Assembly;
@@ -343,6 +350,10 @@ static bool ParseOption(int Argc, char** Argv) {
 
       case 'p':
         JavaReflectionPathName = optarg;
+        break;
+
+      case 'I':
+        IncludePaths.push_back(optarg);
         break;
 
       case 'u':
@@ -697,6 +708,10 @@ int main(int argc, char** argv) {
     }
 
     slangSetOutputType(slang, OutputFileType);
+
+    for (int i = 0; i < IncludePaths.size(); ++i) {
+        slangAddIncludePath(slang, IncludePaths[i].c_str());
+    }
 
     if (AllowRSPrefix)
       slangAllowRSPrefix();

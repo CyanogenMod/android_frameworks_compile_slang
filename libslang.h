@@ -32,6 +32,8 @@ void slangSetOutputType(SlangCompiler* compiler, SlangCompilerOutputTy outputTyp
 int slangSetOutputToStream(SlangCompiler* compiler, FILE* stream);
 int slangSetOutputToFile(SlangCompiler* compiler, const char* fileName);
 
+void slangAddIncludePath(SlangCompiler* compiler, const char* path);
+
 int slangCompile(SlangCompiler* compiler);
 
 int slangReflectToJava(SlangCompiler* compiler, const char* packageName);

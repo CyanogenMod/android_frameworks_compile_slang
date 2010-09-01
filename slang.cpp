@@ -112,37 +112,11 @@ void Slang::createPreprocessor() {
   std::string inclFiles("#include \"rs_types.rsh\"");
   mPP->setPredefines(inclFiles + "\n" + "#include \"rs_math.rsh\"" + "\n");
 
-  /* Like ApplyHeaderSearchOptions in InitHeaderSearch.cpp */
-  const char *inclDir = getenv("ANDROID_BUILD_TOP");
   std::vector<DirectoryLookup> SearchList;
-  if (inclDir) {
-    char *dirPath = new char[strlen(inclDir) + 33];
-    strcpy(dirPath, inclDir);
-    strcpy(dirPath + strlen(inclDir), "/frameworks/base/libs/rs/scriptc");
-
-    if (const DirectoryEntry *DE = mFileMgr->getDirectory(dirPath, dirPath + strlen(dirPath))) {
-      SearchList.push_back(DirectoryLookup(DE, SrcMgr::C_System, false, false));
-    }
-  }
-
-  int siz = 256;
-  char *currDir = new char[siz];
-  while (!getcwd(currDir, siz)) {
-    siz *= 2;
-    currDir = new char[siz];
-  }
-
-  if (siz - strlen(currDir) >= 33) {
-    strcpy(currDir + strlen(currDir), "/frameworks/base/libs/rs/scriptc");
-  } else {
-    char *tmp = new char[strlen(currDir) + 33];
-    strcpy(tmp, currDir);
-    strcpy(tmp + strlen(currDir), "/frameworks/base/libs/rs/scriptc");
-    currDir = tmp;
-  }
-
-  if (const DirectoryEntry *DE = mFileMgr->getDirectory(currDir, currDir + strlen(currDir))) {
-    SearchList.push_back(DirectoryLookup(DE, SrcMgr::C_System, false, false));
+  for (int i = 0; i < mIncludePaths.size(); ++i) {
+      if (const DirectoryEntry *DE = mFileMgr->getDirectory(mIncludePaths[i])) {
+          SearchList.push_back(DirectoryLookup(DE, SrcMgr::C_System, false, false));
+      }
   }
 
   HS->SetSearchPaths(SearchList, 1, false);
@@ -199,6 +173,10 @@ bool Slang::setInputSource(llvm::StringRef inputFile) {
     }
 
     return true;
+}
+
+void Slang::addIncludePath(const char* path) {
+    mIncludePaths.push_back(path);
 }
 
 void Slang::setOutputType(SlangCompilerOutputTy outputType) {

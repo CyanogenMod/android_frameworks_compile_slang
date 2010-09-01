@@ -9,6 +9,7 @@
 
 #include <cstdio>
 #include <string>
+#include <vector>
 
 #include "llvm/Support/raw_ostream.h"   /* for class llvm::raw_ostream */
 
@@ -150,6 +151,8 @@ private:
 
     bool mAllowRSPrefix;
 
+    std::vector<std::string> mIncludePaths;
+
 public:
     static const std::string TargetDescription;
 
@@ -160,6 +163,8 @@ public:
     bool setInputSource(llvm::StringRef inputFile, const char* text, size_t textLength);
 
     bool setInputSource(llvm::StringRef inputFile);
+
+    void addIncludePath(const char* path);
 
     void setOutputType(SlangCompilerOutputTy outputType);
 

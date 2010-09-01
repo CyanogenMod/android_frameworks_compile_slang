@@ -53,6 +53,14 @@ extern "C" int slangSetOutputToFile(SlangCompiler* compiler, const char* fileNam
         return 0;
 }
 
+extern "C" void slangAddIncludePath(SlangCompiler* compiler, const char* path) {
+    Slang* slang = (Slang*) compiler;
+    if(slang != NULL) {
+        slang->addIncludePath(path);
+    }
+    return;
+}
+
 extern "C" int slangCompile(SlangCompiler* compiler) {
     Slang* slang = (Slang*) compiler;
     if(slang != NULL)
