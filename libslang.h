@@ -36,7 +36,11 @@ void slangAddIncludePath(SlangCompiler* compiler, const char* path);
 
 int slangCompile(SlangCompiler* compiler);
 
-int slangReflectToJava(SlangCompiler* compiler, const char* packageName);
+// realPackageName: the buffer to receive the package name that's really
+// applied, since the package name may be specified in the .rs file.
+// bSize: size of the buffer outputPackageName.
+int slangReflectToJava(SlangCompiler* compiler, const char* packageName,
+                       char realPackageName[], int bSize);
 int slangReflectToJavaPath(SlangCompiler* compiler, const char* pathName);
 
 const char* slangGetInfoLog(SlangCompiler* compiler);

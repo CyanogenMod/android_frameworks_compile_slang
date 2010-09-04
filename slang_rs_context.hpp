@@ -132,7 +132,8 @@ public:
      */
     bool insertExportType(const llvm::StringRef& TypeName, RSExportType* Type);
 
-    bool reflectToJava(const char* OutputPackageName, const std::string& InputFileName, const std::string& OutputBCFileName);
+    bool reflectToJava(const char* OutputPackageName, const std::string& InputFileName, const std::string& OutputBCFileName,
+                       char realPackageName[], int bSize);
     bool reflectToJavaPath(const char* OutputPathName);
 
     ~RSContext();

@@ -69,10 +69,11 @@ extern "C" int slangCompile(SlangCompiler* compiler) {
         return 0;
 }
 
-extern "C" int slangReflectToJava(SlangCompiler* compiler, const char* packageName) {
+extern "C" int slangReflectToJava(SlangCompiler* compiler, const char* packageName,
+                                  char realPackageName[], int bSize) {
     Slang* slang = (Slang*) compiler;
     if(slang != NULL)
-        return slang->reflectToJava(packageName);
+        return slang->reflectToJava(packageName, realPackageName, bSize);
     else
         return 0;
 }

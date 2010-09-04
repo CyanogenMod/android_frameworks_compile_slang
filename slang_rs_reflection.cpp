@@ -2,13 +2,13 @@
 #include "slang_rs_export_var.hpp"
 #include "slang_rs_reflection.hpp"
 #include "slang_rs_export_func.hpp"
+#include "slang_rs_reflect_utils.hpp"
 
 #include <ctype.h>
 
 #include <utility>
 #include <cstdarg>
 
-#include <sys/stat.h>
 #include "llvm/ADT/APFloat.h"
 
 using std::make_pair;
@@ -37,23 +37,13 @@ using std::endl;
 namespace slang {
 
 /* Some utility function using internal in RSReflection */
-static bool GetFileNameWithoutExtension(const std::string& FileName, std::string& OutFileName) {
-    OutFileName.clear();
+static bool GetClassNameFromFileName(const std::string& FileName, std::string& ClassName) {
+    ClassName.clear();
 
     if(FileName.empty() || (FileName == "-"))
         return true;
 
-    /* find last component in given path */
-    size_t SlashPos = FileName.find_last_of("/\\");
-
-    if((SlashPos != std::string::npos) && ((SlashPos + 1) < FileName.length()))
-        OutFileName = FileName.substr(SlashPos + 1);
-    else
-        OutFileName = FileName;
-
-    size_t DotPos = OutFileName.find_first_of('.');
-    if(DotPos != std::string::npos)
-        OutFileName.erase(DotPos);
+    ClassName = RSSlangReflectUtils::JavaClassNameFromRSFileName(FileName.c_str());
 
     return true;
 }
@@ -404,52 +394,13 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
         return NULL;
 }
 
-static void _mkdir(const std::string &path) {
-    char buf[256];
-    char *tmp, *p = NULL;
-    size_t len = path.size();
-
-    if (len + 1 <= sizeof(buf))
-        tmp = buf;
-    else
-        tmp = new char [len + 1];
-
-    strcpy(tmp, path.c_str());
-
-    if (tmp[len - 1] == '/')
-        tmp[len - 1] = 0;
-
-    for (p = tmp + 1; *p; p++) {
-        if (*p == '/') {
-            *p = 0;
-            mkdir(tmp, S_IRWXU);
-            *p = '/';
-        }
-    }
-    mkdir(tmp, S_IRWXU);
-
-    if (tmp != buf)
-        delete[] tmp;
-}
-
 bool RSReflection::openScriptFile(Context&C, const std::string& ClassName, std::string& ErrorMsg) {
     if(!C.mUseStdout) {
         C.mOF.clear();
-        std::string _path = "/" + C.getPackageName();
-        for (std::string::iterator it = _path.begin(); it != _path.end(); it++ ) {
-            if ( *it == '.') {
-                *it = '/';
-            }
-        }
+        std::string _path = RSSlangReflectUtils::ComputePackagedPath(
+            mRSContext->getReflectJavaPathName(), C.getPackageName());
 
-        std::string prefix = mRSContext->getReflectJavaPathName();
-        if (prefix.empty()) {
-            _path.insert(0, 1, '.');
-        } else {
-            _path.insert(0, mRSContext->getReflectJavaPathName());
-        }
-
-        _mkdir(_path);
+        RSSlangReflectUtils::mkdir_p(_path.c_str());
         C.mOF.open(( _path + "/" + ClassName + ".java" ).c_str());
         if(!C.mOF.good()) {
             ErrorMsg = "failed to open file '" + _path + "/" + ClassName + ".java' for write";
@@ -1192,7 +1143,7 @@ bool RSReflection::reflect(const char* OutputPackageName, const std::string& Inp
     Context *C = NULL;
     std::string ResourceId = "";
 
-    if(!GetFileNameWithoutExtension(OutputBCFileName, ResourceId))
+    if(!GetClassNameFromFileName(OutputBCFileName, ResourceId))
         return false;
 
     if(ResourceId.empty())
@@ -1206,13 +1157,12 @@ bool RSReflection::reflect(const char* OutputPackageName, const std::string& Inp
     if(C != NULL) {
         std::string ErrorMsg, ScriptClassName;
         /* class ScriptC_<ScriptName> */
-        if(!GetFileNameWithoutExtension(InputFileName, ScriptClassName))
+        if(!GetClassNameFromFileName(InputFileName, ScriptClassName))
             return false;
 
         if(ScriptClassName.empty())
             ScriptClassName = "<Input Script Name>";
 
-        ScriptClassName.at(0) = toupper(ScriptClassName.at(0));
         ScriptClassName.insert(0, RS_SCRIPT_CLASS_NAME_PREFIX);
 
         if (mRSContext->getLicenseNote() != NULL) {

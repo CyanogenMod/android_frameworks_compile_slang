@@ -234,12 +234,23 @@ bool RSContext::insertExportType(const llvm::StringRef& TypeName, RSExportType* 
     }
 }
 
-bool RSContext::reflectToJava(const char* OutputPackageName, const std::string& InputFileName, const std::string& OutputBCFileName) {
-    if(OutputPackageName == NULL)
-        if(!mReflectJavaPackageName.empty())
+bool RSContext::reflectToJava(const char* OutputPackageName, const std::string& InputFileName, const std::string& OutputBCFileName, char realPackageName[], int bSize) {
+    if (realPackageName != NULL) {
+        *realPackageName = 0;
+    }
+
+    if(OutputPackageName == NULL) {
+        if(!mReflectJavaPackageName.empty()) {
             OutputPackageName = mReflectJavaPackageName.c_str();
-        else
+        } else {
             return true; /* no package name, just return */
+        }
+    }
+
+    // Copy back the really applied package name
+    if (realPackageName != NULL) {
+        strncpy(realPackageName, OutputPackageName, bSize - 1);
+    }
 
     RSReflection* R = new RSReflection(this);
     bool ret = R->reflect(OutputPackageName, InputFileName, OutputBCFileName);

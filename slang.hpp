@@ -184,7 +184,10 @@ public:
 
     int compile();
 
-    bool reflectToJava(const char* outputPackageName);
+    // The package name that's really applied will be filled in realPackageName.
+    // bSize is the buffer realPackageName size.
+    bool reflectToJava(const char* outputPackageName,
+                       char* realPackageName, int bSize);
     bool reflectToJavaPath(const char* outputPathName);
 
     inline const char* getErrorMessage() {

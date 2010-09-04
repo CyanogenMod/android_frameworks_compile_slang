@@ -280,9 +280,10 @@ int Slang::compile() {
     return mDiagnostics->getNumErrors();
 }
 
-bool Slang::reflectToJava(const char* outputPackageName) {
+bool Slang::reflectToJava(const char* outputPackageName, char* realPackageName, int bSize) {
     if(mRSContext.get())
-        return mRSContext->reflectToJava(outputPackageName, mInputFileName, mOutputFileName);
+        return mRSContext->reflectToJava(outputPackageName, mInputFileName, mOutputFileName,
+                                         realPackageName, bSize);
     else
         return false;
 }

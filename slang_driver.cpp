@@ -1,4 +1,5 @@
 #include "libslang.h"
+#include "slang_rs_reflect_utils.hpp"
 
 #include <assert.h>
 #include <getopt.h>
@@ -186,6 +187,12 @@ static std::vector<std::string> IncludePaths;
 static std::string* InputFileNames;
 static std::string* OutputFileNames;
 
+// Where to store the bc file.
+// possible values:
+// ar: packed as apk resource
+// jc: encoded in Java code.
+static std::string BitCodeStorage("ar");
+
 static bool Verbose;
 static const char* FeatureEnabledList[MaxTargetFeature + 1];
 static int AllowRSPrefix = 0;
@@ -217,6 +224,7 @@ static void ConstructCommandOptions() {
     { "output-java-reflection-path", required_argument, NULL, 'p'},   /* -p */
 
     { "include-path", required_argument, NULL, 'I'},  /* -I */
+    { "bitcode-storage", required_argument, NULL, 's'}, /* -s */
   };
 
   const int NumberOfBasicOptions = sizeof(BasicSlangOpts) / sizeof(struct option);
@@ -260,28 +268,16 @@ extern int optopt;
 extern int opterr;
 static int FileCount;
 
-static int ChangeFileSuffix(std::string &pathFile) {
-  size_t pos = pathFile.rfind(".rs");
-  if (pos != (pathFile.length() - 3)) {
-    assert(false && "Wrong input file suffix");
-    return -1;
-  }
-
-  pos++;
+static int AddOutputFileSuffix(std::string &pathFile) {
   switch (OutputFileType) {
     case SlangCompilerOutput_Assembly:
-      pathFile[pos++] = 'S';
-      pathFile[pos] = '\0';
-      pathFile.resize(pathFile.size()-1);
+      pathFile += ".S";
       break;
     case SlangCompilerOutput_LL:
-      pathFile[pos++] = 'l';
-      pathFile[pos] = 'l';
+      pathFile += ".ll";
       break;
     case SlangCompilerOutput_Obj:
-      pathFile[pos++] = 'o';
-      pathFile[pos] = '\0';
-      pathFile.resize(pathFile.size()-1);
+      pathFile += ".o";
       break;
 
     case SlangCompilerOutput_Nothing:
@@ -289,8 +285,7 @@ static int ChangeFileSuffix(std::string &pathFile) {
 
     case SlangCompilerOutput_Bitcode:
     default:
-      pathFile[pos++] = 'b';
-      pathFile[pos] = 'c';
+      pathFile += ".bc";
       break;
   }
   return 1;
@@ -330,7 +325,7 @@ static bool ParseOption(int Argc, char** Argv) {
   /* Turn off the error message output by getopt_long */
   opterr = 0;
 
-  while((ch = getopt_long(Argc, Argv, "Schvo:u:t:j:p:I:", SlangOpts, NULL)) != -1) {
+  while((ch = getopt_long(Argc, Argv, "Schvo:u:t:j:p:I:s:", SlangOpts, NULL)) != -1) {
     switch(ch) {
       case 'S':
         OutputFileType = SlangCompilerOutput_Assembly;
@@ -354,6 +349,10 @@ static bool ParseOption(int Argc, char** Argv) {
 
       case 'I':
         IncludePaths.push_back(optarg);
+        break;
+
+      case 's':
+        BitCodeStorage = optarg;
         break;
 
       case 'u':
@@ -465,6 +464,12 @@ static bool ParseOption(int Argc, char** Argv) {
     NOTE(MULTIPLE_INPUT_FILES);
   }
 
+  if ((BitCodeStorage != "ar") && (BitCodeStorage != "jc")) {
+      cerr << "BitCodeStorage (-s) should be 'ar' or 'jc', saw "
+           << BitCodeStorage << endl;
+      return false;
+  }
+
   FileCount = Argc;
   InputFileNames = new std::string[FileCount];
   OutputFileNames = new std::string[FileCount];
@@ -480,33 +485,17 @@ static bool ParseOption(int Argc, char** Argv) {
     std::string _outF;
     if (OutputPathName) {
       _outF.assign(OutputPathName);
-      bool slashed = false;
-      if (_outF[_outF.length()-1] == '/') {
-        slashed = true;
+      if (_outF[_outF.length()-1] != '/') {
+        _outF += "/";
       }
-      // Append the source file name
-      size_t pos = InputFileNames[count].rfind('/');
-      if (pos == std::string::npos) {
-        if (slashed) {
-          _outF.append(InputFileNames[count]);
-        } else {
-          _outF.push_back('/');
-          _outF.append(InputFileNames[count]);
-        }
-      } else {
-        if (slashed) {
-          pos++;
-        }
-        _outF.append(InputFileNames[count].substr(pos, std::string::npos));
-      }
-    } else {
-      _outF.assign(InputFileNames[count]);
     }
+    _outF += slang::RSSlangReflectUtils::BCFileNameFromRSFileName(
+        InputFileNames[count].c_str());
 
-    int changed = ChangeFileSuffix(_outF);
-    if (changed < 0) {
+    int status = AddOutputFileSuffix(_outF);
+    if (status < 0) {
       return false;
-    } else if (!changed) {
+    } else if (!status) {
       OutputFileNames[count].assign("/dev/null");
     } else {
       OutputFileNames[count].assign(_outF);
@@ -743,10 +732,12 @@ int main(int argc, char** argv) {
 
       SLANG_CALL_AND_CHECK( slangReflectToJavaPath(slang, JavaReflectionPathName) );
 
-      SLANG_CALL_AND_CHECK( slangReflectToJava(slang, JavaReflectionPackageName) );
+      char realPackageName[0x100];
+      SLANG_CALL_AND_CHECK( slangReflectToJava(slang, JavaReflectionPackageName,
+                            realPackageName, sizeof(realPackageName)));
 
       if (NoLink) {
-        continue;
+        goto encode_bc_to_java_source;
       }
 
       // llvm-rs-link
@@ -791,6 +782,30 @@ int main(int argc, char** argv) {
       }
 
       waitForChild(pid); */
+
+    encode_bc_to_java_source:
+        if ((OutputFileType == SlangCompilerOutput_Bitcode)
+            && (BitCodeStorage == "jc")
+            && (OutputFileNames[count] != "stdout")) {
+            string generated_src_dir;
+            if (JavaReflectionPathName != NULL) {
+                generated_src_dir = JavaReflectionPathName;
+            }
+            if (!slang::RSSlangReflectUtils::EncodeBitcodeToJavaFile(
+                InputFileNames[count].c_str(),
+                OutputFileNames[count].c_str(),
+                generated_src_dir,
+                realPackageName)) {
+                cerr << "Error: could not encode bitcode file: "
+                     << OutputFileNames[count] << endl;
+                cerr << "    The source rs file: "
+                     << InputFileNames[count] << endl;
+                cerr << "    Dest java dir: "
+                     << generated_src_dir << endl;
+                cerr << "    Package name: "
+                     << realPackageName << endl;
+            }
+        }
     }
  on_slang_error:
     delete slang;
@@ -829,6 +844,8 @@ static void Usage(const char* CommandName) {
   OUTPUT_OPTION("-o", "--output-obj-path=<PATH>", "Write compilation output at this path ('-' means stdout)");
   OUTPUT_OPTION("-j", "--output-java-reflection-class=<PACKAGE NAME>", "Output reflection of exportables in the native domain into Java");
   OUTPUT_OPTION("-p", "--output-java-reflection-path=<PATH>", "Write reflection output at this path");
+  OUTPUT_OPTION("-I", "--include-path=<PATH>", "Add a hearder search path");
+  OUTPUT_OPTION("-s", "--bitcode-storage=<VALUE>", "Where to store the bc file. 'ar' means apk resource, 'jc' means Java code.");
 
   cout << endl;
 
