@@ -6,6 +6,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 #include <iomanip>
 #include <iostream>
 #include <vector>
@@ -632,15 +633,6 @@ static char* linkFile1() {
   return dirPath;
 }
 
-static inline size_t lastSlashPos(std::string& in) {
-  size_t pos = in.rfind('/');
-  if (pos == std::string::npos) {
-    return 0;
-  } else {
-    return pos+1;
-  }
-}
-
 static int waitForChild(pid_t pid) {
   pid_t w;
   int childExitStatus;
@@ -698,7 +690,7 @@ int main(int argc, char** argv) {
 
     slangSetOutputType(slang, OutputFileType);
 
-    for (int i = 0; i < IncludePaths.size(); ++i) {
+    for (size_t i = 0; i < IncludePaths.size(); ++i) {
         slangAddIncludePath(slang, IncludePaths[i].c_str());
     }
 
@@ -714,12 +706,19 @@ int main(int argc, char** argv) {
       if (NoLink) {
         SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, OutputFileNames[count].c_str()) );
       } else {
-        std::string prefix = InputFileNames[count].substr( lastSlashPos(InputFileNames[count]), 5 );
+        std::string stem = slang::RSSlangReflectUtils::BCFileNameFromRSFileName(
+            InputFileNames[count].c_str());
+        char tmpFileName[256];
+        snprintf(tmpFileName, sizeof(tmpFileName), "/tmp/%s.bc.XXXXXX", stem.c_str());
+        int f = mkstemp(tmpFileName);
+        if (f < 0) {
+            cerr << "Error: could not create temporary file " << tmpFileName << endl;
+            return 1;
+        }
+        // we don't need the file descriptor
+        close(f);
 
-        char *beforeLinking = tempnam("/tmp", prefix.c_str());
-        beforeLink.assign(beforeLinking); // "/tmp/beforeLinking"
-        beforeLink.append(".bc");
-
+        beforeLink.assign(tmpFileName);
         SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, beforeLink.c_str()) );
       }
 
