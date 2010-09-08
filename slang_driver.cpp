@@ -573,7 +573,7 @@ static std::string replaceLastPartWithFile(std::string& cmd, const char* fileNam
   //  std::string returnFile = cmd.substr(0, pos+1).append(fileName);  // cmd.replace(pos+1, std::string::npos, fileName);
 }
 
-#define LINK_FILE "/external/llvm/slang/rsScriptC_Lib.bc"
+#define LINK_FILE "/frameworks/compile/slang/rsScriptC_Lib.bc"
 #define LINK_FILE_LENGTH 38
 
 static char* linkFile() {
@@ -608,7 +608,7 @@ static char* linkFile() {
   return dirPath;
 }
 
-#define LINK_FILE1 "/external/llvm/slang/rslib.bc"
+#define LINK_FILE1 "/frameworks/compile/slang/rslib.bc"
 #define LINK_FILE1_LENGTH 30
 
 static char* linkFile1() {
