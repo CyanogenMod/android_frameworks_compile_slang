@@ -192,7 +192,7 @@ static std::string* OutputFileNames;
 // possible values:
 // ar: packed as apk resource
 // jc: encoded in Java code.
-static std::string BitCodeStorage("ar");
+static slang::BitCodeStorageType BitCodeStorage(slang::BCST_APK_RESOURCE);
 
 static bool Verbose;
 static const char* FeatureEnabledList[MaxTargetFeature + 1];
@@ -353,7 +353,15 @@ static bool ParseOption(int Argc, char** Argv) {
         break;
 
       case 's':
-        BitCodeStorage = optarg;
+        if (!std::strcmp(optarg, "ar")) {
+            BitCodeStorage = slang::BCST_APK_RESOURCE;
+        } else if (!std::strcmp(optarg, "jc")) {
+            BitCodeStorage = slang::BCST_JAVA_CODE;
+        } else {
+            cerr << "Error: bit code storage (-s) should be 'ar' or 'jc', saw "
+                 << optarg << endl;
+            return false;
+        }
         break;
 
       case 'u':
@@ -465,11 +473,6 @@ static bool ParseOption(int Argc, char** Argv) {
     NOTE(MULTIPLE_INPUT_FILES);
   }
 
-  if ((BitCodeStorage != "ar") && (BitCodeStorage != "jc")) {
-      cerr << "BitCodeStorage (-s) should be 'ar' or 'jc', saw "
-           << BitCodeStorage << endl;
-      return false;
-  }
 
   FileCount = Argc;
   InputFileNames = new std::string[FileCount];
@@ -736,7 +739,7 @@ int main(int argc, char** argv) {
                             realPackageName, sizeof(realPackageName)));
 
       if (NoLink) {
-        goto encode_bc_to_java_source;
+        goto generate_bitcode_accessor;
       }
 
       // llvm-rs-link
@@ -782,27 +785,19 @@ int main(int argc, char** argv) {
 
       waitForChild(pid); */
 
-    encode_bc_to_java_source:
+    generate_bitcode_accessor:
         if ((OutputFileType == SlangCompilerOutput_Bitcode)
-            && (BitCodeStorage == "jc")
+            && (BitCodeStorage == slang::BCST_JAVA_CODE)
             && (OutputFileNames[count] != "stdout")) {
-            string generated_src_dir;
-            if (JavaReflectionPathName != NULL) {
-                generated_src_dir = JavaReflectionPathName;
-            }
-            if (!slang::RSSlangReflectUtils::EncodeBitcodeToJavaFile(
-                InputFileNames[count].c_str(),
-                OutputFileNames[count].c_str(),
-                generated_src_dir,
-                realPackageName)) {
-                cerr << "Error: could not encode bitcode file: "
-                     << OutputFileNames[count] << endl;
-                cerr << "    The source rs file: "
-                     << InputFileNames[count] << endl;
-                cerr << "    Dest java dir: "
-                     << generated_src_dir << endl;
-                cerr << "    Package name: "
-                     << realPackageName << endl;
+            slang::RSSlangReflectUtils::BitCodeAccessorContext bc_context;
+            bc_context.rsFileName = InputFileNames[count].c_str();
+            bc_context.bcFileName = OutputFileNames[count].c_str();
+            bc_context.reflectPath = JavaReflectionPathName ? JavaReflectionPathName : "";
+            bc_context.packageName = realPackageName;
+            bc_context.bcStorage = BitCodeStorage;
+            if (!slang::RSSlangReflectUtils::GenerateBitCodeAccessor(
+                bc_context)) {
+                ret = 1;
             }
         }
     }

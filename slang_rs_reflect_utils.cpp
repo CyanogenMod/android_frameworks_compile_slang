@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include <fstream>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -13,9 +12,9 @@ namespace slang {
 using std::string;
 
 string RSSlangReflectUtils::ComputePackagedPath(
-    const std::string& prefixPath, const std::string& packageName) {
+    const char* prefixPath, const char* packageName) {
     string packaged_path(prefixPath);
-    if (!prefixPath.empty() && (prefixPath[prefixPath.length() - 1] != '/')) {
+    if (!packaged_path.empty() && (packaged_path[packaged_path.length() - 1] != '/')) {
         packaged_path += "/";
     }
     size_t s = packaged_path.length();
@@ -103,21 +102,146 @@ bool RSSlangReflectUtils::mkdir_p(const char* path) {
     return true;
 }
 
-bool RSSlangReflectUtils::EncodeBitcodeToJavaFile(
-    const char* rsFileName, const char* inputBCFileName,
-    const std::string& outputPath, const std::string& packageName) {
+static bool GenerateAccessorHeader(
+    const RSSlangReflectUtils::BitCodeAccessorContext& context, FILE* pfout) {
+    fprintf(pfout, "/*\n");
+    fprintf(pfout, " * This file is auto-generated. DO NOT MODIFY!\n");
+    fprintf(pfout, " * The source RenderScript file: %s\n", context.rsFileName);
+    fprintf(pfout, " */\n\n");
+    fprintf(pfout, "package %s;\n\n", context.packageName);
 
-    FILE* pfin = fopen(inputBCFileName, "rb");
+    // add imports here.
+
+    return true;
+}
+
+static bool GenerateAccessorMethodSignature(
+    const RSSlangReflectUtils::BitCodeAccessorContext& context, FILE* pfout) {
+    // the prototype of the accessor method
+    fprintf(pfout, "  // return byte array representation of the bitcode.\n");
+    fprintf(pfout, "  public static byte[] getBitCode() {\n");
+    return true;
+}
+
+// Java method size must not exceed 64k,
+// so we have to split the bitcode into multiple segments.
+static bool GenerateSegmentMethod(
+    const char* buff, int blen, int seg_num, FILE* pfout) {
+
+    fprintf(pfout, "  private static byte[] getSegment_%d() {\n", seg_num);
+    fprintf(pfout, "    byte[] data = {\n");
+
+    const static int LINE_BYTE_NUM = 16;
+    char out_line[LINE_BYTE_NUM*6 + 10];
+    const char* out_line_end = out_line + sizeof(out_line);
+    char* p = out_line;
+
+    int write_length = 0;
+    while (write_length < blen) {
+        p += snprintf(p, out_line_end - p, " %4d,", (int)buff[write_length]);
+        ++write_length;
+        if (((write_length % LINE_BYTE_NUM) == 0)
+            || (write_length == blen)) {
+          fprintf(pfout, "     ");
+          fprintf(pfout, out_line);
+          fprintf(pfout, "\n");
+          p = out_line;
+        }
+    }
+
+    fprintf(pfout, "    };\n");
+    fprintf(pfout, "    return data;\n");
+    fprintf(pfout, "  }\n\n");
+
+    return true;
+}
+
+static bool GenerateJavaCodeAccessorMethod(
+    const RSSlangReflectUtils::BitCodeAccessorContext& context, FILE* pfout) {
+    FILE* pfin = fopen(context.bcFileName, "rb");
     if (pfin == NULL) {
+        fprintf(stderr, "Error: could not read file %s\n", context.bcFileName);
         return false;
     }
 
-    string output_path = ComputePackagedPath(outputPath, packageName);
-    if (!mkdir_p(output_path.c_str())) {
-      return false;
+    // start the accessor method
+    GenerateAccessorMethodSignature(context, pfout);
+    fprintf(pfout, "    return getBitCodeInternal();\n");
+    // end the accessor method
+    fprintf(pfout, "  };\n\n");
+
+    // output the data
+    // make sure the generated function for a segment won't break the Javac
+    // size limitation (64K).
+    const static int SEG_SIZE = 0x2000;
+    char* buff = new char[SEG_SIZE];
+    int read_length;
+    int seg_num = 0;
+    int total_length = 0;
+    while ((read_length = fread(buff, 1, SEG_SIZE, pfin)) > 0) {
+        GenerateSegmentMethod(buff, read_length, seg_num, pfout);
+        ++seg_num;
+        total_length += read_length;
+    }
+    delete []buff;
+    fclose(pfin);
+
+    // output the internal accessor method
+    fprintf(pfout, "  private static int bitCodeLength = %d;\n\n", total_length);
+    fprintf(pfout, "  private static byte[] getBitCodeInternal() {\n");
+    fprintf(pfout, "    byte[] bc = new byte[bitCodeLength];\n");
+    fprintf(pfout, "    int offset = 0;\n");
+    fprintf(pfout, "    byte[] seg;\n");
+    for (int i = 0; i < seg_num; ++i) {
+    fprintf(pfout, "    seg = getSegment_%d();\n", i);
+    fprintf(pfout, "    System.arraycopy(seg, 0, bc, offset, seg.length);\n");
+    fprintf(pfout, "    offset += seg.length;\n");
+    }
+    fprintf(pfout, "    return bc;\n");
+    fprintf(pfout, "  }\n\n");
+
+    return true;
+}
+
+static bool GenerateAccessorClass(
+    const RSSlangReflectUtils::BitCodeAccessorContext& context,
+    const char* clazz_name, FILE* pfout) {
+    // begin the class.
+    fprintf(pfout, "/**\n");
+    fprintf(pfout, " * @hide\n");
+    fprintf(pfout, " */\n");
+    fprintf(pfout, "public class %s {\n", clazz_name);
+    fprintf(pfout, "\n");
+
+    bool ret = true;
+    switch (context.bcStorage) {
+      case BCST_APK_RESOURCE:
+        break;
+      case BCST_JAVA_CODE:
+        ret = GenerateJavaCodeAccessorMethod(context, pfout);
+        break;
+      default:
+        ret = false;
     }
 
-    string clazz_name(JavaClassNameFromRSFileName(rsFileName));
+    // end the class.
+    fprintf(pfout, "}\n");
+
+    return ret;
+}
+
+
+bool RSSlangReflectUtils::GenerateBitCodeAccessor(
+    const BitCodeAccessorContext& context) {
+    string output_path = ComputePackagedPath(context.reflectPath,
+                                             context.packageName);
+    if (!mkdir_p(output_path.c_str())) {
+        fprintf(stderr, "Error: could not create dir %s\n",
+                output_path.c_str());
+        return false;
+    }
+
+    string clazz_name(JavaClassNameFromRSFileName(context.rsFileName));
     clazz_name += "BitCode";
     string filename(clazz_name);
     filename += ".java";
@@ -128,63 +252,16 @@ bool RSSlangReflectUtils::EncodeBitcodeToJavaFile(
     printf("Generating %s ...\n", filename.c_str());
     FILE* pfout = fopen(output_filename.c_str(), "w");
     if (pfout == NULL) {
+        fprintf(stderr, "Error: could not write to file %s\n",
+                output_filename.c_str());
         return false;
     }
 
-    // Output the header
-    fprintf(pfout, "/*\n");
-    fprintf(pfout, " * This file is auto-generated. DO NOT MODIFY!\n");
-    fprintf(pfout, " * The source RenderScript file: %s\n", rsFileName);
-    fprintf(pfout, " */\n\n");
-    fprintf(pfout, "package %s;\n\n", packageName.c_str());
-    fprintf(pfout, "/**\n");
-    fprintf(pfout, " * @hide\n");
-    fprintf(pfout, " */\n");
-    fprintf(pfout, "public class %s {\n", clazz_name.c_str());
-    fprintf(pfout, "\n");
-    fprintf(pfout, "  // return byte array representation of the bitcode file.\n");
-    fprintf(pfout, "  public static byte[] getBitCode() {\n");
-    fprintf(pfout, "    byte[] bc = new byte[data.length];\n");
-    fprintf(pfout, "    System.arraycopy(data, 0, bc, 0, data.length);\n");
-    fprintf(pfout, "    return bc;\n");
-    fprintf(pfout, "  }\n");
-    fprintf(pfout, "\n");
-    fprintf(pfout, "  // byte array representation of the bitcode file.\n");
-    fprintf(pfout, "  private static final byte[] data = {\n");
+    bool ret = GenerateAccessorHeader(context, pfout)
+        && GenerateAccessorClass(context, clazz_name.c_str(), pfout);
 
-    // output the data
-    const static int BUFF_SIZE = 0x10000;
-    char* buff = new char[BUFF_SIZE];
-    int read_length;
-    while ((read_length = fread(buff, 1, BUFF_SIZE, pfin)) > 0) {
-        const static int LINE_BYTE_NUM = 16;
-        char out_line[LINE_BYTE_NUM*6 + 10];
-        const char* out_line_end = out_line + sizeof(out_line);
-        char* p = out_line;
-
-        int write_length = 0;
-        while (write_length < read_length) {
-            p += snprintf(p, out_line_end - p, " %4d,", (int)buff[write_length]);
-            ++write_length;
-            if (((write_length % LINE_BYTE_NUM) == 0)
-                || (write_length == read_length)) {
-                fprintf(pfout, "   ");
-                fprintf(pfout, out_line);
-                fprintf(pfout, "\n");
-                p = out_line;
-            }
-        }
-
-    }
-    delete []buff;
-
-    // the rest of the java file.
-    fprintf(pfout, "  };\n");
-    fprintf(pfout, "}\n");
-
-    fclose(pfin);
     fclose(pfout);
-    return true;
+    return ret;
 }
 
 }

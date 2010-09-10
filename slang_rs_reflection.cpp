@@ -398,7 +398,7 @@ bool RSReflection::openScriptFile(Context&C, const std::string& ClassName, std::
     if(!C.mUseStdout) {
         C.mOF.clear();
         std::string _path = RSSlangReflectUtils::ComputePackagedPath(
-            mRSContext->getReflectJavaPathName(), C.getPackageName());
+            mRSContext->getReflectJavaPathName().c_str(), C.getPackageName().c_str());
 
         RSSlangReflectUtils::mkdir_p(_path.c_str());
         C.mOF.open(( _path + "/" + ClassName + ".java" ).c_str());
