@@ -12,7 +12,7 @@
 #include "llvm/Support/FormattedStream.h"   /* for class llvm::formatted_raw_ostream */
 
 #include "clang/AST/ASTConsumer.h"          /* for class clang::ASTConsumer */
-#include "clang/CodeGen/CodeGenOptions.h"   /* for class clang::CodeGenOptions */
+#include "clang/Frontend/CodeGenOptions.h"   /* for class clang::CodeGenOptions */
 #include "clang/Basic/SourceManager.h"      /* for class clang::SourceManager */
 
 namespace llvm {

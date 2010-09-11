@@ -29,7 +29,6 @@
 
 namespace llvm {
 
-class Twine;
 class TargetInfo;
 
 }   /* namespace llvm */
@@ -98,7 +97,8 @@ private:
                                          *mTarget,
                                          mPP->getIdentifierTable(),
                                          mPP->getSelectorTable(),
-                                         mPP->getBuiltinInfo()));
+                                         mPP->getBuiltinInfo(),
+                                         /* size_reserve = */0));
         return;
     }
 
@@ -156,7 +156,7 @@ private:
 public:
     static const std::string TargetDescription;
 
-    static const llvm::Twine PragmaMetadataName;
+    static const llvm::StringRef PragmaMetadataName;
 
     Slang(const char* Triple, const char* CPU, const char** Features);
 

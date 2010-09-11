@@ -61,7 +61,7 @@ void RSBackend::HandleTranslationUnitEx(ASTContext& Ctx) {
     /* Dump export variable info */
     if(mContext->hasExportVar()) {
         if(mExportVarMetadata == NULL)
-            mExportVarMetadata = llvm::NamedMDNode::Create(mLLVMContext, "#rs_export_var", NULL, 0, mpModule);
+            mExportVarMetadata = mpModule->getOrInsertNamedMetadata("#rs_export_var");
 
         llvm::SmallVector<llvm::Value*, 2> ExportVarInfo;
 
@@ -92,7 +92,7 @@ void RSBackend::HandleTranslationUnitEx(ASTContext& Ctx) {
     /* Dump export function info */
     if(mContext->hasExportFunc()) {
         if(mExportFuncMetadata == NULL)
-            mExportFuncMetadata = llvm::NamedMDNode::Create(mLLVMContext, "#rs_export_func", NULL, 0, mpModule);
+            mExportFuncMetadata = mpModule->getOrInsertNamedMetadata("#rs_export_func");
 
         llvm::SmallVector<llvm::Value*, 1> ExportFuncInfo;
 
@@ -187,14 +187,14 @@ void RSBackend::HandleTranslationUnitEx(ASTContext& Ctx) {
                 const RSExportRecordType* ERT = static_cast<const RSExportRecordType*>(ET);
 
                 if(mExportTypeMetadata == NULL)
-                    mExportTypeMetadata = llvm::NamedMDNode::Create(mLLVMContext, "#rs_export_type", NULL, 0, mpModule);
+                    mExportTypeMetadata = mpModule->getOrInsertNamedMetadata("#rs_export_type");
 
                 mExportTypeMetadata->addOperand( llvm::MDNode::get(mLLVMContext, ExportTypeInfo.data(), ExportTypeInfo.size()) );
 
                 /* Now, export struct field information to %[struct name] */
                 std::string StructInfoMetadataName("%");
                 StructInfoMetadataName.append(ET->getName());
-                llvm::NamedMDNode* StructInfoMetadata = llvm::NamedMDNode::Create(mLLVMContext, StructInfoMetadataName.c_str(), NULL, 0, mpModule);
+                llvm::NamedMDNode* StructInfoMetadata = mpModule->getOrInsertNamedMetadata(StructInfoMetadataName);
                 llvm::SmallVector<llvm::Value*, 3> FieldInfo;
 
                 assert(StructInfoMetadata->getNumOperands() == 0 && "Metadata with same name was created before");

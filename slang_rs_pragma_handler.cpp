@@ -6,8 +6,6 @@
 #include "clang/Lex/LiteralSupport.h"       /* for class StringLiteralParser */
 #include "clang/Basic/TokenKinds.h"         /* for class Token */
 
-#include "clang/Basic/IdentifierTable.h"    /* for class IdentifierInfo */
-
 namespace {
 
 using namespace clang;
@@ -20,7 +18,7 @@ private:
     }
 
 public:
-    RSExportVarPragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
+    RSExportVarPragmaHandler(llvm::StringRef Name, RSContext* Context) : RSPragmaHandler(Name, Context) { return; }
 
     void HandlePragma(Preprocessor& PP, Token& FirstToken) {
         this->handleItemListPragma(PP, FirstToken);
@@ -29,7 +27,7 @@ public:
 
 class RSExportVarAllPragmaHandler : public RSPragmaHandler {
 public:
-    RSExportVarAllPragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
+    RSExportVarAllPragmaHandler(llvm::StringRef Name, RSContext* Context) : RSPragmaHandler(Name, Context) { return; }
 
     void HandlePragma(Preprocessor& PP, Token& FirstToken) {
         this->handleNonParamPragma(PP, FirstToken);
@@ -44,7 +42,7 @@ private:
     }
 
 public:
-    RSExportFuncPragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
+    RSExportFuncPragmaHandler(llvm::StringRef Name, RSContext* Context) : RSPragmaHandler(Name, Context) { return; }
 
     void HandlePragma(Preprocessor& PP, Token& FirstToken) {
         this->handleItemListPragma(PP, FirstToken);
@@ -53,7 +51,7 @@ public:
 
 class RSExportFuncAllPragmaHandler : public RSPragmaHandler {
 public:
-    RSExportFuncAllPragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
+    RSExportFuncAllPragmaHandler(llvm::StringRef Name, RSContext* Context) : RSPragmaHandler(Name, Context) { return; }
 
     void HandlePragma(Preprocessor& PP, Token& FirstToken) {
         this->handleNonParamPragma(PP, FirstToken);
@@ -68,7 +66,7 @@ private:
     }
 
 public:
-    RSExportTypePragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
+    RSExportTypePragmaHandler(llvm::StringRef Name, RSContext* Context) : RSPragmaHandler(Name, Context) { return; }
 
     void HandlePragma(Preprocessor& PP, Token& FirstToken) {
         this->handleItemListPragma(PP, FirstToken);
@@ -77,7 +75,7 @@ public:
 
 class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
 public:
-    RSJavaPackageNamePragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
+    RSJavaPackageNamePragmaHandler(llvm::StringRef Name, RSContext* Context) : RSPragmaHandler(Name, Context) { return; }
 
     void HandlePragma(Preprocessor& PP, Token& FirstToken) {
         /* FIXME: Need to validate the extracted package name from paragma. Currently "all chars" specified in pragma will be treated as package name.
@@ -144,7 +142,7 @@ private:
     }
 
 public:
-    RSReflectLicensePragmaHandler(IdentifierInfo* II, RSContext* Context) : RSPragmaHandler(II, Context) { return; }
+  RSReflectLicensePragmaHandler(llvm::StringRef Name, RSContext* Context) : RSPragmaHandler(Name, Context) { return; }
 
     void HandlePragma(Preprocessor& PP, Token& FirstToken) {
         this->handleOptionalStringLiateralParamPragma(PP, FirstToken);
@@ -156,59 +154,31 @@ public:
 namespace slang {
 
 RSPragmaHandler* RSPragmaHandler::CreatePragmaExportVarHandler(RSContext* Context) {
-    IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("export_var");
-    if(II != NULL)
-        return new RSExportVarPragmaHandler(II, Context);
-    else
-        return NULL;
+    return new RSExportVarPragmaHandler("export_var", Context);
 }
 
 RSPragmaHandler* RSPragmaHandler::CreatePragmaExportVarAllHandler(RSContext* Context) {
-    IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("export_var_all");
-    if(II != NULL)
-        return new RSExportVarAllPragmaHandler(II, Context);
-    else
-        return NULL;
+    return new RSExportVarPragmaHandler("export_var_all", Context);
 }
 
 RSPragmaHandler* RSPragmaHandler::CreatePragmaExportFuncHandler(RSContext* Context) {
-    IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("export_func");
-    if(II != NULL)
-        return new RSExportFuncPragmaHandler(II, Context);
-    else
-        return NULL;
+    return new RSExportFuncPragmaHandler("export_func", Context);
 }
 
 RSPragmaHandler* RSPragmaHandler::CreatePragmaExportFuncAllHandler(RSContext* Context) {
-    IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("export_func_all");
-    if(II != NULL)
-        return new RSExportFuncAllPragmaHandler(II, Context);
-    else
-        return NULL;
+    return new RSExportFuncPragmaHandler("export_func_all", Context);
 }
 
 RSPragmaHandler* RSPragmaHandler::CreatePragmaExportTypeHandler(RSContext* Context) {
-    IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("export_type");
-    if(II != NULL)
-        return new RSExportTypePragmaHandler(II, Context);
-    else
-        return NULL;
+    return new RSExportTypePragmaHandler("export_type", Context);
 }
 
 RSPragmaHandler* RSPragmaHandler::CreatePragmaJavaPackageNameHandler(RSContext* Context) {
-    IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("java_package_name");
-    if(II != NULL)
-        return new RSJavaPackageNamePragmaHandler(II, Context);
-    else
-        return NULL;
+    return new RSJavaPackageNamePragmaHandler("java_package_name", Context);
 }
 
 RSPragmaHandler* RSPragmaHandler::CreatePragmaReflectLicenseHandler(RSContext* Context) {
-    IdentifierInfo* II = Context->getPreprocessor()->getIdentifierInfo("set_reflect_license");
-    if(II != NULL)
-        return new RSReflectLicensePragmaHandler(II, Context);
-    else
-        return NULL;
+    return new RSJavaPackageNamePragmaHandler("set_reflect_license", Context);
 }
 
 void RSPragmaHandler::handleItemListPragma(Preprocessor& PP, Token& FirstToken) {

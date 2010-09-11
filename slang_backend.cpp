@@ -31,7 +31,6 @@
 #include "clang/Frontend/FrontendDiagnostic.h"      /* for clang::diag::* */
 
 #include "clang/CodeGen/ModuleBuilder.h"    /* for class clang::CodeGenerator */
-#include "clang/CodeGen/CodeGenOptions.h"   /* for class clang::CodeGenOptions */
 
 namespace slang {
 
@@ -100,10 +99,10 @@ bool Backend::CreateCodeGenPasses() {
     llvm::RegisterScheduler::setDefault(llvm::createDefaultScheduler);
 
     /* Register allocation policy:
-     *  createLocalRegisterAllocator: fast but bad quality
+     *  createFastRegisterAllocator: fast but bad quality
      *  createLinearScanRegisterAllocator: not so fast but good quality
      */
-    llvm::RegisterRegAlloc::setDefault((mCodeGenOpts.OptimizationLevel == 0) ? llvm::createLocalRegisterAllocator : llvm::createLinearScanRegisterAllocator);
+    llvm::RegisterRegAlloc::setDefault((mCodeGenOpts.OptimizationLevel == 0) ? llvm::createFastRegisterAllocator : llvm::createLinearScanRegisterAllocator);
 
     llvm::CodeGenOpt::Level OptLevel = llvm::CodeGenOpt::Default;
     if(mCodeGenOpts.OptimizationLevel == 0)
@@ -202,7 +201,7 @@ void Backend::HandleTranslationUnit(ASTContext& Ctx) {
 
     /* Insert #pragma information into metadata section of module */
     if(!mPragmas.empty()) {
-        llvm::NamedMDNode* PragmaMetadata = llvm::NamedMDNode::Create(mLLVMContext, Slang::PragmaMetadataName, NULL, 0, mpModule);
+        llvm::NamedMDNode* PragmaMetadata = mpModule->getOrInsertNamedMetadata(Slang::PragmaMetadataName);
         for(PragmaList::const_iterator it = mPragmas.begin();
             it != mPragmas.end();
             it++)

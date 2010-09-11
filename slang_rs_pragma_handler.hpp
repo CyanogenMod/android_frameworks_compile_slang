@@ -8,7 +8,6 @@
 namespace clang {
 
 class Token;
-class IdentifierInfo;
 class Preprocessor;
 
 }   /* namespace clang */
@@ -23,8 +22,7 @@ class RSPragmaHandler : public PragmaHandler {
 protected:
     RSContext* mContext;
 
-    RSPragmaHandler(const IdentifierInfo* name, RSContext* Context) : PragmaHandler(name), mContext(Context) { return; }
-
+    RSPragmaHandler(llvm::StringRef Name, RSContext* Context) : PragmaHandler(Name), mContext(Context) { return; }
     RSContext* getContext() const { return this->mContext; }
 
     virtual void handleItem(const std::string& Item) { return; }

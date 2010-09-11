@@ -49,8 +49,12 @@ LOCAL_MODULE := slang
 LOCAL_MODULE_CLASS := EXECUTABLES
 
 TBLGEN_TABLES :=    \
-	DiagnosticCommonKinds.inc	\
+	AttrList.inc    \
+	Attrs.inc    \
+	DeclNodes.inc    \
+	DiagnosticCommonKinds.inc   \
 	DiagnosticFrontendKinds.inc \
+	StmtNodes.inc               \
 	DiagnosticSemaKinds.inc
 
 LOCAL_SRC_FILES :=	\
@@ -91,11 +95,10 @@ LOCAL_STATIC_LIBRARIES :=	\
 	libLLVMTarget	\
 	libLLVMMC	\
 	libLLVMCore	\
-	libclangIndex	\
+        libclangParse   \
 	libclangSema	\
 	libclangAnalysis	\
 	libclangAST	\
-	libclangParse	\
 	libclangLex	\
 	libclangCodeGen	\
 	libclangBasic	\

@@ -5,8 +5,6 @@
 #include "slang_backend.hpp"
 #include "slang_pragma_recorder.hpp"
 
-#include "clang/CodeGen/CodeGenOptions.h"   /* for class clang::CodeGenOptions */
-
 namespace llvm {
 
 class NamedMDNode;

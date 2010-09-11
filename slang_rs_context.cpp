@@ -8,7 +8,6 @@
 
 #include "clang/AST/Type.h"             /* for class clang::QualType */
 #include "clang/AST/Decl.h"             /* for class clang::*Decl */
-#include "clang/Index/Utils.h"          /* for class clang::idx::ResolveLocationInAST() */
 #include "clang/AST/DeclBase.h"         /* for class clang::Decl and clang::DeclContext */
 #include "clang/AST/ASTContext.h"       /* for class clang::ASTContext */
 #include "clang/Basic/TargetInfo.h"     /* for class clang::TargetInfo */
@@ -27,47 +26,30 @@ RSContext::RSContext(Preprocessor* PP, ASTContext* Ctx, const TargetInfo* Target
     mCtx(Ctx),
     mTarget(Target),
     mTargetData(NULL),
-    mLLVMContext(llvm::getGlobalContext()),
-    mRSExportVarPragma(NULL),
     mRSExportVarAllPragma(NULL),
-    mRSExportFuncPragma(NULL),
     mRSExportFuncAllPragma(NULL),
-    mRSExportTypePragma(NULL),
-    mRSJavaPackageNamePragma(NULL),
     mRSReflectLicensePragma(NULL),
     mExportAllNonStaticVars(false),
     mExportAllNonStaticFuncs(false),
-    mLicenseNote(NULL)
+    mLicenseNote(NULL),
+    mLLVMContext(llvm::getGlobalContext())
 {
     /* For #pragma rs export_var */
-    mRSExportVarPragma = RSPragmaHandler::CreatePragmaExportVarHandler(this);
-    if(mRSExportVarPragma != NULL)
-        PP->AddPragmaHandler("rs", mRSExportVarPragma);
 
     /* For #pragma rs export_var_all */
     mRSExportVarAllPragma = RSPragmaHandler::CreatePragmaExportVarAllHandler(this);
     if(mRSExportVarAllPragma != NULL)
         PP->AddPragmaHandler("rs", mRSExportVarAllPragma);
 
-    /* For #pragma rs export_func */
-    mRSExportFuncPragma = RSPragmaHandler::CreatePragmaExportFuncHandler(this);
-    if(mRSExportFuncPragma != NULL)
-        PP->AddPragmaHandler("rs", mRSExportFuncPragma);
-
     /* For #pragma rs export_func_all */
     mRSExportFuncAllPragma = RSPragmaHandler::CreatePragmaExportFuncAllHandler(this);
     if(mRSExportFuncAllPragma != NULL)
         PP->AddPragmaHandler("rs", mRSExportFuncAllPragma);
 
-    /* For #pragma rs export_type */
-    mRSExportTypePragma = RSPragmaHandler::CreatePragmaExportTypeHandler(this);
-    if(mRSExportTypePragma != NULL)
-        PP->AddPragmaHandler("rs", mRSExportTypePragma);
-
-    /* For #pragma rs java_package_name */
-    mRSJavaPackageNamePragma = RSPragmaHandler::CreatePragmaJavaPackageNameHandler(this);
-    if(mRSJavaPackageNamePragma != NULL)
-        PP->AddPragmaHandler("rs", mRSJavaPackageNamePragma);
+    PP->AddPragmaHandler("rs", RSPragmaHandler::CreatePragmaExportVarHandler(this));
+    PP->AddPragmaHandler("rs", RSPragmaHandler::CreatePragmaExportFuncHandler(this));
+    PP->AddPragmaHandler("rs", RSPragmaHandler::CreatePragmaExportTypeHandler(this));
+    PP->AddPragmaHandler("rs", RSPragmaHandler::CreatePragmaJavaPackageNameHandler(this));
 
     /* For #pragma rs set_reflect_license */
     mRSReflectLicensePragma = RSPragmaHandler::RSPragmaHandler::CreatePragmaReflectLicenseHandler(this);
@@ -104,7 +86,7 @@ bool RSContext::processExportFunc(const FunctionDecl* FD) {
     if(!FD->isThisDeclarationADefinition())
         return false;
 
-    if(FD->getStorageClass() != FunctionDecl::None) {
+    if(FD->getStorageClass() != clang::SC_None) {
         printf("RSContext::processExportFunc : cannot export extern or static function '%s'\n", FD->getName().str().c_str());
         return false;
     }
@@ -140,31 +122,24 @@ bool RSContext::processExportType(const llvm::StringRef& Name) {
         I++)
     {
         NamedDecl* const ND = *I;
-        ASTLocation* LastLoc = new ASTLocation(ND);
-        ASTLocation AL = ResolveLocationInAST(*mCtx, ND->getLocStart(), LastLoc);
+        const Type* T = NULL;
 
-        delete LastLoc;
-        if(AL.isDecl()) {
-            Decl* D = AL.dyn_AsDecl();
-            const Type* T = NULL;
+        switch(ND->getKind()) {
+            case Decl::Typedef:
+                T = static_cast<const TypedefDecl*>(ND)->getCanonicalDecl()->getUnderlyingType().getTypePtr();
+            break;
 
-            switch(D->getKind()) {
-                case Decl::Typedef:
-                    T = static_cast<const TypedefDecl*>(D)->getCanonicalDecl()->getUnderlyingType().getTypePtr();
-                break;
+            case Decl::Record:
+                T = static_cast<const RecordDecl*>(ND)->getTypeForDecl();
+            break;
 
-                case Decl::Record:
-                    T = static_cast<const RecordDecl*>(D)->getTypeForDecl();
-                break;
-
-                default:
-                    /* unsupported, skip */
-                break;
-            }
-
-            if(T != NULL)
-                ET = RSExportType::Create(this, T);
+            default:
+                /* unsupported, skip */
+           break;
         }
+
+        if(T != NULL)
+            ET = RSExportType::Create(this, T);
     }
 
     RSExportPointerType::IntegerType = NULL;
@@ -187,7 +162,7 @@ void RSContext::processExport() {
             VarDecl* VD = (VarDecl*) (*DI);
             if (mExportAllNonStaticVars && VD->getLinkage() == ExternalLinkage) {
                 if (!processExportVar(VD)) {
-                    printf("RSContext::processExport : failed to export var '%s'\n", VD->getNameAsCString());
+                  printf("RSContext::processExport : failed to export var '%s'\n", VD->getNameAsString().c_str());
                 }
             } else {
                 NeedExportVarSet::iterator EI = mNeedExportVars.find(VD->getName());
@@ -200,7 +175,7 @@ void RSContext::processExport() {
             FunctionDecl* FD = (FunctionDecl*) (*DI);
             if (mExportAllNonStaticFuncs && FD->getLinkage() == ExternalLinkage) {
                 if (!processExportFunc(FD)) {
-                    printf("RSContext::processExport : failed to export func '%s'\n", FD->getNameAsCString());
+                  printf("RSContext::processExport : failed to export func '%s'\n", FD->getNameAsString().c_str());
                 }
             } else {
                 NeedExportFuncSet::iterator EI = mNeedExportFuncs.find(FD->getName());

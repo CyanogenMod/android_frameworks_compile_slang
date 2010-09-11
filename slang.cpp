@@ -5,8 +5,6 @@
 
 #include "libslang.h"
 
-#include "llvm/ADT/Twine.h"     /* for class llvm::Twine */
-
 #include "llvm/Target/TargetSelect.h"       /* for function LLVMInitialize[ARM|X86][TargetInfo|Target|AsmPrinter]() */
 
 #include "llvm/Support/MemoryBuffer.h"      /* for class llvm::MemoryBuffer */
@@ -19,7 +17,7 @@
 
 #include "clang/Frontend/FrontendDiagnostic.h"      /* for clang::diag::* */
 
-#include "clang/Sema/ParseAST.h"        /* for function clang::ParseAST() */
+#include "clang/Parse/ParseAST.h"        /* for function clang::ParseAST() */
 
 #if defined(__arm__)
 #   define DEFAULT_TARGET_TRIPLE_STRING "armv7-none-linux-gnueabi"
@@ -42,7 +40,7 @@ CodeGenOptions Slang::CodeGenOpts;
 const std::string Slang::TargetDescription = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-n32";
 
 /* The named of metadata node that pragma resides (should be synced with bcc.cpp) */
-const llvm::Twine Slang::PragmaMetadataName = "#pragma";
+const llvm::StringRef Slang::PragmaMetadataName = "#pragma";
 
 void Slang::GlobalInitialization() {
     if(!GlobalInitialized) {
@@ -107,7 +105,7 @@ void Slang::createPreprocessor() {
                               true /* OwnsHeaderSearch */));
   /* Initialize the prepocessor */
   mPragmas.clear();
-  mPP->AddPragmaHandler(NULL, new PragmaRecorder(mPragmas));
+  mPP->AddPragmaHandler(new PragmaRecorder(mPragmas));
 
   std::string inclFiles("#include \"rs_types.rsh\"");
   mPP->setPredefines(inclFiles + "\n" + "#include \"rs_math.rsh\"" + "\n");
@@ -165,7 +163,7 @@ bool Slang::setInputSource(llvm::StringRef inputFile) {
 
     const FileEntry* File = mFileMgr->getFile(inputFile);
     if(File)
-        mSourceMgr->createMainFileID(File, SourceLocation());
+        mSourceMgr->createMainFileID(File);
 
     if(mSourceMgr->getMainFileID().isInvalid()) {
         mDiagnostics->Report(clang::diag::err_fe_error_reading) << inputFile;

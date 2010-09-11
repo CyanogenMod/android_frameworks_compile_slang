@@ -20,14 +20,14 @@ RSExportVar::RSExportVar(RSContext* Context, const VarDecl* VD, const RSExportTy
     switch(ET->getClass()) {
       case RSExportType::ExportClassPrimitive:
       case RSExportType::ExportClassVector:
-        Initializer->EvaluateAsAny(mInit, *Context->getASTContext());
+        Initializer->Evaluate(mInit, *Context->getASTContext());
         break;
 
       case RSExportType::ExportClassPointer:
         if(Initializer->isNullPointerConstant(*Context->getASTContext(), Expr::NPC_ValueDependentIsNotNull))
           mInit.Val = APValue(llvm::APSInt(1));
         else
-          Initializer->EvaluateAsAny(mInit, *Context->getASTContext());
+          Initializer->Evaluate(mInit, *Context->getASTContext());
         break;
 
       case RSExportType::ExportClassRecord:
