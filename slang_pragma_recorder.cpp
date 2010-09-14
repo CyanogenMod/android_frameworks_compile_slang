@@ -27,7 +27,11 @@ bool PragmaRecorder::GetPragmaValueFromToken(const Token& Token, std::string& Pr
     return true;
 }
 
-PragmaRecorder::PragmaRecorder(PragmaList& Pragmas) : PragmaHandler(NULL), mPragmas(Pragmas) { return; }
+PragmaRecorder::PragmaRecorder(PragmaList& Pragmas) :
+    PragmaHandler(),
+    mPragmas(Pragmas) {
+  return;
+}
 
 void PragmaRecorder::HandlePragma(Preprocessor &PP, Token &FirstToken) {
     Token& CurrentToken = FirstToken;

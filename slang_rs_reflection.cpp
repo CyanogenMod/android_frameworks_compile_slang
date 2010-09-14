@@ -791,10 +791,18 @@ bool RSReflection::genCreateFieldPacker(Context& C, const RSExportType* ET, cons
 void RSReflection::genPackVarOfType(Context& C, const RSExportType* ET, const char* VarName, const char* FieldPackerName) {
     switch(ET->getClass()) {
         case RSExportType::ExportClassPrimitive:
-        case RSExportType::ExportClassConstantArray:
         case RSExportType::ExportClassVector:
             C.indent() << FieldPackerName << "." << GetPackerAPIName(static_cast<const RSExportPrimitiveType*>(ET)) << "(" << VarName << ");" << endl;
         break;
+
+        case RSExportType::ExportClassConstantArray: {
+          if (ET->getName().compare("addObj") == 0) {
+            C.indent() << FieldPackerName << "." << "addObj" << "(" << VarName << ");" << endl;
+          } else {
+            C.indent() << FieldPackerName << "." << GetPackerAPIName(static_cast<const RSExportPrimitiveType*>(ET)) << "(" << VarName << ");" << endl;
+          }
+          break;
+        }
 
         case RSExportType::ExportClassPointer:
         {

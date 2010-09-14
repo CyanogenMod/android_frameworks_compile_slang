@@ -600,7 +600,42 @@ RSExportType::ExportClass RSExportConstantArrayType::getClass() const {
 
 const llvm::Type* RSExportConstantArrayType::convertToLLVMType() const {
   llvm::LLVMContext& C = getRSContext()->getLLVMContext();
-  return llvm::ArrayType::get(llvm::Type::getFloatTy(C), mNumElement);
+  const llvm::Type *typ;
+  switch (getType()) {
+    case DataTypeFloat32:
+    case DataTypeRSMatrix2x2:
+    case DataTypeRSMatrix3x3:
+    case DataTypeRSMatrix4x4:
+      typ = llvm::Type::getFloatTy(C);
+      break;
+
+    case DataTypeSigned8:
+    case DataTypeUnsigned8:
+      typ = llvm::Type::getInt8Ty(C);
+      break;
+
+    case DataTypeSigned16:
+    case DataTypeUnsigned16:
+    case DataTypeUnsigned565:
+    case DataTypeUnsigned5551:
+    case DataTypeUnsigned4444:
+      typ = llvm::Type::getInt16Ty(C);
+      break;
+
+    case DataTypeSigned32:
+    case DataTypeUnsigned32:
+      typ = llvm::Type::getInt32Ty(C);
+      break;
+
+    case DataTypeBool:
+      typ = llvm::Type::getInt1Ty(C);
+      break;
+
+    default:
+      assert(false && "Unknown data type");
+      break;
+  }
+  return llvm::ArrayType::get(typ, mNumElement);
 }
 
 /****************************** RSExportVectorType ******************************/

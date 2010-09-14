@@ -152,7 +152,6 @@ bool Slang::setInputSource(llvm::StringRef inputFile, const char* text, size_t t
         mDiagnostics->Report(clang::diag::err_fe_error_reading) << inputFile;
         return false;
     }
-
     return true;
 }
 

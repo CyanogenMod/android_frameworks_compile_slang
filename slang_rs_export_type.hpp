@@ -214,6 +214,8 @@ public:
 class RSExportPointerType : public RSExportType {
     friend class RSExportType;
     friend class RSExportElement;
+    friend class RSExportFunc;
+
 private:
     const RSExportType* mPointeeType;
 
@@ -244,6 +246,7 @@ public:
 class RSExportConstantArrayType : public RSExportPrimitiveType {
   friend class RSExportType;
   friend class RSExportElement;
+  friend class RSExportFunc;
 
  private:
     int mNumElement;   /* number of element */

@@ -137,13 +137,16 @@ void RSBackend::HandleTranslationUnitEx(ASTContext& Ctx) {
                         Idx[0] = llvm::ConstantInt::get(llvm::Type::getInt32Ty(mLLVMContext), 0);
 
                         /* getelementptr and load instruction for all elements in parameter .p */
-                        for(int i=0;i<EF->getNumParameters();i++) {
-                            /* getelementptr */
-                            Idx[1] = llvm::ConstantInt::get(llvm::Type::getInt32Ty(mLLVMContext), i);
-                            llvm::Value* Ptr = IB->CreateInBoundsGEP(HelperFunctionParameter, Idx, Idx + 2);
-                            /* load */
-                            llvm::Value* V = IB->CreateLoad(Ptr);
-                            Params.push_back(V);
+                        int i;
+                        for (i=0; i < EF->getNumParameters(); i++) {
+
+                          /* getelementptr */
+                          Idx[1] = llvm::ConstantInt::get(llvm::Type::getInt32Ty(mLLVMContext), i);
+                          llvm::Value* Ptr = IB->CreateInBoundsGEP(HelperFunctionParameter, Idx, Idx + 2);
+
+                          /* load */
+                          llvm::Value* V = IB->CreateLoad(Ptr);
+                          Params.push_back(V);
                         }
 
                         /* call and pass the all elements as paramter to F */

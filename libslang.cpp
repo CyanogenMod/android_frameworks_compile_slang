@@ -63,10 +63,12 @@ extern "C" void slangAddIncludePath(SlangCompiler* compiler, const char* path) {
 
 extern "C" int slangCompile(SlangCompiler* compiler) {
     Slang* slang = (Slang*) compiler;
-    if(slang != NULL)
-        return slang->compile();
-    else
-        return 0;
+    if(slang != NULL) {
+      slang->allowRSPrefix();
+      return slang->compile();
+    } else {
+      return 0;
+    }
 }
 
 extern "C" int slangReflectToJava(SlangCompiler* compiler, const char* packageName,
