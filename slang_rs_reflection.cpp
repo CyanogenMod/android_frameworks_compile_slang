@@ -862,6 +862,21 @@ void RSReflection::genPackVarOfType(Context& C, const RSExportType* ET, const ch
     return;
 }
 
+void RSReflection::genNewItemBufferIfNull(Context& C, const char* Index) {
+    C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) "
+                       RS_TYPE_ITEM_BUFFER_NAME" = new "RS_TYPE_ITEM_CLASS_NAME"[mType.getX() /* count */];" << endl;
+    if (Index != NULL)
+        C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME"[" << Index << "] == null) "
+                           RS_TYPE_ITEM_BUFFER_NAME"[" << Index << "] = new "RS_TYPE_ITEM_CLASS_NAME"();" << endl;
+    return;
+}
+
+void RSReflection::genNewItemBufferPackerIfNull(Context& C) {
+    C.indent() << "if ("RS_TYPE_ITEM_BUFFER_PACKER_NAME" == null) "
+                       RS_TYPE_ITEM_BUFFER_PACKER_NAME" = new FieldPacker("RS_TYPE_ITEM_CLASS_NAME".sizeof * mType.getX() /* count */);" << endl;
+    return;
+}
+
 /****************************** Methods to generate type class  ******************************/
 bool RSReflection::genTypeClass(Context& C, const RSExportRecordType* ERT, std::string& ErrorMsg) {
     std::string ClassName = RS_TYPE_CLASS_NAME_PREFIX + ERT->getName();
@@ -883,9 +898,11 @@ bool RSReflection::genTypeClass(Context& C, const RSExportRecordType* ERT, std::
 
     genTypeClassConstructor(C, ERT);
     genTypeClassCopyToArray(C, ERT);
-    genTypeClasSet(C, ERT);
-    genTypeClasGet(C, ERT);
-    genTypeClasCopyAll(C, ERT);
+    genTypeClassItemSetter(C, ERT);
+    genTypeClassItemGetter(C, ERT);
+    genTypeClassComponentSetter(C, ERT);
+    genTypeClassComponentGetter(C, ERT);
+    genTypeClassCopyAll(C, ERT);
 
     C.endClass();
 
@@ -956,7 +973,7 @@ void RSReflection::genTypeClassCopyToArray(Context& C, const RSExportRecordType*
     C.startFunction(Context::AM_Private, false, "void", "copyToArray", 2, RS_TYPE_ITEM_CLASS_NAME, "i",
                                                                           "int", "index");
 
-    C.indent() << "if ("RS_TYPE_ITEM_BUFFER_PACKER_NAME" == null) "RS_TYPE_ITEM_BUFFER_PACKER_NAME" = new FieldPacker("RS_TYPE_ITEM_CLASS_NAME".sizeof * mType.getX() /* count */);" << endl;
+    genNewItemBufferPackerIfNull(C);
     C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME".reset(index * "RS_TYPE_ITEM_CLASS_NAME".sizeof);" << endl;
 
     genPackVarOfType(C, ERT, "i", RS_TYPE_ITEM_BUFFER_PACKER_NAME);
@@ -965,18 +982,17 @@ void RSReflection::genTypeClassCopyToArray(Context& C, const RSExportRecordType*
     return;
 }
 
-void RSReflection::genTypeClasSet(Context& C, const RSExportRecordType* ERT) {
+void RSReflection::genTypeClassItemSetter(Context& C, const RSExportRecordType* ERT) {
     C.startFunction(Context::AM_Public, false, "void", "set", 3, RS_TYPE_ITEM_CLASS_NAME, "i",
                                                                  "int", "index",
                                                                  "boolean", "copyNow");
-    C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) "RS_TYPE_ITEM_BUFFER_NAME" = new "RS_TYPE_ITEM_CLASS_NAME"[mType.getX() /* count */];" << endl;
+    genNewItemBufferIfNull(C, NULL);
     C.indent() << RS_TYPE_ITEM_BUFFER_NAME"[index] = i;" << endl;
 
     C.indent() << "if (copyNow) ";
     C.startBlock();
 
     C.indent() << "copyToArray(i, index);" << endl;
-    //C.indent() << "mAllocation.subData1D(index * "RS_TYPE_ITEM_CLASS_NAME".sizeof, "RS_TYPE_ITEM_CLASS_NAME".sizeof, "RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());" << endl;
     C.indent() << "mAllocation.subData1D(index, 1, "RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());" << endl;
 
     C.endBlock();   /* end if (copyNow) */
@@ -985,15 +1001,65 @@ void RSReflection::genTypeClasSet(Context& C, const RSExportRecordType* ERT) {
     return;
 }
 
-void RSReflection::genTypeClasGet(Context& C, const RSExportRecordType* ERT) {
+void RSReflection::genTypeClassItemGetter(Context& C, const RSExportRecordType* ERT) {
     C.startFunction(Context::AM_Public, false, RS_TYPE_ITEM_CLASS_NAME, "get", 1, "int", "index");
     C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return null;" << endl;
     C.indent() << "return "RS_TYPE_ITEM_BUFFER_NAME"[index];" << endl;
     C.endFunction();
     return;
 }
+void RSReflection::genTypeClassComponentSetter(Context& C, const RSExportRecordType* ERT) {
+    for(RSExportRecordType::const_field_iterator FI = ERT->fields_begin();
+        FI != ERT->fields_end();
+        FI++)
+    {
+        const RSExportRecordType::Field* F = *FI;
+        size_t FieldOffset = F->getOffsetInParent();
+        size_t FieldStoreSize = RSExportType::GetTypeStoreSize(F->getType());
+        unsigned FieldIndex = C.getFieldIndex(F);
 
-void RSReflection::genTypeClasCopyAll(Context& C, const RSExportRecordType* ERT) {
+        C.startFunction(Context::AM_Public, false, "void", "set_" + F->getName(), 3, "int", "index",
+                                                                                     GetTypeName(F->getType()).c_str(), "v",
+                                                                                     "boolean", "copyNow");
+        genNewItemBufferPackerIfNull(C);
+        genNewItemBufferIfNull(C, "index");
+        C.indent() << RS_TYPE_ITEM_BUFFER_NAME"[index]." << F->getName() << " = v;" << endl;
+
+        C.indent() << "if (copyNow) ";
+        C.startBlock();
+
+        if(FieldOffset > 0)
+            C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME".reset(index * "RS_TYPE_ITEM_CLASS_NAME".sizeof + " << FieldOffset << ");" << endl;
+        else
+            C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME".reset(index * "RS_TYPE_ITEM_CLASS_NAME".sizeof);" << endl;
+        genPackVarOfType(C, F->getType(), "v", RS_TYPE_ITEM_BUFFER_PACKER_NAME);
+
+        C.indent() << "FieldPacker fp = new FieldPacker(" << FieldStoreSize << ");" << endl;
+        genPackVarOfType(C, F->getType(), "v", "fp");
+        C.indent() << "mAllocation.subElementData(index, " << FieldIndex << ", fp);" << endl;
+
+        C.endBlock();   /* end if (copyNow) */
+
+        C.endFunction();
+    }
+    return;
+}
+
+void RSReflection::genTypeClassComponentGetter(Context& C, const RSExportRecordType* ERT) {
+    for(RSExportRecordType::const_field_iterator FI = ERT->fields_begin();
+        FI != ERT->fields_end();
+        FI++)
+    {
+        const RSExportRecordType::Field* F = *FI;
+        C.startFunction(Context::AM_Public, false, GetTypeName(F->getType()).c_str(), "get_" + F->getName(), 1, "int", "index");
+        C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return null;" << endl;
+        C.indent() << "return "RS_TYPE_ITEM_BUFFER_NAME"[index]." << F->getName() << ";" << endl;
+        C.endFunction();
+    }
+    return;
+}
+
+void RSReflection::genTypeClassCopyAll(Context& C, const RSExportRecordType* ERT) {
     C.startFunction(Context::AM_Public, false, "void", "copyAll", 0);
 
     C.indent() << "for (int ct=0; ct < "RS_TYPE_ITEM_BUFFER_NAME".length; ct++) copyToArray("RS_TYPE_ITEM_BUFFER_NAME"[ct], ct);" << endl;
@@ -1024,7 +1090,8 @@ void RSReflection::genBuildElement(Context& C, const RSExportRecordType* ERT, co
 }
 
 #define EB_ADD(x, ...)  \
-    C.indent() << ElementBuilderName << ".add(Element." << x ##__VA_ARGS__ ", \"" << VarName << "\");" << endl
+    C.indent() << ElementBuilderName << ".add(Element." << x ##__VA_ARGS__ ", \"" << VarName << "\");" << endl; \
+    C.incFieldIndex()
 
 void RSReflection::genAddElementToElementBuilder(Context& C, const RSExportType* ET, const std::string& VarName, const char* ElementBuilderName, const char* RenderScriptVar) {
     const char* ElementConstruct = GetBuiltinElementConstruct(ET);
@@ -1081,8 +1148,7 @@ void RSReflection::genAddElementToElementBuilder(Context& C, const RSExportType*
         assert(false && "??");
       } else if(ET->getClass() == RSExportType::ExportClassRecord) {
         /*
-         * Simalar to genPackVarOfType.
-         *
+         * Simalar to case of RSExportType::ExportClassRecord in genPackVarOfType.
          * TODO: Generalize these two function such that there's no duplicated codes.
          */
         const RSExportRecordType* ERT = static_cast<const RSExportRecordType*>(ET);
@@ -1107,7 +1173,8 @@ void RSReflection::genAddElementToElementBuilder(Context& C, const RSExportType*
           genAddPaddingToElementBuiler(C, (FieldOffset - Pos), ElementBuilderName, RenderScriptVar);
 
           /* eb.add(...) */
-          genAddElementToElementBuilder(C, (*I)->getType(), FieldName, ElementBuilderName, RenderScriptVar);
+          C.addFieldIndexMapping(F);
+          genAddElementToElementBuilder(C, F->getType(), FieldName, ElementBuilderName, RenderScriptVar);
 
           /* There is padding within the field type */
           genAddPaddingToElementBuiler(C, (FieldAllocSize - FieldStoreSize), ElementBuilderName, RenderScriptVar);
