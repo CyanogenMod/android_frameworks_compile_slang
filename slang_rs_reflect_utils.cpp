@@ -28,7 +28,7 @@ string RSSlangReflectUtils::ComputePackagedPath(
     return packaged_path;
 }
 
-static string InternalFileNameConvert(const char* rsFileName, bool camelCase) {
+static string InternalFileNameConvert(const char* rsFileName, bool toLower) {
     const char* dot = rsFileName + strlen(rsFileName);
     const char* slash = dot - 1;
     while (slash >= rsFileName) {
@@ -42,19 +42,15 @@ static string InternalFileNameConvert(const char* rsFileName, bool camelCase) {
     }
     ++slash;
     char ret[256];
-    bool need_cap = true;
     int i = 0;
     for (; (i < 255) && (slash < dot); ++slash) {
-        if (isalnum(*slash)) {
-            if (need_cap && camelCase) {
-                ret[i] = toupper(*slash);
+        if (isalnum(*slash) || *slash == '_') {
+            if (toLower) {
+                ret[i] = tolower(*slash);
             } else {
                 ret[i] = *slash;
             }
-            need_cap = false;
             ++i;
-        } else {
-            need_cap = true;
         }
     }
     ret[i] = 0;
@@ -63,13 +59,13 @@ static string InternalFileNameConvert(const char* rsFileName, bool camelCase) {
 
 std::string RSSlangReflectUtils::JavaClassNameFromRSFileName(
     const char* rsFileName) {
-    return InternalFileNameConvert(rsFileName, true);
+    return InternalFileNameConvert(rsFileName, false);
 }
 
 
 std::string RSSlangReflectUtils::BCFileNameFromRSFileName(
     const char* rsFileName) {
-    return InternalFileNameConvert(rsFileName, false);
+    return InternalFileNameConvert(rsFileName, true);
 }
 
 bool RSSlangReflectUtils::mkdir_p(const char* path) {
