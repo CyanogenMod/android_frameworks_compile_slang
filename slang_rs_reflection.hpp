@@ -17,6 +17,7 @@ namespace slang {
 class RSContext;
 class RSExportVar;
 class RSExportFunc;
+class RSExportRecordType;
 
 class RSReflection {
 private:
@@ -47,15 +48,6 @@ private:
 
         int mNextExportVarSlot;
         int mNextExportFuncSlot;
-
-        /*
-         * A mapping from a field in a record type to its index in the rsType instance.
-         * Only used when generates TypeClass (ScriptField_*).
-         */
-        typedef std::map<const RSExportRecordType::Field*, unsigned> FieldIndexMapTy;
-        FieldIndexMapTy mFieldIndexMap;
-        /* Field index of current processing TypeClass. */
-        unsigned mFieldIndex;
 
         inline void clear() {
             mClassName = "";
@@ -146,29 +138,6 @@ private:
 
         void startTypeClass(const std::string& ClassName);
         void endTypeClass();
-
-        inline void incFieldIndex() {
-            mFieldIndex++;
-        }
-
-        inline void resetFieldIndex() {
-            mFieldIndex = 0;
-        }
-
-        inline void addFieldIndexMapping(const RSExportRecordType::Field* F) {
-            assert((mFieldIndexMap.find(F) == mFieldIndexMap.end()) && "Nested structure never occurs in C language.");
-            mFieldIndexMap.insert(std::make_pair(F, mFieldIndex));
-        }
-
-        inline unsigned getFieldIndex(const RSExportRecordType::Field* F) const {
-            FieldIndexMapTy::const_iterator I = mFieldIndexMap.find(F);
-            assert((I != mFieldIndexMap.end()) && "Requesting field is out of scope.");
-            return I->second;
-        }
-
-        inline void clearFieldIndexMap() {
-            mFieldIndexMap.clear();
-        }
     };
 
     bool openScriptFile(Context& C, const std::string& ClassName, std::string& ErrorMsg);
@@ -191,11 +160,9 @@ private:
     bool genTypeItemClass(Context& C, const RSExportRecordType* ERT, std::string& ErrorMsg);
     void genTypeClassConstructor(Context& C, const RSExportRecordType* ERT);
     void genTypeClassCopyToArray(Context& C, const RSExportRecordType* ERT);
-    void genTypeClassItemSetter(Context& C, const RSExportRecordType* ERT);
-    void genTypeClassItemGetter(Context& C, const RSExportRecordType* ERT);
-    void genTypeClassComponentSetter(Context& C, const RSExportRecordType* ERT);
-    void genTypeClassComponentGetter(Context& C, const RSExportRecordType* ERT);
-    void genTypeClassCopyAll(Context& C, const RSExportRecordType* ERT);
+    void genTypeClasSet(Context& C, const RSExportRecordType* ERT);
+    void genTypeClasGet(Context& C, const RSExportRecordType* ERT);
+    void genTypeClasCopyAll(Context& C, const RSExportRecordType* ERT);
 
     void genBuildElement(Context& C, const RSExportRecordType* ERT, const char* RenderScriptVar);
     void genAddElementToElementBuilder(Context& C, const RSExportType* ERT, const std::string& VarName, const char* ElementBuilderName, const char* RenderScriptVar);
@@ -203,8 +170,6 @@ private:
 
     bool genCreateFieldPacker(Context& C, const RSExportType* T, const char* FieldPackerName);
     void genPackVarOfType(Context& C, const RSExportType* T, const char* VarName, const char* FieldPackerName);
-    void genNewItemBufferIfNull(Context& C, const char* Index);
-    void genNewItemBufferPackerIfNull(Context& C);
 
 public:
     RSReflection(const RSContext* Context) :
