@@ -36,20 +36,20 @@ class RSSlangReflectUtils {
                                          const char* packageName);
 
   // Compute Java class name from a .rs file name.
-  // Any non-alnum character will be discarded. The result will be camel-cased.
-  // Eg, with rsFileName=./foo/bar/my_renderscript_file.rs it returns
-  // "MyRenderscriptFile".
+  // Any non-alnum, non-underscore characters will be discarded.
+  // E.g. with rsFileName=./foo/bar/my-Renderscript_file.rs it returns
+  // "myRenderscript_file".
   // rsFileName: the input .rs file name (with or without path).
   static std::string JavaClassNameFromRSFileName(const char* rsFileName);
 
   // Compute a bitcode file name (no extension) from a .rs file name.
   // Because the bitcode file name may be used as Resource ID in the generated
-  // class (something like R.raw.<bitcode_filename>), Any non-alnum character
-  // will be discarded.
+  // class (something like R.raw.<bitcode_filename>), Any non-alnum,
+  // non-underscore character will be discarded.
   // The difference from JavaClassNameFromRSFileName() is that the result is
-  // not converted to camel case.
-  // Eg, with rsFileName=./foo/bar/my_renderscript_file.rs it returns
-  // "myrenderscriptfile"
+  // converted to lowercase.
+  // E.g. with rsFileName=./foo/bar/my-Renderscript_file.rs it returns
+  // "myrenderscript_file"
   // rsFileName: the input .rs file name (with or without path).
   static std::string BCFileNameFromRSFileName(const char* rsFileName);
 
