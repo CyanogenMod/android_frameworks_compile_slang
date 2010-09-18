@@ -1003,7 +1003,7 @@ void RSReflection::genTypeClassItemSetter(Context& C, const RSExportRecordType* 
 
 void RSReflection::genTypeClassItemGetter(Context& C, const RSExportRecordType* ERT) {
     C.startFunction(Context::AM_Public, false, RS_TYPE_ITEM_CLASS_NAME, "get", 1, "int", "index");
-    //C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return null;" << endl;
+    C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return null;" << endl;
     C.indent() << "return "RS_TYPE_ITEM_BUFFER_NAME"[index];" << endl;
     C.endFunction();
     return;
@@ -1052,7 +1052,7 @@ void RSReflection::genTypeClassComponentGetter(Context& C, const RSExportRecordT
     {
         const RSExportRecordType::Field* F = *FI;
         C.startFunction(Context::AM_Public, false, GetTypeName(F->getType()).c_str(), "get_" + F->getName(), 1, "int", "index");
-        C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return null;" << endl;
+        //C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return null;" << endl;
         C.indent() << "return "RS_TYPE_ITEM_BUFFER_NAME"[index]." << F->getName() << ";" << endl;
         C.endFunction();
     }
