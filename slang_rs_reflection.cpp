@@ -1036,7 +1036,7 @@ void RSReflection::genTypeClassComponentSetter(Context& C, const RSExportRecordT
 
         C.indent() << "FieldPacker fp = new FieldPacker(" << FieldStoreSize << ");" << endl;
         genPackVarOfType(C, F->getType(), "v", "fp");
-        C.indent() << "mAllocation.subElementData(index, " << FieldIndex << ", fp);" << endl;
+        C.indent() << "mAllocation.subElementData(index, " << 0/*FieldIndex*/ << ", fp);" << endl;
 
         C.endBlock();   /* end if (copyNow) */
 
