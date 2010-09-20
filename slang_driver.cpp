@@ -567,14 +567,13 @@ static std::string replaceLastPartWithFile(std::string& cmd, const char* fileNam
 }
 
 #define LINK_FILE "/frameworks/compile/slang/rsScriptC_Lib.bc"
-#define LINK_FILE_LENGTH 38
 
 static char* linkFile() {
   char* dir = getenv("ANDROID_BUILD_TOP");
   char* dirPath;
   bool readyToLink = false;
   if (dir) {
-    dirPath = new char[strlen(dir) + LINK_FILE_LENGTH];
+    dirPath = new char[strlen(dir) + strlen(LINK_FILE) + 1];
     strcpy(dirPath, dir);
     strcpy(dirPath + strlen(dir), LINK_FILE);
     if (open(dirPath, O_RDONLY) >= 0) {
@@ -590,9 +589,10 @@ static char* linkFile() {
       siz *= 2;
       dir = new char[siz];
     }
-    dirPath = new char[strlen(dir) + LINK_FILE_LENGTH];
+    dirPath = new char[strlen(dir) + strlen(LINK_FILE) + 1];
     strcpy(dirPath, dir);
     strcpy(dirPath + strlen(dir), LINK_FILE);
+    //dirPath[strlen(dir) + LINK_FILE_LENGTH] = '\0';
     if (open(dirPath, O_RDONLY) < 0) {
       cerr << "Error: Couldn't load rs library bitcode file" << endl;
       exit(1);
