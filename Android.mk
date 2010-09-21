@@ -48,6 +48,8 @@ LOCAL_MODULE := slang
 
 LOCAL_MODULE_CLASS := EXECUTABLES
 
+LOCAL_CFLAGS += -Wno-sign-promo
+
 TBLGEN_TABLES :=    \
 	AttrList.inc    \
 	Attrs.inc    \

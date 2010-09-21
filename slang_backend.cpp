@@ -130,21 +130,21 @@ Backend::Backend(Diagnostic &Diags,
                  SourceManager &SourceMgr,
                  bool AllowRSPrefix) :
     ASTConsumer(),
-    mLLVMContext(llvm::getGlobalContext()),
-    mDiags(Diags),
     mCodeGenOpts(CodeGenOpts),
     mTargetOpts(TargetOpts),
-    mPragmas(Pragmas),
+    mSourceMgr(SourceMgr),
     mpOS(OS),
     mOutputType(OutputType),
-    mpModule(NULL),
     mpTargetData(NULL),
     mGen(NULL),
     mPerFunctionPasses(NULL),
     mPerModulePasses(NULL),
     mCodeGenPasses(NULL),
-    mSourceMgr(SourceMgr),
-    mAllowRSPrefix(AllowRSPrefix)
+    mAllowRSPrefix(AllowRSPrefix),
+    mLLVMContext(llvm::getGlobalContext()),
+    mDiags(Diags),
+    mpModule(NULL),
+    mPragmas(Pragmas)
 {
     FormattedOutStream.setStream(*mpOS, llvm::formatted_raw_ostream::PRESERVE_STREAM);
     mGen = CreateLLVMCodeGen(mDiags, "", mCodeGenOpts, mLLVMContext);

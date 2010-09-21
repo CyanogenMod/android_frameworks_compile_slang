@@ -112,7 +112,6 @@ bool RSContext::processExportType(const llvm::StringRef& Name) {
         return false;
 
     DeclContext::lookup_const_result R = TUDecl->lookup(II);
-    bool Done = false;
     RSExportType* ET = NULL;
 
     RSExportPointerType::IntegerType = mCtx->IntTy.getTypePtr();

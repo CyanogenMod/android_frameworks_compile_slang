@@ -84,8 +84,9 @@ static const char* GetPrimitiveTypeName(const RSExportPrimitiveType* EPT) {
         "Matrix3f",     /* RSExportPrimitiveType::DataTypeRSMatrix3x3 */
         "Matrix4f",     /* RSExportPrimitiveType::DataTypeRSMatrix4x4 */
     };
+    unsigned TypeId = EPT->getType();
 
-    if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveTypeJavaNameMap) / sizeof(const char*)))) {
+    if(TypeId < (sizeof(PrimitiveTypeJavaNameMap) / sizeof(const char*))) {
         // printf("Type %d\n", EPT->getType());
         return PrimitiveTypeJavaNameMap[ EPT->getType() ];
     }
@@ -103,7 +104,7 @@ static const char* GetVectorTypeName(const RSExportVectorType* EVT) {
         /* 4 */ { "Float2", "Float3",   "Float4" },
     };
 
-    const char** BaseElement;
+    const char** BaseElement = NULL;
 
     switch(EVT->getType()) {
         case RSExportPrimitiveType::DataTypeSigned8:
@@ -191,8 +192,9 @@ static const char* GetPackerAPIName(const RSExportPrimitiveType* EPT) {
         "addObj",   /* RSExportPrimitiveType::DataTypeRSMatrix3x3 */
         "addObj",   /* RSExportPrimitiveType::DataTypeRSMatrix4x4 */
     };
+    unsigned TypeId = EPT->getType();
 
-    if((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveTypePackerAPINameMap) / sizeof(const char*))))
+    if(TypeId < (sizeof(PrimitiveTypePackerAPINameMap) / sizeof(const char*)))
         return PrimitiveTypePackerAPINameMap[ EPT->getType() ];
 
     assert(false && "GetPackerAPIName : Unknown primitive data type");
@@ -272,8 +274,9 @@ static const char* GetBuiltinElementConstruct(const RSExportType* ET) {
                 "MATRIX_3X3",       /* RSExportPrimitiveType::DataTypeRSMatrix3x3 */
                 "MATRIX_4X4",       /* RSExportPrimitiveType::DataTypeRSMatrix4x4 */
             };
+            unsigned TypeId = EPT->getType();
 
-            if ((EPT->getType() >= 0) && (EPT->getType() < (sizeof(PrimitiveBuiltinElementConstructMap) / sizeof(const char*))))
+            if (TypeId < (sizeof(PrimitiveBuiltinElementConstructMap) / sizeof(const char*)))
                 return PrimitiveBuiltinElementConstructMap[ EPT->getType() ];
         } else if (EPT->getKind() == RSExportPrimitiveType::DataKindPixelA) {
             if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
@@ -345,7 +348,7 @@ static const char* GetElementDataKindName(RSExportPrimitiveType::DataKind DK) {
         "Element.DataKind.PIXEL_RGBA",  /* RSExportPrimitiveType::DataKindPixelRGBA */
     };
 
-    if((DK >= 0) && (DK < (sizeof(ElementDataKindNameMap) / sizeof(const char*))))
+    if(static_cast<unsigned>(DK) < (sizeof(ElementDataKindNameMap) / sizeof(const char*)))
         return ElementDataKindNameMap[ DK ];
     else
         return NULL;
@@ -388,7 +391,7 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
         "Element.DataType.RS_MATRIX_4X4",    /* RSExportPrimitiveType::DataTypeRSMatrix4x4 */
     };
 
-    if((DT >= 0) && (DT < (sizeof(ElementDataTypeNameMap) / sizeof(const char*))))
+    if(static_cast<unsigned>(DT) < (sizeof(ElementDataTypeNameMap) / sizeof(const char*)))
         return ElementDataTypeNameMap[ DT ];
     else
         return NULL;
@@ -557,6 +560,13 @@ void RSReflection::genInitExportVariable(Context& C, const RSExportType* ET, con
                         genInitPrimitiveExportVariable(C, Name, ElementVal);
                     }
                 }
+                break;
+
+                case APValue::Uninitialized:
+                case APValue::ComplexInt:
+                case APValue::ComplexFloat:
+                case APValue::LValue:
+                    assert(false && "Unexpected type of value of initializer.");
                 break;
             }
         }
@@ -819,7 +829,7 @@ void RSReflection::genPackVarOfType(Context& C, const RSExportType* ET, const ch
         case RSExportType::ExportClassRecord:
         {
             const RSExportRecordType* ERT = static_cast<const RSExportRecordType*>(ET);
-            int Pos = 0;    /* relative pos from now on in field packer */
+            unsigned Pos = 0;    /* relative pos from now on in field packer */
 
             for(RSExportRecordType::const_field_iterator I = ERT->fields_begin();
                 I != ERT->fields_end();
@@ -1089,8 +1099,8 @@ void RSReflection::genBuildElement(Context& C, const RSExportRecordType* ERT, co
     return;
 }
 
-#define EB_ADD(x, ...)  \
-    C.indent() << ElementBuilderName << ".add(Element." << x ##__VA_ARGS__ ", \"" << VarName << "\");" << endl; \
+#define EB_ADD(x)  \
+    C.indent() << ElementBuilderName << ".add(Element." << x << ", \"" << VarName << "\");" << endl; \
     C.incFieldIndex()
 
 void RSReflection::genAddElementToElementBuilder(Context& C, const RSExportType* ET, const std::string& VarName, const char* ElementBuilderName, const char* RenderScriptVar) {
@@ -1326,7 +1336,7 @@ bool RSReflection::Context::startClass(AccessModifier AM, bool IsStatic, const s
     out() << endl;
 
     /* Imports */
-    for(int i=0;i<(sizeof(Import)/sizeof(const char*));i++)
+    for(unsigned i=0;i<(sizeof(Import)/sizeof(const char*));i++)
         out() << "import " << Import[i] << ";" << endl;
     out() << endl;
 

@@ -17,7 +17,7 @@ RSExportFunc* RSExportFunc::Create(RSContext* Context, const FunctionDecl* FD) {
     F = new RSExportFunc(Context, Name);
 
     /* Check whether the parameters passed to the function is exportable */
-    for(int i=0;i<FD->getNumParams();i++) {
+    for(unsigned i=0;i<FD->getNumParams();i++) {
         const ParmVarDecl* PVD = FD->getParamDecl(i);
         const llvm::StringRef ParamName = PVD->getName();
 

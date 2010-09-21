@@ -33,7 +33,6 @@ RSBackend::RSBackend(RSContext* Context,
                      SlangCompilerOutputTy OutputType,
                      SourceManager& SourceMgr,
                      bool AllowRSPrefix) :
-    mContext(Context),
     Backend(Diags,
             CodeGenOpts,
             TargetOpts,
@@ -42,6 +41,7 @@ RSBackend::RSBackend(RSContext* Context,
             OutputType,
             SourceMgr,
             AllowRSPrefix),
+    mContext(Context),
     mExportVarMetadata(NULL),
     mExportFuncMetadata(NULL),
     mExportTypeMetadata(NULL)
@@ -103,6 +103,7 @@ void RSBackend::HandleTranslationUnitEx(ASTContext& Ctx) {
             const RSExportFunc* EF = *I;
 
             /* function name */
+
             if(!EF->hasParam())
                 ExportFuncInfo.push_back( llvm::MDString::get(mLLVMContext, EF->getName().c_str()) );
             else {
@@ -217,7 +218,7 @@ void RSBackend::HandleTranslationUnitEx(ASTContext& Ctx) {
                         case RSExportType::ExportClassPrimitive:
                         case RSExportType::ExportClassVector:
                         {
-                            RSExportPrimitiveType* EPT = (RSExportPrimitiveType*) F->getType();
+                            const RSExportPrimitiveType* EPT = static_cast<const RSExportPrimitiveType*>(F->getType());
                             FieldInfo.push_back( llvm::MDString::get(mLLVMContext, llvm::itostr(EPT->getKind())) );
                         }
                         break;

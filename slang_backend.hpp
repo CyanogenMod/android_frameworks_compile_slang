@@ -12,7 +12,7 @@
 #include "llvm/Support/FormattedStream.h"   /* for class llvm::formatted_raw_ostream */
 
 #include "clang/AST/ASTConsumer.h"          /* for class clang::ASTConsumer */
-#include "clang/Frontend/CodeGenOptions.h"   /* for class clang::CodeGenOptions */
+#include "clang/Frontend/CodeGenOptions.h"  /* for class clang::CodeGenOptions */
 #include "clang/Basic/SourceManager.h"      /* for class clang::SourceManager */
 
 namespace llvm {
@@ -49,8 +49,6 @@ private:
 
     SourceManager& mSourceMgr;
 
-    bool mAllowRSPrefix;
-
     /* Output stream */
     llvm::raw_ostream* mpOS;
     SlangCompilerOutputTy mOutputType;
@@ -66,6 +64,8 @@ private:
     llvm::FunctionPassManager* mCodeGenPasses;      /* passes for code emission */
 
     llvm::formatted_raw_ostream FormattedOutStream;
+
+    bool mAllowRSPrefix;
 
     inline void CreateFunctionPasses() {
         if(!mPerFunctionPasses) {
@@ -107,11 +107,12 @@ private:
     bool CreateCodeGenPasses();
 
 protected:
+    llvm::LLVMContext& mLLVMContext;
+    Diagnostic &mDiags;
+
     llvm::Module* mpModule;
 
-    llvm::LLVMContext& mLLVMContext;
     const PragmaList& mPragmas;
-    Diagnostic &mDiags;
 
     /* Extra handler for subclass to handle translation unit before emission */
     virtual void HandleTranslationUnitEx(ASTContext& Ctx) { return; }

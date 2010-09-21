@@ -39,6 +39,7 @@ const Type* RSExportType::GetTypeOfDecl(const DeclaratorDecl* DD) {
         else
             return T.getTypePtr();
     }
+    return NULL;
 }
 
 llvm::StringRef RSExportType::GetTypeName(const Type* T) {
@@ -577,21 +578,19 @@ llvm::StringRef RSExportConstantArrayType::GetTypeName(const ConstantArrayType* 
 RSExportConstantArrayType* RSExportConstantArrayType::Create(RSContext* Context, const ConstantArrayType* CT, const llvm::StringRef& TypeName, DataKind DK, bool Normalized) {
     assert(CT != NULL && CT->getTypeClass() == Type::ConstantArray);
 
-    const Type* ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CT);
-    //    RSExportPrimitiveType::DataType DT = RSExportPrimitiveType::GetDataType(ElementType);
-    int64_t siz = CT->getSize().getSExtValue();
+    int64_t Size = CT->getSize().getSExtValue();
     RSExportPrimitiveType::DataType DT;
-    if (siz == 4) {
+    if (Size == 4) {
       DT = RSExportPrimitiveType::DataTypeRSMatrix2x2;
-    } else if (siz == 9) {
+    } else if (Size == 9) {
       DT = RSExportPrimitiveType::DataTypeRSMatrix3x3;
-    } else if (siz == 16) {
+    } else if (Size == 16) {
       DT = RSExportPrimitiveType::DataTypeRSMatrix4x4;
     } else {
       printf("RSExportConstantArrayType::Create : unsupported base element type\n");
     }
 
-    return new RSExportConstantArrayType(Context, TypeName, DT, DK, Normalized, siz);
+    return new RSExportConstantArrayType(Context, TypeName, DT, DK, Normalized, Size);
 }
 
 RSExportType::ExportClass RSExportConstantArrayType::getClass() const {
@@ -692,6 +691,7 @@ RSExportVectorType* RSExportVectorType::Create(RSContext* Context, const ExtVect
         return new RSExportVectorType(Context, TypeName, DT, DK, Normalized, EVT->getNumElements());
     else
         printf("RSExportVectorType::Create : unsupported base element type\n");
+    return NULL;
 }
 
 RSExportType::ExportClass RSExportVectorType::getClass() const {

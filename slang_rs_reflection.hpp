@@ -28,7 +28,6 @@ private:
     class Context {
     private:
         static const char* const ApacheLicenseNote;
-        std::string mLicenseNote;
 
         static const char* const Import[];
 
@@ -40,6 +39,8 @@ private:
         std::string mResourceId;
 
         std::string mClassName;
+
+        std::string mLicenseNote;
 
         std::string mIndent;
 
@@ -79,12 +80,12 @@ private:
         static const char* AccessModifierStr(AccessModifier AM);
 
         Context(const std::string& InputRSFile, const std::string& PackageName, const std::string& ResourceId, bool UseStdout) :
-            mLicenseNote(ApacheLicenseNote),
+            mVerbose(true),
             mInputRSFile(InputRSFile),
             mPackageName(PackageName),
             mResourceId(ResourceId),
-            mUseStdout(UseStdout),
-            mVerbose(true)
+            mLicenseNote(ApacheLicenseNote),
+            mUseStdout(UseStdout)
         {
             clear();
             return;

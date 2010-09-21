@@ -316,13 +316,13 @@ class RSExportRecordType : public RSExportType {
 public:
     class Field {
     private:
+        const RSExportType* mType;
+        /* Field name */
+        std::string mName;
         /* Link to the struct that contain this field */
         const RSExportRecordType* mParent;
         /* Index in the container */
         unsigned int mIndex;
-        const RSExportType* mType;
-        /* Field name */
-        std::string mName;
 
     public:
         Field(const RSExportType* T, const llvm::StringRef& Name, const RSExportRecordType* Parent, unsigned int Index) :
