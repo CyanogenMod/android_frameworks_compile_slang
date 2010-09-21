@@ -493,7 +493,7 @@ void RSReflection::genInitPrimitiveExportVariable(Context& C, const std::string&
       case APValue::Float: {
         llvm::APFloat apf = Val.getFloat();
         if (apf.semanticsPrecision(apf.getSemantics()) == 24 /*llvm::APFloat::IEEEsingle*/) {
-          C.out() << apf.convertToFloat();
+          C.out() << apf.convertToFloat() << "f";
         } else {
           C.out() << apf.convertToDouble();
         }
