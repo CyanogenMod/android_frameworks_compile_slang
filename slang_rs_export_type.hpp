@@ -111,7 +111,7 @@ public:
 
         //DataTypeFloat16 = 1,
         DataTypeFloat32 = 2,
-        //DataTypeFloat64 = 3,
+        DataTypeFloat64 = 3,
         DataTypeSigned8 = 4,
         DataTypeSigned16 = 5,
         DataTypeSigned32 = 6,

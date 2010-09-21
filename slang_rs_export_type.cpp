@@ -57,6 +57,7 @@ llvm::StringRef RSExportType::GetTypeName(const Type* T) {
                 case builtin_type:  \
                     /* Compiler is smart enough to optimize following *big if branches* since they all become "constant comparison" after macro expansion */  \
                     if(type == RSExportPrimitiveType::DataTypeFloat32) return "float";  \
+                    else if(type == RSExportPrimitiveType::DataTypeFloat64) return "double";  \
                     else if(type == RSExportPrimitiveType::DataTypeUnsigned8) return "uchar";   \
                     else if(type == RSExportPrimitiveType::DataTypeUnsigned16) return "ushort"; \
                     else if(type == RSExportPrimitiveType::DataTypeUnsigned32) return "uint";   \
@@ -68,7 +69,7 @@ llvm::StringRef RSExportType::GetTypeName(const Type* T) {
                 break;
 #include "slang_rs_export_type_support.inc"
 
-                default: assert(false && "Unknow data type of the builtin"); break;
+                default: assert(false && "Unknown data type of the builtin"); break;
             }
         }
         break;
@@ -499,6 +500,10 @@ const llvm::Type* RSExportPrimitiveType::convertToLLVMType() const {
             return llvm::Type::getFloatTy(C);
         break;
 
+        case DataTypeFloat64:
+            return llvm::Type::getDoubleTy(C);
+        break;
+
         case DataTypeSigned8:
         case DataTypeUnsigned8:
             return llvm::Type::getInt8Ty(C);
@@ -608,6 +613,10 @@ const llvm::Type* RSExportConstantArrayType::convertToLLVMType() const {
       typ = llvm::Type::getFloatTy(C);
       break;
 
+    case DataTypeFloat64:
+      typ = llvm::Type::getDoubleTy(C);
+      break;
+
     case DataTypeSigned8:
     case DataTypeUnsigned8:
       typ = llvm::Type::getInt8Ty(C);
@@ -646,6 +655,7 @@ const char* RSExportVectorType::VectorTypeNameStore[][3] = {
     /* 4 */ { "int2",       "int3",     "int4" },
     /* 5 */ { "uint2",      "uint3",    "uint4" },
     /* 6 */ { "float2",     "float3",   "float4" },
+    /* 7 */ { "double2",    "double3",  "double4" },
 };
 
 llvm::StringRef RSExportVectorType::GetTypeName(const ExtVectorType* EVT) {
@@ -668,6 +678,7 @@ llvm::StringRef RSExportVectorType::GetTypeName(const ExtVectorType* EVT) {
             else if(type == RSExportPrimitiveType::DataTypeSigned32) BaseElement = VectorTypeNameStore[4];  \
             else if(type == RSExportPrimitiveType::DataTypeUnsigned32) BaseElement = VectorTypeNameStore[5];    \
             else if(type == RSExportPrimitiveType::DataTypeFloat32) BaseElement = VectorTypeNameStore[6];   \
+            else if(type == RSExportPrimitiveType::DataTypeFloat64) BaseElement = VectorTypeNameStore[7];   \
             else if(type == RSExportPrimitiveType::DataTypeBool) BaseElement = VectorTypeNameStore[0];   \
         break;
 #include "slang_rs_export_type_support.inc"

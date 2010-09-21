@@ -243,7 +243,7 @@ static const char* GetBuiltinElementConstruct(const RSExportType* ET) {
                 NULL,
                 NULL,
                 "F32", /* RSExportPrimitiveType::DataTypeFloat32 */
-                NULL,       /* RSExportPrimitiveType::DataTypeFloat64 */
+                "F64",       /* RSExportPrimitiveType::DataTypeFloat64 */
                 "I8",  /* RSExportPrimitiveType::DataTypeSigned8 */
                 NULL,       /* RSExportPrimitiveType::DataTypeSigned16 */
                 "I32", /* RSExportPrimitiveType::DataTypeSigned32 */
@@ -359,7 +359,7 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
         NULL,
         NULL,
         "Element.DataType.FLOAT_32",    /* RSExportPrimitiveType::DataTypeFloat32 */
-        NULL,                           /* RSExportPrimitiveType::DataTypeFloat64 */
+        "Element.DataType.FLOAT_64",    /* RSExportPrimitiveType::DataTypeFloat64 */
         "Element.DataType.SIGNED_8",    /* RSExportPrimitiveType::DataTypeSigned8 */
         "Element.DataType.SIGNED_16",   /* RSExportPrimitiveType::DataTypeSigned16 */
         "Element.DataType.SIGNED_32",   /* RSExportPrimitiveType::DataTypeSigned32 */

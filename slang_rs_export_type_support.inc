@@ -12,6 +12,7 @@
     SLANG_RS_SUPPORT_BUILTIN_TYPE(BuiltinType::UInt,   RSExportPrimitiveType::DataTypeUnsigned32)
     SLANG_RS_SUPPORT_BUILTIN_TYPE(BuiltinType::Int,    RSExportPrimitiveType::DataTypeSigned32)
     SLANG_RS_SUPPORT_BUILTIN_TYPE(BuiltinType::Float,  RSExportPrimitiveType::DataTypeFloat32)
+    SLANG_RS_SUPPORT_BUILTIN_TYPE(BuiltinType::Double, RSExportPrimitiveType::DataTypeFloat64)
     SLANG_RS_SUPPORT_BUILTIN_TYPE(BuiltinType::Bool,   RSExportPrimitiveType::DataTypeBool)
 #   undef SLANG_RS_SUPPORT_BUILTIN_TYPE
 #endif
