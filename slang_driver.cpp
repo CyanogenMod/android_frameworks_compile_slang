@@ -198,7 +198,7 @@ static bool Verbose;
 static const char* FeatureEnabledList[MaxTargetFeature + 1];
 static int AllowRSPrefix = 0;
 static int Externalize = 0;
-static int NoLink = 0;
+static int NoLink = 1;
 
 /* Construct the command options table used in ParseOption::getopt_long */
 static void ConstructCommandOptions() {
