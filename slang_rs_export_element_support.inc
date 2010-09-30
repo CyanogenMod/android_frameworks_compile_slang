@@ -3,6 +3,7 @@
 #   define GET_ELEMENT_DATA_TYPE(type)      ELEMENT_DATA_TYPE_ ## type
 
 #   define ELEMENT_DATA_TYPE_FLOAT_32       RSExportPrimitiveType::DataTypeFloat32
+#   define ELEMENT_DATA_TYPE_FLOAT_64       RSExportPrimitiveType::DataTypeFloat64
 #   define ELEMENT_DATA_TYPE_SIGNED_8       RSExportPrimitiveType::DataTypeSigned8
 #   define ELEMENT_DATA_TYPE_SIGNED_16      RSExportPrimitiveType::DataTypeSigned16
 #   define ELEMENT_DATA_TYPE_SIGNED_32      RSExportPrimitiveType::DataTypeSigned32
@@ -108,6 +109,7 @@
 #ifdef DEF_PRIMITIVE_DATA_TYPE /* (type, name) */
 
     DEF_PRIMITIVE_DATA_TYPE(FLOAT_32, "float")
+    DEF_PRIMITIVE_DATA_TYPE(FLOAT_64, "double")
     DEF_PRIMITIVE_DATA_TYPE(SIGNED_8, "char")
     DEF_PRIMITIVE_DATA_TYPE(SIGNED_16, "short")
     DEF_PRIMITIVE_DATA_TYPE(SIGNED_32, "int")
@@ -151,6 +153,7 @@
 #   undef GET_ELEMENT_DATA_TYPE
 
 #   undef ELEMENT_DATA_TYPE_FLOAT_32
+#   undef ELEMENT_DATA_TYPE_FLOAT_64
 #   undef ELEMENT_DATA_TYPE_SIGNED_8
 #   undef ELEMENT_DATA_TYPE_SIGNED_16
 #   undef ELEMENT_DATA_TYPE_SIGNED_32
