@@ -1,78 +1,89 @@
 #ifndef _SLANG_COMPILER_RS_EXPORT_FUNC_HPP
 #   define _SLANG_COMPILER_RS_EXPORT_FUNC_HPP
 
-#include "llvm/ADT/StringRef.h"     /* for class llvm::StringRef */
+#include "llvm/ADT/StringRef.h"
 
 #include <list>
 #include <string>
 
 namespace clang {
-    class FunctionDecl;
-}   /* namespace clang */
+class FunctionDecl;
+}   // namespace clang
 
 namespace slang {
-
-using namespace clang;
 
 class RSContext;
 class RSExportType;
 class RSExportRecordType;
 
 class RSExportFunc {
-    friend class RSContext;
-public:
-    class Parameter {
-    private:
-        RSExportType* mType;
-        std::string mName;
-    
-    public:
-        Parameter(RSExportType* T, const llvm::StringRef& Name) :
-            mType(T),
-            mName(Name.data(), Name.size())
-        {
-            return;
-        }
-
-        inline const RSExportType* getType() const { return mType; }
-        inline const std::string& getName() const { return mName; }
-    };
-
-private:
-    RSContext* mContext;
+  friend class RSContext;
+ public:
+  class Parameter {
+   private:
+    RSExportType *mType;
     std::string mName;
-    std::list<const Parameter*> mParams;
-    mutable RSExportRecordType* mParamPacketType;
 
-    RSExportFunc(RSContext* Context, const llvm::StringRef& Name) :
-        mContext(Context),
-        mName(Name.data(), Name.size()),
-        mParamPacketType(NULL)
+   public:
+    Parameter(RSExportType *T, const llvm::StringRef &Name) :
+        mType(T),
+        mName(Name.data(), Name.size())
     {
-        return;
+      return;
     }
 
-public:
-    static RSExportFunc* Create(RSContext* Context, const FunctionDecl* FD);
+    inline const RSExportType *getType() const { return mType; }
+    inline const std::string &getName() const { return mName; }
+  };
 
-    typedef std::list<const Parameter*>::const_iterator const_param_iterator;
+ private:
+  RSContext *mContext;
+  std::string mName;
+  std::list<const Parameter*> mParams;
+  mutable RSExportRecordType *mParamPacketType;
 
-    inline const_param_iterator params_begin() const { return this->mParams.begin(); }
-    inline const_param_iterator params_end() const { return this->mParams.end(); }
+  RSExportFunc(RSContext *Context, const llvm::StringRef &Name) :
+      mContext(Context),
+      mName(Name.data(), Name.size()),
+      mParamPacketType(NULL)
+  {
+    return;
+  }
 
-    inline const std::string& getName() const { return mName; }
-    inline RSContext* getRSContext() const { return mContext; }
+ public:
+  static RSExportFunc *Create(RSContext *Context,
+                              const clang::FunctionDecl *FD);
 
-    inline bool hasParam() const { return !mParams.empty(); }
-    inline int getNumParameters() const { return mParams.size(); }
+  typedef std::list<const Parameter*>::const_iterator const_param_iterator;
 
-    const RSExportRecordType* getParamPacketType() const;
+  inline const_param_iterator params_begin() const {
+    return this->mParams.begin();
+  }
+  inline const_param_iterator params_end() const {
+    return this->mParams.end();
+  }
 
-    ~RSExportFunc();
+  inline const std::string &getName() const {
+    return mName;
+  }
+  inline RSContext *getRSContext() const {
+    return mContext;
+  }
 
-};  /* RSExportFunc */
+  inline bool hasParam() const {
+    return !mParams.empty();
+  }
+  inline int getNumParameters() const {
+    return mParams.size();
+  }
+
+  const RSExportRecordType *getParamPacketType() const;
+
+  ~RSExportFunc();
+
+};  // RSExportFunc
 
 
-}   /* namespace slang */
+}   // namespace slang
 
-#endif  /* _SLANG_COMPILER_RS_EXPORT_FUNC_HPP */
+#endif  // _SLANG_COMPILER_RS_EXPORT_FUNC_HPP

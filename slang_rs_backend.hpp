@@ -6,13 +6,10 @@
 #include "slang_pragma_recorder.hpp"
 
 namespace llvm {
-
 class NamedMDNode;
-
-}   /* namespace llvm */
+}
 
 namespace clang {
-
 class ASTConsumer;
 class Diagnostic;
 class TargetOptions;
@@ -20,42 +17,39 @@ class PragmaList;
 class CodeGenerator;
 class ASTContext;
 class DeclGroupRef;
-
-}   /* namespace clang */
+}
 
 namespace slang {
-
-using namespace clang;
 
 class RSContext;
 
 class RSBackend : public Backend {
-private:
-    RSContext* mContext;
+ private:
+  RSContext *mContext;
 
-    llvm::NamedMDNode* mExportVarMetadata;
-    llvm::NamedMDNode* mExportFuncMetadata;
-    llvm::NamedMDNode* mExportTypeMetadata;
-    llvm::NamedMDNode* mExportElementMetadata;
+  llvm::NamedMDNode *mExportVarMetadata;
+  llvm::NamedMDNode *mExportFuncMetadata;
+  llvm::NamedMDNode *mExportTypeMetadata;
+  llvm::NamedMDNode *mExportElementMetadata;
 
-    virtual void HandleTranslationUnitEx(ASTContext& Ctx);
+  virtual void HandleTranslationUnitEx(clang::ASTContext &Ctx);
 
-public:
-    RSBackend(RSContext* Context,
-              Diagnostic &Diags,
-              const CodeGenOptions& CodeGenOpts,
-              const TargetOptions& TargetOpts,
-              const PragmaList& Pragmas,
-              llvm::raw_ostream* OS,
-              SlangCompilerOutputTy OutputType,
-              SourceManager& SourceMgr,
-              bool AllowRSPrefix);
+ public:
+  RSBackend(RSContext *Context,
+            clang::Diagnostic &Diags,
+            const clang::CodeGenOptions &CodeGenOpts,
+            const clang::TargetOptions &TargetOpts,
+            const PragmaList &Pragmas,
+            llvm::raw_ostream *OS,
+            SlangCompilerOutputTy OutputType,
+            clang::SourceManager &SourceMgr,
+            bool AllowRSPrefix);
 
-    virtual void HandleTopLevelDecl(DeclGroupRef D);
+  virtual void HandleTopLevelDecl(clang::DeclGroupRef D);
 
-    virtual ~RSBackend();
-};  /* class RSBackend */
+  virtual ~RSBackend();
+};
 
-}   /* namespace slang */
+}
 
-#endif  /* _SLANG_COMPILER_BACKEND_HPP */
+#endif  // _SLANG_COMPILER_BACKEND_HPP

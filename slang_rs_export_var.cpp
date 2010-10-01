@@ -1,53 +1,62 @@
 #include "slang_rs_context.hpp"
 #include "slang_rs_export_var.hpp"
-#include "slang_rs_export_type.hpp" /* for macro GET_CANONICAL_TYPE() */
+#include "slang_rs_export_type.hpp"
 
-#include "clang/AST/Type.h"         /* for class clang::Type and clang::QualType */
+#include "llvm/ADT/APSInt.h"
 
-#include "llvm/ADT/APSInt.h"        /* for class llvm::APSInt */
+#include "clang/AST/Type.h"
 
-namespace slang {
+using namespace slang;
 
-RSExportVar::RSExportVar(RSContext* Context, const VarDecl* VD, const RSExportType* ET) :
+RSExportVar::RSExportVar(RSContext *Context,
+                         const clang::VarDecl *VD,
+                         const RSExportType *ET) :
     mContext(Context),
     mName(VD->getName().data(), VD->getName().size()),
     mET(ET),
-    mIsConst(false)
-{
-  /* mInit - Evaluate initializer expression */
-  const Expr* Initializer = VD->getAnyInitializer();
-  if(Initializer != NULL) {
-    switch(ET->getClass()) {
+    mIsConst(false) {
+  // mInit - Evaluate initializer expression
+  const clang::Expr *Initializer = VD->getAnyInitializer();
+  if (Initializer != NULL) {
+    switch (ET->getClass()) {
       case RSExportType::ExportClassPrimitive:
-      case RSExportType::ExportClassVector:
+      case RSExportType::ExportClassVector: {
         Initializer->Evaluate(mInit, *Context->getASTContext());
         break;
+      }
 
-      case RSExportType::ExportClassPointer:
-        if(Initializer->isNullPointerConstant(*Context->getASTContext(), Expr::NPC_ValueDependentIsNotNull))
-          mInit.Val = APValue(llvm::APSInt(1));
+      case RSExportType::ExportClassPointer: {
+        if (Initializer->isNullPointerConstant
+            (*Context->getASTContext(),
+             clang::Expr::NPC_ValueDependentIsNotNull)
+            )
+          mInit.Val = clang::APValue(llvm::APSInt(1));
         else
           Initializer->Evaluate(mInit, *Context->getASTContext());
         break;
+      }
 
-      case RSExportType::ExportClassRecord:
-        /* No action */
-        printf("RSExportVar::RSExportVar : Reflection of initializer to variable '%s' (of type '%s') is unsupported currently.\n", mName.c_str(), ET->getName().c_str());
+      case RSExportType::ExportClassRecord: {
+        // No action
+        fprintf(stderr, "RSExportVar::RSExportVar : Reflection of initializer "
+                        "to variable '%s' (of type '%s') is unsupported "
+                        "currently.\n",
+                mName.c_str(),
+                ET->getName().c_str());
         break;
+      }
 
-      default:
+      default: {
         assert(false && "Unknown class of type");
-        break;
+      }
     }
   }
 
-  /* mIsConst - Is it a constant? */
-  QualType QT = VD->getTypeSourceInfo()->getType();
+  // mIsConst - Is it a constant?
+  clang::QualType QT = VD->getTypeSourceInfo()->getType();
   if (!QT.isNull()) {
     mIsConst = QT.isConstQualified();
   }
- 
+
   return;
 }
-
-}   /* namespace slang */

@@ -1,38 +1,38 @@
 #ifndef _SLANG_COMPILER_PRAGMA_HANDLER_HPP
 #   define _SLANG_COMPILER_PRAGMA_HANDLER_HPP
 
+#include "clang/Lex/Pragma.h"
+
 #include <list>
 #include <string>
 
-#include "clang/Lex/Pragma.h"           /* for class clang::PragmaHandler */
 
 namespace clang {
-
 class Token;
 class Preprocessor;
-
-}   /* namespace clang */
+}
 
 namespace slang {
 
-using namespace clang;
-
 typedef std::list< std::pair<std::string, std::string> > PragmaList;
 
-class PragmaRecorder : public PragmaHandler {
-private:
-    PragmaList& mPragmas;
+class PragmaRecorder : public clang::PragmaHandler {
+ private:
+  PragmaList &mPragmas;
 
-    static bool GetPragmaNameFromToken(const Token& Token, std::string& PragmaName);
+  static bool GetPragmaNameFromToken(const clang::Token &Token,
+                                     std::string &PragmaName);
 
-    static bool GetPragmaValueFromToken(const Token& Token, std::string& PragmaValue);
+  static bool GetPragmaValueFromToken(const clang::Token &Token,
+                                      std::string &PragmaValue);
 
-public:
-    PragmaRecorder(PragmaList& Pragmas);
+ public:
+  PragmaRecorder(PragmaList &Pragmas);
 
-    virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
-};  /* class PragmaRecorder */
+  virtual void HandlePragma(clang::Preprocessor &PP,
+                            clang::Token &FirstToken);
+};
 
-}   /* namespace slang */
+}
 
-#endif  /* _SLANG_COMPILER_PRAGMA_HANDLER_HPP */
+#endif  // _SLANG_COMPILER_PRAGMA_HANDLER_HPP

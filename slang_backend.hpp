@@ -4,28 +4,25 @@
 #include "libslang.h"
 #include "slang_pragma_recorder.hpp"
 
-#include "llvm/PassManager.h"               /* for class llvm::PassManager and llvm::FunctionPassManager */
+#include "llvm/PassManager.h"
 
-#include "llvm/Target/TargetData.h"         /* for class llvm::TargetData */
+#include "llvm/Target/TargetData.h"
 
-#include "llvm/Support/StandardPasses.h"    /* for function llvm::createStandardFunctionPasses() and llvm::createStandardModulePasses() */
-#include "llvm/Support/FormattedStream.h"   /* for class llvm::formatted_raw_ostream */
+#include "llvm/Support/StandardPasses.h"
+#include "llvm/Support/FormattedStream.h"
 
-#include "clang/AST/ASTConsumer.h"          /* for class clang::ASTConsumer */
-#include "clang/Frontend/CodeGenOptions.h"  /* for class clang::CodeGenOptions */
-#include "clang/Basic/SourceManager.h"      /* for class clang::SourceManager */
+#include "clang/AST/ASTConsumer.h"
+#include "clang/Frontend/CodeGenOptions.h"
+#include "clang/Basic/SourceManager.h"
 
 namespace llvm {
-
 class LLVMContext;
 class NamedMDNode;
 class raw_ostream;
 class Module;
-
-}   /* namespace llvm */
+}
 
 namespace clang {
-
 class ASTConsumer;
 class Diagnostic;
 class TargetOptions;
@@ -35,136 +32,129 @@ class ASTContext;
 class DeclGroupRef;
 class TagDecl;
 class VarDecl;
-
-}   /* namespace clang */
+}
 
 namespace slang {
 
-using namespace clang;
+class Backend : public clang::ASTConsumer {
+ private:
+  const clang::CodeGenOptions &mCodeGenOpts;
+  const clang::TargetOptions &mTargetOpts;
 
-class Backend : public ASTConsumer {
-private:
-    const CodeGenOptions& mCodeGenOpts;
-    const TargetOptions& mTargetOpts;
+  clang::SourceManager &mSourceMgr;
 
-    SourceManager& mSourceMgr;
+  // Output stream
+  llvm::raw_ostream *mpOS;
+  SlangCompilerOutputTy mOutputType;
 
-    /* Output stream */
-    llvm::raw_ostream* mpOS;
-    SlangCompilerOutputTy mOutputType;
+  llvm::TargetData *mpTargetData;
 
-    llvm::TargetData* mpTargetData;
+  // This helps us translate Clang AST using into LLVM IR
+  clang::CodeGenerator *mGen;
 
-    /* The @Gen here help us to translate AST using in Clang to LLVM IR */
-    CodeGenerator* mGen;
+  // Passes
 
-    /* Passes */
-    llvm::FunctionPassManager* mPerFunctionPasses;  /* passes apply on function scope in a translation unit */
-    llvm::PassManager* mPerModulePasses;            /* passes apply on module scope */
-    llvm::FunctionPassManager* mCodeGenPasses;      /* passes for code emission */
+  // Passes apply on function scope in a translation unit
+  llvm::FunctionPassManager *mPerFunctionPasses;
+  // Passes apply on module scope
+  llvm::PassManager* mPerModulePasses;
+  // Passes for code emission
+  llvm::FunctionPassManager *mCodeGenPasses;
 
-    llvm::formatted_raw_ostream FormattedOutStream;
+  llvm::formatted_raw_ostream FormattedOutStream;
 
-    bool mAllowRSPrefix;
+  bool mAllowRSPrefix;
 
-    inline void CreateFunctionPasses() {
-        if(!mPerFunctionPasses) {
-            mPerFunctionPasses = new llvm::FunctionPassManager(mpModule);
-            mPerFunctionPasses->add(new llvm::TargetData(*mpTargetData));
+  inline void CreateFunctionPasses() {
+    if (!mPerFunctionPasses) {
+      mPerFunctionPasses = new llvm::FunctionPassManager(mpModule);
+      mPerFunctionPasses->add(new llvm::TargetData(*mpTargetData));
 
-            llvm::createStandardFunctionPasses(mPerFunctionPasses, mCodeGenOpts.OptimizationLevel);
-        }
-        return;
+      llvm::createStandardFunctionPasses(mPerFunctionPasses,
+                                         mCodeGenOpts.OptimizationLevel);
+    }
+    return;
+  }
+
+  inline void CreateModulePasses() {
+    if (!mPerModulePasses) {
+      mPerModulePasses = new llvm::PassManager();
+      mPerModulePasses->add(new llvm::TargetData(*mpTargetData));
+
+      llvm::createStandardModulePasses(mPerModulePasses,
+                                       mCodeGenOpts.OptimizationLevel,
+                                       mCodeGenOpts.OptimizeSize,
+                                       mCodeGenOpts.UnitAtATime,
+                                       mCodeGenOpts.UnrollLoops,
+                                       // Some libc functions will be replaced
+                                       // by the LLVM built-in optimized
+                                       // function (e.g. strcmp)
+                                       /* SimplifyLibCalls */true,
+                                       /* HaveExceptions */false,
+                                       /* InliningPass */NULL);
     }
 
-    inline void CreateModulePasses() {
-        if(!mPerModulePasses) {
-            /* inline passes */
-            mPerModulePasses = new llvm::PassManager();
-            mPerModulePasses->add(new llvm::TargetData(*mpTargetData));
+    // llvm::createStandardFunctionPasses and llvm::createStandardModulePasses
+    // insert lots of optimization passes for the code generator. For the
+    // conventional desktop PC which memory resources and computation power is
+    // relatively large, doing lots optimization as possible is reasonible and
+    // feasible. However, on the mobile device or embedded system, this may
+    // cause some problem due to the hardware resources limitation. So they need
+    // to be further refined.
+    return;
+  }
 
-            llvm::createStandardModulePasses(mPerModulePasses,
-                                             mCodeGenOpts.OptimizationLevel,
-                                             mCodeGenOpts.OptimizeSize,
-                                             mCodeGenOpts.UnitAtATime,
-                                             mCodeGenOpts.UnrollLoops,
-                                             /* SimplifyLibCalls */true,    /* Some libc functions will be replaced
-                                                                             *  by the LLVM built-in optimized function (e.g. strcmp)
-                                                                             */
-                                             /* HaveExceptions */false,
-                                             /* InliningPass */NULL);
-        }
+  bool CreateCodeGenPasses();
 
-        /*
-         * llvm::createStandardFunctionPasses and llvm::createStandardModulePasses insert lots of optimization passes for
-         *  the code generator. For the conventional desktop PC which memory resources and computation power is relative
-         *  large, doing lots optimization as possible is reasonible and feasible. However, on the mobile device or embedded
-         *  system, this may cause some problem due to the hardware resources limitation. So they need further refine.
-         */
-        return;
-    }
+ protected:
+  llvm::LLVMContext &mLLVMContext;
+  clang::Diagnostic &mDiags;
 
-    bool CreateCodeGenPasses();
+  llvm::Module *mpModule;
 
-protected:
-    llvm::LLVMContext& mLLVMContext;
-    Diagnostic &mDiags;
+  const PragmaList &mPragmas;
 
-    llvm::Module* mpModule;
+  // Extra handler for subclass to handle translation unit before emission
+  virtual void HandleTranslationUnitEx(clang::ASTContext &Ctx) { return; }
 
-    const PragmaList& mPragmas;
+ public:
+  Backend(clang::Diagnostic &Diags,
+          const clang::CodeGenOptions &CodeGenOpts,
+          const clang::TargetOptions &TargetOpts,
+          const PragmaList &Pragmas,
+          llvm::raw_ostream *OS,
+          SlangCompilerOutputTy OutputType,
+          clang::SourceManager &SourceMgr,
+          bool AllowRSPrefix);
 
-    /* Extra handler for subclass to handle translation unit before emission */
-    virtual void HandleTranslationUnitEx(ASTContext& Ctx) { return; }
+  // Initialize - This is called to initialize the consumer, providing the
+  // ASTContext.
+  virtual void Initialize(clang::ASTContext &Ctx);
 
-public:
-    Backend(Diagnostic &Diags,
-            const CodeGenOptions& CodeGenOpts,
-            const TargetOptions& TargetOpts,
-            const PragmaList& Pragmas,
-            llvm::raw_ostream* OS,
-            SlangCompilerOutputTy OutputType,
-            SourceManager& SourceMgr,
-            bool AllowRSPrefix);
+  // HandleTopLevelDecl - Handle the specified top-level declaration.  This is
+  // called by the parser to process every top-level Decl*. Note that D can be
+  // the head of a chain of Decls (e.g. for `int a, b` the chain will have two
+  // elements). Use Decl::getNextDeclarator() to walk the chain.
+  virtual void HandleTopLevelDecl(clang::DeclGroupRef D);
 
-    /*
-     * Initialize - This is called to initialize the consumer, providing the
-     *  ASTContext.
-     */
-    virtual void Initialize(ASTContext &Ctx);
+  // HandleTranslationUnit - This method is called when the ASTs for entire
+  // translation unit have been parsed.
+  virtual void HandleTranslationUnit(clang::ASTContext &Ctx);
 
-    /*
-     * HandleTopLevelDecl - Handle the specified top-level declaration.  This is
-     *  called by the parser to process every top-level Decl*. Note that D can be
-     *  the head of a chain of Decls (e.g. for `int a, b` the chain will have two
-     *  elements). Use Decl::getNextDeclarator() to walk the chain.
-     */
-    virtual void HandleTopLevelDecl(DeclGroupRef D);
+  // HandleTagDeclDefinition - This callback is invoked each time a TagDecl
+  // (e.g. struct, union, enum, class) is completed.  This allows the client to
+  // hack on the type, which can occur at any point in the file (because these
+  // can be defined in declspecs).
+  virtual void HandleTagDeclDefinition(clang::TagDecl *D);
 
-    /*
-     * HandleTranslationUnit - This method is called when the ASTs for entire
-     *  translation unit have been parsed.
-     */
-    virtual void HandleTranslationUnit(ASTContext& Ctx);
+  // CompleteTentativeDefinition - Callback invoked at the end of a translation
+  // unit to notify the consumer that the given tentative definition should be
+  // completed.
+  virtual void CompleteTentativeDefinition(clang::VarDecl *D);
 
-    /*
-     * HandleTagDeclDefinition - This callback is invoked each time a TagDecl
-     *  (e.g. struct, union, enum, class) is completed.  This allows the client to
-     *  hack on the type, which can occur at any point in the file (because these
-     *  can be defined in declspecs).
-     */
-    virtual void HandleTagDeclDefinition(TagDecl* D);
-
-    /*
-     * CompleteTentativeDefinition - Callback invoked at the end of a translation
-     *  unit to notify the consumer that the given tentative definition should be
-     *  completed.
-     */
-    virtual void CompleteTentativeDefinition(VarDecl* D);
-
-    virtual ~Backend();
+  virtual ~Backend();
 };
 
-}   /* namespace slang */
+}   // namespace slang
 
-#endif  /* _SLANG_COMPILER_BACKEND_HPP */
+#endif  // _SLANG_COMPILER_BACKEND_HPP

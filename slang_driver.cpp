@@ -698,7 +698,7 @@ int main(int argc, char** argv) {
     }
 
     if (AllowRSPrefix)
-      slangAllowRSPrefix();
+      slangAllowRSPrefix(slang);
 
     for (count = 0; count < FileCount; count++) {
       /* Start compilation */
