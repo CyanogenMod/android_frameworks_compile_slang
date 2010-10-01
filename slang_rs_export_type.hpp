@@ -115,7 +115,7 @@ public:
         DataTypeSigned8 = 4,
         DataTypeSigned16 = 5,
         DataTypeSigned32 = 6,
-        //DataTypeSigned64 = 7,
+        DataTypeSigned64 = 7,
         DataTypeUnsigned8 = 8,
         DataTypeUnsigned16 = 9,
         DataTypeUnsigned32 = 10,

@@ -7,6 +7,7 @@
 #   define ELEMENT_DATA_TYPE_SIGNED_8       RSExportPrimitiveType::DataTypeSigned8
 #   define ELEMENT_DATA_TYPE_SIGNED_16      RSExportPrimitiveType::DataTypeSigned16
 #   define ELEMENT_DATA_TYPE_SIGNED_32      RSExportPrimitiveType::DataTypeSigned32
+#   define ELEMENT_DATA_TYPE_SIGNED_64      RSExportPrimitiveType::DataTypeSigned64
 #   define ELEMENT_DATA_TYPE_UNSIGNED_8     RSExportPrimitiveType::DataTypeUnsigned8
 #   define ELEMENT_DATA_TYPE_UNSIGNED_16    RSExportPrimitiveType::DataTypeUnsigned16
 #   define ELEMENT_DATA_TYPE_UNSIGNED_32    RSExportPrimitiveType::DataTypeUnsigned32
@@ -113,6 +114,7 @@
     DEF_PRIMITIVE_DATA_TYPE(SIGNED_8, "char")
     DEF_PRIMITIVE_DATA_TYPE(SIGNED_16, "short")
     DEF_PRIMITIVE_DATA_TYPE(SIGNED_32, "int")
+    DEF_PRIMITIVE_DATA_TYPE(SIGNED_64, "long")
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_8, "uchar")
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_16, "ushort")
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_32, "uint")
@@ -157,6 +159,7 @@
 #   undef ELEMENT_DATA_TYPE_SIGNED_8
 #   undef ELEMENT_DATA_TYPE_SIGNED_16
 #   undef ELEMENT_DATA_TYPE_SIGNED_32
+#   undef ELEMENT_DATA_TYPE_SIGNED_64
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_8
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_16
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_32

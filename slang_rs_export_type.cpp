@@ -64,8 +64,9 @@ llvm::StringRef RSExportType::GetTypeName(const Type* T) {
                     else if(type == RSExportPrimitiveType::DataTypeSigned8) return "char";  \
                     else if(type == RSExportPrimitiveType::DataTypeSigned16) return "short";    \
                     else if(type == RSExportPrimitiveType::DataTypeSigned32) return "int";  \
+                    else if(type == RSExportPrimitiveType::DataTypeSigned64) return "long";  \
                     else if(type == RSExportPrimitiveType::DataTypeBool) return "bool";  \
-                    else assert(false && "Unknow data type of supported builtin");  \
+                    else assert(false && "Unknown data type of supported builtin");  \
                 break;
 #include "slang_rs_export_type_support.inc"
 
@@ -522,6 +523,11 @@ const llvm::Type* RSExportPrimitiveType::convertToLLVMType() const {
             return llvm::Type::getInt32Ty(C);
         break;
 
+        case DataTypeSigned64:
+        // case DataTypeUnsigned64:
+            return llvm::Type::getInt64Ty(C);
+        break;
+
         case DataTypeBool:
             return llvm::Type::getInt1Ty(C);
         break;
@@ -635,6 +641,11 @@ const llvm::Type* RSExportConstantArrayType::convertToLLVMType() const {
       typ = llvm::Type::getInt32Ty(C);
       break;
 
+    case DataTypeSigned64:
+    //case DataTypeUnsigned64:
+      typ = llvm::Type::getInt64Ty(C);
+      break;
+
     case DataTypeBool:
       typ = llvm::Type::getInt1Ty(C);
       break;
@@ -656,6 +667,7 @@ const char* RSExportVectorType::VectorTypeNameStore[][3] = {
     /* 5 */ { "uint2",      "uint3",    "uint4" },
     /* 6 */ { "float2",     "float3",   "float4" },
     /* 7 */ { "double2",    "double3",  "double4" },
+    /* 8 */ { "long2",      "long3",    "long4" },
 };
 
 llvm::StringRef RSExportVectorType::GetTypeName(const ExtVectorType* EVT) {
@@ -679,6 +691,7 @@ llvm::StringRef RSExportVectorType::GetTypeName(const ExtVectorType* EVT) {
             else if(type == RSExportPrimitiveType::DataTypeUnsigned32) BaseElement = VectorTypeNameStore[5];    \
             else if(type == RSExportPrimitiveType::DataTypeFloat32) BaseElement = VectorTypeNameStore[6];   \
             else if(type == RSExportPrimitiveType::DataTypeFloat64) BaseElement = VectorTypeNameStore[7];   \
+            else if(type == RSExportPrimitiveType::DataTypeSigned64) BaseElement = VectorTypeNameStore[8];   \
             else if(type == RSExportPrimitiveType::DataTypeBool) BaseElement = VectorTypeNameStore[0];   \
         break;
 #include "slang_rs_export_type_support.inc"

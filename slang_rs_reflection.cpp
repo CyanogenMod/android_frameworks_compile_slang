@@ -121,6 +121,7 @@ static const char* GetVectorTypeName(const RSExportVectorType* EVT) {
             BaseElement = VectorTypeJavaNameMap[2];
         break;
 
+        case RSExportPrimitiveType::DataTypeSigned64:
         case RSExportPrimitiveType::DataTypeUnsigned32:
             BaseElement = VectorTypeJavaNameMap[3];
         break;
@@ -242,16 +243,16 @@ static const char* GetBuiltinElementConstruct(const RSExportType* ET) {
             static const char* PrimitiveBuiltinElementConstructMap[] = {
                 NULL,
                 NULL,
-                "F32", /* RSExportPrimitiveType::DataTypeFloat32 */
-                "F64",       /* RSExportPrimitiveType::DataTypeFloat64 */
-                "I8",  /* RSExportPrimitiveType::DataTypeSigned8 */
-                NULL,       /* RSExportPrimitiveType::DataTypeSigned16 */
-                "I32", /* RSExportPrimitiveType::DataTypeSigned32 */
-                NULL,       /* RSExportPrimitiveType::DataTypeSigned64 */
-                "U8",  /* RSExportPrimitiveType::DataTypeUnsigned8 */
-                NULL,       /* RSExportPrimitiveType::DataTypeUnsigned16 */
-                "U32", /* RSExportPrimitiveType::DataTypeUnsigned32 */
-                NULL,       /* RSExportPrimitiveType::DataTypeUnsigned64 */
+                "F32",  /* RSExportPrimitiveType::DataTypeFloat32 */
+                "F64",  /* RSExportPrimitiveType::DataTypeFloat64 */
+                "I8",   /* RSExportPrimitiveType::DataTypeSigned8 */
+                NULL,   /* RSExportPrimitiveType::DataTypeSigned16 */
+                "I32",  /* RSExportPrimitiveType::DataTypeSigned32 */
+                "I64",  /* RSExportPrimitiveType::DataTypeSigned64 */
+                "U8",   /* RSExportPrimitiveType::DataTypeUnsigned8 */
+                NULL,   /* RSExportPrimitiveType::DataTypeUnsigned16 */
+                "U32",  /* RSExportPrimitiveType::DataTypeUnsigned32 */
+                NULL,   /* RSExportPrimitiveType::DataTypeUnsigned64 */
 
                 NULL,   /* RSExportPrimitiveType::DataTypeUnsigned565 */
                 NULL,   /* RSExportPrimitiveType::DataTypeUnsigned5551 */
@@ -363,7 +364,7 @@ static const char* GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
         "Element.DataType.SIGNED_8",    /* RSExportPrimitiveType::DataTypeSigned8 */
         "Element.DataType.SIGNED_16",   /* RSExportPrimitiveType::DataTypeSigned16 */
         "Element.DataType.SIGNED_32",   /* RSExportPrimitiveType::DataTypeSigned32 */
-        NULL,                           /* RSExportPrimitiveType::DataTypeSigned64 */
+        "Element.DataType.SIGNED_64",   /* RSExportPrimitiveType::DataTypeSigned64 */
         "Element.DataType.UNSIGNED_8",  /* RSExportPrimitiveType::DataTypeUnsigned8 */
         "Element.DataType.UNSIGNED_16", /* RSExportPrimitiveType::DataTypeUnsigned16 */
         "Element.DataType.UNSIGNED_32", /* RSExportPrimitiveType::DataTypeUnsigned32 */
