@@ -46,6 +46,7 @@ class Slang {
 
  public:
   typedef enum {
+    OT_Dependency,
     OT_Assembly,
     OT_LLVMAssembly,
     OT_Bitcode,
@@ -92,6 +93,7 @@ class Slang {
   // Input file name
   std::string mInputFileName;
   std::string mOutputFileName;
+  std::string mDepTargetBCFileName;
 
   OutputType mOT;
 
@@ -147,6 +149,9 @@ class Slang {
     return mOutputFileName;
   }
 
+  bool setDepTargetBC(const char *targetBCFile);
+
+  int generateDepFile();
   int compile();
 
   inline const char *getErrorMessage() { return mDiagClient->str().c_str(); }

@@ -104,6 +104,7 @@ LOCAL_STATIC_LIBRARIES :=	\
 	libclangLex	\
 	libclangCodeGen	\
 	libclangBasic	\
+	libclangFrontend	\
 	libLLVMSupport	\
 	libLLVMSystem
 

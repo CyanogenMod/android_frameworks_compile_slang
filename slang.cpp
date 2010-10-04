@@ -14,6 +14,10 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
 
+#include "clang/Frontend/DependencyOutputOptions.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/Utils.h"
+
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h"
 
@@ -277,11 +281,12 @@ static void _mkdir_given_a_file(const char *file) {
 bool Slang::setOutput(const char *OutputFile) {
   std::string Error;
 
-  _mkdir_given_a_file(OutputFile);
 
   switch (mOT) {
+    case OT_Dependency:
     case OT_Assembly:
     case OT_LLVMAssembly: {
+      _mkdir_given_a_file(OutputFile);
       mOS.reset(new llvm::raw_fd_ostream(OutputFile, Error, 0));
       break;
     }
@@ -290,13 +295,16 @@ bool Slang::setOutput(const char *OutputFile) {
       break;
     }
     case OT_Object:
-    case OT_Bitcode:
-    default: {
+    case OT_Bitcode: {
+      _mkdir_given_a_file(OutputFile);
       mOS.reset(new llvm::raw_fd_ostream(OutputFile,
                                          Error,
                                          llvm::raw_fd_ostream::F_Binary));
       break;
     }
+    default:
+      llvm_unreachable("Unknown compiler output type");
+      break;
   }
 
   if (!Error.empty()) {
@@ -311,7 +319,48 @@ bool Slang::setOutput(const char *OutputFile) {
   return true;
 }
 
+bool Slang::setDepTargetBC(const char *targetBCFile) {
+  mDepTargetBCFileName = targetBCFile;
+
+  return true;
+}
+
+int Slang::generateDepFile() {
+  if((mDiagnostics->getNumErrors() > 0) || (mOS.get() == NULL))
+    return mDiagnostics->getNumErrors();
+
+  /* Initialize options for generating dependency file */
+  clang::DependencyOutputOptions DepOpts;
+  DepOpts.IncludeSystemHeaders = 1;
+  DepOpts.OutputFile = mOutputFileName;
+  DepOpts.Targets.push_back(mDepTargetBCFileName);
+
+  /* Per-compilation needed initialization */
+  createPreprocessor();
+  AttachDependencyFileGen(*mPP.get(), DepOpts);
+
+  /* Inform the diagnostic client we are processing a source file */
+  mDiagClient->BeginSourceFile(LangOpts, mPP.get());
+
+  /* Go through the source file (no operations necessary) */
+  clang::Token Tok;
+  mPP->EnterMainSourceFile();
+  do {
+    mPP->Lex(Tok);
+  } while (Tok.isNot(clang::tok::eof));
+
+  mPP->EndSourceFile();
+
+  /* Clean up after compilation */
+  mPP.reset();
+
+  return mDiagnostics->getNumErrors();
+}
+
 int Slang::compile() {
+  if (mOT == OT_Dependency)
+    return generateDepFile();
+
   if ((mDiagnostics->getNumErrors() > 0) || (mOS.get() == NULL))
     return mDiagnostics->getNumErrors();
 

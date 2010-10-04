@@ -189,6 +189,7 @@ static std::vector<std::string> IncludePaths;
 
 static std::string* InputFileNames;
 static std::string* OutputFileNames;
+static std::string* DepTargetBCFileNames;
 
 // Where to store the bc file.
 // possible values:
@@ -213,6 +214,7 @@ static void ConstructCommandOptions() {
     { "emit-llvm",       no_argument, (int*) &OutputFileType, Slang::OT_LLVMAssembly },
     { "emit-bc",         no_argument, (int*) &OutputFileType, Slang::OT_Bitcode },
     { "emit-asm",        no_argument, NULL, 'S' },
+    { "emit-dep",        no_argument, (int*) &OutputFileType, Slang::OT_Dependency },
     { "emit-obj",        no_argument, NULL, 'c' },
     { "emit-nothing",    no_argument, (int*) &OutputFileType, Slang::OT_Nothing },
 
@@ -271,8 +273,11 @@ extern int optopt;
 extern int opterr;
 static int FileCount;
 
-static int AddOutputFileSuffix(std::string &pathFile) {
-  switch (OutputFileType) {
+static int AddFileSuffix(std::string &pathFile, Slang::OutputType type) {
+  switch (type) {
+    case Slang::OT_Dependency:
+      pathFile += ".d";
+      break;
     case Slang::OT_Assembly:
       pathFile += ".S";
       break;
@@ -311,6 +316,7 @@ static bool ParseOption(int Argc, char** Argv) {
 
   InputFileNames = NULL;
   OutputFileNames = NULL;
+  DepTargetBCFileNames = NULL;
 
   Verbose = false;
   FeatureEnabledList[0] = NULL;
@@ -328,8 +334,12 @@ static bool ParseOption(int Argc, char** Argv) {
   /* Turn off the error message output by getopt_long */
   opterr = 0;
 
-  while((ch = getopt_long(Argc, Argv, "Schvo:u:t:j:p:I:s:", SlangOpts, NULL)) != -1) {
+  while((ch = getopt_long(Argc, Argv, "MSchvo:u:t:j:p:I:s:", SlangOpts, NULL)) != -1) {
     switch(ch) {
+      case 'M':
+        OutputFileType = Slang::OT_Dependency;
+        break;
+
       case 'S':
         OutputFileType = Slang::OT_Assembly;
         break;
@@ -479,12 +489,14 @@ static bool ParseOption(int Argc, char** Argv) {
   FileCount = Argc;
   InputFileNames = new std::string[FileCount];
   OutputFileNames = new std::string[FileCount];
+  DepTargetBCFileNames = new std::string[FileCount];
   int count;
   for (count = 0; count < FileCount; count++) {
     InputFileNames[count].assign(Argv[optind + count]);
 
     if ( OutputPathName && !strcmp(OutputPathName, "-") ) {
       OutputFileNames[count].assign("stdout");
+      DepTargetBCFileNames[count].assign("stdout");
       continue;
     }
 
@@ -497,14 +509,23 @@ static bool ParseOption(int Argc, char** Argv) {
     }
     _outF += slang::RSSlangReflectUtils::BCFileNameFromRSFileName(
         InputFileNames[count].c_str());
+    std::string _outD(_outF);
 
-    int status = AddOutputFileSuffix(_outF);
+    int status = AddFileSuffix(_outF, OutputFileType);
+
     if (status < 0) {
       return false;
     } else if (!status) {
       OutputFileNames[count].assign("/dev/null");
+      DepTargetBCFileNames[count].assign("/dev/null");
     } else {
       OutputFileNames[count].assign(_outF);
+      if (OutputFileType == Slang::OT_Dependency) {
+        if (AddFileSuffix(_outD, Slang::OT_Bitcode) <= 0) {
+          return false;
+        }
+        DepTargetBCFileNames[count].assign(_outD);
+      }
     }
   }
 
@@ -532,6 +553,7 @@ static bool ParseOption(int Argc, char** Argv) {
 
     cout << "Output to: " << ((strcmp(OutputPathName, "-")) ? OutputPathName : "(standard output)") << ", type: ";
     switch(OutputFileType) {
+      case Slang::OT_Dependency: cout << "Dependencies"; break;
       case Slang::OT_Assembly: cout << "Target Assembly"; break;
       case Slang::OT_LLVMAssembly: cout << "LLVM Assembly"; break;
       case Slang::OT_Bitcode: cout << "Bitcode"; break;
@@ -710,6 +732,7 @@ int main(int argc, char** argv) {
       std::string beforeLink;
       if (NoLink) {
         SLANG_CALL_AND_CHECK( slang->setOutput(OutputFileNames[count].c_str()) );
+        SLANG_CALL_AND_CHECK( slang->setDepTargetBC(DepTargetBCFileNames[count].c_str()) );
       } else {
         std::string stem = slang::RSSlangReflectUtils::BCFileNameFromRSFileName(
             InputFileNames[count].c_str());
@@ -725,6 +748,7 @@ int main(int argc, char** argv) {
 
         beforeLink.assign(tmpFileName);
         SLANG_CALL_AND_CHECK( slang->setOutput(beforeLink.c_str()) );
+        SLANG_CALL_AND_CHECK( slang->setDepTargetBC(beforeLink.c_str()) );
       }
 
       SLANG_CALL_AND_CHECK( slang->compile() <= 0 );
@@ -733,11 +757,14 @@ int main(int argc, char** argv) {
       if(slang->getErrorMessage())
         cout << slang->getErrorMessage();
 
-      SLANG_CALL_AND_CHECK( slang->reflectToJavaPath(JavaReflectionPathName) );
-
       char realPackageName[0x100];
-      SLANG_CALL_AND_CHECK( slang->reflectToJava(JavaReflectionPackageName,
-                            realPackageName, sizeof(realPackageName)));
+
+      if (OutputFileType != Slang::OT_Dependency) {
+        SLANG_CALL_AND_CHECK( slang->reflectToJavaPath(JavaReflectionPathName) );
+
+        SLANG_CALL_AND_CHECK( slang->reflectToJava(JavaReflectionPackageName,
+                              realPackageName, sizeof(realPackageName)));
+      }
 
       if (NoLink) {
         goto generate_bitcode_accessor;
@@ -839,7 +866,7 @@ static void Usage(const char* CommandName) {
   OUTPUT_OPTION("-o", "--output-obj-path=<PATH>", "Write compilation output at this path ('-' means stdout)");
   OUTPUT_OPTION("-j", "--output-java-reflection-class=<PACKAGE NAME>", "Output reflection of exportables in the native domain into Java");
   OUTPUT_OPTION("-p", "--output-java-reflection-path=<PATH>", "Write reflection output at this path");
-  OUTPUT_OPTION("-I", "--include-path=<PATH>", "Add a hearder search path");
+  OUTPUT_OPTION("-I", "--include-path=<PATH>", "Add a header search path");
   OUTPUT_OPTION("-s", "--bitcode-storage=<VALUE>", "Where to store the bc file. 'ar' means apk resource, 'jc' means Java code.");
 
   cout << endl;
@@ -849,6 +876,7 @@ static void Usage(const char* CommandName) {
   OUTPUT_OPTION(NULL, "--emit-llvm", "Set output type to LLVM assembly (.ll)");
   OUTPUT_OPTION(NULL, "--emit-bc", "Set output type to Bitcode (.bc) (Default)");
   OUTPUT_OPTION("-S", "--emit-asm", "Set output type to target assmbly code (.S)");
+  OUTPUT_OPTION("-M", "--emit-dep", "Set output type to Make dependency (.d)");
   OUTPUT_OPTION("-c", "--emit-obj", "Set output type to target object file (.o)");
   OUTPUT_OPTION(NULL, "--emit-nothing", "Output nothing");
 
