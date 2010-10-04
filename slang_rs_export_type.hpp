@@ -125,56 +125,51 @@ class RSExportPrimitiveType : public RSExportType {
   typedef enum {
     DataTypeUnknown = -1,
 
-    //DataTypeFloat16 = 1,
-    DataTypeFloat32 = 2,
-    DataTypeFloat64 = 3,
-    DataTypeSigned8 = 4,
-    DataTypeSigned16 = 5,
-    DataTypeSigned32 = 6,
-    DataTypeSigned64 = 7,
-    DataTypeUnsigned8 = 8,
-    DataTypeUnsigned16 = 9,
-    DataTypeUnsigned32 = 10,
-    //DataTypeUnSigned64 = 11,
+    DataTypeFloat16 = 0,
+    DataTypeFloat32,
+    DataTypeFloat64,
+    DataTypeSigned8,
+    DataTypeSigned16,
+    DataTypeSigned32,
+    DataTypeSigned64,
+    DataTypeUnsigned8,
+    DataTypeUnsigned16,
+    DataTypeUnsigned32,
+    DataTypeUnSigned64,
 
-    DataTypeUnsigned565 = 12,
-    DataTypeUnsigned5551 = 13,
-    DataTypeUnsigned4444 = 14,
+    DataTypeBoolean,
 
-    DataTypeBool = 15,
+    DataTypeUnsigned565,
+    DataTypeUnsigned5551,
+    DataTypeUnsigned4444,
 
-    DataTypeRSElement = 16,
-    DataTypeRSType = 17,
-    DataTypeRSAllocation = 18,
-    DataTypeRSSampler = 19,
-    DataTypeRSScript = 20,
-    DataTypeRSMesh = 21,
-    DataTypeRSProgramFragment = 22,
-    DataTypeRSProgramVertex = 23,
-    DataTypeRSProgramRaster = 24,
-    DataTypeRSProgramStore = 25,
-    DataTypeRSFont = 26,
-    DataTypeRSMatrix2x2 = 27,
-    DataTypeRSMatrix3x3 = 28,
-    DataTypeRSMatrix4x4 = 29,
+    DataTypeRSMatrix2x2,
+    DataTypeRSMatrix3x3,
+    DataTypeRSMatrix4x4,
+
+    DataTypeRSElement,
+    DataTypeRSType,
+    DataTypeRSAllocation,
+    DataTypeRSSampler,
+    DataTypeRSScript,
+    DataTypeRSMesh,
+    DataTypeRSProgramFragment,
+    DataTypeRSProgramVertex,
+    DataTypeRSProgramRaster,
+    DataTypeRSProgramStore,
+    DataTypeRSFont,
 
     DataTypeMax
   } DataType;
 
   // From graphics/java/android/renderscript/Element.java: Element.DataKind
   typedef enum {
-    DataKindUser = 0,
-    DataKindColor = 1,
-    DataKindPosition = 2,
-    DataKindTexture = 3,
-    DataKindNormal = 4,
-    DataKindIndex = 5,
-    DataKindPointSize = 6,
-    DataKindPixelL = 7,
-    DataKindPixelA = 8,
-    DataKindPixelLA = 9,
-    DataKindPixelRGB = 10,
-    DataKindPixelRGBA = 11
+    DataKindUser,
+    DataKindPixelL,
+    DataKindPixelA,
+    DataKindPixelLA,
+    DataKindPixelRGB,
+    DataKindPixelRGBA
   } DataKind;
 
  private:

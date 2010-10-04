@@ -150,18 +150,16 @@ RSExportType *RSExportElement::CreateFromDecl(RSContext *Context,
   const clang::Type* CT = GET_CANONICAL_TYPE(T);
   const ElementInfo* EI = NULL;
 
-  // For rs element that's NOT like those rs_color4f..., just call
-  // Create(Context, T) without finding EI.
-  // Note: Those rs_color4f kind of elements are either typed primitive or
-  // vector
+  // Note: RS element like rs_pixel_rgb elements are either in the type of
+  // primitive or vector.
   if ((CT->getTypeClass() != clang::Type::Builtin) &&
       (CT->getTypeClass() != clang::Type::ExtVector) &&
       (CT->getTypeClass() != clang::Type::Record)) {
     return RSExportType::Create(Context, T);
   }
 
-  // Iterative query the name of type to see whether it's an element name
-  // like rs_color4f or its alias (via typedef).
+  // Following the typedef chain to see whether it's an element name like
+  // rs_pixel_rgb or its alias (via typedef).
   while (T != CT) {
     if (T->getTypeClass() != clang::Type::Typedef) {
       break;

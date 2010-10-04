@@ -77,7 +77,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
             return "int";                                               \
           else if(type == RSExportPrimitiveType::DataTypeSigned64)      \
             return "long";                                              \
-          else if (type == RSExportPrimitiveType::DataTypeBool)         \
+          else if (type == RSExportPrimitiveType::DataTypeBoolean)      \
             return "bool";                                              \
           else                                                          \
             assert(false && "Unknow data type of supported builtin");   \
@@ -436,7 +436,6 @@ RSExportPrimitiveType::GetRSObjectType(const clang::Type *T) {
 const size_t
 RSExportPrimitiveType::SizeOfDataTypeInBits[
     RSExportPrimitiveType::DataTypeMax + 1] = {
-  0,
   16, // DataTypeFloat16
   32, // DataTypeFloat32
   64, // DataTypeFloat64
@@ -448,12 +447,15 @@ RSExportPrimitiveType::SizeOfDataTypeInBits[
   16, // DataTypeUnsigned16
   32, // DataTypeUnsigned32
   64, // DataTypeUnSigned64
+  1,  // DataTypeBoolean
 
   16, // DataTypeUnsigned565
   16, // DataTypeUnsigned5551
   16, // DataTypeUnsigned4444
 
-  1,  // DataTypeBool
+  128, // DataTypeRSMatrix2x2
+  288, // DataTypeRSMatrix3x3
+  512, // DataTypeRSMatrix4x4
 
   32, // DataTypeRSElement
   32, // DataTypeRSType
@@ -466,9 +468,6 @@ RSExportPrimitiveType::SizeOfDataTypeInBits[
   32, // DataTypeRSProgramRaster
   32, // DataTypeRSProgramStore
   32, // DataTypeRSFont
-  128, // DataTypeRSMatrix2x2
-  288, // DataTypeRSMatrix3x3
-  512, // DataTypeRSMatrix4x4
   0
 };
 
@@ -582,6 +581,10 @@ const llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
       return llvm::Type::getDoubleTy(C);
       break;
     }
+    case DataTypeBoolean: {
+      return llvm::Type::getInt1Ty(C);
+      break;
+    }
     case DataTypeSigned8:
     case DataTypeUnsigned8: {
       return llvm::Type::getInt8Ty(C);
@@ -603,10 +606,6 @@ const llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
     case DataTypeSigned64: {
     // case DataTypeUnsigned64:
       return llvm::Type::getInt64Ty(C);
-      break;
-    }
-    case DataTypeBool: {
-      return llvm::Type::getInt1Ty(C);
       break;
     }
     default: {
@@ -716,6 +715,10 @@ const llvm::Type *RSExportConstantArrayType::convertToLLVMType() const {
       typ = llvm::Type::getDoubleTy(C);
       break;
     }
+    case DataTypeBoolean: {
+      typ = llvm::Type::getInt1Ty(C);
+      break;
+    }
     case DataTypeSigned8:
     case DataTypeUnsigned8: {
       typ = llvm::Type::getInt8Ty(C);
@@ -737,10 +740,6 @@ const llvm::Type *RSExportConstantArrayType::convertToLLVMType() const {
     case DataTypeSigned64: {
     //case DataTypeUnsigned64:
       typ = llvm::Type::getInt64Ty(C);
-      break;
-    }
-    case DataTypeBool: {
-      typ = llvm::Type::getInt1Ty(C);
       break;
     }
     default: {
@@ -797,7 +796,7 @@ llvm::StringRef RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT)
         BaseElement = VectorTypeNameStore[7];                           \
       else if (type == RSExportPrimitiveType::DataTypeSigned64) \
         BaseElement = VectorTypeNameStore[8];                           \
-      else if (type == RSExportPrimitiveType::DataTypeBool) \
+      else if (type == RSExportPrimitiveType::DataTypeBoolean) \
         BaseElement = VectorTypeNameStore[0];                          \
       break;  \
     }
@@ -876,7 +875,7 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
   for (clang::RecordDecl::field_iterator FI = RD->field_begin(),
            FE = RD->field_end();
        FI != FE;
-       FI++) {
+       FI++, Index++) {
 #define FAILED_CREATE_FIELD(err)    do {         \
       if (*err)                                                          \
         fprintf(stderr, \

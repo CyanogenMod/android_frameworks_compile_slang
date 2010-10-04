@@ -48,8 +48,7 @@ static bool GetClassNameFromFileName(const std::string &FileName,
 
 static const char *GetPrimitiveTypeName(const RSExportPrimitiveType *EPT) {
   static const char *PrimitiveTypeJavaNameMap[] = {
-    "",
-    "",
+    "",         // RSExportPrimitiveType::DataTypeFloat16
     "float",    // RSExportPrimitiveType::DataTypeFloat32
     "double",   // RSExportPrimitiveType::DataTypeFloat64
     "byte",     // RSExportPrimitiveType::DataTypeSigned8
@@ -60,12 +59,15 @@ static const char *GetPrimitiveTypeName(const RSExportPrimitiveType *EPT) {
     "int",      // RSExportPrimitiveType::DataTypeUnsigned16
     "long",     // RSExportPrimitiveType::DataTypeUnsigned32
     "long",     // RSExportPrimitiveType::DataTypeUnsigned64
+    "boolean",  // RSExportPrimitiveType::DataTypeBoolean
 
     "int",      // RSExportPrimitiveType::DataTypeUnsigned565
     "int",      // RSExportPrimitiveType::DataTypeUnsigned5551
     "int",      // RSExportPrimitiveType::DataTypeUnsigned4444
 
-    "boolean",  // RSExportPrimitiveType::DataTypeBool
+    "Matrix2f",     // RSExportPrimitiveType::DataTypeRSMatrix2x2
+    "Matrix3f",     // RSExportPrimitiveType::DataTypeRSMatrix3x3
+    "Matrix4f",     // RSExportPrimitiveType::DataTypeRSMatrix4x4
 
     "Element",  // RSExportPrimitiveType::DataTypeRSElement
     "Type",     // RSExportPrimitiveType::DataTypeRSType
@@ -78,9 +80,6 @@ static const char *GetPrimitiveTypeName(const RSExportPrimitiveType *EPT) {
     "ProgramRaster",    // RSExportPrimitiveType::DataTypeRSProgramRaster
     "ProgramStore",     // RSExportPrimitiveType::DataTypeRSProgramStore
     "Font",     // RSExportPrimitiveType::DataTypeRSFont
-    "Matrix2f",     // RSExportPrimitiveType::DataTypeRSMatrix2x2
-    "Matrix3f",     // RSExportPrimitiveType::DataTypeRSMatrix3x3
-    "Matrix4f",     // RSExportPrimitiveType::DataTypeRSMatrix4x4
   };
   unsigned TypeId = EPT->getType();
 
@@ -104,7 +103,8 @@ static const char *GetVectorTypeName(const RSExportVectorType *EVT) {
   const char **BaseElement = NULL;
 
   switch (EVT->getType()) {
-    case RSExportPrimitiveType::DataTypeSigned8: {
+    case RSExportPrimitiveType::DataTypeSigned8:
+    case RSExportPrimitiveType::DataTypeBoolean: {
       BaseElement = VectorTypeJavaNameMap[0];
       break;
     }
@@ -125,10 +125,6 @@ static const char *GetVectorTypeName(const RSExportVectorType *EVT) {
     }
     case RSExportPrimitiveType::DataTypeFloat32: {
       BaseElement = VectorTypeJavaNameMap[4];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeBool: {
-      BaseElement = VectorTypeJavaNameMap[0];
       break;
     }
     default: {
@@ -162,8 +158,7 @@ static const char *GetVectorAccessor(int Index) {
 
 static const char *GetPackerAPIName(const RSExportPrimitiveType *EPT) {
   static const char* PrimitiveTypePackerAPINameMap[] = {
-    "",
-    "",
+    "",         // RSExportPrimitiveType::DataTypeFloat16
     "addF32",   // RSExportPrimitiveType::DataTypeFloat32
     "addF64",   // RSExportPrimitiveType::DataTypeFloat64
     "addI8",    // RSExportPrimitiveType::DataTypeSigned8
@@ -174,12 +169,15 @@ static const char *GetPackerAPIName(const RSExportPrimitiveType *EPT) {
     "addU16",   // RSExportPrimitiveType::DataTypeUnsigned16
     "addU32",   // RSExportPrimitiveType::DataTypeUnsigned32
     "addU64",   // RSExportPrimitiveType::DataTypeUnsigned64
+    "addBoolean",  // RSExportPrimitiveType::DataTypeBoolean
 
     "addU16",   // RSExportPrimitiveType::DataTypeUnsigned565
     "addU16",   // RSExportPrimitiveType::DataTypeUnsigned5551
     "addU16",   // RSExportPrimitiveType::DataTypeUnsigned4444
 
-    "addBoolean",  // RSExportPrimitiveType::DataTypeBool
+    "addObj",   // RSExportPrimitiveType::DataTypeRSMatrix2x2
+    "addObj",   // RSExportPrimitiveType::DataTypeRSMatrix3x3
+    "addObj",   // RSExportPrimitiveType::DataTypeRSMatrix4x4
 
     "addObj",   // RSExportPrimitiveType::DataTypeRSElement
     "addObj",   // RSExportPrimitiveType::DataTypeRSType
@@ -192,9 +190,6 @@ static const char *GetPackerAPIName(const RSExportPrimitiveType *EPT) {
     "addObj",   // RSExportPrimitiveType::DataTypeRSProgramRaster
     "addObj",   // RSExportPrimitiveType::DataTypeRSProgramStore
     "addObj",   // RSExportPrimitiveType::DataTypeRSFont
-    "addObj",   // RSExportPrimitiveType::DataTypeRSMatrix2x2
-    "addObj",   // RSExportPrimitiveType::DataTypeRSMatrix3x3
-    "addObj",   // RSExportPrimitiveType::DataTypeRSMatrix4x4
   };
   unsigned TypeId = EPT->getType();
 
@@ -244,24 +239,26 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
     const RSExportPrimitiveType *EPT = static_cast<const RSExportPrimitiveType*>(ET);
     if (EPT->getKind() == RSExportPrimitiveType::DataKindUser) {
       static const char *PrimitiveBuiltinElementConstructMap[] = {
-        NULL,
-        NULL,
-        "F32", // RSExportPrimitiveType::DataTypeFloat32
-        "F64",       // RSExportPrimitiveType::DataTypeFloat64
-        "I8",  // RSExportPrimitiveType::DataTypeSigned8
-        NULL,       // RSExportPrimitiveType::DataTypeSigned16
-        "I32", // RSExportPrimitiveType::DataTypeSigned32
-        "I64",  /* RSExportPrimitiveType::DataTypeSigned64 */
-        "U8",  // RSExportPrimitiveType::DataTypeUnsigned8
-        NULL,       // RSExportPrimitiveType::DataTypeUnsigned16
-        "U32", // RSExportPrimitiveType::DataTypeUnsigned32
-        NULL,       // RSExportPrimitiveType::DataTypeUnsigned64
+        NULL,   // RSExportPrimitiveType::DataTypeFloat16
+        "F32",  // RSExportPrimitiveType::DataTypeFloat32
+        "F64",  // RSExportPrimitiveType::DataTypeFloat64
+        "I8",   // RSExportPrimitiveType::DataTypeSigned8
+        NULL,   // RSExportPrimitiveType::DataTypeSigned16
+        "I32",  // RSExportPrimitiveType::DataTypeSigned32
+        "I64",  // RSExportPrimitiveType::DataTypeSigned64
+        "U8",   // RSExportPrimitiveType::DataTypeUnsigned8
+        NULL,   // RSExportPrimitiveType::DataTypeUnsigned16
+        "U32",  // RSExportPrimitiveType::DataTypeUnsigned32
+        NULL,   // RSExportPrimitiveType::DataTypeUnsigned64
+        "BOOLEAN",  // RSExportPrimitiveType::DataTypeBoolean
 
         NULL,   // RSExportPrimitiveType::DataTypeUnsigned565
         NULL,   // RSExportPrimitiveType::DataTypeUnsigned5551
         NULL,   // RSExportPrimitiveType::DataTypeUnsigned4444
 
-        "BOOLEAN",  // RSExportPrimitiveType::DataTypeBool
+        "MATRIX_2X2",   // RSExportPrimitiveType::DataTypeRSMatrix2x2
+        "MATRIX_3X3",   // RSExportPrimitiveType::DataTypeRSMatrix3x3
+        "MATRIX_4X4",   // RSExportPrimitiveType::DataTypeRSMatrix4x4
 
         "ELEMENT", // RSExportPrimitiveType::DataTypeRSElement
         "TYPE",    // RSExportPrimitiveType::DataTypeRSType
@@ -274,9 +271,6 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
         "PROGRAM_RASTER",    // RSExportPrimitiveType::DataTypeRSProgramRaster
         "PROGRAM_STORE",     // RSExportPrimitiveType::DataTypeRSProgramStore
         "FONT",       // RSExportPrimitiveType::DataTypeRSFont
-        "MATRIX_2X2",       // RSExportPrimitiveType::DataTypeRSMatrix2x2
-        "MATRIX_3X3",       // RSExportPrimitiveType::DataTypeRSMatrix3x3
-        "MATRIX_4X4",       // RSExportPrimitiveType::DataTypeRSMatrix4x4
       };
       unsigned TypeId = EPT->getType();
 
@@ -293,41 +287,25 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
         return "RGB_888";
     } else if (EPT->getKind() == RSExportPrimitiveType::DataKindPixelRGBA) {
       if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned5551)
-        return "RGB_5551";
+        return "RGBA_5551";
       else if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned4444)
-        return "RGB_4444";
+        return "RGBA_4444";
       else if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
-        return "RGB_8888";
-    } else if (EPT->getKind() == RSExportPrimitiveType::DataKindIndex) {
-      if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned16)
-        return "INDEX_16";
+        return "RGBA_8888";
     }
   } else if (ET->getClass() == RSExportType::ExportClassVector) {
     const RSExportVectorType *EVT = static_cast<const RSExportVectorType*>(ET);
-    if (EVT->getKind() == RSExportPrimitiveType::DataKindPosition) {
+    if (EVT->getKind() == RSExportPrimitiveType::DataKindUser) {
       if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
         if (EVT->getNumElement() == 2)
-          return "ATTRIB_POSITION_2";
+          return "F32_2";
         else if (EVT->getNumElement() == 3)
-          return "ATTRIB_POSITION_3";
-      }
-    } else if (EVT->getKind() == RSExportPrimitiveType::DataKindTexture) {
-      if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
-        if (EVT->getNumElement() == 2)
-          return "ATTRIB_TEXTURE_2";
-      }
-    } else if (EVT->getKind() == RSExportPrimitiveType::DataKindNormal) {
-      if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
-        if (EVT->getNumElement() == 3)
-          return "ATTRIB_NORMAL_3";
-      }
-    } else if (EVT->getKind() == RSExportPrimitiveType::DataKindColor) {
-      if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
-        if (EVT->getNumElement() == 4)
-          return "ATTRIB_COLOR_F32_4";
+          return "F32_3";
+        else if (EVT->getNumElement() == 4)
+          return "F32_4";
       } else if (EVT->getType() == RSExportPrimitiveType::DataTypeUnsigned8) {
         if (EVT->getNumElement() == 4)
-          return "ATTRIB_COLOR_U8_4";
+          return "U8_4";
       }
     }
   } else if (ET->getClass() == RSExportType::ExportClassPointer) {
@@ -342,12 +320,6 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
 static const char *GetElementDataKindName(RSExportPrimitiveType::DataKind DK) {
   static const char *ElementDataKindNameMap[] = {
     "Element.DataKind.USER",        // RSExportPrimitiveType::DataKindUser
-    "Element.DataKind.COLOR",       // RSExportPrimitiveType::DataKindColor
-    "Element.DataKind.POSITION",    // RSExportPrimitiveType::DataKindPosition
-    "Element.DataKind.TEXTURE",     // RSExportPrimitiveType::DataKindTexture
-    "Element.DataKind.NORMAL",      // RSExportPrimitiveType::DataKindNormal
-    "Element.DataKind.INDEX",       // RSExportPrimitiveType::DataKindIndex
-    "Element.DataKind.POINT_SIZE",  // RSExportPrimitiveType::DataKindPointSize
     "Element.DataKind.PIXEL_L",     // RSExportPrimitiveType::DataKindPixelL
     "Element.DataKind.PIXEL_A",     // RSExportPrimitiveType::DataKindPixelA
     "Element.DataKind.PIXEL_LA",    // RSExportPrimitiveType::DataKindPixelLA
@@ -364,8 +336,7 @@ static const char *GetElementDataKindName(RSExportPrimitiveType::DataKind DK) {
 
 static const char *GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
   static const char *ElementDataTypeNameMap[] = {
-    NULL,
-    NULL,
+    NULL,                           // RSExportPrimitiveType::DataTypeFloat16
     "Element.DataType.FLOAT_32",    // RSExportPrimitiveType::DataTypeFloat32
     "Element.DataType.FLOAT_64",    // RSExportPrimitiveType::DataTypeFloat64
     "Element.DataType.SIGNED_8",    // RSExportPrimitiveType::DataTypeSigned8
@@ -376,14 +347,21 @@ static const char *GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
     "Element.DataType.UNSIGNED_16", // RSExportPrimitiveType::DataTypeUnsigned16
     "Element.DataType.UNSIGNED_32", // RSExportPrimitiveType::DataTypeUnsigned32
     NULL,                           // RSExportPrimitiveType::DataTypeUnsigned64
-      // RSExportPrimitiveType::DataTypeUnsigned565
+    "Element.DataType.BOOLEAN",     // RSExportPrimitiveType::DataTypeBoolean
+
+    // RSExportPrimitiveType::DataTypeUnsigned565
     "Element.DataType.UNSIGNED_5_6_5",
-      // RSExportPrimitiveType::DataTypeUnsigned5551
+    // RSExportPrimitiveType::DataTypeUnsigned5551
     "Element.DataType.UNSIGNED_5_5_5_1",
-      // RSExportPrimitiveType::DataTypeUnsigned4444
+    // RSExportPrimitiveType::DataTypeUnsigned4444
     "Element.DataType.UNSIGNED_4_4_4_4",
 
-    "Element.DataType.BOOLEAN",     // RSExportPrimitiveType::DataTypeBool
+    // RSExportPrimitiveType::DataTypeRSMatrix2x2
+    "Element.DataType.RS_MATRIX_2X2",
+    // RSExportPrimitiveType::DataTypeRSMatrix3x3
+    "Element.DataType.RS_MATRIX_3X3",
+    // RSExportPrimitiveType::DataTypeRSMatrix4x4
+    "Element.DataType.RS_MATRIX_4X4",
 
     "Element.DataType.RS_ELEMENT",  // RSExportPrimitiveType::DataTypeRSElement
     "Element.DataType.RS_TYPE",     // RSExportPrimitiveType::DataTypeRSType
@@ -405,12 +383,6 @@ static const char *GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
     "Element.DataType.RS_PROGRAM_STORE",
       // RSExportPrimitiveType::DataTypeRSFont
     "Element.DataType.RS_FONT",
-      // RSExportPrimitiveType::DataTypeRSMatrix2x2
-    "Element.DataType.RS_MATRIX_2X2",
-      // RSExportPrimitiveType::DataTypeRSMatrix3x3
-    "Element.DataType.RS_MATRIX_3X3",
-      // RSExportPrimitiveType::DataTypeRSMatrix4x4
-    "Element.DataType.RS_MATRIX_4X4",
   };
 
   if (static_cast<unsigned>(DT) <
@@ -578,7 +550,7 @@ void RSReflection::genInitExportVariable(Context &C,
     case RSExportType::ExportClassConstantArray: {
       const RSExportPrimitiveType *EPT =
           static_cast<const RSExportPrimitiveType*>(ET);
-      if (EPT->getType() == RSExportPrimitiveType::DataTypeBool) {
+      if (EPT->getType() == RSExportPrimitiveType::DataTypeBoolean) {
         genInitBoolExportVariable(C, VarName, Val);
       } else {
         genInitPrimitiveExportVariable(C, VarName, Val);
@@ -1378,32 +1350,15 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
           1;
 
       switch (EPT->getKind()) {
-        case RSExportPrimitiveType::DataKindColor:
-        case RSExportPrimitiveType::DataKindPosition:
-        case RSExportPrimitiveType::DataKindTexture:
-        case RSExportPrimitiveType::DataKindNormal:
-        case RSExportPrimitiveType::DataKindPointSize: {
-          // Element.createAttrib()
-          EB_ADD("createAttrib(" << RenderScriptVar << ", "
-                                 << DataTypeName << ", "
-                                 << DataKindName << ", "
-                                 << Size << ")");
-          break;
-        }
-        case RSExportPrimitiveType::DataKindIndex: {
-          // Element.createIndex()
-          EB_ADD("createAttrib(" << RenderScriptVar << ")");
-          break;
-        }
         case RSExportPrimitiveType::DataKindPixelL:
         case RSExportPrimitiveType::DataKindPixelA:
         case RSExportPrimitiveType::DataKindPixelLA:
         case RSExportPrimitiveType::DataKindPixelRGB:
         case RSExportPrimitiveType::DataKindPixelRGBA: {
           // Element.createPixel()
-          EB_ADD("createVector(" << RenderScriptVar << ", "
-                                 << DataTypeName << ", "
-                                 << DataKindName << ")");
+          EB_ADD("createPixel(" << RenderScriptVar << ", "
+                                << DataTypeName << ", "
+                                << DataKindName << ")");
           break;
         }
         case RSExportPrimitiveType::DataKindUser:

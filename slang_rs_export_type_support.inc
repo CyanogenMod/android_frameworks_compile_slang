@@ -14,6 +14,6 @@
   SLANG_RS_SUPPORT_BUILTIN_TYPE(clang::BuiltinType::LongLong, RSExportPrimitiveType::DataTypeSigned64)
   SLANG_RS_SUPPORT_BUILTIN_TYPE(clang::BuiltinType::Float,  RSExportPrimitiveType::DataTypeFloat32)
   SLANG_RS_SUPPORT_BUILTIN_TYPE(clang::BuiltinType::Double, RSExportPrimitiveType::DataTypeFloat64)
-  SLANG_RS_SUPPORT_BUILTIN_TYPE(clang::BuiltinType::Bool,   RSExportPrimitiveType::DataTypeBool)
+  SLANG_RS_SUPPORT_BUILTIN_TYPE(clang::BuiltinType::Bool,   RSExportPrimitiveType::DataTypeBoolean)
 #   undef SLANG_RS_SUPPORT_BUILTIN_TYPE
 #endif

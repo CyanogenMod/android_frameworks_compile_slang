@@ -11,10 +11,16 @@
 #   define ELEMENT_DATA_TYPE_UNSIGNED_8     RSExportPrimitiveType::DataTypeUnsigned8
 #   define ELEMENT_DATA_TYPE_UNSIGNED_16    RSExportPrimitiveType::DataTypeUnsigned16
 #   define ELEMENT_DATA_TYPE_UNSIGNED_32    RSExportPrimitiveType::DataTypeUnsigned32
+#   define ELEMENT_DATA_TYPE_BOOL           RSExportPrimitiveType::DataTypeBool
+
 #   define ELEMENT_DATA_TYPE_UNSIGNED_565   RSExportPrimitiveType::DataTypeUnsigned565
 #   define ELEMENT_DATA_TYPE_UNSIGNED_5551  RSExportPrimitiveType::DataTypeUnsigned5551
 #   define ELEMENT_DATA_TYPE_UNSIGNED_4444  RSExportPrimitiveType::DataTypeUnsigned4444
-#   define ELEMENT_DATA_TYPE_BOOL           RSExportPrimitiveType::DataTypeBool
+
+#   define ELEMENT_DATA_TYPE_RS_MATRIX_2X2  RSExportPrimitiveType::DataTypeRSMatrix2x2
+#   define ELEMENT_DATA_TYPE_RS_MATRIX_3X3  RSExportPrimitiveType::DataTypeRSMatrix3x3
+#   define ELEMENT_DATA_TYPE_RS_MATRIX_4X4  RSExportPrimitiveType::DataTypeRSMatrix4x4
+
 #   define ELEMENT_DATA_TYPE_RS_ELEMENT     RSExportPrimitiveType::DataTypeRSElement
 #   define ELEMENT_DATA_TYPE_RS_TYPE        RSExportPrimitiveType::DataTypeRSType
 #   define ELEMENT_DATA_TYPE_RS_ALLOCATION  RSExportPrimitiveType::DataTypeRSAllocation
@@ -26,9 +32,6 @@
 #   define ELEMENT_DATA_TYPE_RS_PROGRAM_RASTER      RSExportPrimitiveType::DataTypeRSProgramRaster
 #   define ELEMENT_DATA_TYPE_RS_PROGRAM_STORE       RSExportPrimitiveType::DataTypeRSProgramStore
 #   define ELEMENT_DATA_TYPE_RS_FONT                RSExportPrimitiveType::DataTypeRSFont
-#   define ELEMENT_DATA_TYPE_RS_MATRIX_2X2           RSExportPrimitiveType::DataTypeRSMatrix2x2
-#   define ELEMENT_DATA_TYPE_RS_MATRIX_3X3           RSExportPrimitiveType::DataTypeRSMatrix3x3
-#   define ELEMENT_DATA_TYPE_RS_MATRIX_4X4           RSExportPrimitiveType::DataTypeRSMatrix4x4
 
 #endif  /* USE_ELEMENT_TYPE_NAME */
 
@@ -38,12 +41,6 @@
 #   define GET_ELEMENT_DATA_KIND(kind)  ELEMENT_DATA_KIND_ ## kind
 
 #   define ELEMENT_DATA_KIND_USER       RSExportPrimitiveType::DataKindUser
-#   define ELEMENT_DATA_KIND_COLOR      RSExportPrimitiveType::DataKindColor
-#   define ELEMENT_DATA_KIND_POSITION   RSExportPrimitiveType::DataKindPosition
-#   define ELEMENT_DATA_KIND_TEXTURE    RSExportPrimitiveType::DataKindTexture
-#   define ELEMENT_DATA_KIND_NORMAL     RSExportPrimitiveType::DataKindNormal
-#   define ELEMENT_DATA_KIND_INDEX      RSExportPrimitiveType::DataKindIndex
-#   define ELEMENT_DATA_KIND_POINT_SIZE RSExportPrimitiveType::DataKindPointSize
 #   define ELEMENT_DATA_KIND_PIXEL_L    RSExportPrimitiveType::DataKindPixelL
 #   define ELEMENT_DATA_KIND_PIXEL_A    RSExportPrimitiveType::DataKindPixelA
 #   define ELEMENT_DATA_KIND_PIXEL_LA   RSExportPrimitiveType::DataKindPixelLA
@@ -55,57 +52,16 @@
 /* DEF_ELEMENT(name, dk, dt, norm, vsize) */
 #ifdef DEF_ELEMENT
 
-    /* RS_KIND_INDEX */
-    DEF_ELEMENT("rs_index", INDEX, UNSIGNED_16, false, 1)
-
-    /* RS_KIND_COLOR */
-    DEF_ELEMENT("rs_color3f", COLOR, FLOAT_32, false, 3)
-    DEF_ELEMENT("rs_color4f", COLOR, FLOAT_32, false, 4)
-    DEF_ELEMENT("rs_color3u", COLOR, UNSIGNED_8, true, 3)
-    DEF_ELEMENT("rs_color4u", COLOR, UNSIGNED_8, true, 4)
-
-    /* RS_KIND_POSITION */
-    DEF_ELEMENT("rs_position1", POSITION, FLOAT_32, false, 1)
-    DEF_ELEMENT("rs_position2", POSITION, FLOAT_32, false, 2)
-    DEF_ELEMENT("rs_position3", POSITION, FLOAT_32, false, 3)
-    DEF_ELEMENT("rs_position4", POSITION, FLOAT_32, false, 4)
-
-    /* RS_KIND_TEXTURE */
-    DEF_ELEMENT("rs_texture_coord1", TEXTURE, FLOAT_32, false, 1)
-    DEF_ELEMENT("rs_texture_coord2", TEXTURE, FLOAT_32, false, 2)
-    DEF_ELEMENT("rs_texture_coord3", TEXTURE, FLOAT_32, false, 3)
-    DEF_ELEMENT("rs_texture_coord4", TEXTURE, FLOAT_32, false, 4)
-
-    /* RS_KIND_NORMAL */
-    DEF_ELEMENT("rs_normal", NORMAL, FLOAT_32, false, 3)
-
-    /* RS_KIND_POINT_SIZE */
-    DEF_ELEMENT("rs_point_size", POINT_SIZE, FLOAT_32, false, 3)
-
-    /* matrix */
-    DEF_ELEMENT("rs_matrix2x2", USER, FLOAT_32, false, 4)
-    DEF_ELEMENT("rs_matrix3x3", USER, FLOAT_32, false, 9)
-    DEF_ELEMENT("rs_matrix4x4", USER, FLOAT_32, false, 16)
+    DEF_ELEMENT("rs_pixel_l", USER, UNSIGNED_8, true, 1)
+    DEF_ELEMENT("rs_pixel_a", USER, UNSIGNED_8, true, 1)
+    DEF_ELEMENT("rs_pixel_la", USER, UNSIGNED_8, true, 2)
+    DEF_ELEMENT("rs_pixel_rgb", USER, UNSIGNED_8, true, 3)
+    DEF_ELEMENT("rs_pixel_rgba", USER, UNSIGNED_8, true, 4)
+    DEF_ELEMENT("rs_pixel_rgb565", USER, UNSIGNED_565, true, 1)
+    DEF_ELEMENT("rs_pixel_rgba5551", USER, UNSIGNED_5551, true, 1)
+    DEF_ELEMENT("rs_pixel_rgba4444", USER, UNSIGNED_4444, true, 1)
 
 #endif  /* DEF_ELEMENT */
-
-#if 0
-
-/* Element.createPixel(), always normalized */
-#ifdef DEF_PIXEL_ELEMENT /* (dk, dt, vsize) */
-    DEF_PIXEL_ELEMENT(PIXEL_L, UNSIGNED_8, 1)
-    DEF_PIXEL_ELEMENT(PIXEL_A, UNSIGNED_8, 1)
-    DEF_PIXEL_ELEMENT(PIXEL_LA, UNSIGNED_8, 2)
-    DEF_PIXEL_ELEMENT(PIXEL_RGB, UNSIGNED_8, 3)
-    DEF_PIXEL_ELEMENT(PIXEL_RGBA, UNSIGNED_8, 4)
-    DEF_PIXEL_ELEMENT(PIXEL_RGB, UNSIGNED_565, 1)
-    DEF_PIXEL_ELEMENT(PIXEL_RGBA, UNSIGNED_5551, 1)
-    DEF_PIXEL_ELEMENT(PIXEL_RGBA, UNSIGNED_4444, 1)
-#   undef DEF_PIXEL_ELEMENT
-#endif  /* DEF_PIXEL_ELEMENT */
-
-#endif
-
 
 #ifdef DEF_PRIMITIVE_DATA_TYPE /* (type, name) */
 
@@ -118,16 +74,19 @@
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_8, "uchar")
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_16, "ushort")
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_32, "uint")
+    DEF_PRIMITIVE_DATA_TYPE(BOOLEAN, "bool")
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_565, "u565")
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_5551, "u5551")
     DEF_PRIMITIVE_DATA_TYPE(UNSIGNED_4444, "u4444")
-    DEF_PRIMITIVE_DATA_TYPE(BOOL, "bool")
 
 #   undef DEF_PRIMITIVE_DATA_TYPE
 #endif  /* DEF_PRIMITIVE_DATA_TYPE */
 
 #ifdef DEF_RS_OBJECT_TYPE /* (type, name) */
 
+    DEF_RS_OBJECT_TYPE(RS_MATRIX_2X2, "rs_matrix2x2")
+    DEF_RS_OBJECT_TYPE(RS_MATRIX_3X3, "rs_matrix3x3")
+    DEF_RS_OBJECT_TYPE(RS_MATRIX_4X4, "rs_matrix4x4")
     DEF_RS_OBJECT_TYPE(RS_ELEMENT, "rs_element")
     DEF_RS_OBJECT_TYPE(RS_TYPE, "rs_type")
     DEF_RS_OBJECT_TYPE(RS_ALLOCATION, "rs_allocation")
@@ -139,9 +98,6 @@
     DEF_RS_OBJECT_TYPE(RS_PROGRAM_RASTER, "rs_program_raster")
     DEF_RS_OBJECT_TYPE(RS_PROGRAM_STORE, "rs_program_store")
     DEF_RS_OBJECT_TYPE(RS_FONT, "rs_font")
-    DEF_RS_OBJECT_TYPE(RS_MATRIX_2X2, "rs_matrix2x2")
-    DEF_RS_OBJECT_TYPE(RS_MATRIX_3X3, "rs_matrix3x3")
-    DEF_RS_OBJECT_TYPE(RS_MATRIX_4X4, "rs_matrix4x4")
 
 #   undef DEF_RS_OBJECT_TYPE
 #endif  /* DEF_RS_OBJECT_TYPE */
@@ -163,10 +119,13 @@
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_8
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_16
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_32
+#   undef ELEMENT_DATA_TYPE_BOOLEAN
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_565
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_5551
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_4444
-#   undef ELEMENT_DATA_TYPE_BOOL
+#   undef ELEMENT_DATA_TYPE_RS_MATRIX_2X2
+#   undef ELEMENT_DATA_TYPE_RS_MATRIX_3X3
+#   undef ELEMENT_DATA_TYPE_RS_MATRIX_4X4
 #   undef ELEMENT_DATA_TYPE_RS_ELEMENT
 #   undef ELEMENT_DATA_TYPE_RS_TYPE
 #   undef ELEMENT_DATA_TYPE_RS_ALLOCATION
@@ -191,12 +150,6 @@
 #   undef GET_ELEMENT_DATA_KIND
 
 #   undef ELEMENT_DATA_KIND_USER
-#   undef ELEMENT_DATA_KIND_COLOR
-#   undef ELEMENT_DATA_KIND_POSITION
-#   undef ELEMENT_DATA_KIND_TEXTURE
-#   undef ELEMENT_DATA_KIND_NORMAL
-#   undef ELEMENT_DATA_KIND_INDEX
-#   undef ELEMENT_DATA_KIND_POINT_SIZE
 #   undef ELEMENT_DATA_KIND_PIXEL_L
 #   undef ELEMENT_DATA_KIND_PIXEL_A
 #   undef ELEMENT_DATA_KIND_PIXEL_LA
