@@ -1,8 +1,5 @@
-#ifndef _SLANG_COMPILER_BACKEND_HPP
-#   define _SLANG_COMPILER_BACKEND_HPP
-
-#include "libslang.h"
-#include "slang_pragma_recorder.hpp"
+#ifndef _SLANG_COMPILER_BACKEND_H
+#define _SLANG_COMPILER_BACKEND_H
 
 #include "llvm/PassManager.h"
 
@@ -15,23 +12,26 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Basic/SourceManager.h"
 
+#include "libslang.h"
+#include "slang_pragma_recorder.h"
+
 namespace llvm {
-class LLVMContext;
-class NamedMDNode;
-class raw_ostream;
-class Module;
+  class LLVMContext;
+  class NamedMDNode;
+  class raw_ostream;
+  class Module;
 }
 
 namespace clang {
-class ASTConsumer;
-class Diagnostic;
-class TargetOptions;
-class PragmaList;
-class CodeGenerator;
-class ASTContext;
-class DeclGroupRef;
-class TagDecl;
-class VarDecl;
+  class ASTConsumer;
+  class Diagnostic;
+  class TargetOptions;
+  class PragmaList;
+  class CodeGenerator;
+  class ASTContext;
+  class DeclGroupRef;
+  class TagDecl;
+  class VarDecl;
 }
 
 namespace slang {
@@ -57,7 +57,7 @@ class Backend : public clang::ASTConsumer {
   // Passes apply on function scope in a translation unit
   llvm::FunctionPassManager *mPerFunctionPasses;
   // Passes apply on module scope
-  llvm::PassManager* mPerModulePasses;
+  llvm::PassManager *mPerModulePasses;
   // Passes for code emission
   llvm::FunctionPassManager *mCodeGenPasses;
 
@@ -157,4 +157,4 @@ class Backend : public clang::ASTConsumer {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_BACKEND_HPP
+#endif  // _SLANG_COMPILER_BACKEND_H

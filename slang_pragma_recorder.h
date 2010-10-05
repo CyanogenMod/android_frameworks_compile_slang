@@ -1,15 +1,14 @@
-#ifndef _SLANG_COMPILER_PRAGMA_HANDLER_HPP
-#   define _SLANG_COMPILER_PRAGMA_HANDLER_HPP
-
-#include "clang/Lex/Pragma.h"
+#ifndef _SLANG_COMPILER_PRAGMA_HANDLER_H
+#define _SLANG_COMPILER_PRAGMA_HANDLER_H
 
 #include <list>
 #include <string>
 
+#include "clang/Lex/Pragma.h"
 
 namespace clang {
-class Token;
-class Preprocessor;
+  class Token;
+  class Preprocessor;
 }
 
 namespace slang {
@@ -27,12 +26,11 @@ class PragmaRecorder : public clang::PragmaHandler {
                                       std::string &PragmaValue);
 
  public:
-  PragmaRecorder(PragmaList &Pragmas);
+  explicit PragmaRecorder(PragmaList &Pragmas);
 
   virtual void HandlePragma(clang::Preprocessor &PP,
                             clang::Token &FirstToken);
 };
-
 }
 
-#endif  // _SLANG_COMPILER_PRAGMA_HANDLER_HPP
+#endif  // _SLANG_COMPILER_PRAGMA_HANDLER_H

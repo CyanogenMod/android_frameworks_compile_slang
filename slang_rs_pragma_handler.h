@@ -1,19 +1,19 @@
-#ifndef _SLANG_COMILER_RS_PRAGMA_HANDLER_HPP
-#   define _SLANG_COMILER_RS_PRAGMA_HANDLER_HPP
+#ifndef _SLANG_COMILER_RS_PRAGMA_HANDLER_H
+#define _SLANG_COMILER_RS_PRAGMA_HANDLER_H
 
 #include <string>
 
 #include "clang/Lex/Pragma.h"
 
 namespace clang {
-class Token;
-class IdentifierInfo;
-class Preprocessor;
+  class Token;
+  class IdentifierInfo;
+  class Preprocessor;
 }
 
 namespace slang {
 
-class RSContext;
+  class RSContext;
 
 class RSPragmaHandler : public clang::PragmaHandler {
  protected:
@@ -39,8 +39,8 @@ class RSPragmaHandler : public clang::PragmaHandler {
                             clang::Token &FirstToken);
 
   // Handle pragma like #pragma rs [name] ("string literal")
-  void handleOptionalStringLiateralParamPragma(clang::Preprocessor& PP,
-                                               clang::Token& FirstToken);
+  void handleOptionalStringLiateralParamPragma(clang::Preprocessor &PP,
+                                               clang::Token &FirstToken);
 
  public:
   static RSPragmaHandler *CreatePragmaExportVarHandler(RSContext *Context);
@@ -57,4 +57,4 @@ class RSPragmaHandler : public clang::PragmaHandler {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMILER_RS_PRAGMA_HANDLER_HPP
+#endif  // _SLANG_COMILER_RS_PRAGMA_HANDLER_H

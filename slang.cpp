@@ -1,22 +1,23 @@
-#include "slang.hpp"
-#include "libslang.h"
-#include "slang_rs_export_func.hpp"
-
-#include "llvm/Target/TargetSelect.h"       /* for function LLVMInitialize[ARM|X86][TargetInfo|Target|AsmPrinter]() */
-
-#include "llvm/Support/MemoryBuffer.h"      /* for class llvm::MemoryBuffer */
-#include "llvm/Support/ErrorHandling.h"     /* for function llvm::install_fatal_error_handler() */
-#include "llvm/Support/ManagedStatic.h"     /* for class llvm::llvm_shutdown */
-
-#include "clang/Basic/TargetInfo.h"     /* for class clang::TargetInfo */
-#include "clang/Basic/LangOptions.h"    /* for class clang::LangOptions */
-#include "clang/Basic/TargetOptions.h"  /* for class clang::TargetOptions */
-
-#include "clang/Frontend/FrontendDiagnostic.h"      /* for clang::diag::* */
-
-#include "clang/Parse/ParseAST.h"        /* for function clang::ParseAST() */
+#include "slang.h"
 
 #include <stdlib.h>
+
+#include "llvm/Target/TargetSelect.h"
+
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ManagedStatic.h"
+
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/LangOptions.h"
+#include "clang/Basic/TargetOptions.h"
+
+#include "clang/Frontend/FrontendDiagnostic.h"
+
+#include "clang/Parse/ParseAST.h"
+
+#include "libslang.h"
+#include "slang_rs_export_func.h"
 
 using namespace slang;
 
@@ -34,10 +35,23 @@ bool Slang::GlobalInitialized = false;
 // Language option (define the language feature for compiler such as C99)
 clang::LangOptions Slang::LangOpts;
 
-/* Code generation option for the compiler */
+// Code generation option for the compiler
 clang::CodeGenOptions Slang::CodeGenOpts;
 
-const std::string Slang::TargetDescription = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-n32";
+const std::string Slang::TargetDescription =
+  "e-"  // little-endian
+  "p:32:32:32-"   // 32-bit pointer
+  "i1:8:8-"
+  "i8:8:8-"
+  "i16:16:16-"
+  "i32:32:32-"
+  "i64:64:64-"
+  "f32:32:32-"
+  "f64:64:64-"
+  "v64:64:64-"  // 64-bit vector (e.g. float2, int2, short4)
+  "v128:128:128-"
+  "a0:0:64-"
+  "n32";  // native CPU only support 32-bit integer width.
 
 // The named of metadata node that pragma resides (should be synced with
 // bcc.cpp)
@@ -91,7 +105,7 @@ void Slang::createTarget(const char* Triple, const char* CPU,
                                                     mTargetOpts));
 
   if (Features != NULL)
-    for (int i = 0; Features[i]!=NULL; i++)
+    for (int i = 0; Features[i] != NULL; i++)
       mTargetOpts.Features.push_back(Features[i]);
 
     return;
@@ -131,10 +145,9 @@ void Slang::createPreprocessor() {
   return;
 }
 
-Slang::Slang(const char *Triple, const char *CPU, const char **Features) :
-    mOutputType(SlangCompilerOutput_Default),
-    mAllowRSPrefix(false)
-{
+Slang::Slang(const char *Triple, const char *CPU, const char **Features)
+    : mOutputType(SlangCompilerOutput_Default),
+      mAllowRSPrefix(false) {
   GlobalInitialization();
 
   createDiagnostic();
@@ -147,14 +160,17 @@ Slang::Slang(const char *Triple, const char *CPU, const char **Features) :
   return;
 }
 
-bool Slang::setInputSource(llvm::StringRef inputFile, const char *text, size_t textLength) {
+bool Slang::setInputSource(llvm::StringRef inputFile,
+                           const char *text,
+                           size_t textLength) {
   mInputFileName = inputFile.str();
 
   // Reset the ID tables if we are reusing the SourceManager
   mSourceMgr->clearIDTables();
 
   // Load the source
-  llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getMemBuffer(text, text + textLength);
+  llvm::MemoryBuffer *SB =
+      llvm::MemoryBuffer::getMemBuffer(text, text + textLength);
   mSourceMgr->createMainFileIDForMemBuffer(SB);
 
   if (mSourceMgr->getMainFileID().isInvalid()) {
@@ -204,7 +220,7 @@ static void _mkdir_given_a_file(const char *file) {
   if (len + 1 <= sizeof(buf))
     tmp = buf;
   else
-    tmp = new char [len + 1];
+    tmp = new char[len + 1];
 
   strcpy(tmp, file);
 
@@ -231,7 +247,7 @@ bool Slang::setOutput(const char *outputFile) {
   switch (mOutputType) {
     case SlangCompilerOutput_Assembly:
     case SlangCompilerOutput_LL: {
-      mOS.reset( new llvm::raw_fd_ostream(outputFile, Error, 0) );
+      mOS.reset(new llvm::raw_fd_ostream(outputFile, Error, 0));
       break;
     }
     case SlangCompilerOutput_Nothing: {
@@ -334,9 +350,11 @@ typedef std::list<RSExportFunc*> ExportFuncList;
 
 const char* Slang::exportFuncs() {
   std::string fNames;
-  for (RSContext::const_export_func_iterator I=mRSContext->export_funcs_begin();
-       I != mRSContext->export_funcs_end();
-       ++I) {
+  for (RSContext::const_export_func_iterator
+          I = mRSContext->export_funcs_begin(),
+          E = mRSContext->export_funcs_end();
+       I != E;
+       I++) {
     RSExportFunc* func = *I;
     fNames.push_back(',');
     fNames.append(func->getName());

@@ -1,12 +1,13 @@
-#include "slang_rs_context.hpp"
-#include "slang_rs_export_type.hpp"
-#include "slang_rs_export_element.hpp"
+#include "slang_rs_export_element.h"
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/IdentifierTable.h"
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/Type.h"
+
+#include "slang_rs_context.h"
+#include "slang_rs_export_type.h"
 
 using namespace slang;
 
@@ -32,8 +33,7 @@ void RSExportElement::Init() {
               Name.begin(),                             \
               Name.end(),                               \
               ElementInfoMap.getAllocator(),            \
-              EI                                        \
-              ));                                       \
+              EI));                                     \
     }
 #include "slang_rs_export_element_support.inc"
 
@@ -58,7 +58,7 @@ RSExportType *RSExportElement::Create(RSContext *Context,
   if (!RSExportType::NormalizeType(T, TypeName))
     return NULL;
 
-  switch(T->getTypeClass()) {
+  switch (T->getTypeClass()) {
     case clang::Type::Builtin:
     case clang::Type::Pointer: {
       assert(EI->vsize == 1 && "Element not a primitive class (please check "
@@ -74,12 +74,10 @@ RSExportType *RSExportElement::Create(RSContext *Context,
       ET = EPT;
       break;
     }
-
     case clang::Type::ConstantArray: {
-      //XXX
+      // XXX
       break;
     }
-
     case clang::Type::ExtVector: {
       assert(EI->vsize > 1 && "Element not a vector class (please check your "
                               "macro)");
@@ -98,14 +96,12 @@ RSExportType *RSExportElement::Create(RSContext *Context,
       ET = EVT;
       break;
     }
-
     case clang::Type::Record: {
       // Must be RS object type
 
-      if ( TypeName.equals(llvm::StringRef("rs_matrix2x2")) ||
-           TypeName.equals(llvm::StringRef("rs_matrix3x3")) ||
-           TypeName.equals(llvm::StringRef("rs_matrix4x4")) ) {
-
+      if (TypeName.equals(llvm::StringRef("rs_matrix2x2")) ||
+          TypeName.equals(llvm::StringRef("rs_matrix3x3")) ||
+          TypeName.equals(llvm::StringRef("rs_matrix4x4"))) {
         const clang::RecordType *RT = static_cast<const clang::RecordType*> (T);
         const clang::RecordDecl *RD = RT->getDecl();
         RD = RD->getDefinition();
@@ -116,8 +112,7 @@ RSExportType *RSExportElement::Create(RSContext *Context,
             RSExportConstantArrayType::Create(
                 Context,
                 static_cast<const clang::ConstantArrayType*> (FT),
-                TypeName
-                                              );
+                TypeName);
         ET = ECT;
       } else {
         RSExportPrimitiveType* EPT =
@@ -132,9 +127,8 @@ RSExportType *RSExportElement::Create(RSContext *Context,
       }
       break;
     }
-
     default: {
-      // TODO: warning: type is not exportable
+      // TODO(zonr): warn that type is not exportable
       fprintf(stderr, "RSExportElement::Create : type '%s' is not exportable\n",
               T->getTypeClassName());
       break;
@@ -182,7 +176,7 @@ RSExportType *RSExportElement::CreateFromDecl(RSContext *Context,
 }
 
 const RSExportElement::ElementInfo *
-RSExportElement::GetElementInfo(const llvm::StringRef& Name) {
+RSExportElement::GetElementInfo(const llvm::StringRef &Name) {
   if (!Initialized)
     Init();
 

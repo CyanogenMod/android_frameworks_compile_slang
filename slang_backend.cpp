@@ -1,5 +1,4 @@
-#include "slang.hpp"
-#include "slang_backend.hpp"
+#include "slang_backend.h"
 
 #include "llvm/Module.h"
 #include "llvm/Metadata.h"
@@ -28,6 +27,8 @@
 
 #include "clang/CodeGen/ModuleBuilder.h"
 
+#include "slang.h"
+
 using namespace slang;
 
 bool Backend::CreateCodeGenPasses() {
@@ -49,7 +50,7 @@ bool Backend::CreateCodeGenPasses() {
   std::string Error;
   const llvm::Target* TargetInfo =
       llvm::TargetRegistry::lookupTarget(Triple, Error);
-  if(TargetInfo == NULL) {
+  if (TargetInfo == NULL) {
     mDiags.Report(clang::diag::err_fe_unable_to_create_target) << Error;
     return false;
   }
@@ -116,7 +117,7 @@ bool Backend::CreateCodeGenPasses() {
     OptLevel = llvm::CodeGenOpt::Aggressive;
 
   llvm::TargetMachine::CodeGenFileType CGFT =
-      llvm::TargetMachine::CGFT_AssemblyFile;;
+      llvm::TargetMachine::CGFT_AssemblyFile;
   if (mOutputType == SlangCompilerOutput_Obj)
     CGFT = llvm::TargetMachine::CGFT_ObjectFile;
   if (TM->addPassesToEmitFile(*mCodeGenPasses, FormattedOutStream,
@@ -135,25 +136,25 @@ Backend::Backend(clang::Diagnostic &Diags,
                  llvm::raw_ostream *OS,
                  SlangCompilerOutputTy OutputType,
                  clang::SourceManager &SourceMgr,
-                 bool AllowRSPrefix) :
-    ASTConsumer(),
-    mCodeGenOpts(CodeGenOpts),
-    mTargetOpts(TargetOpts),
-    mSourceMgr(SourceMgr),
-    mpOS(OS),
-    mOutputType(OutputType),
-    mpTargetData(NULL),
-    mGen(NULL),
-    mPerFunctionPasses(NULL),
-    mPerModulePasses(NULL),
-    mCodeGenPasses(NULL),
-    mAllowRSPrefix(AllowRSPrefix),
-    mLLVMContext(llvm::getGlobalContext()),
-    mDiags(Diags),
-    mpModule(NULL),
-    mPragmas(Pragmas)
-{
-  FormattedOutStream.setStream(*mpOS, llvm::formatted_raw_ostream::PRESERVE_STREAM);
+                 bool AllowRSPrefix)
+    : ASTConsumer(),
+      mCodeGenOpts(CodeGenOpts),
+      mTargetOpts(TargetOpts),
+      mSourceMgr(SourceMgr),
+      mpOS(OS),
+      mOutputType(OutputType),
+      mpTargetData(NULL),
+      mGen(NULL),
+      mPerFunctionPasses(NULL),
+      mPerModulePasses(NULL),
+      mCodeGenPasses(NULL),
+      mAllowRSPrefix(AllowRSPrefix),
+      mLLVMContext(llvm::getGlobalContext()),
+      mDiags(Diags),
+      mpModule(NULL),
+      mPragmas(Pragmas) {
+  FormattedOutStream.setStream(*mpOS,
+                               llvm::formatted_raw_ostream::PRESERVE_STREAM);
   mGen = CreateLLVMCodeGen(mDiags, "", mCodeGenOpts, mLLVMContext);
   return;
 }
@@ -253,7 +254,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
   switch (mOutputType) {
     case SlangCompilerOutput_Assembly:
     case SlangCompilerOutput_Obj: {
-      if(!CreateCodeGenPasses())
+      if (!CreateCodeGenPasses())
         return;
 
       mCodeGenPasses->doInitialization();
@@ -261,7 +262,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
       for (llvm::Module::iterator I = mpModule->begin(), E = mpModule->end();
           I != E;
           I++)
-        if(!I->isDeclaration())
+        if (!I->isDeclaration())
           mCodeGenPasses->run(*I);
 
       mCodeGenPasses->doFinalization();

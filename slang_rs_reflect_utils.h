@@ -1,5 +1,5 @@
-#ifndef _SLANG_COMPILER_SLANG_REFLECT_UTILS_HPP
-#define _SLANG_COMPILER_SLANG_REFLECT_UTILS_HPP
+#ifndef _SLANG_COMPILER_SLANG_REFLECT_UTILS_H
+#define _SLANG_COMPILER_SLANG_REFLECT_UTILS_H
 
 #include <string>
 
@@ -21,10 +21,10 @@ class RSSlangReflectUtils {
   // it.
   // packageName: the package of the output Java file.
   struct BitCodeAccessorContext {
-    const char* rsFileName;
-    const char* bcFileName;
-    const char* reflectPath;
-    const char* packageName;
+    const char *rsFileName;
+    const char *bcFileName;
+    const char *reflectPath;
+    const char *packageName;
 
     BitCodeStorageType bcStorage;
   };
@@ -32,15 +32,15 @@ class RSSlangReflectUtils {
   // Compuate a Java source file path from a given prefixPath and its package.
   // Eg, given prefixPath=./foo/bar and packageName=com.x.y, then it returns
   // ./foo/bar/com/x/y
-  static std::string ComputePackagedPath(const char* prefixPath,
-                                         const char* packageName);
+  static std::string ComputePackagedPath(const char *prefixPath,
+                                         const char *packageName);
 
   // Compute Java class name from a .rs file name.
   // Any non-alnum, non-underscore characters will be discarded.
   // E.g. with rsFileName=./foo/bar/my-Renderscript_file.rs it returns
   // "myRenderscript_file".
   // rsFileName: the input .rs file name (with or without path).
-  static std::string JavaClassNameFromRSFileName(const char* rsFileName);
+  static std::string JavaClassNameFromRSFileName(const char *rsFileName);
 
   // Compute a bitcode file name (no extension) from a .rs file name.
   // Because the bitcode file name may be used as Resource ID in the generated
@@ -51,17 +51,15 @@ class RSSlangReflectUtils {
   // E.g. with rsFileName=./foo/bar/my-Renderscript_file.rs it returns
   // "myrenderscript_file"
   // rsFileName: the input .rs file name (with or without path).
-  static std::string BCFileNameFromRSFileName(const char* rsFileName);
+  static std::string BCFileNameFromRSFileName(const char *rsFileName);
 
   // "mkdir -p"
-  static bool mkdir_p(const char* path);
+  static bool mkdir_p(const char *path);
 
 
   // Generate the bit code accessor Java source file.
-  static bool GenerateBitCodeAccessor(const BitCodeAccessorContext& context);
-
+  static bool GenerateBitCodeAccessor(const BitCodeAccessorContext &context);
 };
-
 }
 
-#endif  // _SLANG_COMPILER_SLANG_REFLECT_UTILS_HPP
+#endif  // _SLANG_COMPILER_SLANG_REFLECT_UTILS_H

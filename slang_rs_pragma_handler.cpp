@@ -1,11 +1,12 @@
-#include "slang_rs_context.hpp"
-#include "slang_rs_pragma_handler.hpp"
+#include "slang_rs_pragma_handler.h"
 
 #include "clang/Basic/TokenKinds.h"
 
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Token.h"
+
+#include "slang_rs_context.h"
 
 using namespace slang;
 
@@ -18,8 +19,8 @@ class RSExportVarPragmaHandler : public RSPragmaHandler {
   }
 
  public:
-  RSExportVarPragmaHandler(llvm::StringRef Name, RSContext *Context) :
-      RSPragmaHandler(Name, Context) {
+  RSExportVarPragmaHandler(llvm::StringRef Name, RSContext *Context)
+      : RSPragmaHandler(Name, Context) {
     return;
   }
 
@@ -30,8 +31,8 @@ class RSExportVarPragmaHandler : public RSPragmaHandler {
 
 class RSExportVarAllPragmaHandler : public RSPragmaHandler {
  public:
-  RSExportVarAllPragmaHandler(llvm::StringRef Name, RSContext *Context) :
-      RSPragmaHandler(Name, Context) { return; }
+  RSExportVarAllPragmaHandler(llvm::StringRef Name, RSContext *Context)
+      : RSPragmaHandler(Name, Context) { return; }
 
   void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
     this->handleNonParamPragma(PP, FirstToken);
@@ -47,8 +48,8 @@ class RSExportFuncPragmaHandler : public RSPragmaHandler {
 
  public:
   RSExportFuncPragmaHandler(llvm::StringRef Name,
-                            RSContext *Context) :
-      RSPragmaHandler(Name, Context) { return; }
+                            RSContext *Context)
+      : RSPragmaHandler(Name, Context) { return; }
 
   void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
     this->handleItemListPragma(PP, FirstToken);
@@ -57,8 +58,8 @@ class RSExportFuncPragmaHandler : public RSPragmaHandler {
 
 class RSExportFuncAllPragmaHandler : public RSPragmaHandler {
  public:
-  RSExportFuncAllPragmaHandler(llvm::StringRef Name, RSContext *Context) :
-      RSPragmaHandler(Name, Context) { return; }
+  RSExportFuncAllPragmaHandler(llvm::StringRef Name, RSContext *Context)
+      : RSPragmaHandler(Name, Context) { return; }
 
   void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
     this->handleNonParamPragma(PP, FirstToken);
@@ -68,23 +69,23 @@ class RSExportFuncAllPragmaHandler : public RSPragmaHandler {
 
 class RSExportTypePragmaHandler : public RSPragmaHandler {
  private:
-  void handleItem(const std::string& Item) {
+  void handleItem(const std::string &Item) {
     mContext->addExportType(Item);
   }
 
  public:
-  RSExportTypePragmaHandler(llvm::StringRef Name, RSContext* Context) :
-      RSPragmaHandler(Name, Context) { return; }
+  RSExportTypePragmaHandler(llvm::StringRef Name, RSContext *Context)
+      : RSPragmaHandler(Name, Context) { return; }
 
-  void HandlePragma(clang::Preprocessor& PP, clang::Token& FirstToken) {
+  void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
     this->handleItemListPragma(PP, FirstToken);
   }
 };
 
 class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
  public:
-  RSJavaPackageNamePragmaHandler(llvm::StringRef Name, RSContext *Context) :
-      RSPragmaHandler(Name, Context) { return; }
+  RSJavaPackageNamePragmaHandler(llvm::StringRef Name, RSContext *Context)
+      : RSPragmaHandler(Name, Context) { return; }
 
   void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
     // FIXME: Need to validate the extracted package name from paragma.
@@ -129,9 +130,9 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
         PackageName.append(Spelling);
 
       // Pre-mature end (syntax error will be triggered by preprocessor later)
-      if (PragmaToken.is(clang::tok::eom) || PragmaToken.is(clang::tok::eof))
+      if (PragmaToken.is(clang::tok::eom) || PragmaToken.is(clang::tok::eof)) {
         break;
-      else {
+      } else {
         // Next token is ')' (end of paragma)
         const clang::Token &NextTok = PP.LookAhead(0);
         if (NextTok.is(clang::tok::r_paren)) {
@@ -139,7 +140,7 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
           // Lex until meets clang::tok::eom
           do {
             PP.LexUnexpandedToken(PragmaToken);
-          } while(PragmaToken.isNot(clang::tok::eom));
+          } while (PragmaToken.isNot(clang::tok::eom));
           break;
         }
       }
@@ -215,7 +216,7 @@ void RSPragmaHandler::handleItemListPragma(clang::Preprocessor &PP,
     // Lex variable name
     PP.LexUnexpandedToken(PragmaToken);
     if (PragmaToken.is(clang::tok::identifier))
-      this->handleItem( PP.getSpelling(PragmaToken) );
+      this->handleItem(PP.getSpelling(PragmaToken));
     else
       break;
 
@@ -229,9 +230,9 @@ void RSPragmaHandler::handleItemListPragma(clang::Preprocessor &PP,
   return;
 }
 
-void RSPragmaHandler::handleNonParamPragma(clang::Preprocessor& PP,
-                                           clang::Token& FirstToken) {
-  clang::Token& PragmaToken = FirstToken;
+void RSPragmaHandler::handleNonParamPragma(clang::Preprocessor &PP,
+                                           clang::Token &FirstToken) {
+  clang::Token &PragmaToken = FirstToken;
 
   // Skip first token, like "export_var_all"
   PP.LexUnexpandedToken(PragmaToken);
@@ -263,7 +264,7 @@ void RSPragmaHandler::handleOptionalStringLiateralParamPragma(
       fprintf(stderr, "RSPragmaHandler::handleOptionalStringLiateralParamPragma"
                       ": illegal string literal\n");
     else
-      this->handleItem( std::string(StringLiteral.GetString()) );
+      this->handleItem(std::string(StringLiteral.GetString()));
 
     // The current token should be clang::tok::r_para
     PP.LexUnexpandedToken(PragmaToken);
@@ -272,6 +273,6 @@ void RSPragmaHandler::handleOptionalStringLiateralParamPragma(
                       ": expected a ')'\n");
   } else {
     // If no argument, remove the license
-    this->handleItem( "" );
+    this->handleItem("");
   }
 }

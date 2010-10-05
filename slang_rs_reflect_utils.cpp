@@ -1,4 +1,4 @@
-#include "slang_rs_reflect_utils.hpp"
+#include "slang_rs_reflect_utils.h"
 
 #include <cstdlib>
 #include <cstdio>
@@ -12,9 +12,10 @@ namespace slang {
 using std::string;
 
 string RSSlangReflectUtils::ComputePackagedPath(
-    const char* prefixPath, const char* packageName) {
+    const char *prefixPath, const char *packageName) {
     string packaged_path(prefixPath);
-    if (!packaged_path.empty() && (packaged_path[packaged_path.length() - 1] != '/')) {
+    if (!packaged_path.empty() &&
+        (packaged_path[packaged_path.length() - 1] != '/')) {
         packaged_path += "/";
     }
     size_t s = packaged_path.length();
@@ -28,9 +29,9 @@ string RSSlangReflectUtils::ComputePackagedPath(
     return packaged_path;
 }
 
-static string InternalFileNameConvert(const char* rsFileName, bool toLower) {
-    const char* dot = rsFileName + strlen(rsFileName);
-    const char* slash = dot - 1;
+static string InternalFileNameConvert(const char *rsFileName, bool toLower) {
+    const char *dot = rsFileName + strlen(rsFileName);
+    const char *slash = dot - 1;
     while (slash >= rsFileName) {
         if (*slash == '/') {
             break;
@@ -58,17 +59,17 @@ static string InternalFileNameConvert(const char* rsFileName, bool toLower) {
 }
 
 std::string RSSlangReflectUtils::JavaClassNameFromRSFileName(
-    const char* rsFileName) {
+    const char *rsFileName) {
     return InternalFileNameConvert(rsFileName, false);
 }
 
 
 std::string RSSlangReflectUtils::BCFileNameFromRSFileName(
-    const char* rsFileName) {
+    const char *rsFileName) {
     return InternalFileNameConvert(rsFileName, true);
 }
 
-bool RSSlangReflectUtils::mkdir_p(const char* path) {
+bool RSSlangReflectUtils::mkdir_p(const char *path) {
     char buf[256];
     char *tmp, *p = NULL;
     size_t len = strlen(path);
@@ -76,7 +77,7 @@ bool RSSlangReflectUtils::mkdir_p(const char* path) {
     if (len + 1 <= sizeof(buf))
         tmp = buf;
     else
-        tmp = new char [len + 1];
+        tmp = new char[len + 1];
 
     strcpy(tmp, path);
 
@@ -99,7 +100,7 @@ bool RSSlangReflectUtils::mkdir_p(const char* path) {
 }
 
 static bool GenerateAccessorHeader(
-    const RSSlangReflectUtils::BitCodeAccessorContext& context, FILE* pfout) {
+    const RSSlangReflectUtils::BitCodeAccessorContext &context, FILE *pfout) {
     fprintf(pfout, "/*\n");
     fprintf(pfout, " * This file is auto-generated. DO NOT MODIFY!\n");
     fprintf(pfout, " * The source RenderScript file: %s\n", context.rsFileName);
@@ -112,7 +113,7 @@ static bool GenerateAccessorHeader(
 }
 
 static bool GenerateAccessorMethodSignature(
-    const RSSlangReflectUtils::BitCodeAccessorContext& context, FILE* pfout) {
+    const RSSlangReflectUtils::BitCodeAccessorContext &context, FILE *pfout) {
     // the prototype of the accessor method
     fprintf(pfout, "  // return byte array representation of the bitcode.\n");
     fprintf(pfout, "  public static byte[] getBitCode() {\n");
@@ -122,19 +123,20 @@ static bool GenerateAccessorMethodSignature(
 // Java method size must not exceed 64k,
 // so we have to split the bitcode into multiple segments.
 static bool GenerateSegmentMethod(
-    const char* buff, int blen, int seg_num, FILE* pfout) {
+    const char *buff, int blen, int seg_num, FILE *pfout) {
 
     fprintf(pfout, "  private static byte[] getSegment_%d() {\n", seg_num);
     fprintf(pfout, "    byte[] data = {\n");
 
-    const static int LINE_BYTE_NUM = 16;
+    static const int LINE_BYTE_NUM = 16;
     char out_line[LINE_BYTE_NUM*6 + 10];
-    const char* out_line_end = out_line + sizeof(out_line);
-    char* p = out_line;
+    const char *out_line_end = out_line + sizeof(out_line);
+    char *p = out_line;
 
     int write_length = 0;
     while (write_length < blen) {
-        p += snprintf(p, out_line_end - p, " %4d,", (int)buff[write_length]);
+        p += snprintf(p, out_line_end - p,
+                      " %4d,", static_cast<int>(buff[write_length]));
         ++write_length;
         if (((write_length % LINE_BYTE_NUM) == 0)
             || (write_length == blen)) {
@@ -153,8 +155,8 @@ static bool GenerateSegmentMethod(
 }
 
 static bool GenerateJavaCodeAccessorMethod(
-    const RSSlangReflectUtils::BitCodeAccessorContext& context, FILE* pfout) {
-    FILE* pfin = fopen(context.bcFileName, "rb");
+    const RSSlangReflectUtils::BitCodeAccessorContext &context, FILE *pfout) {
+    FILE *pfin = fopen(context.bcFileName, "rb");
     if (pfin == NULL) {
         fprintf(stderr, "Error: could not read file %s\n", context.bcFileName);
         return false;
@@ -169,8 +171,8 @@ static bool GenerateJavaCodeAccessorMethod(
     // output the data
     // make sure the generated function for a segment won't break the Javac
     // size limitation (64K).
-    const static int SEG_SIZE = 0x2000;
-    char* buff = new char[SEG_SIZE];
+    static const int SEG_SIZE = 0x2000;
+    char *buff = new char[SEG_SIZE];
     int read_length;
     int seg_num = 0;
     int total_length = 0;
@@ -200,8 +202,8 @@ static bool GenerateJavaCodeAccessorMethod(
 }
 
 static bool GenerateAccessorClass(
-    const RSSlangReflectUtils::BitCodeAccessorContext& context,
-    const char* clazz_name, FILE* pfout) {
+    const RSSlangReflectUtils::BitCodeAccessorContext &context,
+    const char *clazz_name, FILE *pfout) {
     // begin the class.
     fprintf(pfout, "/**\n");
     fprintf(pfout, " * @hide\n");
@@ -228,7 +230,7 @@ static bool GenerateAccessorClass(
 
 
 bool RSSlangReflectUtils::GenerateBitCodeAccessor(
-    const BitCodeAccessorContext& context) {
+    const BitCodeAccessorContext &context) {
     string output_path = ComputePackagedPath(context.reflectPath,
                                              context.packageName);
     if (!mkdir_p(output_path.c_str())) {
@@ -246,18 +248,17 @@ bool RSSlangReflectUtils::GenerateBitCodeAccessor(
     output_filename += "/";
     output_filename += filename;
     printf("Generating %s ...\n", filename.c_str());
-    FILE* pfout = fopen(output_filename.c_str(), "w");
+    FILE *pfout = fopen(output_filename.c_str(), "w");
     if (pfout == NULL) {
         fprintf(stderr, "Error: could not write to file %s\n",
                 output_filename.c_str());
         return false;
     }
 
-    bool ret = GenerateAccessorHeader(context, pfout)
-        && GenerateAccessorClass(context, clazz_name.c_str(), pfout);
+    bool ret = GenerateAccessorHeader(context, pfout) &&
+               GenerateAccessorClass(context, clazz_name.c_str(), pfout);
 
     fclose(pfout);
     return ret;
 }
-
 }

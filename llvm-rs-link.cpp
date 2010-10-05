@@ -1,3 +1,7 @@
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "llvm/Linker.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
@@ -16,9 +20,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/LinkAllVMCore.h"
-#include <memory>
-#include <string>
-#include <vector>
 
 using namespace llvm;
 
@@ -109,7 +110,8 @@ int main(int argc, char **argv) {
   for (unsigned i = 1; i < InputFilenames.size(); ++i) {
     std::auto_ptr<Module> M(LoadFile(argv[0], InputFilenames[i], Context));
     if (M.get() == 0) {
-      errs() << argv[0] << ": error loading file '" << InputFilenames[i]<< "'\n";
+      errs() << argv[0] << ": error loading file '" << InputFilenames[i]
+             << "'\n";
       return 1;
     }
     if (Linker::LinkModules(Composite.get(), M.get(), &ErrorMessage)) {

@@ -1,9 +1,5 @@
-#ifndef _SLANG_COMPILER_RS_REFLECTION_HPP
-#   define _SLANG_COMPILER_RS_REFLECTION_HPP
-
-#include "slang_rs_export_type.hpp"
-
-#include "llvm/ADT/StringExtras.h"
+#ifndef _SLANG_COMPILER_RS_REFLECTION_H
+#define _SLANG_COMPILER_RS_REFLECTION_H
 
 #include <map>
 #include <vector>
@@ -12,11 +8,15 @@
 #include <fstream>
 #include <iostream>
 
+#include "llvm/ADT/StringExtras.h"
+
+#include "slang_rs_export_type.h"
+
 namespace slang {
 
-class RSContext;
-class RSExportVar;
-class RSExportFunc;
+  class RSContext;
+  class RSExportVar;
+  class RSExportFunc;
 
 class RSReflection {
  private:
@@ -92,7 +92,7 @@ class RSReflection {
     }
 
     inline std::ostream &out() const {
-      if (mUseStdout) return std::cout; else return mOF;
+      return ((mUseStdout) ? std::cout : mOF);
     }
     inline std::ostream &indent() const {
       out() << mIndent;
@@ -201,7 +201,7 @@ class RSReflection {
                                  const std::string &VarName,
                                  const clang::APValue &Val);
   void genInitPrimitiveExportVariable(Context &C,
-                                      const std::string& VarName,
+                                      const std::string &VarName,
                                       const clang::APValue &Val);
   void genInitExportVariable(Context &C,
                              const RSExportType *ET,
@@ -260,7 +260,7 @@ class RSReflection {
   void genNewItemBufferPackerIfNull(Context &C);
 
  public:
-  RSReflection(const RSContext *Context)
+  explicit RSReflection(const RSContext *Context)
       : mRSContext(Context),
         mLastError("") {
     return;
@@ -280,4 +280,4 @@ class RSReflection {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_RS_REFLECTION_HPP
+#endif  // _SLANG_COMPILER_RS_REFLECTION_H

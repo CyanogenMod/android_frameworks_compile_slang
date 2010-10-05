@@ -1,10 +1,9 @@
-#include "slang_pragma_recorder.hpp"
-
-#include "clang/Lex/Token.h"
+#include "slang_pragma_recorder.h"
 
 #include "clang/Basic/TokenKinds.h"
 
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/Token.h"
 
 using namespace slang;
 
@@ -23,16 +22,16 @@ bool PragmaRecorder::GetPragmaNameFromToken(const clang::Token &Token,
 bool PragmaRecorder::GetPragmaValueFromToken(const clang::Token &Token,
                                              std::string &PragmaValue) {
   // Same as the GetPragmaName()
-  if(Token.is(clang::tok::r_paren))
+  if (Token.is(clang::tok::r_paren))
     PragmaValue.clear();
   else
     return GetPragmaNameFromToken(Token, PragmaValue);
   return true;
 }
 
-PragmaRecorder::PragmaRecorder(PragmaList &Pragmas) :
-    PragmaHandler(),
-    mPragmas(Pragmas) {
+PragmaRecorder::PragmaRecorder(PragmaList &Pragmas)
+    : PragmaHandler(),
+      mPragmas(Pragmas) {
   return;
 }
 
@@ -66,10 +65,10 @@ void PragmaRecorder::HandlePragma(clang::Preprocessor &PP,
     }
 
     // Until now, we ensure that we have a pragma name/value pair
-    mPragmas.push_back( make_pair(PragmaName, PragmaValue) );
+    mPragmas.push_back(make_pair(PragmaName, PragmaValue));
   }
 
-end_parsing_pragma_value:
+ end_parsing_pragma_value:
   // Infor lex to eat the token
   PP.LexUnexpandedToken(CurrentToken);
 

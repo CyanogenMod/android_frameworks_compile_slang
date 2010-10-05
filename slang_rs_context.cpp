@@ -1,10 +1,7 @@
-#include "slang.hpp"
-#include "slang_rs_context.hpp"
-#include "slang_rs_reflection.hpp"
-#include "slang_rs_export_var.hpp"
-#include "slang_rs_export_func.hpp"
-#include "slang_rs_export_type.hpp"
-#include "slang_rs_pragma_handler.hpp"
+#include "slang_rs_context.h"
+
+#include "llvm/LLVMContext.h"
+#include "llvm/Target/TargetData.h"
 
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Linkage.h"
@@ -14,22 +11,26 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/Index/ASTLocation.h"
 
-#include "llvm/LLVMContext.h"
-#include "llvm/Target/TargetData.h"
+#include "slang.h"
+#include "slang_rs_reflection.h"
+#include "slang_rs_export_var.h"
+#include "slang_rs_export_func.h"
+#include "slang_rs_export_type.h"
+#include "slang_rs_pragma_handler.h"
 
 using namespace slang;
 
 RSContext::RSContext(clang::Preprocessor *PP,
                      clang::ASTContext *Ctx,
-                     const clang::TargetInfo *Target) :
-    mPP(PP),
-    mCtx(Ctx),
-    mTarget(Target),
-    mTargetData(NULL),
-    mLLVMContext(llvm::getGlobalContext()),
-    mExportAllNonStaticVars(false),
-    mExportAllNonStaticFuncs(false),
-    mLicenseNote(NULL) {
+                     const clang::TargetInfo *Target)
+    : mPP(PP),
+      mCtx(Ctx),
+      mTarget(Target),
+      mTargetData(NULL),
+      mLLVMContext(llvm::getGlobalContext()),
+      mExportAllNonStaticVars(false),
+      mExportAllNonStaticFuncs(false),
+      mLicenseNote(NULL) {
   // For #pragma rs export_var
   PP->AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaExportVarHandler(this));
@@ -67,7 +68,7 @@ RSContext::RSContext(clang::Preprocessor *PP,
 bool RSContext::processExportVar(const clang::VarDecl *VD) {
   assert(!VD->getName().empty() && "Variable name should not be empty");
 
-  // TODO: some check on variable
+  // TODO(zonr): some check on variable
 
   RSExportType *ET = RSExportType::CreateFromDecl(this, VD);
   if (!ET)
@@ -82,7 +83,7 @@ bool RSContext::processExportVar(const clang::VarDecl *VD) {
   return true;
 }
 
-bool RSContext::processExportFunc(const clang::FunctionDecl* FD) {
+bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
   assert(!FD->getName().empty() && "Function name should not be empty");
 
   if (!FD->isThisDeclarationADefinition())
@@ -112,7 +113,8 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
 
   const clang::IdentifierInfo *II = mPP->getIdentifierInfo(Name);
   if (II == NULL)
-    // TODO: error: identifier @Name mark as an exportable type cannot be found
+    // TODO(zonr): alert identifier @Name mark as an exportable type cannot be
+    //             found
     return false;
 
   clang::DeclContext::lookup_const_result R = TUDecl->lookup(II);
@@ -132,12 +134,10 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
             ND)->getCanonicalDecl()->getUnderlyingType().getTypePtr();
         break;
       }
-
       case clang::Decl::Record: {
         T = static_cast<const clang::RecordDecl*>(ND)->getTypeForDecl();
         break;
       }
-
       default: {
         // unsupported, skip
         break;
@@ -159,10 +159,8 @@ void RSContext::processExport() {
       !mExportAllNonStaticVars && !mExportAllNonStaticFuncs) {
     fprintf(stderr, "note: No reflection because there are no #pragma "
                     "rs export_var(...), #pragma rs export_func(...), "
-                    "#pragma rs export_var_all, or #pragma rs export_func_all\n"
-            );
-    //mExportAllNonStaticVars = true;
-    //mExportAllNonStaticFuncs = true;
+                    "#pragma rs export_var_all, or #pragma rs "
+                    "export_func_all\n");
   }
 
   // Export variable
@@ -257,7 +255,7 @@ bool RSContext::reflectToJava(const char *OutputPackageName,
 
   RSReflection *R = new RSReflection(this);
   bool ret = R->reflect(OutputPackageName, InputFileName, OutputBCFileName);
-  if(!ret)
+  if (!ret)
     fprintf(stderr, "RSContext::reflectToJava : failed to do reflection "
                     "(%s)\n", R->getLastError());
   delete R;
@@ -274,12 +272,6 @@ bool RSContext::reflectToJavaPath(const char *OutputPathName) {
 }
 
 RSContext::~RSContext() {
-  /*    delete mRSExportVarPragma;  // These are deleted by mPP.reset() that was invoked at the end of Slang::compile(). Doing it again in ~RSContext here will cause seg-faults
-        delete mRSExportFuncPragma;
-        delete mRSExportTypePragma;
-        delete mRSJavaPackageNamePragma;
-        delete mRSReflectLicensePragma;
-  */
   delete mLicenseNote;
   delete mTargetData;
 }

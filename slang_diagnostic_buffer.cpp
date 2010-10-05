@@ -1,4 +1,4 @@
-#include "slang_diagnostic_buffer.hpp"
+#include "slang_diagnostic_buffer.h"
 
 #include "llvm/ADT/SmallString.h"
 

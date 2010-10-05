@@ -1,10 +1,11 @@
-#include "slang_rs_context.hpp"
-#include "slang_rs_export_func.hpp"
-#include "slang_rs_export_type.hpp"
+#include "slang_rs_export_func.h"
 
 #include "llvm/Target/TargetData.h"
 
 #include "clang/AST/Decl.h"
+
+#include "slang_rs_context.h"
+#include "slang_rs_export_type.h"
 
 using namespace slang;
 
@@ -18,7 +19,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
   F = new RSExportFunc(Context, Name);
 
   // Check whether the parameters passed to the function is exportable
-  for(unsigned i = 0;i < FD->getNumParams(); i++) {
+  for (unsigned i = 0, e = FD->getNumParams(); i != e; i++) {
     const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
     const llvm::StringRef ParamName = PVD->getName();
 
@@ -60,15 +61,15 @@ const RSExportRecordType *RSExportFunc::getParamPacketType() const {
              PE = params_end();
          PI != PE;
          PI++, Index++) {
-      //For-Loop's body should be:
-      const RSExportFunc::Parameter* P = *PI;
+      // For-Loop's body should be:
+      const RSExportFunc::Parameter *P = *PI;
       std::string nam = P->getName();
-      const RSExportType* typ = P->getType();
+      const RSExportType *typ = P->getType();
       std::string typNam = typ->getName();
       // If (type conversion is needed)
       if (typNam.find("rs_") == 0) {
         // P's type set to [1 x i32];
-        RSExportConstantArrayType* ECT = new RSExportConstantArrayType
+        RSExportConstantArrayType *ECT = new RSExportConstantArrayType
             (mContext, "addObj",
              RSExportPrimitiveType::DataTypeSigned32,
              RSExportPrimitiveType::DataKindUser,
@@ -86,21 +87,13 @@ const RSExportRecordType *RSExportFunc::getParamPacketType() const {
                                           ParamPacketType,
                                           Index) );
       }
-
-      //      ParamPacketType->mFields.push_back(
-      //          new RSExportRecordType::Field((*PI)->getType(),
-      //                                        (*PI)->getName(),
-      //                                        ParamPacketType,
-      //                                        Index
-      //                                        ));
     }
 
 
 
     ParamPacketType->AllocSize =
         mContext->getTargetData()->getTypeAllocSize(
-            ParamPacketType->getLLVMType()
-                                                    );
+            ParamPacketType->getLLVMType());
 
     mParamPacketType = ParamPacketType;
   }
@@ -115,7 +108,7 @@ RSExportFunc::~RSExportFunc() {
        PI++)
     delete *PI;
 
-  if(mParamPacketType != NULL)
+  if (mParamPacketType != NULL)
     delete mParamPacketType;
 
   return;

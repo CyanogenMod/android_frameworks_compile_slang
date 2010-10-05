@@ -1,7 +1,5 @@
-#ifndef _SLANG_COMPILER_RS_CONTEXT_HPP
-#   define _SLANG_COMPILER_RS_CONTEXT_HPP
-
-#include "slang_rs_export_element.hpp"
+#ifndef _SLANG_COMPILER_RS_CONTEXT_H
+#define _SLANG_COMPILER_RS_CONTEXT_H
 
 #include <map>
 #include <list>
@@ -13,17 +11,19 @@
 
 #include "clang/Lex/Preprocessor.h"
 
+#include "slang_rs_export_element.h"
+
 namespace llvm {
-class LLVMContext;
-class TargetData;
+  class LLVMContext;
+  class TargetData;
 }   // namespace llvm
 
 namespace clang {
-class VarDecl;
-class ASTContext;
-class TargetInfo;
-class FunctionDecl;
-class SourceManager;
+  class VarDecl;
+  class ASTContext;
+  class TargetInfo;
+  class FunctionDecl;
+  class SourceManager;
 }   // namespace clang
 
 namespace slang {
@@ -177,4 +177,4 @@ class RSContext {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_RS_CONTEXT_HPP
+#endif  // _SLANG_COMPILER_RS_CONTEXT_H

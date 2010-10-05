@@ -1,16 +1,16 @@
-#ifndef _SLANG_COMPILER_RS_EXPORT_TYPE_HPP
-#   define _SLANG_COMPILER_RS_EXPORT_TYPE_HPP
-
-#include "llvm/ADT/StringRef.h"     /* for class llvm::StringRef */
-#include "llvm/ADT/StringMap.h"     /* for class llvm::StringMap */
-#include "llvm/ADT/SmallPtrSet.h"   /* for class llvm::SmallPtrSet */
-
-#include "clang/AST/Type.h"         /* for clang::Type and clang::QualType */
-#include "clang/AST/Decl.h"         /* for clang::VarDecl and clang::DeclaratorDecl */
+#ifndef _SLANG_COMPILER_RS_EXPORT_TYPE_H
+#define _SLANG_COMPILER_RS_EXPORT_TYPE_H
 
 #include <set>
 #include <list>
 #include <string>
+
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
+
+#include "clang/AST/Type.h"
+#include "clang/AST/Decl.h"
 
 #define GET_CANONICAL_TYPE(T) \
   (((T) == NULL) ? NULL : (T)->getCanonicalTypeInternal().getTypePtr())
@@ -27,17 +27,17 @@
                    GET_CANONICAL_TYPE((T)->getPointeeType().getTypePtr()))
 
 namespace llvm {
-class Type;
+  class Type;
 }   // namespace llvm
 
 namespace slang {
 
-class RSContext;
-class RSExportPrimitiveType;
-class RSExportConstantArrayType;
-class RSExportVectorType;
-class RSExportRecordType;
-class RSExportFunction;
+  class RSContext;
+  class RSExportPrimitiveType;
+  class RSExportConstantArrayType;
+  class RSExportVectorType;
+  class RSExportRecordType;
+  class RSExportFunction;
 
 class RSExportType {
   friend class RSExportElement;
@@ -64,17 +64,18 @@ class RSExportType {
   // function.
   //
   // @T was normalized by calling RSExportType::TypeExportable().
-  // @TypeName was retrieve from RSExportType::GetTypeName() before calling this.
+  // @TypeName was retrieve from RSExportType::GetTypeName() before calling
+  //           this.
   //
   static RSExportType *Create(RSContext *Context,
                               const clang::Type *T,
-                              const llvm::StringRef& TypeName);
+                              const llvm::StringRef &TypeName);
 
   static llvm::StringRef GetTypeName(const clang::Type *T);
   // Return the type that can be used to create RSExportType, will always return
   // the canonical type
   static const clang::Type
-  *TypeExportable(const clang::Type* T,
+  *TypeExportable(const clang::Type *T,
                   // Contain the checked type for recursion
                   llvm::SmallPtrSet<const clang::Type*, 8> &SPS);
 
@@ -88,6 +89,7 @@ class RSExportType {
   // by ourselves.
   virtual const llvm::Type *convertToLLVMType() const = 0;
 
+  virtual ~RSExportType() {}
  public:
   static bool NormalizeType(const clang::Type *&T, llvm::StringRef &TypeName);
   // @T may not be normalized
@@ -204,11 +206,11 @@ class RSExportPrimitiveType : public RSExportType {
                         const llvm::StringRef &Name,
                         DataType DT,
                         DataKind DK,
-                        bool Normalized) :
-      RSExportType(Context, Name),
-      mType(DT),
-      mKind(DK),
-      mNormalized(Normalized) {
+                        bool Normalized)
+      : RSExportType(Context, Name),
+        mType(DT),
+        mKind(DK),
+        mNormalized(Normalized) {
     return;
   }
 
@@ -244,9 +246,9 @@ class RSExportPointerType : public RSExportType {
 
   RSExportPointerType(RSContext *Context,
                       const llvm::StringRef &Name,
-                      const RSExportType *PointeeType) :
-      RSExportType(Context, Name),
-      mPointeeType(PointeeType) {
+                      const RSExportType *PointeeType)
+      : RSExportType(Context, Name),
+        mPointeeType(PointeeType) {
     return;
   }
 
@@ -279,10 +281,9 @@ class RSExportConstantArrayType : public RSExportPrimitiveType {
                             DataType DT,
                             DataKind DK,
                             bool Normalized,
-                            int NumElement) :
-      RSExportPrimitiveType(Context, Name, DT, DK, Normalized),
-      mNumElement(NumElement)
-  {
+                            int NumElement)
+      : RSExportPrimitiveType(Context, Name, DT, DK, Normalized),
+        mNumElement(NumElement) {
     return;
   }
 
@@ -313,9 +314,9 @@ class RSExportVectorType : public RSExportPrimitiveType {
                      DataType DT,
                      DataKind DK,
                      bool Normalized,
-                     int NumElement) :
-      RSExportPrimitiveType(Context, Name, DT, DK, Normalized),
-      mNumElement(NumElement) {
+                     int NumElement)
+      : RSExportPrimitiveType(Context, Name, DT, DK, Normalized),
+        mNumElement(NumElement) {
     return;
   }
 
@@ -357,11 +358,11 @@ class RSExportRecordType : public RSExportType {
     Field(const RSExportType *T,
           const llvm::StringRef &Name,
           const RSExportRecordType *Parent,
-          unsigned int Index) :
-        mType(T),
-        mName(Name.data(), Name.size()),
-        mParent(Parent),
-        mIndex(Index) {
+          unsigned int Index)
+        : mType(T),
+          mName(Name.data(), Name.size()),
+          mParent(Parent),
+          mIndex(Index) {
       return;
     }
 
@@ -392,10 +393,10 @@ class RSExportRecordType : public RSExportType {
   RSExportRecordType(RSContext *Context,
                      const llvm::StringRef &Name,
                      bool IsPacked,
-                     bool IsArtificial = false) :
-      RSExportType(Context, Name),
-      mIsPacked(IsPacked),
-      mIsArtificial(IsArtificial) {
+                     bool IsArtificial = false)
+      : RSExportType(Context, Name),
+        mIsPacked(IsPacked),
+        mIsArtificial(IsArtificial) {
     return;
   }
 
@@ -429,4 +430,4 @@ class RSExportRecordType : public RSExportType {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_RS_EXPORT_TYPE_HPP
+#endif  // _SLANG_COMPILER_RS_EXPORT_TYPE_H

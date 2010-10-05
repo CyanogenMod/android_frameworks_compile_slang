@@ -1,5 +1,5 @@
-#ifndef _SLANG_DIAGNOSTIC_BUFFER_HPP
-#   define _SLANG_DIAGNOSTIC_BUFFER_HPP
+#ifndef _SLANG_DIAGNOSTIC_BUFFER_H
+#define _SLANG_DIAGNOSTIC_BUFFER_H
 
 #include "llvm/Support/raw_ostream.h"
 
@@ -8,7 +8,7 @@
 #include <string>
 
 namespace llvm {
-class raw_string_ostream;
+  class raw_string_ostream;
 }
 
 namespace slang {
@@ -17,7 +17,7 @@ namespace slang {
 class DiagnosticBuffer : public clang::DiagnosticClient {
  private:
   std::string mDiags;
-  llvm::raw_string_ostream* mSOS;
+  llvm::raw_string_ostream *mSOS;
 
  public:
   DiagnosticBuffer();
@@ -25,12 +25,18 @@ class DiagnosticBuffer : public clang::DiagnosticClient {
   virtual void HandleDiagnostic(clang::Diagnostic::Level DiagLevel,
                                 const clang::DiagnosticInfo& Info);
 
-  inline const std::string &str() const { mSOS->flush(); return mDiags; }
+  inline const std::string &str() const {
+    mSOS->flush();
+    return mDiags;
+  }
 
-  inline void reset() { this->mSOS->str().clear(); return; }
+  inline void reset() {
+    this->mSOS->str().clear();
+    return;
+  }
 
   virtual ~DiagnosticBuffer();
 };
 }
 
-#endif  // _SLANG_DIAGNOSTIC_BUFFER_HPP
+#endif  // _SLANG_DIAGNOSTIC_BUFFER_H

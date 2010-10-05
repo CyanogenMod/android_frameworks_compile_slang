@@ -1,4 +1,4 @@
-#include "slang.hpp"
+#include "slang.h"
 
 using namespace slang;
 

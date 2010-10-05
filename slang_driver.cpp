@@ -1,5 +1,5 @@
 #include "libslang.h"
-#include "slang_rs_reflect_utils.hpp"
+#include "slang_rs_reflect_utils.h"
 
 #include <assert.h>
 #include <getopt.h>

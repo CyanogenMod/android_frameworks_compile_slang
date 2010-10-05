@@ -1,12 +1,8 @@
-#ifndef _SLANG_COMPILER_SLANG_HPP
-#   define _SLANG_COMPILER_SLANG_HPP
+#ifndef _SLANG_COMPILER_SLANG_H
+#define _SLANG_COMPILER_SLANG_H
 
-#include "slang_backend.hpp"
-#include "slang_rs_context.hpp"
-#include "slang_rs_backend.hpp"
-#include "slang_pragma_recorder.hpp"
-#include "slang_diagnostic_buffer.hpp"
-
+#include <cstdio>
+#include <string>
 #include <vector>
 
 #include "llvm/Support/raw_ostream.h"
@@ -21,21 +17,25 @@
 #include "clang/Lex/HeaderSearch.h"
 
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Sema/SemaDiagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetOptions.h"
 
-#include <cstdio>
-#include <string>
+#include "clang/Sema/SemaDiagnostic.h"
+
+#include "slang_backend.h"
+#include "slang_rs_context.h"
+#include "slang_rs_backend.h"
+#include "slang_pragma_recorder.h"
+#include "slang_diagnostic_buffer.h"
 
 namespace llvm {
-class TargetInfo;
+  class TargetInfo;
 }
 
 namespace clang {
-class LangOptions;
-class CodeGenOptions;
-class TargetOptions;
+  class LangOptions;
+  class CodeGenOptions;
+  class TargetOptions;
 }
 
 namespace slang {
@@ -176,11 +176,11 @@ class Slang {
   void setOutputType(SlangCompilerOutputTy outputType);
 
   inline bool setOutput(FILE *stream) {
-    if(stream == NULL)
+    if (stream == NULL)
       return false;
 
-    mOS.reset(
-        new llvm::raw_fd_ostream(fileno(stream), /* shouldClose */false));
+    mOS.reset(new llvm::raw_fd_ostream(fileno(stream),
+                                       /* shouldClose */false));
     return true;
   }
 
@@ -218,7 +218,6 @@ class Slang {
 
   ~Slang();
 };
-
 }
 
-#endif  // _SLANG_COMPILER_SLANG_HPP
+#endif  // _SLANG_COMPILER_SLANG_H

@@ -1,25 +1,26 @@
-#include "slang_rs_backend.hpp"
-#include "slang_rs_context.hpp"
-#include "slang_rs_export_var.hpp"
-#include "slang_rs_export_func.hpp"
-#include "slang_rs_export_type.hpp"
+#include "slang_rs_backend.h"
+
+#include <vector>
+#include <string>
 
 #include "llvm/Metadata.h"
-
-#include "llvm/ADT/Twine.h"
-#include "llvm/ADT/StringExtras.h"
-
-#include "llvm/Support/IRBuilder.h"
 #include "llvm/Constant.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
 
+#include "llvm/Support/IRBuilder.h"
+
+#include "llvm/ADT/Twine.h"
+#include "llvm/ADT/StringExtras.h"
+
 #include "clang/AST/DeclGroup.h"
 
-#include <vector>
-#include <string>
+#include "slang_rs_context.h"
+#include "slang_rs_export_var.h"
+#include "slang_rs_export_func.h"
+#include "slang_rs_export_type.h"
 
 using namespace slang;
 
@@ -31,19 +32,19 @@ RSBackend::RSBackend(RSContext *Context,
                      llvm::raw_ostream *OS,
                      SlangCompilerOutputTy OutputType,
                      clang::SourceManager &SourceMgr,
-                     bool AllowRSPrefix) :
-    Backend(Diags,
-            CodeGenOpts,
-            TargetOpts,
-            Pragmas,
-            OS,
-            OutputType,
-            SourceMgr,
-            AllowRSPrefix),
-    mContext(Context),
-    mExportVarMetadata(NULL),
-    mExportFuncMetadata(NULL),
-    mExportTypeMetadata(NULL) {
+                     bool AllowRSPrefix)
+    : Backend(Diags,
+              CodeGenOpts,
+              TargetOpts,
+              Pragmas,
+              OS,
+              OutputType,
+              SourceMgr,
+              AllowRSPrefix),
+      mContext(Context),
+      mExportVarMetadata(NULL),
+      mExportFuncMetadata(NULL),
+      mExportTypeMetadata(NULL) {
   return;
 }
 
@@ -64,12 +65,12 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
 
     llvm::SmallVector<llvm::Value*, 2> ExportVarInfo;
 
-    for (RSContext::const_export_var_iterator I = mContext->export_vars_begin();
-        I != mContext->export_vars_end();
-        I++)
-    {
-      const RSExportVar* EV = *I;
-      const RSExportType* ET = EV->getType();
+    for (RSContext::const_export_var_iterator I = mContext->export_vars_begin(),
+            E = mContext->export_vars_end();
+         I != E;
+         I++) {
+      const RSExportVar *EV = *I;
+      const RSExportType *ET = EV->getType();
 
       // Variable name
       ExportVarInfo.push_back(
@@ -80,15 +81,12 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
         ExportVarInfo.push_back(
             llvm::MDString::get(
                 mLLVMContext, llvm::utostr_32(
-                    static_cast<const RSExportPrimitiveType*>(ET)->getType()
-                                              )));
+                    static_cast<const RSExportPrimitiveType*>(ET)->getType())));
       else if (ET->getClass() == RSExportType::ExportClassPointer)
         ExportVarInfo.push_back(
             llvm::MDString::get(
                 mLLVMContext, ("*" + static_cast<const RSExportPointerType*>(ET)
-                               ->getPointeeType()->getName()
-                               ).c_str()
-                                ));
+                               ->getPointeeType()->getName()).c_str()));
       else
         ExportVarInfo.push_back(
             llvm::MDString::get(mLLVMContext,
@@ -111,17 +109,18 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
 
     llvm::SmallVector<llvm::Value*, 1> ExportFuncInfo;
 
-    for (RSContext::const_export_func_iterator I=mContext->export_funcs_begin(),
-             E = mContext->export_funcs_end();
+    for (RSContext::const_export_func_iterator
+            I = mContext->export_funcs_begin(),
+            E = mContext->export_funcs_end();
          I != E;
          I++) {
-      const RSExportFunc* EF = *I;
+      const RSExportFunc *EF = *I;
 
       // Function name
-      if (!EF->hasParam())
-        ExportFuncInfo.push_back( llvm::MDString::get(mLLVMContext,
-                                                      EF->getName().c_str()));
-      else {
+      if (!EF->hasParam()) {
+        ExportFuncInfo.push_back(llvm::MDString::get(mLLVMContext,
+                                                     EF->getName().c_str()));
+      } else {
         llvm::Function *F = mpModule->getFunction(EF->getName());
         llvm::Function *HelperFunction;
         const std::string HelperFunctionName(".helper_" + EF->getName());
@@ -212,8 +211,9 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
   if (mContext->hasExportType()) {
     llvm::SmallVector<llvm::Value*, 1> ExportTypeInfo;
 
-    for (RSContext::const_export_type_iterator I=mContext->export_types_begin(),
-             E = mContext->export_types_end();
+    for (RSContext::const_export_type_iterator
+            I = mContext->export_types_begin(),
+            E = mContext->export_types_end();
          I != E;
          I++) {
       // First, dump type name list to export
@@ -246,8 +246,9 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
 
         assert(StructInfoMetadata->getNumOperands() == 0 &&
                "Metadata with same name was created before");
-        for (RSExportRecordType::const_field_iterator FI = ERT->fields_begin();
-             FI != ERT->fields_end();
+        for (RSExportRecordType::const_field_iterator FI = ERT->fields_begin(),
+                FE = ERT->fields_end();
+             FI != FE;
              FI++) {
           const RSExportRecordType::Field *F = *FI;
 
@@ -276,15 +277,14 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
               FieldInfo.push_back(
                   llvm::MDString::get(mLLVMContext,
                                       llvm::itostr(
-                                          RSExportPrimitiveType::DataKindUser
-                                                   )));
+                                        RSExportPrimitiveType::DataKindUser)));
               break;
             }
           }
 
-          StructInfoMetadata->addOperand( llvm::MDNode::get(mLLVMContext,
-                                                            FieldInfo.data(),
-                                                            FieldInfo.size()));
+          StructInfoMetadata->addOperand(llvm::MDNode::get(mLLVMContext,
+                                                           FieldInfo.data(),
+                                                           FieldInfo.size()));
 
           FieldInfo.clear();
         }

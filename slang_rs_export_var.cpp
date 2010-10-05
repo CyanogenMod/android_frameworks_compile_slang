@@ -1,20 +1,21 @@
-#include "slang_rs_context.hpp"
-#include "slang_rs_export_var.hpp"
-#include "slang_rs_export_type.hpp"
+#include "slang_rs_export_var.h"
 
 #include "llvm/ADT/APSInt.h"
 
 #include "clang/AST/Type.h"
 
+#include "slang_rs_context.h"
+#include "slang_rs_export_type.h"
+
 using namespace slang;
 
 RSExportVar::RSExportVar(RSContext *Context,
                          const clang::VarDecl *VD,
-                         const RSExportType *ET) :
-    mContext(Context),
-    mName(VD->getName().data(), VD->getName().size()),
-    mET(ET),
-    mIsConst(false) {
+                         const RSExportType *ET)
+    : mContext(Context),
+      mName(VD->getName().data(), VD->getName().size()),
+      mET(ET),
+      mIsConst(false) {
   // mInit - Evaluate initializer expression
   const clang::Expr *Initializer = VD->getAnyInitializer();
   if (Initializer != NULL) {
@@ -24,7 +25,6 @@ RSExportVar::RSExportVar(RSContext *Context,
         Initializer->Evaluate(mInit, *Context->getASTContext());
         break;
       }
-
       case RSExportType::ExportClassPointer: {
         if (Initializer->isNullPointerConstant
             (*Context->getASTContext(),
@@ -35,7 +35,6 @@ RSExportVar::RSExportVar(RSContext *Context,
           Initializer->Evaluate(mInit, *Context->getASTContext());
         break;
       }
-
       case RSExportType::ExportClassRecord: {
         // No action
         fprintf(stderr, "RSExportVar::RSExportVar : Reflection of initializer "
@@ -45,7 +44,6 @@ RSExportVar::RSExportVar(RSContext *Context,
                 ET->getName().c_str());
         break;
       }
-
       default: {
         assert(false && "Unknown class of type");
       }

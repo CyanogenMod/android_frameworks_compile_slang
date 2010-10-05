@@ -1,5 +1,5 @@
-#ifndef _SLANG_COMPILER_RS_EXPORT_VAR_HPP
-#   define _SLANG_COMPILER_RS_EXPORT_VAR_HPP
+#ifndef _SLANG_COMPILER_RS_EXPORT_VAR_H
+#define _SLANG_COMPILER_RS_EXPORT_VAR_H
 
 #include "llvm/ADT/StringRef.h"
 
@@ -9,13 +9,13 @@
 #include <string>
 
 namespace clang {
-class APValue;
+  class APValue;
 }
 
 namespace slang {
 
-class RSContext;
-class RSExportType;
+  class RSContext;
+  class RSExportType;
 
 class RSExportVar {
   friend class RSContext;
@@ -38,10 +38,8 @@ class RSExportVar {
   inline bool isConst() const { return mIsConst; }
 
   inline const clang::APValue &getInit() const { return mInit.Val; }
-
 };  // RSExportVar
-
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_RS_EXPORT_VAR_HPP
+#endif  // _SLANG_COMPILER_RS_EXPORT_VAR_H

@@ -1,22 +1,22 @@
-#ifndef _SLANG_COMPILER_RS_BACKEND_HPP
-#   define _SLANG_COMPILER_RENDER_SCRIPT_BACKEND_HPP
+#ifndef _SLANG_COMPILER_RS_BACKEND_H
+#define _SLANG_COMPILER_RENDER_SCRIPT_BACKEND_H
 
 #include "libslang.h"
-#include "slang_backend.hpp"
-#include "slang_pragma_recorder.hpp"
+#include "slang_backend.h"
+#include "slang_pragma_recorder.h"
 
 namespace llvm {
-class NamedMDNode;
+  class NamedMDNode;
 }
 
 namespace clang {
-class ASTConsumer;
-class Diagnostic;
-class TargetOptions;
-class PragmaList;
-class CodeGenerator;
-class ASTContext;
-class DeclGroupRef;
+  class ASTConsumer;
+  class Diagnostic;
+  class TargetOptions;
+  class PragmaList;
+  class CodeGenerator;
+  class ASTContext;
+  class DeclGroupRef;
 }
 
 namespace slang {
@@ -49,7 +49,6 @@ class RSBackend : public Backend {
 
   virtual ~RSBackend();
 };
-
 }
 
-#endif  // _SLANG_COMPILER_BACKEND_HPP
+#endif  // _SLANG_COMPILER_BACKEND_H

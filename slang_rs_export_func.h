@@ -1,20 +1,20 @@
-#ifndef _SLANG_COMPILER_RS_EXPORT_FUNC_HPP
-#   define _SLANG_COMPILER_RS_EXPORT_FUNC_HPP
-
-#include "llvm/ADT/StringRef.h"
+#ifndef _SLANG_COMPILER_RS_EXPORT_FUNC_H
+#define _SLANG_COMPILER_RS_EXPORT_FUNC_H
 
 #include <list>
 #include <string>
 
+#include "llvm/ADT/StringRef.h"
+
 namespace clang {
-class FunctionDecl;
+  class FunctionDecl;
 }   // namespace clang
 
 namespace slang {
 
-class RSContext;
-class RSExportType;
-class RSExportRecordType;
+  class RSContext;
+  class RSExportType;
+  class RSExportRecordType;
 
 class RSExportFunc {
   friend class RSContext;
@@ -25,10 +25,9 @@ class RSExportFunc {
     std::string mName;
 
    public:
-    Parameter(RSExportType *T, const llvm::StringRef &Name) :
-        mType(T),
-        mName(Name.data(), Name.size())
-    {
+    Parameter(RSExportType *T, const llvm::StringRef &Name)
+        : mType(T),
+          mName(Name.data(), Name.size()) {
       return;
     }
 
@@ -42,11 +41,10 @@ class RSExportFunc {
   std::list<const Parameter*> mParams;
   mutable RSExportRecordType *mParamPacketType;
 
-  RSExportFunc(RSContext *Context, const llvm::StringRef &Name) :
-      mContext(Context),
-      mName(Name.data(), Name.size()),
-      mParamPacketType(NULL)
-  {
+  RSExportFunc(RSContext *Context, const llvm::StringRef &Name)
+      : mContext(Context),
+        mName(Name.data(), Name.size()),
+        mParamPacketType(NULL) {
     return;
   }
 
@@ -80,10 +78,8 @@ class RSExportFunc {
   const RSExportRecordType *getParamPacketType() const;
 
   ~RSExportFunc();
-
 };  // RSExportFunc
-
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_RS_EXPORT_FUNC_HPP
+#endif  // _SLANG_COMPILER_RS_EXPORT_FUNC_H
