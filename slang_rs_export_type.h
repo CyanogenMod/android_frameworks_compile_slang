@@ -47,6 +47,7 @@ class RSExportType {
     ExportClassPointer,
     ExportClassConstantArray,
     ExportClassVector,
+    ExportClassMatrix,
     ExportClassRecord
   } ExportClass;
 
@@ -145,6 +146,11 @@ class RSExportPrimitiveType : public RSExportType {
     DataTypeUnsigned5551,
     DataTypeUnsigned4444,
 
+    // Actually, there's no any instance of RSExportPrimitiveType which mType
+    // is of the value DataTypeRSMatrix*. DataTypeRSMatrix* enumeration here is
+    // only for RSExportPrimitiveType::GetRSObjectType to *recognize* the struct
+    // rs_matrix{2x2, 3x3, 4x4}. These matrix type are represented as
+    // RSExportMatrixType.
     DataTypeRSMatrix2x2,
     DataTypeRSMatrix3x3,
     DataTypeRSMatrix4x4,
@@ -305,16 +311,15 @@ class RSExportConstantArrayType : public RSExportPrimitiveType {
 class RSExportVectorType : public RSExportPrimitiveType {
   friend class RSExportType;
   friend class RSExportElement;
-
  private:
-  int mNumElement;   // number of element
+  unsigned mNumElement;   // number of element
 
   RSExportVectorType(RSContext *Context,
                      const llvm::StringRef &Name,
                      DataType DT,
                      DataKind DK,
                      bool Normalized,
-                     int NumElement)
+                     unsigned NumElement)
       : RSExportPrimitiveType(Context, Name, DT, DK, Normalized),
         mNumElement(NumElement) {
     return;
@@ -336,7 +341,43 @@ class RSExportVectorType : public RSExportPrimitiveType {
 
   virtual ExportClass getClass() const;
 
-  inline int getNumElement() const { return mNumElement; }
+  inline unsigned getNumElement() const { return mNumElement; }
+};
+
+// Only *square* *float* matrix is supported by now.
+//
+// struct rs_matrix{2x2,3x3,4x4, ..., NxN} should be defined as the following
+// form *exactly*:
+//  typedef struct {
+//    float m[{NxN}];
+//  } rs_matrixNxN;
+//
+//  where mDim will be N.
+class RSExportMatrixType : public RSExportType {
+  friend class RSExportType;
+ private:
+  unsigned mDim; // dimension
+
+  RSExportMatrixType(RSContext *Context,
+                     const llvm::StringRef &Name,
+                     unsigned Dim)
+    : RSExportType(Context, Name),
+      mDim(Dim) {
+    return;
+  }
+
+  virtual const llvm::Type *convertToLLVMType() const;
+ public:
+  virtual ExportClass getClass() const;
+
+  // @RT was normalized by calling RSExportType::TypeExportable() before
+  // calling this.
+  static RSExportMatrixType *Create(RSContext *Context,
+                                    const clang::RecordType *RT,
+                                    const llvm::StringRef &TypeName,
+                                    unsigned Dim);
+
+  inline unsigned getDim() const { return mDim; }
 };
 
 class RSExportRecordType : public RSExportType {

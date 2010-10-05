@@ -96,37 +96,6 @@ RSExportType *RSExportElement::Create(RSContext *Context,
       ET = EVT;
       break;
     }
-    case clang::Type::Record: {
-      // Must be RS object type
-
-      if (TypeName.equals(llvm::StringRef("rs_matrix2x2")) ||
-          TypeName.equals(llvm::StringRef("rs_matrix3x3")) ||
-          TypeName.equals(llvm::StringRef("rs_matrix4x4"))) {
-        const clang::RecordType *RT = static_cast<const clang::RecordType*> (T);
-        const clang::RecordDecl *RD = RT->getDecl();
-        RD = RD->getDefinition();
-        clang::RecordDecl::field_iterator fit = RD->field_begin();
-        clang::FieldDecl *FD = *fit;
-        const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
-        RSExportConstantArrayType *ECT =
-            RSExportConstantArrayType::Create(
-                Context,
-                static_cast<const clang::ConstantArrayType*> (FT),
-                TypeName);
-        ET = ECT;
-      } else {
-        RSExportPrimitiveType* EPT =
-            RSExportPrimitiveType::Create(Context,
-                                          T,
-                                          TypeName,
-                                          EI->kind,
-                                          EI->normalized);
-        // Verify
-        assert(EI->type == EPT->getType() && "Element has unexpected type");
-        ET = EPT;
-      }
-      break;
-    }
     default: {
       // TODO(zonr): warn that type is not exportable
       fprintf(stderr, "RSExportElement::Create : type '%s' is not exportable\n",
@@ -147,8 +116,7 @@ RSExportType *RSExportElement::CreateFromDecl(RSContext *Context,
   // Note: RS element like rs_pixel_rgb elements are either in the type of
   // primitive or vector.
   if ((CT->getTypeClass() != clang::Type::Builtin) &&
-      (CT->getTypeClass() != clang::Type::ExtVector) &&
-      (CT->getTypeClass() != clang::Type::Record)) {
+      (CT->getTypeClass() != clang::Type::ExtVector)) {
     return RSExportType::Create(Context, T);
   }
 

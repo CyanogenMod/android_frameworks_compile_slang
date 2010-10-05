@@ -275,29 +275,39 @@ RSExportType *RSExportType::Create(RSContext *Context,
       RSExportPrimitiveType::DataType dt =
           RSExportPrimitiveType::GetRSObjectType(TypeName);
       switch (dt) {
-        case RSExportPrimitiveType::DataTypeUnknown: {  // User-defined types
+        case RSExportPrimitiveType::DataTypeUnknown: {
+          // User-defined types
           ET = RSExportRecordType::Create(Context,
                                           T->getAsStructureType(),
                                           TypeName);
           break;
         }
-        case RSExportPrimitiveType::DataTypeRSMatrix2x2:
-        case RSExportPrimitiveType::DataTypeRSMatrix3x3:
+        case RSExportPrimitiveType::DataTypeRSMatrix2x2: {
+          // 2 x 2 Matrix type
+          ET = RSExportMatrixType::Create(Context,
+                                          T->getAsStructureType(),
+                                          TypeName,
+                                          2);
+          break;
+        }
+        case RSExportPrimitiveType::DataTypeRSMatrix3x3: {
+          // 3 x 3 Matrix type
+          ET = RSExportMatrixType::Create(Context,
+                                          T->getAsStructureType(),
+                                          TypeName,
+                                          3);
+          break;
+        }
         case RSExportPrimitiveType::DataTypeRSMatrix4x4: {
-          const clang::RecordType *RT =
-              static_cast<const clang::RecordType*> (T);
-          const clang::RecordDecl *RD = RT->getDecl();
-          RD = RD->getDefinition();
-          clang::RecordDecl::field_iterator FI = RD->field_begin();
-          clang::FieldDecl *FD = *FI;
-          const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
-          ET = RSExportConstantArrayType::Create(
-              Context,
-              static_cast<const clang::ConstantArrayType*> (FT),
-              TypeName);
+          // 4 x 4 Matrix type
+          ET = RSExportMatrixType::Create(Context,
+                                          T->getAsStructureType(),
+                                          TypeName,
+                                          4);
           break;
         }
         default: {
+          // Others are primitive types
           ET = RSExportPrimitiveType::Create(Context, T, TypeName);
           break;
         }
@@ -312,7 +322,7 @@ RSExportType *RSExportType::Create(RSContext *Context,
       ET = RSExportPointerType::Create(Context,
                                        UNSAFE_CAST_TYPE(clang::PointerType, T),
                                        TypeName);
-      // Free the name (allocated in RSExportType::GetTypeName)
+      // FIXME: free the name (allocated in RSExportType::GetTypeName)
       delete [] TypeName.data();
       break;
     }
@@ -808,7 +818,7 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
                                                const llvm::StringRef &TypeName,
                                                DataKind DK,
                                                bool Normalized) {
-  assert(EVT != NULL && EVT->getTypeClass() == Type::ExtVector);
+  assert(EVT != NULL && EVT->getTypeClass() == clang::Type::ExtVector);
 
   const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
   RSExportPrimitiveType::DataType DT =
@@ -836,12 +846,88 @@ const llvm::Type *RSExportVectorType::convertToLLVMType() const {
   return llvm::VectorType::get(ElementType, getNumElement());
 }
 
+/***************************** RSExportMatrixType *****************************/
+RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
+                                               const clang::RecordType *RT,
+                                               const llvm::StringRef &TypeName,
+                                               unsigned Dim) {
+  assert((RT != NULL) && (RT->getTypeClass() == clang::Type::Record));
+  assert((Dim > 1) && "Invalid dimension of matrix");
+
+  // Check whether the struct rs_matrix is in our expected form (but assume it's
+  // correct if we're not sure whether it's correct or not)
+  const clang::RecordDecl* RD = RT->getDecl();
+  RD = RD->getDefinition();
+  if (RD != NULL) {
+    // Find definition, perform further examination
+    if (RD->field_empty()) {
+      fprintf(stderr, "RSExportMatrixType::Create : invalid %s struct: "
+                      "must have 1 field for saving values", TypeName.data());
+      return NULL;
+    }
+
+    clang::RecordDecl::field_iterator FIT = RD->field_begin();
+    const clang::FieldDecl *FD = *FIT;
+    const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
+    if ((FT == NULL) || (FT->getTypeClass() != clang::Type::ConstantArray)) {
+      fprintf(stderr, "RSExportMatrixType::Create : invalid %s struct: "
+                      "first field should be an array with constant size",
+              TypeName.data());
+      return NULL;
+    }
+    const clang::ConstantArrayType *CAT =
+      static_cast<const clang::ConstantArrayType *>(FT);
+    const clang::Type *ElementType =
+      GET_CANONICAL_TYPE(CAT->getElementType().getTypePtr());
+    if ((ElementType == NULL) ||
+        (ElementType->getTypeClass() != clang::Type::Builtin) ||
+        (static_cast<const clang::BuiltinType *>(ElementType)->getKind()
+          != clang::BuiltinType::Float)) {
+      fprintf(stderr, "RSExportMatrixType::Create : invalid %s struct: "
+                      "first field should be a float array", TypeName.data());
+      return NULL;
+    }
+
+    if (CAT->getSize() != Dim * Dim) {
+      fprintf(stderr, "RSExportMatrixType::Create : invalid %s struct: "
+                      "first field should be an array with size %d",
+              TypeName.data(), Dim * Dim);
+      return NULL;
+    }
+
+    FIT++;
+    if (FIT != RD->field_end()) {
+      fprintf(stderr, "RSExportMatrixType::Create : invalid %s struct: "
+                      "must have exactly 1 field", TypeName.data());
+      return NULL;
+    }
+  }
+
+  return new RSExportMatrixType(Context, TypeName, Dim);
+}
+
+RSExportType::ExportClass RSExportMatrixType::getClass() const {
+  return RSExportType::ExportClassMatrix;
+}
+
+const llvm::Type *RSExportMatrixType::convertToLLVMType() const {
+  // Construct LLVM type:
+  // struct {
+  //  float X[mDim * mDim];
+  // }
+
+  llvm::LLVMContext &C = getRSContext()->getLLVMContext();
+  llvm::ArrayType *X = llvm::ArrayType::get(llvm::Type::getFloatTy(C),
+                                            mDim * mDim);
+  return llvm::StructType::get(C, X, NULL);
+}
+
 /**************************** RSExportRecordType ****************************/
 RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
                                                const clang::RecordType *RT,
                                                const llvm::StringRef &TypeName,
                                                bool mIsArtificial) {
-  assert(RT != NULL && RT->getTypeClass() == Type::Record);
+  assert(RT != NULL && RT->getTypeClass() == clang::Type::Record);
 
   const clang::RecordDecl *RD = RT->getDecl();
   assert(RD->isStruct());

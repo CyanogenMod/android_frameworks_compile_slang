@@ -112,17 +112,11 @@ class RSReflection {
       return;
     }
 
-    inline int getIndentLevel() {
-      return (mIndent.length() >> 2);
-    }
+    inline int getIndentLevel() { return (mIndent.length() >> 2); }
 
-    inline int getNextExportVarSlot() {
-      return mNextExportVarSlot++;
-    }
+    inline int getNextExportVarSlot() { return mNextExportVarSlot++; }
 
-    inline int getNextExportFuncSlot() {
-      return mNextExportFuncSlot++;
-    }
+    inline int getNextExportFuncSlot() { return mNextExportFuncSlot++; }
 
     // Will remove later due to field name information is not necessary for
     // C-reflect-to-Java
@@ -165,13 +159,9 @@ class RSReflection {
     void startTypeClass(const std::string &ClassName);
     void endTypeClass();
 
-    inline void incFieldIndex() {
-      mFieldIndex++;
-    }
+    inline void incFieldIndex() { mFieldIndex++; }
 
-    inline void resetFieldIndex() {
-      mFieldIndex = 0;
-    }
+    inline void resetFieldIndex() { mFieldIndex = 0; }
 
     inline void addFieldIndexMapping(const RSExportRecordType::Field *F) {
       assert((mFieldIndexMap.find(F) == mFieldIndexMap.end()) &&
@@ -186,9 +176,7 @@ class RSReflection {
       return I->second;
     }
 
-    inline void clearFieldIndexMap() {
-      mFieldIndexMap.clear();
-    }
+    inline void clearFieldIndexMap() { mFieldIndexMap.clear(); }
   };
 
   bool openScriptFile(Context &C,
@@ -213,6 +201,7 @@ class RSReflection {
   void genPrimitiveTypeExportVariable(Context &C, const RSExportVar *EV);
   void genPointerTypeExportVariable(Context &C, const RSExportVar *EV);
   void genVectorTypeExportVariable(Context &C, const RSExportVar *EV);
+  void genMatrixTypeExportVariable(Context &C, const RSExportVar *EV);
   void genRecordTypeExportVariable(Context &C, const RSExportVar *EV);
   void genGetExportVariable(Context &C,
                             const std::string &TypeName,
@@ -227,12 +216,9 @@ class RSReflection {
   bool genTypeItemClass(Context &C,
                         const RSExportRecordType *ERT,
                         std::string &ErrorMsg);
-  void genTypeClassConstructor(Context &C,
-                               const RSExportRecordType *ERT);
-  void genTypeClassCopyToArray(Context &C,
-                               const RSExportRecordType *ERT);
-  void genTypeClassItemSetter(Context &C,
-                              const RSExportRecordType *ERT);
+  void genTypeClassConstructor(Context &C, const RSExportRecordType *ERT);
+  void genTypeClassCopyToArray(Context &C, const RSExportRecordType *ERT);
+  void genTypeClassItemSetter(Context &C, const RSExportRecordType *ERT);
   void genTypeClassItemGetter(Context &C, const RSExportRecordType *ERT);
   void genTypeClassComponentSetter(Context &C, const RSExportRecordType *ERT);
   void genTypeClassComponentGetter(Context &C, const RSExportRecordType *ERT);

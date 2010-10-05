@@ -16,13 +16,13 @@ LOCAL_MODULE := llvm-rs-link
 LOCAL_MODULE_CLASS := EXECUTABLES
 
 LOCAL_SRC_FILES :=	\
-        llvm-rs-link.cpp
+	llvm-rs-link.cpp
 
 LOCAL_STATIC_LIBRARIES :=	\
-        libLLVMLinker   \
+	libLLVMLinker   \
 	libLLVMipo	\
 	libLLVMBitWriter	\
-        libLLVMBitReader        \
+	libLLVMBitReader        \
 	libLLVMScalarOpts	\
 	libLLVMInstCombine	\
 	libLLVMTransformUtils	\
@@ -56,7 +56,7 @@ TBLGEN_TABLES :=    \
 	DeclNodes.inc    \
 	DiagnosticCommonKinds.inc   \
 	DiagnosticFrontendKinds.inc \
-	StmtNodes.inc               \
+	StmtNodes.inc	\
 	DiagnosticSemaKinds.inc
 
 LOCAL_SRC_FILES :=	\
@@ -97,7 +97,7 @@ LOCAL_STATIC_LIBRARIES :=	\
 	libLLVMTarget	\
 	libLLVMMC	\
 	libLLVMCore	\
-        libclangParse   \
+	libclangParse   \
 	libclangSema	\
 	libclangAnalysis	\
 	libclangAST	\

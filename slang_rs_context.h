@@ -31,7 +31,6 @@ namespace slang {
 class RSExportVar;
 class RSExportFunc;
 class RSExportType;
-class RSPragmaHandler;
 
 class RSContext {
   typedef llvm::StringSet<> NeedExportVarSet;
