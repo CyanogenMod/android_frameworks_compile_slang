@@ -202,6 +202,7 @@ class RSReflection {
   void genPointerTypeExportVariable(Context &C, const RSExportVar *EV);
   void genVectorTypeExportVariable(Context &C, const RSExportVar *EV);
   void genMatrixTypeExportVariable(Context &C, const RSExportVar *EV);
+  void genConstantArrayTypeExportVariable(Context &C, const RSExportVar *EV);
   void genRecordTypeExportVariable(Context &C, const RSExportVar *EV);
   void genGetExportVariable(Context &C,
                             const std::string &TypeName,
@@ -213,9 +214,7 @@ class RSReflection {
   bool genTypeClass(Context &C,
                     const RSExportRecordType *ERT,
                     std::string &ErrorMsg);
-  bool genTypeItemClass(Context &C,
-                        const RSExportRecordType *ERT,
-                        std::string &ErrorMsg);
+  void genTypeItemClass(Context &C, const RSExportRecordType *ERT);
   void genTypeClassConstructor(Context &C, const RSExportRecordType *ERT);
   void genTypeClassCopyToArray(Context &C, const RSExportRecordType *ERT);
   void genTypeClassItemSetter(Context &C, const RSExportRecordType *ERT);
@@ -244,6 +243,9 @@ class RSReflection {
                         const RSExportType *T,
                         const char *VarName,
                         const char *FieldPackerName);
+  void genAllocateVarOfType(Context &C,
+                            const RSExportType *T,
+                            const std::string &VarName);
   void genNewItemBufferIfNull(Context &C, const char *Index);
   void genNewItemBufferPackerIfNull(Context &C);
 

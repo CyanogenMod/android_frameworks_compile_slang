@@ -133,17 +133,15 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
       }
       break;
     }
-    case clang::Type::ConstantArray: {
-      const clang::ConstantArrayType *ECT =
-          UNSAFE_CAST_TYPE(clang::ConstantArrayType, T);
-      return RSExportConstantArrayType::GetTypeName(ECT);
-      break;
-    }
     case clang::Type::ExtVector: {
       const clang::ExtVectorType *EVT =
           UNSAFE_CAST_TYPE(clang::ExtVectorType, T);
       return RSExportVectorType::GetTypeName(EVT);
       break;
+    }
+    case clang::Type::ConstantArray : {
+      // Construct name for a constant array is too complicated.
+      return DUMMY_TYPE_NAME_FOR_RS_CONSTANT_ARRAY_TYPE;
     }
     default: {
       break;
@@ -221,27 +219,12 @@ const clang::Type *RSExportType::TypeExportable(
       const clang::PointerType *PT = UNSAFE_CAST_TYPE(clang::PointerType, T);
       const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
 
-      if ((PointeeType->getTypeClass() != clang::Type::Pointer) &&
-         (TypeExportable(PointeeType, SPS) == NULL) )
-        return NULL;
-      else
+      if (PointeeType->getTypeClass() == clang::Type::Pointer)
         return T;
-    }
-
-    case clang::Type::ConstantArray: {
-      const clang::ConstantArrayType *ECT =
-          UNSAFE_CAST_TYPE(clang::ConstantArrayType, T);
-      // No longer only support 2x2, 3x3 and 4x4 arrays
-      // if (ECT->getNumElements() != 4 &&
-      //     ECT->getNumElements() != 9 &&
-      //     ECT->getNumElements() != 16)
-      //  return NULL;
-
-      // Check base element type
-      const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(ECT);
-
-      if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
-          (TypeExportable(ElementType, SPS) == NULL))
+      // We don't support pointer with array-type pointee or unsupported pointee
+      // type
+      if (PointeeType->isArrayType() ||
+         (TypeExportable(PointeeType, SPS) == NULL) )
         return NULL;
       else
         return T;
@@ -258,6 +241,28 @@ const clang::Type *RSExportType::TypeExportable(
 
       if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
           (TypeExportable(ElementType, SPS) == NULL))
+        return NULL;
+      else
+        return T;
+    }
+    case clang::Type::ConstantArray: {
+      const clang::ConstantArrayType *CAT =
+          UNSAFE_CAST_TYPE(clang::ConstantArrayType, T);
+
+      // Check size
+      if (CAT->getSize().getActiveBits() > 32) {
+        fprintf(stderr, "RSExportConstantArrayType::Create : array with too "
+                        "large size (> 2^32).\n");
+        return NULL;
+      }
+      // Check element type
+      const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
+      if (ElementType->isArrayType()) {
+        fprintf(stderr, "RSExportType::TypeExportable : constant array with 2 "
+                        "or higher dimension of constant is not supported.\n");
+        return NULL;
+      }
+      if (TypeExportable(ElementType, SPS) == NULL)
         return NULL;
       else
         return T;
@@ -336,17 +341,16 @@ RSExportType *RSExportType::Create(RSContext *Context,
       delete [] TypeName.data();
       break;
     }
-    case clang::Type::ConstantArray: {
-      ET = RSExportConstantArrayType::Create(
-          Context,
-          UNSAFE_CAST_TYPE(clang::ConstantArrayType, T),
-          TypeName);
-      break;
-    }
     case clang::Type::ExtVector: {
       ET = RSExportVectorType::Create(Context,
                                       UNSAFE_CAST_TYPE(clang::ExtVectorType, T),
                                       TypeName);
+      break;
+    }
+    case clang::Type::ConstantArray: {
+      ET = RSExportConstantArrayType::Create(
+              Context,
+              UNSAFE_CAST_TYPE(clang::ConstantArrayType, T));
       break;
     }
     default: {
@@ -664,104 +668,6 @@ const llvm::Type *RSExportPointerType::convertToLLVMType() const {
   return llvm::PointerType::getUnqual(PointeeType);
 }
 
-/************************* RSExportConstantArrayType *************************/
-llvm::StringRef
-RSExportConstantArrayType::GetTypeName(const clang::ConstantArrayType *CT) {
-  llvm::APInt i = CT->getSize();
-  if (i == 4) {
-    return llvm::StringRef("rs_matrix2x2");
-  } else if (i == 9) {
-    return llvm::StringRef("rs_matrix3x3");
-  } else if (i == 16) {
-    return llvm::StringRef("rs_matrix4x4");
-  }
-  return llvm::StringRef();
-}
-
-RSExportConstantArrayType
-*RSExportConstantArrayType::Create(RSContext *Context,
-                                   const clang::ConstantArrayType *CT,
-                                   const llvm::StringRef &TypeName,
-                                   DataKind DK,
-                                   bool Normalized) {
-  assert(CT != NULL && CT->getTypeClass() == clang::Type::ConstantArray);
-
-  int64_t Size = CT->getSize().getSExtValue();
-  RSExportPrimitiveType::DataType DT;
-  if (Size == 4) {
-    DT = RSExportPrimitiveType::DataTypeRSMatrix2x2;
-  } else if (Size == 9) {
-    DT = RSExportPrimitiveType::DataTypeRSMatrix3x3;
-  } else if (Size == 16) {
-    DT = RSExportPrimitiveType::DataTypeRSMatrix4x4;
-  } else {
-    fprintf(stderr, "RSExportConstantArrayType::Create : unsupported base "
-                    "element type\n");
-    return NULL;
-  }
-
-  return new RSExportConstantArrayType(Context,
-                                       TypeName,
-                                       DT,
-                                       DK,
-                                       Normalized,
-                                       Size);
-}
-
-RSExportType::ExportClass RSExportConstantArrayType::getClass() const {
-  return RSExportType::ExportClassConstantArray;
-}
-
-const llvm::Type *RSExportConstantArrayType::convertToLLVMType() const {
-  llvm::LLVMContext &C = getRSContext()->getLLVMContext();
-  const llvm::Type *typ;
-  switch (getType()) {
-    case DataTypeFloat32:
-    case DataTypeRSMatrix2x2:
-    case DataTypeRSMatrix3x3:
-    case DataTypeRSMatrix4x4: {
-      typ = llvm::Type::getFloatTy(C);
-      break;
-    }
-    case DataTypeFloat64: {
-      typ = llvm::Type::getDoubleTy(C);
-      break;
-    }
-    case DataTypeBoolean: {
-      typ = llvm::Type::getInt1Ty(C);
-      break;
-    }
-    case DataTypeSigned8:
-    case DataTypeUnsigned8: {
-      typ = llvm::Type::getInt8Ty(C);
-      break;
-    }
-    case DataTypeSigned16:
-    case DataTypeUnsigned16:
-    case DataTypeUnsigned565:
-    case DataTypeUnsigned5551:
-    case DataTypeUnsigned4444: {
-      typ = llvm::Type::getInt16Ty(C);
-      break;
-    }
-    case DataTypeSigned32:
-    case DataTypeUnsigned32: {
-      typ = llvm::Type::getInt32Ty(C);
-      break;
-    }
-    case DataTypeSigned64: {
-    //case DataTypeUnsigned64:
-      typ = llvm::Type::getInt64Ty(C);
-      break;
-    }
-    default: {
-      assert(false && "Unknown data type");
-      break;
-    }
-  }
-  return llvm::ArrayType::get(typ, mNumElement);
-}
-
 /***************************** RSExportVectorType *****************************/
 const char* RSExportVectorType::VectorTypeNameStore[][3] = {
   /* 0 */ { "char2",      "char3",    "char4" },
@@ -891,8 +797,7 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
     }
     const clang::ConstantArrayType *CAT =
       static_cast<const clang::ConstantArrayType *>(FT);
-    const clang::Type *ElementType =
-      GET_CANONICAL_TYPE(CAT->getElementType().getTypePtr());
+    const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
     if ((ElementType == NULL) ||
         (ElementType->getTypeClass() != clang::Type::Builtin) ||
         (static_cast<const clang::BuiltinType *>(ElementType)->getKind()
@@ -934,6 +839,39 @@ const llvm::Type *RSExportMatrixType::convertToLLVMType() const {
   llvm::ArrayType *X = llvm::ArrayType::get(llvm::Type::getFloatTy(C),
                                             mDim * mDim);
   return llvm::StructType::get(C, X, NULL);
+}
+
+/************************* RSExportConstantArrayType *************************/
+RSExportConstantArrayType
+*RSExportConstantArrayType::Create(RSContext *Context,
+                                   const clang::ConstantArrayType *CAT) {
+  assert(CAT != NULL && CAT->getTypeClass() == clang::Type::ConstantArray);
+
+  assert((CAT->getSize().getActiveBits() < 32) && "array too large");
+
+  unsigned Size = static_cast<unsigned>(CAT->getSize().getZExtValue());
+  assert((Size > 0) && "Constant array should have size greater than 0");
+
+  const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
+  RSExportType *ElementET = RSExportType::Create(Context, ElementType);
+
+  if (ElementET == NULL) {
+    fprintf(stderr, "RSExportConstantArrayType::Create : failed to create "
+                    "RSExportType for array element.\n");
+    return NULL;
+  }
+
+  return new RSExportConstantArrayType(Context,
+                                       ElementET,
+                                       Size);
+}
+
+RSExportType::ExportClass RSExportConstantArrayType::getClass() const {
+  return RSExportType::ExportClassConstantArray;
+}
+
+const llvm::Type *RSExportConstantArrayType::convertToLLVMType() const {
+  return llvm::ArrayType::get(mElementType->getLLVMType(), getSize());
 }
 
 /**************************** RSExportRecordType ****************************/

@@ -74,10 +74,6 @@ RSExportType *RSExportElement::Create(RSContext *Context,
       ET = EPT;
       break;
     }
-    case clang::Type::ConstantArray: {
-      // XXX
-      break;
-    }
     case clang::Type::ExtVector: {
       assert(EI->vsize > 1 && "Element not a vector class (please check your "
                               "macro)");

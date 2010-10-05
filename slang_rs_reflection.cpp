@@ -218,11 +218,9 @@ static const char *GetPackerAPIName(const RSExportPrimitiveType *EPT) {
 
 static std::string GetTypeName(const RSExportType *ET) {
   switch (ET->getClass()) {
-    case RSExportType::ExportClassPrimitive:
-    case RSExportType::ExportClassConstantArray: {
+    case RSExportType::ExportClassPrimitive: {
       return GetPrimitiveTypeName(
                 static_cast<const RSExportPrimitiveType*>(ET));
-      break;
     }
     case RSExportType::ExportClassPointer: {
       const RSExportType *PointeeType =
@@ -232,20 +230,23 @@ static std::string GetTypeName(const RSExportType *ET) {
         return "Allocation";
       else
         return RS_TYPE_CLASS_NAME_PREFIX + PointeeType->getName();
-      break;
     }
     case RSExportType::ExportClassVector: {
       return GetVectorTypeName(static_cast<const RSExportVectorType*>(ET));
-      break;
     }
     case RSExportType::ExportClassMatrix: {
       return GetMatrixTypeName(static_cast<const RSExportMatrixType*>(ET));
-      break;
+    }
+    case RSExportType::ExportClassConstantArray: {
+      const RSExportConstantArrayType* CAT =
+          static_cast<const RSExportConstantArrayType*>(ET);
+      std::string ElementTypeName = GetTypeName(CAT->getElementType());
+      ElementTypeName.append("[]");
+      return ElementTypeName;
     }
     case RSExportType::ExportClassRecord: {
       return RS_TYPE_CLASS_NAME_PREFIX + ET->getName() +
                  "."RS_TYPE_ITEM_CLASS_NAME;
-      break;
     }
     default: {
       assert(false && "Unknown class of type");
@@ -256,8 +257,7 @@ static std::string GetTypeName(const RSExportType *ET) {
 }
 
 static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
-  if (ET->getClass() == RSExportType::ExportClassPrimitive ||
-      ET->getClass() == RSExportType::ExportClassConstantArray) {
+  if (ET->getClass() == RSExportType::ExportClassPrimitive) {
     const RSExportPrimitiveType *EPT =
         static_cast<const RSExportPrimitiveType*>(ET);
     if (EPT->getKind() == RSExportPrimitiveType::DataKindUser) {
@@ -582,8 +582,7 @@ void RSReflection::genInitExportVariable(Context &C,
   assert(!Val.isUninit() && "Not a valid initializer");
 
   switch (ET->getClass()) {
-    case RSExportType::ExportClassPrimitive:
-    case RSExportType::ExportClassConstantArray: {
+    case RSExportType::ExportClassPrimitive: {
       const RSExportPrimitiveType *EPT =
           static_cast<const RSExportPrimitiveType*>(ET);
       if (EPT->getType() == RSExportPrimitiveType::DataTypeBoolean) {
@@ -593,27 +592,24 @@ void RSReflection::genInitExportVariable(Context &C,
       }
       break;
     }
-
     case RSExportType::ExportClassPointer: {
       if (!Val.isInt() || Val.getInt().getSExtValue() != 0)
         std::cout << "Initializer which is non-NULL to pointer type variable "
                      "will be ignored" << std::endl;
       break;
     }
-
     case RSExportType::ExportClassVector: {
       const RSExportVectorType *EVT =
           static_cast<const RSExportVectorType*>(ET);
       switch (Val.getKind()) {
         case clang::APValue::Int:
         case clang::APValue::Float: {
-          for (int i = 0; i < EVT->getNumElement(); i++) {
+          for (unsigned i = 0; i < EVT->getNumElement(); i++) {
             std::string Name =  VarName + "." + GetVectorAccessor(i);
             genInitPrimitiveExportVariable(C, Name, Val);
           }
           break;
         }
-
         case clang::APValue::Vector: {
           C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = new "
                      << GetVectorTypeName(EVT) << "();" << std::endl;
@@ -628,7 +624,6 @@ void RSReflection::genInitExportVariable(Context &C,
           }
           break;
         }
-
         case clang::APValue::Uninitialized:
         case clang::APValue::ComplexInt:
         case clang::APValue::ComplexFloat:
@@ -638,11 +633,11 @@ void RSReflection::genInitExportVariable(Context &C,
       }
       break;
     }
-
     // TODO(zonr): Resolving initializer of a record (and matrix) type variable
     // is complex. It cannot obtain by just simply evaluating the initializer
     // expression.
     case RSExportType::ExportClassMatrix:
+    case RSExportType::ExportClassConstantArray:
     case RSExportType::ExportClassRecord: {
 #if 0
       unsigned InitIndex = 0;
@@ -671,11 +666,10 @@ void RSReflection::genInitExportVariable(Context &C,
                                        Val.getVectorElt(InitIndex++));
       }
 #endif
-      assert(false && "Unsupported initializer for record type variable "
-                      "currently");
+      assert(false && "Unsupported initializer for record/matrix/constant "
+                      "array type variable currently");
       break;
     }
-
     default: {
       assert(false && "Unknown class of type");
     }
@@ -691,8 +685,7 @@ void RSReflection::genExportVariable(Context &C, const RSExportVar *EV) {
              << std::endl;
 
   switch (ET->getClass()) {
-    case RSExportType::ExportClassPrimitive:
-    case RSExportType::ExportClassConstantArray: {
+    case RSExportType::ExportClassPrimitive: {
       genPrimitiveTypeExportVariable(C, EV);
       break;
     }
@@ -706,6 +699,10 @@ void RSReflection::genExportVariable(Context &C, const RSExportVar *EV) {
     }
     case RSExportType::ExportClassMatrix: {
       genMatrixTypeExportVariable(C, EV);
+      break;
+    }
+    case RSExportType::ExportClassConstantArray: {
+      genConstantArrayTypeExportVariable(C, EV);
       break;
     }
     case RSExportType::ExportClassRecord: {
@@ -764,9 +761,8 @@ void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
 
 void RSReflection::genPrimitiveTypeExportVariable(Context &C,
                                                   const RSExportVar *EV) {
-  assert((EV->getType()->getClass() == RSExportType::ExportClassPrimitive ||
-          EV->getType()->getClass() == RSExportType::ExportClassConstantArray)
-         && "Variable should be type of primitive here");
+  assert((EV->getType()->getClass() == RSExportType::ExportClassPrimitive) &&
+         "Variable should be type of primitive here");
 
   const RSExportPrimitiveType *EPT =
       static_cast<const RSExportPrimitiveType*>(EV->getType());
@@ -915,6 +911,41 @@ void RSReflection::genMatrixTypeExportVariable(Context &C,
   return;
 }
 
+void RSReflection::genConstantArrayTypeExportVariable(Context &C,
+                                                      const RSExportVar *EV) {
+  assert((EV->getType()->getClass() == RSExportType::ExportClassConstantArray)&&
+         "Variable should be type of constant array here");
+
+  const RSExportConstantArrayType *ECAT =
+      static_cast<const RSExportConstantArrayType*>(EV->getType());
+  std::string TypeName = GetTypeName(ECAT);
+  const char *FieldPackerName = "fp";
+
+  C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
+             << EV->getName() << ";" << std::endl;
+
+  // set_*()
+  if (!EV->isConst()) {
+    C.startFunction(Context::AM_Public,
+                    false,
+                    "void",
+                    "set_" + EV->getName(),
+                    1,
+                    TypeName.c_str(), "v");
+    C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
+
+    if (genCreateFieldPacker(C, ECAT, FieldPackerName))
+      genPackVarOfType(C, ECAT, "v", FieldPackerName);
+    C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", "
+               << FieldPackerName << ");" << std::endl;
+
+    C.endFunction();
+  }
+
+  genGetExportVariable(C, TypeName, EV->getName());
+  return;
+}
+
 void RSReflection::genRecordTypeExportVariable(Context &C,
                                                const RSExportVar *EV) {
   assert((EV->getType()->getClass() == RSExportType::ExportClassRecord) &&
@@ -994,18 +1025,6 @@ void RSReflection::genPackVarOfType(Context &C,
                  << "(" << VarName << ");" << std::endl;
       break;
     }
-    case RSExportType::ExportClassConstantArray: {
-      if (ET->getName().compare("addObj") == 0) {
-        C.indent() << FieldPackerName << "." << "addObj" << "("
-                   << VarName << ");" << std::endl;
-      } else {
-        C.indent() << FieldPackerName << "."
-                   << GetPackerAPIName(
-                       static_cast<const RSExportPrimitiveType*>(ET))
-                   << "(" << VarName << ");" << std::endl;
-      }
-      break;
-    }
     case RSExportType::ExportClassPointer: {
       // Must reflect as type Allocation in Java
       const RSExportType *PointeeType =
@@ -1022,6 +1041,20 @@ void RSReflection::genPackVarOfType(Context &C,
     case RSExportType::ExportClassMatrix: {
       C.indent() << FieldPackerName << ".addObj(" << VarName << ");"
                  << std::endl;
+      break;
+    }
+    case RSExportType::ExportClassConstantArray: {
+      const RSExportConstantArrayType *ECAT =
+          static_cast<const RSExportConstantArrayType *>(ET);
+      C.indent() << "for (int ct = 0; ct < " << ECAT->getSize() << "; ct++)";
+      C.startBlock();
+
+      std::string ElementVarName(VarName);
+      ElementVarName.append("[ct]");
+      genPackVarOfType(C, ECAT->getElementType(), ElementVarName.c_str(),
+                       FieldPackerName);
+
+      C.endBlock();
       break;
     }
     case RSExportType::ExportClassRecord: {
@@ -1075,6 +1108,59 @@ void RSReflection::genPackVarOfType(Context &C,
   return;
 }
 
+void RSReflection::genAllocateVarOfType(Context &C,
+                                        const RSExportType *T,
+                                        const std::string &VarName) {
+  switch (T->getClass()) {
+    case RSExportType::ExportClassPrimitive: {
+      // Primitive type like int in Java has its own storage once it's declared.
+      //
+      // FIXME: Should we allocate storage for RS object?
+      // if (static_cast<const RSExportPrimitiveType *>(T)->isRSObjectType())
+      //  C.indent() << VarName << " = new " << GetTypeName(T) << "();"
+      //             << std::endl;
+      break;
+    }
+    case RSExportType::ExportClassPointer: {
+      // Pointer type is an instance of Allocation or a TypeClass whose value is
+      // expected to be assigned by programmer later in Java program. Therefore
+      // we don't reflect things like [VarName] = new Allocation();
+      C.indent() << VarName << " = null;" << std::endl;
+      break;
+    }
+    case RSExportType::ExportClassConstantArray: {
+      const RSExportConstantArrayType *ECAT =
+          static_cast<const RSExportConstantArrayType *>(T);
+      const RSExportType *ElementType = ECAT->getElementType();
+
+      // Primitive type element doesn't need allocation code.
+      if (ElementType->getClass() != RSExportType::ExportClassPrimitive) {
+        C.indent() << VarName << " = new " << GetTypeName(ElementType)
+                   << "[" << ECAT->getSize() << "];" << std::endl;
+
+        C.indent() << "for (int $ct = 0; $ct < " << ECAT->getSize() << "; "
+                            "$ct++)";
+        C.startBlock();
+
+        std::string ElementVarName(VarName);
+        ElementVarName.append("[$ct]");
+        genAllocateVarOfType(C, ElementType, ElementVarName);
+
+        C.endBlock();
+      }
+      break;
+    }
+    case RSExportType::ExportClassVector:
+    case RSExportType::ExportClassMatrix:
+    case RSExportType::ExportClassRecord: {
+      C.indent() << VarName << " = new " << GetTypeName(T) << "();"
+                 << std::endl;
+      break;
+    }
+  }
+  return;
+}
+
 void RSReflection::genNewItemBufferIfNull(Context &C, const char *Index) {
   C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) "
                   RS_TYPE_ITEM_BUFFER_NAME" = "
@@ -1114,8 +1200,7 @@ bool RSReflection::genTypeClass(Context &C,
                     ErrorMsg))
     return false;
 
-  if (!genTypeItemClass(C, ERT, ErrorMsg))
-    return false;
+  genTypeItemClass(C, ERT);
 
   // Declare item buffer and item buffer packer
   C.indent() << "private "RS_TYPE_ITEM_CLASS_NAME" "RS_TYPE_ITEM_BUFFER_NAME"[]"
@@ -1139,9 +1224,7 @@ bool RSReflection::genTypeClass(Context &C,
   return true;
 }
 
-bool RSReflection::genTypeItemClass(Context &C,
-                                    const RSExportRecordType *ERT,
-                                    std::string &ErrorMsg) {
+void RSReflection::genTypeItemClass(Context &C, const RSExportRecordType *ERT) {
   C.indent() << "static public class "RS_TYPE_ITEM_CLASS_NAME;
   C.startBlock();
 
@@ -1168,13 +1251,7 @@ bool RSReflection::genTypeItemClass(Context &C,
        FI != FE;
        FI++) {
     const RSExportRecordType::Field *F = *FI;
-    if ((F->getType()->getClass() == RSExportType::ExportClassVector) ||
-        (F->getType()->getClass() == RSExportType::ExportClassMatrix) ||
-        (F->getType()->getClass() == RSExportType::ExportClassRecord) ||
-        (F->getType()->getClass() == RSExportType::ExportClassConstantArray)) {
-      C.indent() << F->getName() << " = new " << GetTypeName(F->getType())
-                 << "();" << std::endl;
-    }
+    genAllocateVarOfType(C, F->getType(), F->getName());
   }
 
   // end Constructor
@@ -1183,7 +1260,7 @@ bool RSReflection::genTypeItemClass(Context &C,
   // end Item class
   C.endBlock();
 
-  return true;
+  return;
 }
 
 void RSReflection::genTypeClassConstructor(Context &C,
@@ -1368,8 +1445,8 @@ void RSReflection::genTypeClassCopyAll(Context &C,
                                        const RSExportRecordType *ERT) {
   C.startFunction(Context::AM_Public, false, "void", "copyAll", 0);
 
-  C.indent() << "for (int ct=0; ct < "RS_TYPE_ITEM_BUFFER_NAME".length; ct++) "
-      "copyToArray("RS_TYPE_ITEM_BUFFER_NAME"[ct], ct);"
+  C.indent() << "for (int ct = 0; ct < "RS_TYPE_ITEM_BUFFER_NAME".length; ct++)"
+                  " copyToArray("RS_TYPE_ITEM_BUFFER_NAME"[ct], ct);"
              << std::endl;
   C.indent() << "mAllocation.data("RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());"
              << std::endl;
@@ -1421,8 +1498,7 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
     EB_ADD(ElementConstruct << "(" << RenderScriptVar << ")");
   } else {
     if ((ET->getClass() == RSExportType::ExportClassPrimitive) ||
-        (ET->getClass() == RSExportType::ExportClassVector)    ||
-        (ET->getClass() == RSExportType::ExportClassConstantArray)) {
+        (ET->getClass() == RSExportType::ExportClassVector)) {
       const RSExportPrimitiveType *EPT =
           static_cast<const RSExportPrimitiveType*>(ET);
       const char *DataKindName = GetElementDataKindName(EPT->getKind());
@@ -1445,8 +1521,7 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
         }
         case RSExportPrimitiveType::DataKindUser:
         default: {
-          if (EPT->getClass() == RSExportType::ExportClassPrimitive ||
-              EPT->getClass() == RSExportType::ExportClassConstantArray) {
+          if (EPT->getClass() == RSExportType::ExportClassPrimitive) {
             // Element.createUser()
             EB_ADD("createUser(" << RenderScriptVar << ", "
                                  << DataTypeName << ")");
@@ -1470,6 +1545,21 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
       // in GetBuiltinElementConstruct()
       assert(false && "??");
 #endif
+    } else if (ET->getClass() == RSExportType::ExportClassConstantArray) {
+      const RSExportConstantArrayType *ECAT =
+          static_cast<const RSExportConstantArrayType *>(ET);
+      C.indent() << "for (int ct = 0; ct < " << ECAT->getSize() << "; ct++)";
+      C.startBlock();
+
+      std::string ElementVarName(VarName);
+      ElementVarName.append("[\" + ct + \"]");
+      genAddElementToElementBuilder(C,
+                                    ECAT->getElementType(),
+                                    ElementVarName,
+                                    ElementBuilderName,
+                                    RenderScriptVar);
+
+      C.endBlock();
     } else if (ET->getClass() == RSExportType::ExportClassRecord) {
       // Simalar to case of RSExportType::ExportClassRecord in genPackVarOfType.
       //
