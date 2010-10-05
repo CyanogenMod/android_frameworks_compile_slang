@@ -394,7 +394,8 @@ size_t RSExportType::GetTypeAllocSize(const RSExportType *ET) {
 RSExportType::RSExportType(RSContext *Context,
                            ExportClass Class,
                            const llvm::StringRef &Name)
-    : mContext(Context),
+    : RSExportable(Context, RSExportable::EX_TYPE),
+      mContext(Context),
       mClass(Class),
       // Make a copy on Name since memory stored @Name is either allocated in
       // ASTContext or allocated in GetTypeName which will be destroyed later.
@@ -410,8 +411,8 @@ RSExportType::RSExportType(RSContext *Context,
 }
 
 /************************** RSExportPrimitiveType **************************/
-RSExportPrimitiveType::RSObjectTypeMapTy
-*RSExportPrimitiveType::RSObjectTypeMap = NULL;
+llvm::ManagedStatic<RSExportPrimitiveType::RSObjectTypeMapTy>
+RSExportPrimitiveType::RSObjectTypeMap;
 
 llvm::Type *RSExportPrimitiveType::RSObjectLLVMType = NULL;
 
@@ -427,9 +428,7 @@ RSExportPrimitiveType::GetRSObjectType(const llvm::StringRef &TypeName) {
   if (TypeName.empty())
     return DataTypeUnknown;
 
-  if (RSObjectTypeMap == NULL) {
-    RSObjectTypeMap = new RSObjectTypeMapTy(16);
-
+  if (RSObjectTypeMap->empty()) {
 #define USE_ELEMENT_DATA_TYPE
 #define DEF_RS_OBJECT_TYPE(type, name)                                  \
     RSObjectTypeMap->GetOrCreateValue(name, GET_ELEMENT_DATA_TYPE(type));

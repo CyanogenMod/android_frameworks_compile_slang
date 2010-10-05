@@ -1,23 +1,24 @@
 #ifndef _SLANG_COMPILER_RS_EXPORT_VAR_H
 #define _SLANG_COMPILER_RS_EXPORT_VAR_H
 
+#include <string>
+
 #include "llvm/ADT/StringRef.h"
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 
-#include <string>
+#include "slang_rs_exportable.h"
 
 namespace clang {
   class APValue;
 }
 
 namespace slang {
-
   class RSContext;
   class RSExportType;
 
-class RSExportVar {
+class RSExportVar : public RSExportable {
   friend class RSContext;
  private:
   RSContext *mContext;

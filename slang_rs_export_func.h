@@ -6,6 +6,7 @@
 
 #include "llvm/ADT/StringRef.h"
 
+#include "slang_rs_exportable.h"
 #include "slang_rs_export_type.h"
 
 namespace llvm {
@@ -20,7 +21,7 @@ namespace slang {
 
 class RSContext;
 
-class RSExportFunc {
+class RSExportFunc : public RSExportable {
   friend class RSContext;
 
  private:
@@ -29,7 +30,8 @@ class RSExportFunc {
   RSExportRecordType *mParamPacketType;
 
   RSExportFunc(RSContext *Context, const llvm::StringRef &Name)
-    : mContext(Context),
+    : RSExportable(Context, RSExportable::EX_FUNC),
+      mContext(Context),
       mName(Name.data(), Name.size()),
       mParamPacketType(NULL) {
     return;

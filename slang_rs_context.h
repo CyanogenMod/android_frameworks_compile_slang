@@ -11,8 +11,6 @@
 
 #include "clang/Lex/Preprocessor.h"
 
-#include "slang_rs_export_element.h"
-
 namespace llvm {
   class LLVMContext;
   class TargetData;
@@ -27,10 +25,10 @@ namespace clang {
 }   // namespace clang
 
 namespace slang {
-
-class RSExportVar;
-class RSExportFunc;
-class RSExportType;
+  class RSExportable;
+  class RSExportVar;
+  class RSExportFunc;
+  class RSExportType;
 
 class RSContext {
   typedef llvm::StringSet<> NeedExportVarSet;
@@ -38,6 +36,7 @@ class RSContext {
   typedef llvm::StringSet<> NeedExportTypeSet;
 
  public:
+  typedef std::list<RSExportable*> ExportableList;
   typedef std::list<RSExportVar*> ExportVarList;
   typedef std::list<RSExportFunc*> ExportFuncList;
   typedef llvm::StringMap<RSExportType*> ExportTypeMap;
@@ -49,6 +48,8 @@ class RSContext {
 
   llvm::TargetData *mTargetData;
   llvm::LLVMContext &mLLVMContext;
+
+  ExportableList mExportables;
 
   // Record the variables/types/elements annotated in #pragma to be exported
   NeedExportVarSet mNeedExportVars;
@@ -119,6 +120,10 @@ class RSContext {
   }
 
   void processExport();
+  inline void newExportable(RSExportable *E) {
+    if (E != NULL)
+      mExportables.push_back(E);
+  }
 
   typedef ExportVarList::const_iterator const_export_var_iterator;
   const_export_var_iterator export_vars_begin() const {

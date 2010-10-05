@@ -5,12 +5,16 @@
 #include <list>
 #include <string>
 
+#include "llvm/Support/ManagedStatic.h"
+
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
+
+#include "slang_rs_exportable.h"
 
 #define GET_CANONICAL_TYPE(T) \
     (((T) == NULL) ? NULL : (T)->getCanonicalTypeInternal().getTypePtr())
@@ -38,7 +42,7 @@ namespace slang {
 
   class RSContext;
 
-class RSExportType {
+class RSExportType : public RSExportable {
   friend class RSExportElement;
  public:
   typedef enum {
@@ -188,7 +192,7 @@ class RSExportPrimitiveType : public RSExportType {
   bool mNormalized;
 
   typedef llvm::StringMap<DataType> RSObjectTypeMapTy;
-  static RSObjectTypeMapTy *RSObjectTypeMap;
+  static llvm::ManagedStatic<RSObjectTypeMapTy> RSObjectTypeMap;
 
   static llvm::Type *RSObjectLLVMType;
 

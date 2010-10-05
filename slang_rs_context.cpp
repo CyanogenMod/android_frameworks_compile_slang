@@ -13,6 +13,7 @@
 
 #include "slang.h"
 #include "slang_rs_reflection.h"
+#include "slang_rs_exportable.h"
 #include "slang_rs_export_var.h"
 #include "slang_rs_export_func.h"
 #include "slang_rs_export_type.h"
@@ -274,4 +275,10 @@ bool RSContext::reflectToJavaPath(const char *OutputPathName) {
 RSContext::~RSContext() {
   delete mLicenseNote;
   delete mTargetData;
+  for (ExportableList::iterator I = mExportables.begin(),
+          E = mExportables.end();
+       I != E;
+       I++) {
+    delete *I;
+  }
 }
