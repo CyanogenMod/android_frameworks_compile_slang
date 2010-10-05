@@ -88,6 +88,8 @@ class RSReflection {
           mLicenseNote(ApacheLicenseNote),
           mUseStdout(UseStdout) {
       clear();
+      resetFieldIndex();
+      clearFieldIndexMap();
       return;
     }
 

@@ -1059,6 +1059,9 @@ bool RSReflection::genTypeClass(Context &C,
 
   C.endClass();
 
+  C.resetFieldIndex();
+  C.clearFieldIndexMap();
+
   return true;
 }
 
@@ -1252,8 +1255,8 @@ void RSReflection::genTypeClassComponentSetter(Context &C,
     C.indent() << "FieldPacker fp = new FieldPacker(" << FieldStoreSize << ");"
                << std::endl;
     genPackVarOfType(C, F->getType(), "v", "fp");
-    C.indent() << "mAllocation.subElementData(index, "
-               << 0/*FieldIndex*/ << ", fp);" << std::endl;
+    C.indent() << "mAllocation.subElementData(index, " << FieldIndex << ", fp);"
+               << std::endl;
 
     // End of if (copyNow)
     C.endBlock();
