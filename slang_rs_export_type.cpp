@@ -391,8 +391,11 @@ size_t RSExportType::GetTypeAllocSize(const RSExportType *ET) {
         ET->getLLVMType());
 }
 
-RSExportType::RSExportType(RSContext *Context, const llvm::StringRef &Name)
+RSExportType::RSExportType(RSContext *Context,
+                           ExportClass Class,
+                           const llvm::StringRef &Name)
     : mContext(Context),
+      mClass(Class),
       // Make a copy on Name since memory stored @Name is either allocated in
       // ASTContext or allocated in GetTypeName which will be destroyed later.
       mName(Name.data(), Name.size()),
@@ -551,7 +554,8 @@ RSExportPrimitiveType
   if ((DT == DataTypeUnknown) || TypeName.empty())
     return NULL;
   else
-    return new RSExportPrimitiveType(Context, TypeName, DT, DK, Normalized);
+    return new RSExportPrimitiveType(Context, ExportClassPrimitive, TypeName,
+                                     DT, DK, Normalized);
 }
 
 RSExportPrimitiveType *RSExportPrimitiveType::Create(RSContext *Context,
@@ -562,10 +566,6 @@ RSExportPrimitiveType *RSExportPrimitiveType::Create(RSContext *Context,
     return Create(Context, T, TypeName, DK);
   else
     return NULL;
-}
-
-RSExportType::ExportClass RSExportPrimitiveType::getClass() const {
-  return RSExportType::ExportClassPrimitive;
 }
 
 const llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
@@ -657,10 +657,6 @@ RSExportPointerType
   }
 
   return new RSExportPointerType(Context, TypeName, PointeeET);
-}
-
-RSExportType::ExportClass RSExportPointerType::getClass() const {
-  return RSExportType::ExportClassPointer;
 }
 
 const llvm::Type *RSExportPointerType::convertToLLVMType() const {
@@ -757,10 +753,6 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
   return NULL;
 }
 
-RSExportType::ExportClass RSExportVectorType::getClass() const {
-  return RSExportType::ExportClassVector;
-}
-
 const llvm::Type *RSExportVectorType::convertToLLVMType() const {
   const llvm::Type *ElementType = RSExportPrimitiveType::convertToLLVMType();
   return llvm::VectorType::get(ElementType, getNumElement());
@@ -825,10 +817,6 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
   return new RSExportMatrixType(Context, TypeName, Dim);
 }
 
-RSExportType::ExportClass RSExportMatrixType::getClass() const {
-  return RSExportType::ExportClassMatrix;
-}
-
 const llvm::Type *RSExportMatrixType::convertToLLVMType() const {
   // Construct LLVM type:
   // struct {
@@ -864,10 +852,6 @@ RSExportConstantArrayType
   return new RSExportConstantArrayType(Context,
                                        ElementET,
                                        Size);
-}
-
-RSExportType::ExportClass RSExportConstantArrayType::getClass() const {
-  return RSExportType::ExportClassConstantArray;
 }
 
 const llvm::Type *RSExportConstantArrayType::convertToLLVMType() const {
@@ -943,10 +927,6 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
   }
 
   return ERT;
-}
-
-RSExportType::ExportClass RSExportRecordType::getClass() const {
-  return RSExportType::ExportClassRecord;
 }
 
 const llvm::Type *RSExportRecordType::convertToLLVMType() const {

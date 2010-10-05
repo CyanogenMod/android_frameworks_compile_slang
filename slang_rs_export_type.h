@@ -52,13 +52,16 @@ class RSExportType {
 
  private:
   RSContext *mContext;
+  ExportClass mClass;
   std::string mName;
 
   // Cache the result after calling convertToLLVMType() at the first time
   mutable const llvm::Type *mLLVMType;
 
  protected:
-  RSExportType(RSContext *Context, const llvm::StringRef &Name);
+  RSExportType(RSContext *Context,
+               ExportClass Class,
+               const llvm::StringRef &Name);
 
   // Let's make it private since there're some prerequisites to call this
   // function.
@@ -99,7 +102,7 @@ class RSExportType {
 
   static const clang::Type *GetTypeOfDecl(const clang::DeclaratorDecl *DD);
 
-  virtual ExportClass getClass() const = 0;
+  inline ExportClass getClass() const { return mClass; }
 
   inline const llvm::Type *getLLVMType() const {
     if (mLLVMType == NULL)
@@ -208,11 +211,13 @@ class RSExportPrimitiveType : public RSExportType {
   static DataType GetDataType(const clang::Type *T);
 
   RSExportPrimitiveType(RSContext *Context,
+                        // for derived class to set their type class
+                        ExportClass Class,
                         const llvm::StringRef &Name,
                         DataType DT,
                         DataKind DK,
                         bool Normalized)
-      : RSExportType(Context, Name),
+      : RSExportType(Context, Class, Name),
         mType(DT),
         mKind(DK),
         mNormalized(Normalized) {
@@ -231,8 +236,6 @@ class RSExportPrimitiveType : public RSExportType {
 
   static size_t GetSizeInBits(const RSExportPrimitiveType *EPT);
 
-  virtual ExportClass getClass() const;
-
   inline DataType getType() const { return mType; }
   inline DataKind getKind() const { return mKind; }
   inline bool isRSObjectType() const {
@@ -250,7 +253,7 @@ class RSExportPointerType : public RSExportType {
   RSExportPointerType(RSContext *Context,
                       const llvm::StringRef &Name,
                       const RSExportType *PointeeType)
-      : RSExportType(Context, Name),
+      : RSExportType(Context, ExportClassPointer, Name),
         mPointeeType(PointeeType) {
     return;
   }
@@ -264,8 +267,6 @@ class RSExportPointerType : public RSExportType {
   virtual const llvm::Type *convertToLLVMType() const;
  public:
   static const clang::Type *IntegerType;
-
-  virtual ExportClass getClass() const;
 
   inline const RSExportType *getPointeeType() const { return mPointeeType; }
 };  // RSExportPointerType
@@ -283,7 +284,8 @@ class RSExportVectorType : public RSExportPrimitiveType {
                      DataKind DK,
                      bool Normalized,
                      unsigned NumElement)
-      : RSExportPrimitiveType(Context, Name, DT, DK, Normalized),
+      : RSExportPrimitiveType(Context, ExportClassVector, Name,
+                              DT, DK, Normalized),
         mNumElement(NumElement) {
     return;
   }
@@ -301,8 +303,6 @@ class RSExportVectorType : public RSExportPrimitiveType {
   virtual const llvm::Type *convertToLLVMType() const;
  public:
   static llvm::StringRef GetTypeName(const clang::ExtVectorType *EVT);
-
-  virtual ExportClass getClass() const;
 
   inline unsigned getNumElement() const { return mNumElement; }
 };
@@ -324,15 +324,13 @@ class RSExportMatrixType : public RSExportType {
   RSExportMatrixType(RSContext *Context,
                      const llvm::StringRef &Name,
                      unsigned Dim)
-    : RSExportType(Context, Name),
+    : RSExportType(Context, ExportClassMatrix, Name),
       mDim(Dim) {
     return;
   }
 
   virtual const llvm::Type *convertToLLVMType() const;
  public:
-  virtual ExportClass getClass() const;
-
   // @RT was normalized by calling RSExportType::TypeExportable() before
   // calling this.
   static RSExportMatrixType *Create(RSContext *Context,
@@ -353,6 +351,7 @@ class RSExportConstantArrayType : public RSExportType {
                             const RSExportType *ElementType,
                             unsigned Size)
     : RSExportType(Context,
+                   ExportClassConstantArray,
                    DUMMY_TYPE_NAME_FOR_RS_CONSTANT_ARRAY_TYPE),
       mElementType(ElementType),
       mSize(Size) {
@@ -366,8 +365,6 @@ class RSExportConstantArrayType : public RSExportType {
 
   virtual const llvm::Type *convertToLLVMType() const;
  public:
-  virtual ExportClass getClass() const;
-
   inline unsigned getSize() const { return mSize; }
   inline const RSExportType *getElementType() const { return mElementType; }
 };
@@ -425,7 +422,7 @@ class RSExportRecordType : public RSExportType {
                      bool IsPacked,
                      bool IsArtificial,
                      size_t AllocSize)
-      : RSExportType(Context, Name),
+      : RSExportType(Context, ExportClassRecord, Name),
         mIsPacked(IsPacked),
         mIsArtificial(IsArtificial),
         mAllocSize(AllocSize) {
@@ -443,8 +440,6 @@ class RSExportRecordType : public RSExportType {
 
   virtual const llvm::Type *convertToLLVMType() const;
  public:
-  virtual ExportClass getClass() const;
-
   inline const std::list<const Field*>& getFields() const { return mFields; }
   inline bool isPacked() const { return mIsPacked; }
   inline bool isArtificial() const { return mIsArtificial; }
