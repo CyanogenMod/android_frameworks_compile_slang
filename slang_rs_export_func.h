@@ -6,45 +6,32 @@
 
 #include "llvm/ADT/StringRef.h"
 
+#include "slang_rs_export_type.h"
+
+namespace llvm {
+  class StructType;
+}
+
 namespace clang {
   class FunctionDecl;
 }   // namespace clang
 
 namespace slang {
 
-  class RSContext;
-  class RSExportType;
-  class RSExportRecordType;
+class RSContext;
 
 class RSExportFunc {
   friend class RSContext;
- public:
-  class Parameter {
-   private:
-    RSExportType *mType;
-    std::string mName;
-
-   public:
-    Parameter(RSExportType *T, const llvm::StringRef &Name)
-        : mType(T),
-          mName(Name.data(), Name.size()) {
-      return;
-    }
-
-    inline const RSExportType *getType() const { return mType; }
-    inline const std::string &getName() const { return mName; }
-  };
 
  private:
   RSContext *mContext;
   std::string mName;
-  std::list<const Parameter*> mParams;
-  mutable RSExportRecordType *mParamPacketType;
+  RSExportRecordType *mParamPacketType;
 
   RSExportFunc(RSContext *Context, const llvm::StringRef &Name)
-      : mContext(Context),
-        mName(Name.data(), Name.size()),
-        mParamPacketType(NULL) {
+    : mContext(Context),
+      mName(Name.data(), Name.size()),
+      mParamPacketType(NULL) {
     return;
   }
 
@@ -52,33 +39,36 @@ class RSExportFunc {
   static RSExportFunc *Create(RSContext *Context,
                               const clang::FunctionDecl *FD);
 
-  typedef std::list<const Parameter*>::const_iterator const_param_iterator;
+  typedef RSExportRecordType::const_field_iterator const_param_iterator;
 
   inline const_param_iterator params_begin() const {
-    return this->mParams.begin();
+    assert((mParamPacketType != NULL) &&
+           "Get parameter from export function without parameter!");
+    return mParamPacketType->fields_begin();
   }
   inline const_param_iterator params_end() const {
-    return this->mParams.end();
+    assert((mParamPacketType != NULL) &&
+           "Get parameter from export function without parameter!");
+    return mParamPacketType->fields_end();
   }
 
-  inline const std::string &getName() const {
-    return mName;
-  }
-  inline RSContext *getRSContext() const {
-    return mContext;
-  }
+  inline const std::string &getName() const { return mName; }
+  inline RSContext *getRSContext() const { return mContext; }
 
-  inline bool hasParam() const {
-    return !mParams.empty();
-  }
-  inline int getNumParameters() const {
-    return mParams.size();
-  }
+  inline bool hasParam() const
+    { return (mParamPacketType && !mParamPacketType->getFields().empty()); }
+  inline size_t getNumParameters() const
+    { return ((mParamPacketType) ? mParamPacketType->getFields().size() : 0); }
 
-  const RSExportRecordType *getParamPacketType() const;
+  inline const RSExportRecordType *getParamPacketType() const
+    { return mParamPacketType; }
 
-  ~RSExportFunc();
+  // Check whether the given ParamsPacket type (in LLVM type) is "size
+  // equivalent" to the one obtained from getParamPacketType(). If the @Params
+  // is NULL, means there must be no any parameters.
+  bool checkParameterPacketType(const llvm::StructType *ParamTy) const;
 };  // RSExportFunc
+
 
 }   // namespace slang
 

@@ -728,12 +728,14 @@ void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
   // invoke_*()
   Context::ArgTy Args;
 
-  for (RSExportFunc::const_param_iterator I = EF->params_begin(),
-           E = EF->params_end();
-       I != E;
-       I++) {
-    const RSExportFunc::Parameter *P = *I;
-    Args.push_back(make_pair(GetTypeName(P->getType()), P->getName()));
+  if (EF->hasParam()) {
+    for (RSExportFunc::const_param_iterator I = EF->params_begin(),
+             E = EF->params_end();
+         I != E;
+         I++) {
+      Args.push_back(std::make_pair(GetTypeName((*I)->getType()),
+                                    (*I)->getName()));
+    }
   }
 
   C.startFunction(Context::AM_Public,

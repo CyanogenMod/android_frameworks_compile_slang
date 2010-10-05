@@ -129,16 +129,45 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
 
         // Create helper function
         {
-          llvm::PointerType *HelperFunctionParameterTypeP =
-              llvm::PointerType::getUnqual(
-                  EF->getParamPacketType()->getLLVMType());
-          llvm::FunctionType *HelperFunctionType;
-          std::vector<const llvm::Type*> Params;
+          llvm::StructType *HelperFunctionParameterTy = NULL;
 
-          Params.push_back(HelperFunctionParameterTypeP);
-          HelperFunctionType = llvm::FunctionType::get(F->getReturnType(),
-                                                       Params,
-                                                       false);
+          if (!F->getArgumentList().empty()) {
+            std::vector<const llvm::Type*> HelperFunctionParameterTys;
+            for (llvm::Function::arg_iterator AI = F->arg_begin(),
+                 AE = F->arg_end(); AI != AE; AI++)
+              HelperFunctionParameterTys.push_back(AI->getType());
+
+            HelperFunctionParameterTy =
+                llvm::StructType::get(mLLVMContext, HelperFunctionParameterTys);
+          }
+
+          if (!EF->checkParameterPacketType(HelperFunctionParameterTy)) {
+            fprintf(stderr, "Failed to export function %s: parameter type "
+                            "mismatch during creation of helper function.\n",
+                    EF->getName().c_str());
+
+            const RSExportRecordType *Expected = EF->getParamPacketType();
+            if (Expected) {
+              fprintf(stderr, "Expected:\n");
+              Expected->getLLVMType()->dump();
+            }
+            if (HelperFunctionParameterTy) {
+              fprintf(stderr, "Got:\n");
+              HelperFunctionParameterTy->dump();
+            }
+          }
+
+          std::vector<const llvm::Type*> Params;
+          if (HelperFunctionParameterTy) {
+            llvm::PointerType *HelperFunctionParameterTyP =
+                llvm::PointerType::getUnqual(HelperFunctionParameterTy);
+            Params.push_back(HelperFunctionParameterTyP);
+          }
+
+          llvm::FunctionType * HelperFunctionType =
+              llvm::FunctionType::get(F->getReturnType(),
+                                      Params,
+                                      /* IsVarArgs = */false);
 
           HelperFunction =
               llvm::Function::Create(HelperFunctionType,
@@ -164,7 +193,7 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
 
             // getelementptr and load instruction for all elements in
             // parameter .p
-            for (int i = 0; i < EF->getNumParameters(); i++) {
+            for (size_t i = 0; i < EF->getNumParameters(); i++) {
               // getelementptr
               Idx[1] =
                   llvm::ConstantInt::get(

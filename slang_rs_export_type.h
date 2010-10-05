@@ -25,6 +25,8 @@
 #define GET_POINTEE_TYPE(T) \
   (((T) == NULL) ? NULL : \
                    GET_CANONICAL_TYPE((T)->getPointeeType().getTypePtr()))
+#define DUMMY_RS_TYPE_NAME_PREFIX   "<"
+#define DUMMY_RS_TYPE_NAME_POSTFIX  ">"
 
 namespace llvm {
   class Type;
@@ -244,9 +246,7 @@ class RSExportPrimitiveType : public RSExportType {
 
 class RSExportPointerType : public RSExportType {
   friend class RSExportType;
-  friend class RSExportElement;
   friend class RSExportFunc;
-
  private:
   const RSExportType *mPointeeType;
 
@@ -278,7 +278,6 @@ class RSExportConstantArrayType : public RSExportPrimitiveType {
   friend class RSExportType;
   friend class RSExportElement;
   friend class RSExportFunc;
-
  private:
   int mNumElement;   // number of element
 
@@ -382,8 +381,6 @@ class RSExportMatrixType : public RSExportType {
 
 class RSExportRecordType : public RSExportType {
   friend class RSExportType;
-  friend class RSExportElement;
-  friend class RSExportFunc;
  public:
   class Field {
    private:
@@ -392,26 +389,25 @@ class RSExportRecordType : public RSExportType {
     std::string mName;
     // Link to the struct that contain this field
     const RSExportRecordType *mParent;
-    // Index in the container
-    unsigned int mIndex;
+    // Offset in the container
+    size_t mOffset;
 
    public:
     Field(const RSExportType *T,
           const llvm::StringRef &Name,
           const RSExportRecordType *Parent,
-          unsigned int Index)
+          size_t Offset)
         : mType(T),
           mName(Name.data(), Name.size()),
           mParent(Parent),
-          mIndex(Index) {
+          mOffset(Offset) {
       return;
     }
 
     inline const RSExportRecordType *getParent() const { return mParent; }
-    inline unsigned int getIndex() const { return mIndex; }
     inline const RSExportType *getType() const { return mType; }
     inline const std::string &getName() const { return mName; }
-    size_t getOffsetInParent() const;
+    inline size_t getOffsetInParent() const { return mOffset; }
   };
 
   typedef std::list<const Field*>::const_iterator const_field_iterator;
@@ -429,15 +425,17 @@ class RSExportRecordType : public RSExportType {
   // Artificial export struct type is not exported by user (and thus it won't
   // get reflected)
   bool mIsArtificial;
-  size_t AllocSize;
+  size_t mAllocSize;
 
   RSExportRecordType(RSContext *Context,
                      const llvm::StringRef &Name,
                      bool IsPacked,
-                     bool IsArtificial = false)
+                     bool IsArtificial,
+                     size_t AllocSize)
       : RSExportType(Context, Name),
         mIsPacked(IsPacked),
-        mIsArtificial(IsArtificial) {
+        mIsArtificial(IsArtificial),
+        mAllocSize(AllocSize) {
     return;
   }
 
@@ -454,9 +452,10 @@ class RSExportRecordType : public RSExportType {
  public:
   virtual ExportClass getClass() const;
 
+  inline const std::list<const Field*>& getFields() const { return mFields; }
   inline bool isPacked() const { return mIsPacked; }
   inline bool isArtificial() const { return mIsArtificial; }
-  inline size_t getAllocSize() const { return AllocSize; }
+  inline size_t getAllocSize() const { return mAllocSize; }
 
   ~RSExportRecordType() {
     for (std::list<const Field*>::iterator I = mFields.begin(),

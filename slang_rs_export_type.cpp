@@ -36,8 +36,13 @@ bool RSExportType::NormalizeType(const clang::Type *&T,
 
 const clang::Type
 *RSExportType::GetTypeOfDecl(const clang::DeclaratorDecl *DD) {
-  if (DD && DD->getTypeSourceInfo()) {
-    clang::QualType T = DD->getTypeSourceInfo()->getType();
+  if (DD) {
+    clang::QualType T;
+    if (DD->getTypeSourceInfo())
+      T = DD->getTypeSourceInfo()->getType();
+    else
+      T = DD->getType();
+
     if (T.isNull())
       return NULL;
     else
@@ -197,12 +202,17 @@ const clang::Type *RSExportType::TypeExportable(
                FE = RD->field_end();
            FI != FE;
            FI++) {
-        const clang::Type *FT = GetTypeOfDecl(*FI);
+        const clang::FieldDecl *FD = *FI;
+        const clang::Type *FT = GetTypeOfDecl(FD);
         FT = GET_CANONICAL_TYPE(FT);
 
-        if (!TypeExportable(FT, SPS))
-          // TODO(zonr): warn that is's an unsupported field type
+        if (!TypeExportable(FT, SPS)) {
+          fprintf(stderr, "Field `%s' in Record `%s' contains unsupported "
+                          "type\n", FD->getNameAsString().c_str(),
+                                    RD->getNameAsString().c_str());
+          FT->dump();
           return NULL;
+        }
       }
 
       return T;
@@ -379,12 +389,16 @@ size_t RSExportType::GetTypeAllocSize(const RSExportType *ET) {
 
 RSExportType::RSExportType(RSContext *Context, const llvm::StringRef &Name)
     : mContext(Context),
-      // Make a copy on Name since data of @Name which is stored in ASTContext
-      // will be destroyed later
+      // Make a copy on Name since memory stored @Name is either allocated in
+      // ASTContext or allocated in GetTypeName which will be destroyed later.
       mName(Name.data(), Name.size()),
       mLLVMType(NULL) {
-  // TODO(zonr): Need to check whether the insertion is successful or not.
-  Context->insertExportType(Name, this);
+  // Don't cache the type whose name start with '<'. Those type failed to
+  // get their name since constructing their name in GetTypeName() requiring
+  // complicated work.
+  if (!Name.startswith(DUMMY_RS_TYPE_NAME_PREFIX))
+    // TODO(zonr): Need to check whether the insertion is successful or not.
+    Context->insertExportType(llvm::StringRef(Name), this);
   return;
 }
 
@@ -941,11 +955,18 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
     return NULL;
   }
 
-  RSExportRecordType *ERT = new RSExportRecordType(Context,
-                                                   TypeName,
-                                                   RD->
-                                                   hasAttr<clang::PackedAttr>(),
-                                                   mIsArtificial);
+  // Struct layout construct by clang. We rely on this for obtaining the
+  // alloc size of a struct and offset of every field in that struct.
+  const clang::ASTRecordLayout *RL =
+      &Context->getASTContext()->getASTRecordLayout(RD);
+  assert((RL != NULL) && "Failed to retrieve the struct layout from Clang.");
+
+  RSExportRecordType *ERT =
+      new RSExportRecordType(Context,
+                             TypeName,
+                             RD->hasAttr<clang::PackedAttr>(),
+                             mIsArtificial,
+                             (RL->getSize() >> 3));
   unsigned int Index = 0;
 
   for (clang::RecordDecl::field_iterator FI = RD->field_begin(),
@@ -975,18 +996,13 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
     RSExportType *ET = RSExportElement::CreateFromDecl(Context, FD);
 
     if (ET != NULL)
-      ERT->mFields.push_back(new Field(ET, FD->getName(), ERT, Index));
+      ERT->mFields.push_back(
+          new Field(ET, FD->getName(), ERT,
+                    static_cast<size_t>(RL->getFieldOffset(Index) >> 3)));
     else
       FAILED_CREATE_FIELD(FD->getName().str().c_str());
 #undef FAILED_CREATE_FIELD
   }
-
-  const clang::ASTRecordLayout &ASTRL =
-      Context->getASTContext()->getASTRecordLayout(RD);
-  ERT->AllocSize =
-      (ASTRL.getSize() > ASTRL.getDataSize()) ?
-      (ASTRL.getSize() >> 3) :
-      (ASTRL.getDataSize() >> 3);
 
   return ERT;
 }
@@ -1011,13 +1027,4 @@ const llvm::Type *RSExportRecordType::convertToLLVMType() const {
   return llvm::StructType::get(getRSContext()->getLLVMContext(),
                                FieldTypes,
                                mIsPacked);
-}
-
-/************************* RSExportRecordType::Field *************************/
-size_t RSExportRecordType::Field::getOffsetInParent() const {
-  // Struct layout obtains below will be cached by LLVM
-  const llvm::StructLayout *SL =
-      mParent->getRSContext()->getTargetData()->getStructLayout(
-          static_cast<const llvm::StructType*>(mParent->getLLVMType()));
-  return SL->getElementOffset(mIndex);
 }
