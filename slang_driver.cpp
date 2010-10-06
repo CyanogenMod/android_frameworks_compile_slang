@@ -628,6 +628,7 @@ static char* linkFile() {
 #define LINK_FILE1 "/frameworks/compile/slang/rslib.bc"
 #define LINK_FILE1_LENGTH 30
 
+#if 0
 static char* linkFile1() {
   char* dir = getenv("ANDROID_BUILD_TOP");
   char* dirPath;
@@ -659,6 +660,7 @@ static char* linkFile1() {
   }
   return dirPath;
 }
+#endif
 
 static int waitForChild(pid_t pid) {
   pid_t w;
@@ -780,13 +782,24 @@ int main(int argc, char** argv) {
         cmd = replaceLastPartWithFile(cmd, "llvm-rs-link");
 
         char* link0 = linkFile();
-        char* link1 = linkFile1();
+        //char* link1 = linkFile1();
         if (Externalize) {
-          char* cmdline[] = { (char*)cmd.c_str(), "-e", "-o", (char*)OutputFileNames[count].c_str(), (char*)beforeLink.c_str(), (char*)link0, /*link1,*/ NULL };
+          char* cmdline[] = { const_cast<char*>(cmd.c_str()),
+                              const_cast<char*>("-e"),
+                              const_cast<char*>("-o"),
+                              const_cast<char*>(OutputFileNames[count].c_str()),
+                              const_cast<char*>(beforeLink.c_str()),
+                              link0,
+                              /*link1,*/ NULL };
           execvp(cmd.c_str(), cmdline);
         } else {
           //cerr << cmd << " -o " << OutputFileNames[count] << " " << beforeLink << " " << link0 << endl;
-          char* cmdline[] = { (char*)cmd.c_str(), "-o", (char*)OutputFileNames[count].c_str(), (char*)beforeLink.c_str(), (char*)link0, /*link1,*/ NULL };
+          char* cmdline[] = { const_cast<char*>(cmd.c_str()),
+                              const_cast<char*>("-o"),
+                              const_cast<char*>(OutputFileNames[count].c_str()),
+                              const_cast<char*>(beforeLink.c_str()),
+                              link0,
+                              /*link1,*/ NULL };
           execvp(cmd.c_str(), cmdline);
         }
       }

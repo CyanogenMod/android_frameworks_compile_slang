@@ -141,7 +141,7 @@ static bool GenerateSegmentMethod(
         if (((write_length % LINE_BYTE_NUM) == 0)
             || (write_length == blen)) {
           fprintf(pfout, "     ");
-          fprintf(pfout, out_line);
+          fprintf(pfout, "%s", out_line);
           fprintf(pfout, "\n");
           p = out_line;
         }
