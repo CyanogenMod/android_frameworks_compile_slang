@@ -259,8 +259,12 @@ static std::string GetTypeName(const RSExportType *ET) {
 static const char *GetTypeNullValue(const RSExportType *ET) {
   switch (ET->getClass()) {
     case RSExportType::ExportClassPrimitive: {
-      if (static_cast<const RSExportPrimitiveType*>(ET)->isRSObjectType())
+      const RSExportPrimitiveType *EPT =
+          static_cast<const RSExportPrimitiveType*>(ET);
+      if (EPT->isRSObjectType())
         return "null";
+      else if (EPT->getType() == RSExportPrimitiveType::DataTypeBoolean)
+        return "false";
       else
         return "0";
       break;
