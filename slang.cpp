@@ -4,20 +4,30 @@
 
 #include "llvm/Target/TargetSelect.h"
 
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 
-#include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
 
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/HeaderSearch.h"
+
+#include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
+
+#include "clang/Basic/FileManager.h"
+
+#include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 
 #include "clang/Parse/ParseAST.h"
 
-#include "libslang.h"
-#include "slang_rs_export_func.h"
+#include "slang_backend.h"
 
 using namespace slang;
 
@@ -71,7 +81,7 @@ void Slang::GlobalInitialization() {
     LLVMInitializeX86Target();
     LLVMInitializeX86AsmPrinter();
 
-    // Please refer to clang/include/clang/Basic/LangOptions.h to set up
+    // Please refer to include/clang/Basic/LangOptions.h to setup
     // the options.
     LangOpts.RTTI = 0;  // Turn off the RTTI information support
     LangOpts.NeXTRuntime = 0;   // Turn off the NeXT runtime uses
@@ -89,6 +99,15 @@ void Slang::LLVMErrorHandler(void *UserData, const std::string &Message) {
   clang::Diagnostic* Diags = static_cast<clang::Diagnostic*>(UserData);
   Diags->Report(clang::diag::err_fe_error_backend) << Message;
   exit(1);
+}
+
+void Slang::createDiagnostic() {
+  mDiagnostics =
+      llvm::IntrusiveRefCntPtr<clang::Diagnostic>(new clang::Diagnostic());
+  mDiagClient = new DiagnosticBuffer();
+  // This takes the ownership of mDiagClient.
+  mDiagnostics->setClient(mDiagClient);
+  return;
 }
 
 void Slang::createTarget(const char* Triple, const char* CPU,
@@ -111,6 +130,15 @@ void Slang::createTarget(const char* Triple, const char* CPU,
     return;
 }
 
+void Slang::createFileManager() {
+  mFileMgr.reset(new clang::FileManager());
+}
+
+void Slang::createSourceManager() {
+  mSourceMgr.reset(new clang::SourceManager(*mDiagnostics));
+  return;
+}
+
 void Slang::createPreprocessor() {
   // Default only search header file in current dir
   clang::HeaderSearch *HS = new clang::HeaderSearch(*mFileMgr);
@@ -121,18 +149,15 @@ void Slang::createPreprocessor() {
                                     *mSourceMgr,
                                     *HS,
                                     NULL,
-                                    /* OwnsHeaderSearch */true));
+                                    /* OwnsHeaderSearch = */true));
   // Initialize the prepocessor
   mPragmas.clear();
   mPP->AddPragmaHandler(new PragmaRecorder(mPragmas));
 
-  std::string inclFiles("#include \"rs_types.rsh\"");
-  mPP->setPredefines(inclFiles + "\n" + "#include \"rs_math.rsh\"" + "\n");
-
   std::vector<clang::DirectoryLookup> SearchList;
-  for (unsigned i = 0; i < mIncludePaths.size(); ++i) {
+  for (unsigned i = 0, e = mIncludePaths.size(); i != e; i++) {
     if (const clang::DirectoryEntry *DE =
-        mFileMgr->getDirectory(mIncludePaths[i])) {
+            mFileMgr->getDirectory(mIncludePaths[i])) {
       SearchList.push_back(clang::DirectoryLookup(DE,
                                                   clang::SrcMgr::C_System,
                                                   false,
@@ -142,16 +167,41 @@ void Slang::createPreprocessor() {
 
   HS->SetSearchPaths(SearchList, 1, false);
 
+  initPreprocessor();
   return;
 }
 
+void Slang::createASTContext() {
+  mASTContext.reset(new clang::ASTContext(LangOpts,
+                                          *mSourceMgr,
+                                          *mTarget,
+                                          mPP->getIdentifierTable(),
+                                          mPP->getSelectorTable(),
+                                          mPP->getBuiltinInfo(),
+                                          /* size_reserve = */0));
+  initASTContext();
+  return;
+}
+
+clang::ASTConsumer
+*Slang::createBackend(const clang::CodeGenOptions& CodeGenOpts,
+                      llvm::raw_ostream *OS,
+                      OutputType OT) {
+  return new Backend(*mDiagnostics,
+                     CodeGenOpts,
+                     mTargetOpts,
+                     mPragmas,
+                     OS,
+                     OT);
+}
+
 Slang::Slang(const char *Triple, const char *CPU, const char **Features)
-    : mOutputType(SlangCompilerOutput_Default),
-      mAllowRSPrefix(false) {
+    : mDiagClient(NULL),
+      mOT(OT_Default) {
   GlobalInitialization();
 
   createDiagnostic();
-  llvm::install_fatal_error_handler(LLVMErrorHandler, mDiagnostics.get());
+  llvm::install_fatal_error_handler(LLVMErrorHandler, mDiagnostics.getPtr());
 
   createTarget(Triple, CPU, Features);
   createFileManager();
@@ -160,56 +210,41 @@ Slang::Slang(const char *Triple, const char *CPU, const char **Features)
   return;
 }
 
-bool Slang::setInputSource(llvm::StringRef inputFile,
-                           const char *text,
-                           size_t textLength) {
-  mInputFileName = inputFile.str();
+bool Slang::setInputSource(llvm::StringRef InputFile,
+                           const char *Text,
+                           size_t TextLength) {
+  mInputFileName = InputFile.str();
 
   // Reset the ID tables if we are reusing the SourceManager
   mSourceMgr->clearIDTables();
 
   // Load the source
   llvm::MemoryBuffer *SB =
-      llvm::MemoryBuffer::getMemBuffer(text, text + textLength);
+      llvm::MemoryBuffer::getMemBuffer(Text, Text + TextLength);
   mSourceMgr->createMainFileIDForMemBuffer(SB);
 
   if (mSourceMgr->getMainFileID().isInvalid()) {
-    mDiagnostics->Report(clang::diag::err_fe_error_reading) << inputFile;
+    mDiagnostics->Report(clang::diag::err_fe_error_reading) << InputFile;
     return false;
   }
   return true;
 }
 
-bool Slang::setInputSource(llvm::StringRef inputFile) {
-  mInputFileName = inputFile.str();
+bool Slang::setInputSource(llvm::StringRef InputFile) {
+  mInputFileName = InputFile.str();
 
   mSourceMgr->clearIDTables();
 
-  const clang::FileEntry *File = mFileMgr->getFile(inputFile);
+  const clang::FileEntry *File = mFileMgr->getFile(InputFile);
   if (File)
     mSourceMgr->createMainFileID(File);
 
   if (mSourceMgr->getMainFileID().isInvalid()) {
-    mDiagnostics->Report(clang::diag::err_fe_error_reading) << inputFile;
+    mDiagnostics->Report(clang::diag::err_fe_error_reading) << InputFile;
     return false;
   }
 
   return true;
-}
-
-void Slang::addIncludePath(const char *path) {
-  mIncludePaths.push_back(path);
-}
-
-void Slang::setOutputType(SlangCompilerOutputTy outputType) {
-  mOutputType = outputType;
-  if ( mOutputType != SlangCompilerOutput_Assembly &&
-       mOutputType != SlangCompilerOutput_LL &&
-       mOutputType != SlangCompilerOutput_Bitcode &&
-       mOutputType != SlangCompilerOutput_Nothing &&
-       mOutputType != SlangCompilerOutput_Obj)
-    mOutputType = SlangCompilerOutput_Default;
-  return;
 }
 
 static void _mkdir_given_a_file(const char *file) {
@@ -239,25 +274,25 @@ static void _mkdir_given_a_file(const char *file) {
     delete[] tmp;
 }
 
-bool Slang::setOutput(const char *outputFile) {
+bool Slang::setOutput(const char *OutputFile) {
   std::string Error;
 
-  _mkdir_given_a_file(outputFile);
+  _mkdir_given_a_file(OutputFile);
 
-  switch (mOutputType) {
-    case SlangCompilerOutput_Assembly:
-    case SlangCompilerOutput_LL: {
-      mOS.reset(new llvm::raw_fd_ostream(outputFile, Error, 0));
+  switch (mOT) {
+    case OT_Assembly:
+    case OT_LLVMAssembly: {
+      mOS.reset(new llvm::raw_fd_ostream(OutputFile, Error, 0));
       break;
     }
-    case SlangCompilerOutput_Nothing: {
+    case OT_Nothing: {
       mOS.reset();
       break;
     }
-    case SlangCompilerOutput_Obj:
-    case SlangCompilerOutput_Bitcode:
+    case OT_Object:
+    case OT_Bitcode:
     default: {
-      mOS.reset(new llvm::raw_fd_ostream(outputFile,
+      mOS.reset(new llvm::raw_fd_ostream(OutputFile,
                                          Error,
                                          llvm::raw_fd_ostream::F_Binary));
       break;
@@ -266,12 +301,12 @@ bool Slang::setOutput(const char *outputFile) {
 
   if (!Error.empty()) {
     mOS.reset();
-    mDiagnostics->Report(clang::diag::err_fe_error_opening) << outputFile
+    mDiagnostics->Report(clang::diag::err_fe_error_opening) << OutputFile
                                                             << Error;
     return false;
   }
 
-  mOutputFileName = outputFile;
+  mOutputFileName = OutputFile;
 
   return true;
 }
@@ -283,9 +318,8 @@ int Slang::compile() {
   // Here is per-compilation needed initialization
   createPreprocessor();
   createASTContext();
-  createRSContext();
-  //createBackend();
-  createRSBackend();
+
+  mBackend.reset(createBackend(CodeGenOpts, mOS.take(), mOT));
 
   // Inform the diagnostic client we are processing a source file
   mDiagClient->BeginSourceFile(LangOpts, mPP.get());
@@ -293,10 +327,8 @@ int Slang::compile() {
   // The core of the slang compiler
   ParseAST(*mPP, mBackend.get(), *mASTContext);
 
-  // The compilation ended, clear up
+  // The compilation ended, clear
   mBackend.reset();
-  // Can't reset yet because the reflection later on still needs mRSContext
-  //mRSContext.reset();
   mASTContext.reset();
   mPP.reset();
 
@@ -306,60 +338,10 @@ int Slang::compile() {
   return mDiagnostics->getNumErrors();
 }
 
-bool Slang::reflectToJava(const char *outputPackageName,
-                          char *realPackageName,
-                          int bSize) {
-  if (mRSContext.get())
-    return mRSContext->reflectToJava(outputPackageName,
-                                     mInputFileName,
-                                     mOutputFileName,
-                                     realPackageName,
-                                     bSize);
-  else
-    return false;
-}
-
-bool Slang::reflectToJavaPath(const char *outputPathName) {
-  if (mRSContext.get())
-    return mRSContext->reflectToJavaPath(outputPathName);
-  else
-    return false;
-}
-
-void Slang::getPragmas(size_t *actualStringCount,
-                       size_t maxStringCount,
-                       char **strings) {
-  unsigned stringCount = mPragmas.size() * 2;
-
-  if (actualStringCount)
-    *actualStringCount = stringCount;
-  if (stringCount > maxStringCount)
-    stringCount = maxStringCount;
-  if (strings)
-    for (PragmaList::const_iterator it = mPragmas.begin();
-         stringCount > 0;
-         stringCount -= 2, it++) {
-      *strings++ = const_cast<char*>(it->first.c_str());
-      *strings++ = const_cast<char*>(it->second.c_str());
-    }
-
+void Slang::reset() {
+  mDiagnostics->Reset();
+  mDiagClient->reset();
   return;
-}
-
-typedef std::list<RSExportFunc*> ExportFuncList;
-
-const char* Slang::exportFuncs() {
-  std::string fNames;
-  for (RSContext::const_export_func_iterator
-          I = mRSContext->export_funcs_begin(),
-          E = mRSContext->export_funcs_end();
-       I != E;
-       I++) {
-    RSExportFunc* func = *I;
-    fNames.push_back(',');
-    fNames.append(func->getName());
-  }
-  return fNames.c_str();
 }
 
 Slang::~Slang() {

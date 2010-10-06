@@ -1,4 +1,4 @@
-#include "libslang.h"
+#include "slang_rs.h"
 #include "slang_rs_reflect_utils.h"
 
 #include <assert.h>
@@ -16,6 +16,8 @@
 #include <sys/wait.h>
 
 using namespace std;
+using slang::Slang;
+using slang::SlangRS;
 
 #define ERR_NO_INPUT_FILE           "no input file"
 
@@ -177,7 +179,7 @@ static const char* CPUString;
 static const TargetCPU* CPU;
 static const char* TripleString;
 static TargetFeatureEnum EnableFeatureValue, DisableFeatureValue;
-static SlangCompilerOutputTy OutputFileType;
+static Slang::OutputType OutputFileType;
 static const char* JavaReflectionPackageName;
 
 static const char* JavaReflectionPathName;
@@ -208,11 +210,11 @@ static void ConstructCommandOptions() {
     { "externalize", no_argument, &Externalize, 1 },
     { "no-link", no_argument, &NoLink, 1 },
 
-    { "emit-llvm",       no_argument, (int*) &OutputFileType, SlangCompilerOutput_LL },
-    { "emit-bc",         no_argument, (int*) &OutputFileType, SlangCompilerOutput_Bitcode },
+    { "emit-llvm",       no_argument, (int*) &OutputFileType, Slang::OT_LLVMAssembly },
+    { "emit-bc",         no_argument, (int*) &OutputFileType, Slang::OT_Bitcode },
     { "emit-asm",        no_argument, NULL, 'S' },
     { "emit-obj",        no_argument, NULL, 'c' },
-    { "emit-nothing",    no_argument, (int*) &OutputFileType, SlangCompilerOutput_Nothing },
+    { "emit-nothing",    no_argument, (int*) &OutputFileType, Slang::OT_Nothing },
 
     { "help",    no_argument, NULL, 'h' }, /* -h */
     { "verbose", no_argument, NULL, 'v' }, /* -v */
@@ -271,20 +273,20 @@ static int FileCount;
 
 static int AddOutputFileSuffix(std::string &pathFile) {
   switch (OutputFileType) {
-    case SlangCompilerOutput_Assembly:
+    case Slang::OT_Assembly:
       pathFile += ".S";
       break;
-    case SlangCompilerOutput_LL:
+    case Slang::OT_LLVMAssembly:
       pathFile += ".ll";
       break;
-    case SlangCompilerOutput_Obj:
+    case Slang::OT_Object:
       pathFile += ".o";
       break;
 
-    case SlangCompilerOutput_Nothing:
+    case Slang::OT_Nothing:
       return 0; //strcpy(OutputFileNames[count], "/dev/null");
 
-    case SlangCompilerOutput_Bitcode:
+    case Slang::OT_Bitcode:
     default:
       pathFile += ".bc";
       break;
@@ -299,7 +301,7 @@ static bool ParseOption(int Argc, char** Argv) {
   CPU = NULL;
   TripleString = DEFAULT_TARGET_TRIPLE_STRING;
   EnableFeatureValue = DisableFeatureValue = FeatureNone;
-  OutputFileType = SlangCompilerOutput_Default;
+  OutputFileType = Slang::OT_Default;
   JavaReflectionPackageName = NULL;
 
   JavaReflectionPathName = NULL;
@@ -329,11 +331,11 @@ static bool ParseOption(int Argc, char** Argv) {
   while((ch = getopt_long(Argc, Argv, "Schvo:u:t:j:p:I:s:", SlangOpts, NULL)) != -1) {
     switch(ch) {
       case 'S':
-        OutputFileType = SlangCompilerOutput_Assembly;
+        OutputFileType = Slang::OT_Assembly;
         break;
 
       case 'c':
-        OutputFileType = SlangCompilerOutput_Obj;
+        OutputFileType = Slang::OT_Object;
         break;
 
       case 'o':
@@ -530,11 +532,11 @@ static bool ParseOption(int Argc, char** Argv) {
 
     cout << "Output to: " << ((strcmp(OutputPathName, "-")) ? OutputPathName : "(standard output)") << ", type: ";
     switch(OutputFileType) {
-      case SlangCompilerOutput_Assembly: cout << "Target Assembly"; break;
-      case SlangCompilerOutput_LL: cout << "LLVM Assembly"; break;
-      case SlangCompilerOutput_Bitcode: cout << "Bitcode"; break;
-      case SlangCompilerOutput_Nothing: cout << "No output (test)"; break;
-      case SlangCompilerOutput_Obj: cout << "Object file"; break;
+      case Slang::OT_Assembly: cout << "Target Assembly"; break;
+      case Slang::OT_LLVMAssembly: cout << "LLVM Assembly"; break;
+      case Slang::OT_Bitcode: cout << "Bitcode"; break;
+      case Slang::OT_Nothing: cout << "No output (test)"; break;
+      case Slang::OT_Object: cout << "Object file"; break;
       default: assert(false && "Unknown output type"); break;
     }
     cout << endl;
@@ -665,8 +667,8 @@ static int waitForChild(pid_t pid) {
 
 #define SLANG_CALL_AND_CHECK(expr)              \
   if(!(expr)) {                                 \
-    if(slangGetInfoLog(slang))                  \
-      cerr << slangGetInfoLog(slang);           \
+    if(slang->getErrorMessage())                \
+      cerr << slang->getErrorMessage();         \
     ret = 1;                                    \
     goto on_slang_error;                        \
   }
@@ -686,28 +688,28 @@ int main(int argc, char** argv) {
   ConstructCommandOptions();
 
   if(ParseOption(argc, argv)) {
-    SlangCompiler* slang = slangCreateCompiler(TripleString, CPUString, FeatureEnabledList);
+    SlangRS *slang = new SlangRS(TripleString, CPUString, FeatureEnabledList);
     if(slang == NULL) {
       goto on_slang_error;
     }
 
-    slangSetOutputType(slang, OutputFileType);
+    slang->setOutputType(OutputFileType);
 
     for (size_t i = 0; i < IncludePaths.size(); ++i) {
-        slangAddIncludePath(slang, IncludePaths[i].c_str());
+        slang->addIncludePath(IncludePaths[i].c_str());
     }
 
     if (AllowRSPrefix)
-      slangAllowRSPrefix(slang);
+      slang->allowRSPrefix(true);
 
     for (count = 0; count < FileCount; count++) {
       /* Start compilation */
 
-      SLANG_CALL_AND_CHECK( slangSetSourceFromFile(slang, InputFileNames[count].c_str()) );
+      SLANG_CALL_AND_CHECK( slang->setInputSource(InputFileNames[count]) );
 
       std::string beforeLink;
       if (NoLink) {
-        SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, OutputFileNames[count].c_str()) );
+        SLANG_CALL_AND_CHECK( slang->setOutput(OutputFileNames[count].c_str()) );
       } else {
         std::string stem = slang::RSSlangReflectUtils::BCFileNameFromRSFileName(
             InputFileNames[count].c_str());
@@ -722,20 +724,19 @@ int main(int argc, char** argv) {
         close(f);
 
         beforeLink.assign(tmpFileName);
-        SLANG_CALL_AND_CHECK( slangSetOutputToFile(slang, beforeLink.c_str()) );
+        SLANG_CALL_AND_CHECK( slang->setOutput(beforeLink.c_str()) );
       }
 
-      SLANG_CALL_AND_CHECK( slangCompile(slang) <= 0 );
+      SLANG_CALL_AND_CHECK( slang->compile() <= 0 );
 
       /* Output log anyway */
-      if(slangGetInfoLog(slang)) {
-        cout << slangGetInfoLog(slang);
-      }
+      if(slang->getErrorMessage())
+        cout << slang->getErrorMessage();
 
-      SLANG_CALL_AND_CHECK( slangReflectToJavaPath(slang, JavaReflectionPathName) );
+      SLANG_CALL_AND_CHECK( slang->reflectToJavaPath(JavaReflectionPathName) );
 
       char realPackageName[0x100];
-      SLANG_CALL_AND_CHECK( slangReflectToJava(slang, JavaReflectionPackageName,
+      SLANG_CALL_AND_CHECK( slang->reflectToJava(JavaReflectionPackageName,
                             realPackageName, sizeof(realPackageName)));
 
       if (NoLink) {
@@ -786,7 +787,7 @@ int main(int argc, char** argv) {
       waitForChild(pid); */
 
     generate_bitcode_accessor:
-        if ((OutputFileType == SlangCompilerOutput_Bitcode)
+        if ((OutputFileType == Slang::OT_Bitcode)
             && (BitCodeStorage == slang::BCST_JAVA_CODE)
             && (OutputFileNames[count] != "stdout")) {
             slang::RSSlangReflectUtils::BitCodeAccessorContext bc_context;

@@ -45,12 +45,12 @@ class RSExportFunc : public RSExportable {
 
   inline const_param_iterator params_begin() const {
     assert((mParamPacketType != NULL) &&
-           "Get parameter from export function without parameter!");
+           "Get parameter from export function having no parameter!");
     return mParamPacketType->fields_begin();
   }
   inline const_param_iterator params_end() const {
     assert((mParamPacketType != NULL) &&
-           "Get parameter from export function without parameter!");
+           "Get parameter from export function having no parameter!");
     return mParamPacketType->fields_end();
   }
 

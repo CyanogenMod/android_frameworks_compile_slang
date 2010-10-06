@@ -1,7 +1,6 @@
 #ifndef _SLANG_COMPILER_RS_BACKEND_H
 #define _SLANG_COMPILER_RENDER_SCRIPT_BACKEND_H
 
-#include "libslang.h"
 #include "slang_backend.h"
 #include "slang_pragma_recorder.h"
 
@@ -27,6 +26,10 @@ class RSBackend : public Backend {
  private:
   RSContext *mContext;
 
+  clang::SourceManager &mSourceMgr;
+
+  bool mAllowRSPrefix;
+
   llvm::NamedMDNode *mExportVarMetadata;
   llvm::NamedMDNode *mExportFuncMetadata;
   llvm::NamedMDNode *mExportTypeMetadata;
@@ -41,7 +44,7 @@ class RSBackend : public Backend {
             const clang::TargetOptions &TargetOpts,
             const PragmaList &Pragmas,
             llvm::raw_ostream *OS,
-            SlangCompilerOutputTy OutputType,
+            Slang::OutputType OT,
             clang::SourceManager &SourceMgr,
             bool AllowRSPrefix);
 

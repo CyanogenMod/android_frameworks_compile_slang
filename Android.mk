@@ -61,11 +61,11 @@ TBLGEN_TABLES :=    \
 
 LOCAL_SRC_FILES :=	\
 	slang_driver.cpp	\
-	libslang.cpp	\
 	slang.cpp	\
 	slang_backend.cpp	\
 	slang_pragma_recorder.cpp	\
 	slang_diagnostic_buffer.cpp	\
+	slang_rs.cpp	\
 	slang_rs_context.cpp	\
 	slang_rs_pragma_handler.cpp	\
 	slang_rs_backend.cpp	\

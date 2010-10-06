@@ -5,37 +5,31 @@
 #include <string>
 #include <vector>
 
-#include "llvm/Support/raw_ostream.h"
-
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/ASTContext.h"
-
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Lex/HeaderSearch.h"
-
-#include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetOptions.h"
 
-#include "clang/Sema/SemaDiagnostic.h"
-
-#include "slang_backend.h"
-#include "slang_rs_context.h"
-#include "slang_rs_backend.h"
 #include "slang_pragma_recorder.h"
 #include "slang_diagnostic_buffer.h"
 
 namespace llvm {
-  class TargetInfo;
+  class raw_ostream;
 }
 
 namespace clang {
+  class Diagnostic;
+  class FileManager;
+  class SourceManager;
   class LangOptions;
-  class CodeGenOptions;
+  class Preprocessor;
   class TargetOptions;
+  class CodeGenOptions;
+  class ASTContext;
+  class ASTConsumer;
+  class Backend;
+  class TargetInfo;
 }
 
 namespace slang {
@@ -50,46 +44,39 @@ class Slang {
 
   static void LLVMErrorHandler(void *UserData, const std::string &Message);
 
+ public:
+  typedef enum {
+    OT_Assembly,
+    OT_LLVMAssembly,
+    OT_Bitcode,
+    OT_Nothing,
+    OT_Object,
+
+    OT_Default = OT_Bitcode
+  } OutputType;
+
  private:
-  PragmaList mPragmas;
-
   // The diagnostics engine instance (for status reporting during compilation)
-  llvm::OwningPtr<clang::Diagnostic> mDiagnostics;
-
-  llvm::OwningPtr<DiagnosticBuffer> mDiagClient;
-  inline void createDiagnostic() {
-    mDiagClient.reset(new DiagnosticBuffer());
-    mDiagnostics.reset(new clang::Diagnostic(mDiagClient.get()));
-    if (!mDiagnostics->setDiagnosticGroupMapping(
-            "implicit-function-declaration",
-            clang::diag::MAP_ERROR))
-      assert("Unable find option group implicit-function-declaration");
-    mDiagnostics->setDiagnosticMapping(
-        clang::diag::ext_typecheck_convert_discards_qualifiers,
-        clang::diag::MAP_ERROR);
-    return;
-  }
+  llvm::IntrusiveRefCntPtr<clang::Diagnostic> mDiagnostics;
+  // The clients of diagnostics engine. The ownership is taken by the
+  // mDiagnostics after creation.
+  DiagnosticBuffer *mDiagClient;
+  void createDiagnostic();
 
   // The target being compiled for
   clang::TargetOptions mTargetOpts;
   llvm::OwningPtr<clang::TargetInfo> mTarget;
   void createTarget(const char *Triple, const char *CPU, const char **Features);
 
-  // Below is for parsing
+  // Below is for parsing and code generation
 
   // The file manager (for prepocessor doing the job such as header file search)
   llvm::OwningPtr<clang::FileManager> mFileMgr;
-  inline void createFileManager() {
-    mFileMgr.reset(new clang::FileManager());
-    return;
-  }
+  void createFileManager();
 
   // The source manager (responsible for the source code handling)
   llvm::OwningPtr<clang::SourceManager> mSourceMgr;
-  inline void createSourceManager() {
-    mSourceMgr.reset(new clang::SourceManager(*mDiagnostics));
-    return;
-  }
+  void createSourceManager();
 
   // The preprocessor (source code preprocessor)
   llvm::OwningPtr<clang::Preprocessor> mPP;
@@ -97,67 +84,43 @@ class Slang {
 
   // The AST context (the context to hold long-lived AST nodes)
   llvm::OwningPtr<clang::ASTContext> mASTContext;
-  inline void createASTContext() {
-    mASTContext.reset(new clang::ASTContext(LangOpts,
-                                            *mSourceMgr,
-                                            *mTarget,
-                                            mPP->getIdentifierTable(),
-                                            mPP->getSelectorTable(),
-                                            mPP->getBuiltinInfo(),
-                                            /* size_reserve */0));
-    return;
-  }
-
-  // Context for RenderScript
-  llvm::OwningPtr<RSContext> mRSContext;
-  inline void createRSContext() {
-    mRSContext.reset(new RSContext(mPP.get(),
-                                   mASTContext.get(),
-                                   mTarget.get()));
-    return;
-  }
+  void createASTContext();
 
   // The AST consumer, responsible for code generation
-  llvm::OwningPtr<Backend> mBackend;
-  inline void createBackend() {
-    mBackend.reset(new Backend(*mDiagnostics,
-                               CodeGenOpts,
-                               mTargetOpts,
-                               mPragmas,
-                               mOS.take(),
-                               mOutputType,
-                               *mSourceMgr,
-                               mAllowRSPrefix));
-
-    return;
-  }
-
-  inline void createRSBackend() {
-    mBackend.reset(new RSBackend(mRSContext.get(),
-                                 *mDiagnostics,
-                                 CodeGenOpts,
-                                 mTargetOpts,
-                                 mPragmas,
-                                 mOS.take(),
-                                 mOutputType,
-                                 *mSourceMgr,
-                                 mAllowRSPrefix));
-
-    return;
-  }
+  llvm::OwningPtr<clang::ASTConsumer> mBackend;
 
   // Input file name
   std::string mInputFileName;
   std::string mOutputFileName;
 
-  SlangCompilerOutputTy mOutputType;
+  OutputType mOT;
 
   // Output stream
   llvm::OwningPtr<llvm::raw_ostream> mOS;
 
-  bool mAllowRSPrefix;
-
   std::vector<std::string> mIncludePaths;
+
+ protected:
+  PragmaList mPragmas;
+
+  inline clang::Diagnostic &getDiagnostics() { return *mDiagnostics; }
+  inline const clang::TargetInfo &getTargetInfo() const { return *mTarget; }
+  inline clang::FileManager &getFileManager() { return *mFileMgr; }
+  inline clang::SourceManager &getSourceManager() { return *mSourceMgr; }
+  inline clang::Preprocessor &getPreprocessor() { return *mPP; }
+  inline clang::ASTContext &getASTContext() { return *mASTContext; }
+
+  inline const clang::TargetOptions &getTargetOptions() const
+    { return mTargetOpts; }
+
+  virtual void initDiagnostic() {}
+  virtual void initPreprocessor() {}
+  virtual void initASTContext() {}
+
+  virtual clang::ASTConsumer
+  *createBackend(const clang::CodeGenOptions& CodeGenOpts,
+                 llvm::raw_ostream *OS,
+                 OutputType OT);
 
  public:
   static const std::string TargetDescription;
@@ -166,57 +129,33 @@ class Slang {
 
   Slang(const char *Triple, const char *CPU, const char **Features);
 
-  bool setInputSource(llvm::StringRef inputFile, const char *text,
-                      size_t textLength);
+  bool setInputSource(llvm::StringRef InputFile, const char *Text,
+                      size_t TextLength);
 
-  bool setInputSource(llvm::StringRef inputFile);
+  bool setInputSource(llvm::StringRef InputFile);
 
-  void addIncludePath(const char *path);
+  inline const std::string &getInputFileName() const { return mInputFileName; }
 
-  void setOutputType(SlangCompilerOutputTy outputType);
-
-  inline bool setOutput(FILE *stream) {
-    if (stream == NULL)
-      return false;
-
-    mOS.reset(new llvm::raw_fd_ostream(fileno(stream),
-                                       /* shouldClose */false));
-    return true;
+  inline void addIncludePath(const char *Path) {
+    mIncludePaths.push_back(Path);
   }
 
-  bool setOutput(const char *outputFile);
+  inline void setOutputType(OutputType OT) { mOT = OT; }
 
-  inline void allowRSPrefix() {
-    mAllowRSPrefix = true;
+  bool setOutput(const char *outputFile);
+  inline const std::string &getOutputFileName() const {
+    return mOutputFileName;
   }
 
   int compile();
 
-  // The package name that's really applied will be filled in realPackageName.
-  // bSize is the buffer realPackageName size.
-  bool reflectToJava(const char *outputPackageName,
-                     char *realPackageName, int bSize);
-  bool reflectToJavaPath(const char *outputPathName);
-
-  inline const char *getErrorMessage() {
-    return mDiagClient->str().c_str();
-  }
-
-  void getPragmas(size_t *actualStringCount, size_t maxStringCount,
-                  char **strings);
-
-  const char *exportFuncs();
+  inline const char *getErrorMessage() { return mDiagClient->str().c_str(); }
 
   // Reset the slang compiler state such that it can be reused to compile
   // another file
-  inline void reset() {
-    // Seems there's no way to clear the diagnostics. We just re-create it.
-    createDiagnostic();
-    mOutputType = SlangCompilerOutput_Default;
-    return;
-  }
+  virtual void reset();
 
-  ~Slang();
+  virtual ~Slang();
 };
 }
 

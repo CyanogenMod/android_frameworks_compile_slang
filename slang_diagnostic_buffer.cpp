@@ -53,7 +53,6 @@ void DiagnosticBuffer::HandleDiagnostic(clang::Diagnostic::Level DiagLevel,
 }
 
 DiagnosticBuffer::~DiagnosticBuffer() {
-  if (mSOS != NULL)
-    delete mSOS;
+  delete mSOS;
   return;
 }

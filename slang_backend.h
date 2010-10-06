@@ -9,26 +9,22 @@
 #include "llvm/Support/FormattedStream.h"
 
 #include "clang/AST/ASTConsumer.h"
-#include "clang/Frontend/CodeGenOptions.h"
-#include "clang/Basic/SourceManager.h"
 
-#include "libslang.h"
+#include "slang.h"
 #include "slang_pragma_recorder.h"
 
 namespace llvm {
+  class formatted_raw_ostream;
   class LLVMContext;
   class NamedMDNode;
-  class raw_ostream;
   class Module;
+  class PassManager;
+  class FunctionPassManager;
 }
 
 namespace clang {
-  class ASTConsumer;
-  class Diagnostic;
-  class TargetOptions;
-  class PragmaList;
+  class CodeGenOptions;
   class CodeGenerator;
-  class ASTContext;
   class DeclGroupRef;
   class TagDecl;
   class VarDecl;
@@ -41,11 +37,9 @@ class Backend : public clang::ASTConsumer {
   const clang::CodeGenOptions &mCodeGenOpts;
   const clang::TargetOptions &mTargetOpts;
 
-  clang::SourceManager &mSourceMgr;
-
   // Output stream
   llvm::raw_ostream *mpOS;
-  SlangCompilerOutputTy mOutputType;
+  Slang::OutputType mOT;
 
   llvm::TargetData *mpTargetData;
 
@@ -63,47 +57,8 @@ class Backend : public clang::ASTConsumer {
 
   llvm::formatted_raw_ostream FormattedOutStream;
 
-  bool mAllowRSPrefix;
-
-  inline void CreateFunctionPasses() {
-    if (!mPerFunctionPasses) {
-      mPerFunctionPasses = new llvm::FunctionPassManager(mpModule);
-      mPerFunctionPasses->add(new llvm::TargetData(*mpTargetData));
-
-      llvm::createStandardFunctionPasses(mPerFunctionPasses,
-                                         mCodeGenOpts.OptimizationLevel);
-    }
-    return;
-  }
-
-  inline void CreateModulePasses() {
-    if (!mPerModulePasses) {
-      mPerModulePasses = new llvm::PassManager();
-      mPerModulePasses->add(new llvm::TargetData(*mpTargetData));
-
-      llvm::createStandardModulePasses(mPerModulePasses,
-                                       mCodeGenOpts.OptimizationLevel,
-                                       mCodeGenOpts.OptimizeSize,
-                                       mCodeGenOpts.UnitAtATime,
-                                       mCodeGenOpts.UnrollLoops,
-                                       // Some libc functions will be replaced
-                                       // by the LLVM built-in optimized
-                                       // function (e.g. strcmp)
-                                       /* SimplifyLibCalls */true,
-                                       /* HaveExceptions */false,
-                                       /* InliningPass */NULL);
-    }
-
-    // llvm::createStandardFunctionPasses and llvm::createStandardModulePasses
-    // insert lots of optimization passes for the code generator. For the
-    // conventional desktop PC which memory resources and computation power is
-    // relatively large, doing lots optimization as possible is reasonible and
-    // feasible. However, on the mobile device or embedded system, this may
-    // cause some problem due to the hardware resources limitation. So they need
-    // to be further refined.
-    return;
-  }
-
+  void CreateFunctionPasses();
+  void CreateModulePasses();
   bool CreateCodeGenPasses();
 
  protected:
@@ -123,9 +78,7 @@ class Backend : public clang::ASTConsumer {
           const clang::TargetOptions &TargetOpts,
           const PragmaList &Pragmas,
           llvm::raw_ostream *OS,
-          SlangCompilerOutputTy OutputType,
-          clang::SourceManager &SourceMgr,
-          bool AllowRSPrefix);
+          Slang::OutputType OT);
 
   // Initialize - This is called to initialize the consumer, providing the
   // ASTContext.

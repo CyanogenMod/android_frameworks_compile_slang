@@ -30,7 +30,7 @@ RSBackend::RSBackend(RSContext *Context,
                      const clang::TargetOptions &TargetOpts,
                      const PragmaList &Pragmas,
                      llvm::raw_ostream *OS,
-                     SlangCompilerOutputTy OutputType,
+                     Slang::OutputType OT,
                      clang::SourceManager &SourceMgr,
                      bool AllowRSPrefix)
     : Backend(Diags,
@@ -38,10 +38,10 @@ RSBackend::RSBackend(RSContext *Context,
               TargetOpts,
               Pragmas,
               OS,
-              OutputType,
-              SourceMgr,
-              AllowRSPrefix),
+              OT),
       mContext(Context),
+      mSourceMgr(SourceMgr),
+      mAllowRSPrefix(AllowRSPrefix),
       mExportVarMetadata(NULL),
       mExportFuncMetadata(NULL),
       mExportTypeMetadata(NULL) {
@@ -49,6 +49,23 @@ RSBackend::RSBackend(RSContext *Context,
 }
 
 void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
+  // Disallow user-defined functions with prefix "rs"
+  if (!mAllowRSPrefix) {
+    clang::DeclGroupRef::iterator I;
+    for (I = D.begin(); I != D.end(); I++) {
+      clang::FunctionDecl *FD = dyn_cast<clang::FunctionDecl>(*I);
+      if (!FD || !FD->isThisDeclarationADefinition()) continue;
+      if (FD->getName().startswith("rs")) {
+        mDiags.Report(clang::FullSourceLoc(FD->getLocStart(), mSourceMgr),
+                      mDiags.getCustomDiagID(clang::Diagnostic::Error,
+                                             "invalid function name prefix,"
+                                             " \"rs\" is reserved: '%0'")
+                      )
+            << FD->getNameAsString();
+      }
+    }
+  }
+
   Backend::HandleTopLevelDecl(D);
   return;
 }

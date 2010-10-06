@@ -23,6 +23,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetOptions.h"
 
+#include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 
 #include "clang/CodeGen/ModuleBuilder.h"
@@ -31,9 +32,36 @@
 
 using namespace slang;
 
+void Backend::CreateFunctionPasses() {
+  if (!mPerFunctionPasses) {
+    mPerFunctionPasses = new llvm::FunctionPassManager(mpModule);
+    mPerFunctionPasses->add(new llvm::TargetData(*mpTargetData));
+
+    llvm::createStandardFunctionPasses(mPerFunctionPasses,
+                                       mCodeGenOpts.OptimizationLevel);
+  }
+  return;
+}
+
+void Backend::CreateModulePasses() {
+  if (!mPerModulePasses) {
+    mPerModulePasses = new llvm::PassManager();
+    mPerModulePasses->add(new llvm::TargetData(*mpTargetData));
+
+    llvm::createStandardModulePasses(mPerModulePasses,
+                                     mCodeGenOpts.OptimizationLevel,
+                                     mCodeGenOpts.OptimizeSize,
+                                     mCodeGenOpts.UnitAtATime,
+                                     mCodeGenOpts.UnrollLoops,
+                                     /* SimplifyLibCalls = */true,
+                                     /* HaveExceptions = */false,
+                                     /* InliningPass = */NULL);
+  }
+  return;
+}
+
 bool Backend::CreateCodeGenPasses() {
-  if (mOutputType != SlangCompilerOutput_Assembly &&
-      mOutputType != SlangCompilerOutput_Obj)
+  if ((mOT != Slang::OT_Assembly) && (mOT != Slang::OT_Object))
     return true;
 
   // Now we add passes for code emitting
@@ -118,7 +146,7 @@ bool Backend::CreateCodeGenPasses() {
 
   llvm::TargetMachine::CodeGenFileType CGFT =
       llvm::TargetMachine::CGFT_AssemblyFile;
-  if (mOutputType == SlangCompilerOutput_Obj)
+  if (mOT == Slang::OT_Object)
     CGFT = llvm::TargetMachine::CGFT_ObjectFile;
   if (TM->addPassesToEmitFile(*mCodeGenPasses, FormattedOutStream,
                               CGFT, OptLevel)) {
@@ -134,21 +162,17 @@ Backend::Backend(clang::Diagnostic &Diags,
                  const clang::TargetOptions &TargetOpts,
                  const PragmaList &Pragmas,
                  llvm::raw_ostream *OS,
-                 SlangCompilerOutputTy OutputType,
-                 clang::SourceManager &SourceMgr,
-                 bool AllowRSPrefix)
+                 Slang::OutputType OT)
     : ASTConsumer(),
       mCodeGenOpts(CodeGenOpts),
       mTargetOpts(TargetOpts),
-      mSourceMgr(SourceMgr),
       mpOS(OS),
-      mOutputType(OutputType),
+      mOT(OT),
       mpTargetData(NULL),
       mGen(NULL),
       mPerFunctionPasses(NULL),
       mPerModulePasses(NULL),
       mCodeGenPasses(NULL),
-      mAllowRSPrefix(AllowRSPrefix),
       mLLVMContext(llvm::getGlobalContext()),
       mDiags(Diags),
       mpModule(NULL),
@@ -169,23 +193,6 @@ void Backend::Initialize(clang::ASTContext &Ctx) {
 }
 
 void Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
-  // Disallow user-defined functions with prefix "rs"
-  if (!mAllowRSPrefix) {
-    clang::DeclGroupRef::iterator I;
-    for (I = D.begin(); I != D.end(); I++) {
-      clang::FunctionDecl *FD = dyn_cast<clang::FunctionDecl>(*I);
-      if (!FD || !FD->isThisDeclarationADefinition()) continue;
-      if (FD->getName().startswith("rs")) {
-        mDiags.Report(clang::FullSourceLoc(FD->getLocStart(), mSourceMgr),
-                      mDiags.getCustomDiagID(clang::Diagnostic::Error,
-                                             "invalid function name prefix,"
-                                             " \"rs\" is reserved: '%0'")
-                      )
-            << FD->getNameAsString();
-      }
-    }
-  }
-
   mGen->HandleTopLevelDecl(D);
   return;
 }
@@ -251,9 +258,9 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
   if (mPerModulePasses)
     mPerModulePasses->run(*mpModule);
 
-  switch (mOutputType) {
-    case SlangCompilerOutput_Assembly:
-    case SlangCompilerOutput_Obj: {
+  switch (mOT) {
+    case Slang::OT_Assembly:
+    case Slang::OT_Object: {
       if (!CreateCodeGenPasses())
         return;
 
@@ -268,26 +275,23 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
       mCodeGenPasses->doFinalization();
       break;
     }
-    case SlangCompilerOutput_LL: {
+    case Slang::OT_LLVMAssembly: {
       llvm::PassManager *LLEmitPM = new llvm::PassManager();
       LLEmitPM->add(llvm::createPrintModulePass(&FormattedOutStream));
       LLEmitPM->run(*mpModule);
       break;
     }
-
-    case SlangCompilerOutput_Bitcode: {
+    case Slang::OT_Bitcode: {
       llvm::PassManager *BCEmitPM = new llvm::PassManager();
       BCEmitPM->add(llvm::createBitcodeWriterPass(FormattedOutStream));
       BCEmitPM->run(*mpModule);
       break;
     }
-    case SlangCompilerOutput_Nothing: {
+    case Slang::OT_Nothing: {
       return;
-      break;
     }
     default: {
       assert(false && "Unknown output type");
-      break;
     }
   }
 
