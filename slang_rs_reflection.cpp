@@ -256,6 +256,30 @@ static std::string GetTypeName(const RSExportType *ET) {
   return "";
 }
 
+static const char *GetTypeNullValue(const RSExportType *ET) {
+  switch (ET->getClass()) {
+    case RSExportType::ExportClassPrimitive: {
+      if (static_cast<const RSExportPrimitiveType*>(ET)->isRSObjectType())
+        return "null";
+      else
+        return "0";
+      break;
+    }
+    case RSExportType::ExportClassPointer:
+    case RSExportType::ExportClassVector:
+    case RSExportType::ExportClassMatrix:
+    case RSExportType::ExportClassConstantArray:
+    case RSExportType::ExportClassRecord: {
+      return "null";
+      break;
+    }
+    default: {
+      assert(false && "Unknown class of type");
+    }
+  }
+  return "";
+}
+
 static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
   if (ET->getClass() == RSExportType::ExportClassPrimitive) {
     const RSExportPrimitiveType *EPT =
@@ -1434,6 +1458,8 @@ void RSReflection::genTypeClassComponentGetter(Context &C,
                     1,
                     "int",
                     "index");
+    C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return "
+               << GetTypeNullValue(F->getType()) << ";" << std::endl;
     C.indent() << "return "RS_TYPE_ITEM_BUFFER_NAME"[index]." << F->getName()
                << ";" << std::endl;
     C.endFunction();
