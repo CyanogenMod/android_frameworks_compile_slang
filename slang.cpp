@@ -281,7 +281,6 @@ static void _mkdir_given_a_file(const char *file) {
 bool Slang::setOutput(const char *OutputFile) {
   std::string Error;
 
-
   switch (mOT) {
     case OT_Dependency:
     case OT_Assembly:
@@ -326,8 +325,10 @@ bool Slang::setDepTargetBC(const char *targetBCFile) {
 }
 
 int Slang::generateDepFile() {
-  if((mDiagnostics->getNumErrors() > 0) || (mOS.get() == NULL))
+  if(mDiagnostics->getNumErrors() > 0)
     return mDiagnostics->getNumErrors();
+  if (mOS.get() == NULL)
+    return 1;
 
   /* Initialize options for generating dependency file */
   clang::DependencyOutputOptions DepOpts;
@@ -361,8 +362,10 @@ int Slang::compile() {
   if (mOT == OT_Dependency)
     return generateDepFile();
 
-  if ((mDiagnostics->getNumErrors() > 0) || (mOS.get() == NULL))
+  if (mDiagnostics->getNumErrors() > 0)
     return mDiagnostics->getNumErrors();
+  if (mOS.get() == NULL)
+    return 1;
 
   // Here is per-compilation needed initialization
   createPreprocessor();
