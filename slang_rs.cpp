@@ -7,6 +7,21 @@
 
 using namespace slang;
 
+#define RS_HEADER_SUFFIX  "rsh"
+
+#define ENUM_RS_HEADER()  \
+  RS_HEADER_ENTRY(rs_types) \
+  RS_HEADER_ENTRY(rs_cl) \
+  RS_HEADER_ENTRY(rs_core) \
+  RS_HEADER_ENTRY(rs_graphics) \
+  RS_HEADER_ENTRY(rs_math)
+
+#define RS_HEADER_ENTRY(x)  \
+  extern const char x ## _header[]; \
+  extern unsigned x ## _header_size;
+ENUM_RS_HEADER()
+#undef RS_HEADER_ENTRY
+
 void SlangRS::initDiagnostic() {
   clang::Diagnostic &Diag = getDiagnostics();
   if (!Diag.setDiagnosticGroupMapping(
@@ -22,8 +37,14 @@ void SlangRS::initDiagnostic() {
 void SlangRS::initPreprocessor() {
   clang::Preprocessor &PP = getPreprocessor();
 
-  std::string inclFiles("#include \"rs_types.rsh\"");
-  PP.setPredefines(inclFiles + "\n" + "#include \"rs_math.rsh\"" + "\n");
+  std::string RSH;
+#define RS_HEADER_ENTRY(x)  \
+  RSH.append("#line 1 \"" #x "."RS_HEADER_SUFFIX"\"\n"); \
+  RSH.append(x ## _header, x ## _header_size);
+ENUM_RS_HEADER()
+#undef RS_HEADER_ENTRY
+  PP.setPredefines(RSH);
+
   return;
 }
 

@@ -6,7 +6,7 @@ include $(LLVM_ROOT_PATH)/llvm.mk
 CLANG_ROOT_PATH := external/clang
 include $(CLANG_ROOT_PATH)/clang.mk
 
-# Executable for host
+# Executable llvm-rs-link for host
 # ========================================================
 include $(CLEAR_VARS)
 include $(CLEAR_TBLGEN_VARS)
@@ -39,7 +39,77 @@ include $(LLVM_HOST_BUILD_MK)
 include $(LLVM_GEN_INTRINSICS_MK)
 include $(BUILD_HOST_EXECUTABLE)
 
-# Executable for host
+# Host static library containing rs_types.rsh
+# ========================================================
+include $(CLEAR_VARS)
+
+input_data_file := frameworks/base/libs/rs/scriptc/rs_types.rsh
+slangdata_output_var_name := rs_types_header
+
+LOCAL_IS_HOST_MODULE := true
+LOCAL_MODULE := librsheader-types
+LOCAL_MODULE_TAGS := optional
+
+include $(LOCAL_PATH)/SlangData.mk
+include $(BUILD_HOST_STATIC_LIBRARY)
+
+# Host static library containing rs_cl.rsh
+# ========================================================
+include $(CLEAR_VARS)
+
+input_data_file := frameworks/base/libs/rs/scriptc/rs_cl.rsh
+slangdata_output_var_name := rs_cl_header
+
+LOCAL_IS_HOST_MODULE := true
+LOCAL_MODULE := librsheader-cl
+LOCAL_MODULE_TAGS := optional
+
+include $(LOCAL_PATH)/SlangData.mk
+include $(BUILD_HOST_STATIC_LIBRARY)
+
+# Host static library containing rs_cores.rsh
+# ========================================================
+include $(CLEAR_VARS)
+
+input_data_file := frameworks/base/libs/rs/scriptc/rs_core.rsh
+slangdata_output_var_name := rs_core_header
+
+LOCAL_IS_HOST_MODULE := true
+LOCAL_MODULE := librsheader-core
+LOCAL_MODULE_TAGS := optional
+
+include $(LOCAL_PATH)/SlangData.mk
+include $(BUILD_HOST_STATIC_LIBRARY)
+
+# Host static library containing rs_math.rsh
+# ========================================================
+include $(CLEAR_VARS)
+
+input_data_file := frameworks/base/libs/rs/scriptc/rs_math.rsh
+slangdata_output_var_name := rs_math_header
+
+LOCAL_IS_HOST_MODULE := true
+LOCAL_MODULE := librsheader-math
+LOCAL_MODULE_TAGS := optional
+
+include $(LOCAL_PATH)/SlangData.mk
+include $(BUILD_HOST_STATIC_LIBRARY)
+
+# Host static library containing rs_graphics.rsh
+# ========================================================
+include $(CLEAR_VARS)
+
+input_data_file := frameworks/base/libs/rs/scriptc/rs_graphics.rsh
+slangdata_output_var_name := rs_graphics_header
+
+LOCAL_IS_HOST_MODULE := true
+LOCAL_MODULE := librsheader-graphics
+LOCAL_MODULE_TAGS := optional
+
+include $(LOCAL_PATH)/SlangData.mk
+include $(BUILD_HOST_STATIC_LIBRARY)
+
+# Executable slang for host
 # ========================================================
 include $(CLEAR_VARS)
 include $(CLEAR_TBLGEN_VARS)
@@ -106,7 +176,12 @@ LOCAL_STATIC_LIBRARIES :=	\
 	libclangBasic	\
 	libclangFrontend	\
 	libLLVMSupport	\
-	libLLVMSystem
+	libLLVMSystem	\
+	librsheader-types	\
+	librsheader-cl  \
+	librsheader-core	\
+	librsheader-math	\
+	librsheader-graphics
 
 LOCAL_LDLIBS := -ldl -lpthread
 
