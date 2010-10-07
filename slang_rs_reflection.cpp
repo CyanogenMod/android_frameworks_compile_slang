@@ -574,7 +574,11 @@ void RSReflection::genInitPrimitiveExportVariable(Context &C,
   C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
   switch (Val.getKind()) {
     case clang::APValue::Int: {
-      C.out() << Val.getInt().getSExtValue();
+      llvm::APInt api = Val.getInt();
+      C.out() << api.getSExtValue();
+      if (api.getBitWidth() > 32) {
+        C.out() << "L";
+      }
       break;
     }
     case clang::APValue::Float: {
