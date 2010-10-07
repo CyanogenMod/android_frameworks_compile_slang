@@ -184,6 +184,7 @@ static const char* JavaReflectionPackageName;
 
 static const char* JavaReflectionPathName;
 static const char* OutputPathName;
+static const char* OutputDepPathName;
 
 static std::vector<std::string> IncludePaths;
 
@@ -222,6 +223,7 @@ static void ConstructCommandOptions() {
     { "verbose", no_argument, NULL, 'v' }, /* -v */
 
     { "output-obj-path", required_argument, NULL, 'o' }, /* -o */
+    { "output-dep-path", required_argument, NULL, 'd' }, /* -d */
     { "cpu",    required_argument, NULL, 'u' }, /* -u */
     { "triple", required_argument, NULL, 't' }, /* -t */
 
@@ -299,6 +301,39 @@ static int AddFileSuffix(std::string &pathFile, Slang::OutputType type) {
   return 1;
 }
 
+static int CreateFileName(std::string &Name,
+                           const char *PathName,
+                           const char *FileName,
+                           Slang::OutputType type)
+{
+  std::string _Name;
+
+  if (PathName && !strcmp(PathName, "-")) {
+    /* TODO - stdout is not actually supported by slang right now */
+    Name.assign("stdout");
+    return true;
+  }
+
+  if (PathName) {
+    _Name.assign(PathName);
+    if (_Name[_Name.length()-1] != '/') {
+      _Name += "/";
+    }
+  }
+
+  _Name += slang::RSSlangReflectUtils::BCFileNameFromRSFileName(FileName);
+
+  int status = AddFileSuffix(_Name, type);
+  if (status < 0) {
+  } else if (status == 0) {
+    Name.assign("/dev/null");
+  } else {
+    Name = _Name;
+  }
+
+  return status;
+}
+
 static bool ParseOption(int Argc, char** Argv) {
   assert(SlangOpts != NULL && "Slang command options table was not initialized!");
 
@@ -311,6 +346,7 @@ static bool ParseOption(int Argc, char** Argv) {
 
   JavaReflectionPathName = NULL;
   OutputPathName = NULL;
+  OutputDepPathName = NULL;
 
   IncludePaths.clear();
 
@@ -334,7 +370,7 @@ static bool ParseOption(int Argc, char** Argv) {
   /* Turn off the error message output by getopt_long */
   opterr = 0;
 
-  while((ch = getopt_long(Argc, Argv, "MSchvo:u:t:j:p:I:s:", SlangOpts, NULL)) != -1) {
+  while((ch = getopt_long(Argc, Argv, "MSchvd:o:u:t:j:p:I:s:", SlangOpts, NULL)) != -1) {
     switch(ch) {
       case 'M':
         OutputFileType = Slang::OT_Dependency;
@@ -346,6 +382,10 @@ static bool ParseOption(int Argc, char** Argv) {
 
       case 'c':
         OutputFileType = Slang::OT_Object;
+        break;
+
+      case 'd':
+        OutputDepPathName = optarg;
         break;
 
       case 'o':
@@ -494,37 +534,25 @@ static bool ParseOption(int Argc, char** Argv) {
   for (count = 0; count < FileCount; count++) {
     InputFileNames[count].assign(Argv[optind + count]);
 
-    if ( OutputPathName && !strcmp(OutputPathName, "-") ) {
-      OutputFileNames[count].assign("stdout");
-      DepTargetBCFileNames[count].assign("stdout");
-      continue;
-    }
-
-    std::string _outF;
-    if (OutputPathName) {
-      _outF.assign(OutputPathName);
-      if (_outF[_outF.length()-1] != '/') {
-        _outF += "/";
+    if (OutputFileType == Slang::OT_Dependency) {
+      if (CreateFileName(DepTargetBCFileNames[count],
+                         OutputPathName,
+                         Argv[optind + count],
+                         Slang::OT_Bitcode) < 0) {
+        return false;
       }
-    }
-    _outF += slang::RSSlangReflectUtils::BCFileNameFromRSFileName(
-        InputFileNames[count].c_str());
-    std::string _outD(_outF);
-
-    int status = AddFileSuffix(_outF, OutputFileType);
-
-    if (status < 0) {
-      return false;
-    } else if (!status) {
-      OutputFileNames[count].assign("/dev/null");
-      DepTargetBCFileNames[count].assign("/dev/null");
+      if (CreateFileName(OutputFileNames[count],
+                         OutputDepPathName,
+                         Argv[optind + count],
+                         Slang::OT_Dependency) < 0) {
+        return false;
+      }
     } else {
-      OutputFileNames[count].assign(_outF);
-      if (OutputFileType == Slang::OT_Dependency) {
-        if (AddFileSuffix(_outD, Slang::OT_Bitcode) <= 0) {
-          return false;
-        }
-        DepTargetBCFileNames[count].assign(_outD);
+      if (CreateFileName(OutputFileNames[count],
+                         OutputPathName,
+                         Argv[optind + count],
+                         OutputFileType) < 0) {
+        return false;
       }
     }
   }
@@ -877,6 +905,7 @@ static void Usage(const char* CommandName) {
   OUTPUT_OPTION(NULL, "--allow-rs-prefix", "Allow user-defined function names with the \"rs\" prefix");
   OUTPUT_OPTION(NULL, "--no-link", "Do not link the system bitcode libraries");
   OUTPUT_OPTION("-o", "--output-obj-path=<PATH>", "Write compilation output at this path ('-' means stdout)");
+  OUTPUT_OPTION("-d", "--output-dep-path=<PATH>", "Write dependency targets for bitcode files at this path ('-' means stdout)");
   OUTPUT_OPTION("-j", "--output-java-reflection-class=<PACKAGE NAME>", "Output reflection of exportables in the native domain into Java");
   OUTPUT_OPTION("-p", "--output-java-reflection-path=<PATH>", "Write reflection output at this path");
   OUTPUT_OPTION("-I", "--include-path=<PATH>", "Add a header search path");
