@@ -1,15 +1,86 @@
 LOCAL_PATH := $(call my-dir)
 
-LLVM_ROOT_PATH := external/llvm
-include $(LLVM_ROOT_PATH)/llvm.mk
+# Shared library libslang for host
+# ========================================================
+include $(CLEAR_VARS)
+include $(CLEAR_TBLGEN_VARS)
 
+LLVM_ROOT_PATH := external/llvm
 CLANG_ROOT_PATH := external/clang
+
 include $(CLANG_ROOT_PATH)/clang.mk
+
+LOCAL_MODULE := libslang
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+
+LOCAL_CFLAGS += -Wno-sign-promo
+
+TBLGEN_TABLES :=    \
+	AttrList.inc	\
+	Attrs.inc	\
+	DeclNodes.inc	\
+	DiagnosticCommonKinds.inc	\
+	DiagnosticFrontendKinds.inc	\
+	DiagnosticSemaKinds.inc	\
+	StmtNodes.inc
+
+LOCAL_SRC_FILES :=	\
+	slang.cpp	\
+	slang_utils.cpp	\
+	slang_backend.cpp	\
+	slang_pragma_recorder.cpp	\
+	slang_diagnostic_buffer.cpp
+
+LOCAL_STATIC_LIBRARIES :=	\
+	libLLVMLinker   \
+	libLLVMipo	\
+	libLLVMBitWriter	\
+	libLLVMBitReader	\
+	libLLVMARMAsmPrinter	\
+	libLLVMX86AsmPrinter	\
+	libLLVMAsmPrinter	\
+	libLLVMMCParser	\
+	libLLVMARMCodeGen	\
+	libLLVMARMInfo	\
+	libLLVMX86CodeGen	\
+	libLLVMX86Info	\
+	libLLVMSelectionDAG	\
+	libLLVMCodeGen	\
+	libLLVMScalarOpts	\
+	libLLVMInstCombine	\
+	libLLVMTransformUtils	\
+	libLLVMInstrumentation	\
+	libLLVMipa	\
+	libLLVMAnalysis	\
+	libLLVMTarget	\
+	libLLVMMC	\
+	libLLVMCore	\
+	libclangParse	\
+	libclangSema	\
+	libclangAnalysis	\
+	libclangAST	\
+	libclangLex	\
+	libclangFrontend	\
+	libclangCodeGen	\
+	libclangBasic	\
+	libLLVMSupport	\
+	libLLVMSystem
+
+LOCAL_LDLIBS := -ldl -lpthread
+
+include $(CLANG_HOST_BUILD_MK)
+include $(CLANG_TBLGEN_RULES_MK)
+include $(LLVM_GEN_INTRINSICS_MK)
+include $(BUILD_HOST_SHARED_LIBRARY)
 
 # Executable llvm-rs-link for host
 # ========================================================
 include $(CLEAR_VARS)
 include $(CLEAR_TBLGEN_VARS)
+
+include $(LLVM_ROOT_PATH)/llvm.mk
 
 LOCAL_MODULE := llvm-rs-link
 
@@ -18,20 +89,8 @@ LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES :=	\
 	llvm-rs-link.cpp
 
-LOCAL_STATIC_LIBRARIES :=	\
-	libLLVMLinker   \
-	libLLVMipo	\
-	libLLVMBitWriter	\
-	libLLVMBitReader        \
-	libLLVMScalarOpts	\
-	libLLVMInstCombine	\
-	libLLVMTransformUtils	\
-	libLLVMipa	\
-	libLLVMAnalysis	\
-	libLLVMTarget	\
-	libLLVMCore	\
-	libLLVMSupport	\
-	libLLVMSystem
+LOCAL_SHARED_LIBRARIES :=	\
+	libslang
 
 LOCAL_LDLIBS := -ldl -lpthread
 
@@ -125,17 +184,11 @@ TBLGEN_TABLES :=    \
 	Attrs.inc    \
 	DeclNodes.inc    \
 	DiagnosticCommonKinds.inc   \
-	DiagnosticFrontendKinds.inc \
 	StmtNodes.inc	\
 	DiagnosticSemaKinds.inc
 
 LOCAL_SRC_FILES :=	\
 	slang_driver.cpp	\
-	slang.cpp	\
-	slang_utils.cpp	\
-	slang_backend.cpp	\
-	slang_pragma_recorder.cpp	\
-	slang_diagnostic_buffer.cpp	\
 	slang_rs.cpp	\
 	slang_rs_context.cpp	\
 	slang_rs_pragma_handler.cpp	\
@@ -147,44 +200,15 @@ LOCAL_SRC_FILES :=	\
 	slang_rs_reflection.cpp \
 	slang_rs_reflect_utils.cpp
 
+LOCAL_SHARED_LIBRARIES :=      \
+	libslang
+
 LOCAL_STATIC_LIBRARIES :=	\
-	libLLVMipo	\
-	libLLVMBitWriter	\
-	libLLVMARMAsmPrinter	\
-	libLLVMX86AsmPrinter	\
-	libLLVMAsmPrinter	\
-	libLLVMMCParser	\
-	libLLVMARMCodeGen	\
-	libLLVMARMInfo	\
-	libLLVMX86CodeGen	\
-	libLLVMX86Info	\
-	libLLVMSelectionDAG	\
-	libLLVMCodeGen	\
-	libLLVMScalarOpts	\
-	libLLVMInstCombine	\
-	libLLVMTransformUtils	\
-	libLLVMipa	\
-	libLLVMAnalysis	\
-	libLLVMTarget	\
-	libLLVMMC	\
-	libLLVMCore	\
-	libclangParse   \
-	libclangSema	\
-	libclangAnalysis	\
-	libclangAST	\
-	libclangLex	\
-	libclangCodeGen	\
-	libclangBasic	\
-	libclangFrontend	\
-	libLLVMSupport	\
-	libLLVMSystem	\
 	librsheader-types	\
 	librsheader-cl  \
 	librsheader-core	\
 	librsheader-math	\
 	librsheader-graphics
-
-LOCAL_LDLIBS := -ldl -lpthread
 
 LOCAL_REQUIRED_MODULES := llvm-rs-link
 

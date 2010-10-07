@@ -2,6 +2,10 @@
 
 #include <stdlib.h>
 
+// Force linking all passes/vmcore stuffs to libslang.so
+#include "llvm/LinkAllPasses.h"
+#include "llvm/LinkAllVMCore.h"
+
 #include "llvm/Target/TargetSelect.h"
 
 #include "llvm/System/Path.h"
@@ -35,6 +39,27 @@
 
 #include "slang_utils.h"
 #include "slang_backend.h"
+
+// More force linking
+#include "llvm/Linker.h"
+#include "llvm/Bitcode/ReaderWriter.h"
+
+namespace {
+  struct ForceSlangLinking {
+    ForceSlangLinking() {
+      // We must reference the functions in such a way that compilers will not
+      // delete it all as dead code, even with whole program optimization,
+      // yet is effectively a NO-OP. As the compiler isn't smart enough
+      // to know that getenv() never returns -1, this will do the job.
+      if (std::getenv("bar") != reinterpret_cast<char*>(-1))
+        return;
+
+      // llvm-rs-link needs following functions existing in libslang.
+      llvm::ParseBitcodeFile(NULL, llvm::getGlobalContext(), NULL);
+      llvm::Linker::LinkModules(NULL, NULL, NULL);
+    }
+  } ForceSlangLinking;
+}
 
 using namespace slang;
 
