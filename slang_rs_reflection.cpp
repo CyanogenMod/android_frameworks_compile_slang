@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/APFloat.h"
 
+#include "slang_utils.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_var.h"
 #include "slang_rs_export_func.h"
@@ -460,36 +461,10 @@ static const char *GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
     return NULL;
 }
 
-bool RSReflection::openScriptFile(Context &C,
-                                  const std::string &ClassName,
-                                  std::string &ErrorMsg) {
-  if (!C.mUseStdout) {
-    C.mOF.clear();
-    std::string _path = RSSlangReflectUtils::ComputePackagedPath(
-        mRSContext->getReflectJavaPathName().c_str(),
-        C.getPackageName().c_str());
-
-    RSSlangReflectUtils::mkdir_p(_path.c_str());
-    C.mOF.open((_path + "/" + ClassName + ".java").c_str());
-    if (!C.mOF.good()) {
-      ErrorMsg = "failed to open file '" + _path + "/" + ClassName
-          + ".java' for write";
-
-      return false;
-    }
-  }
-  return true;
-}
-
 /********************** Methods to generate script class **********************/
 bool RSReflection::genScriptClass(Context &C,
                                   const std::string &ClassName,
                                   std::string &ErrorMsg) {
-  // Open the file
-  if (!openScriptFile(C, ClassName, ErrorMsg)) {
-    return false;
-  }
-
   if (!C.startClass(Context::AM_Public,
                     false,
                     ClassName,
@@ -1220,11 +1195,6 @@ bool RSReflection::genTypeClass(Context &C,
                                 std::string &ErrorMsg) {
   std::string ClassName = RS_TYPE_CLASS_NAME_PREFIX + ERT->getName();
 
-  // Open the file
-  if (!openScriptFile(C, ClassName, ErrorMsg)) {
-    return false;
-  }
-
   if (!C.startClass(Context::AM_Public,
                     false,
                     ClassName,
@@ -1694,9 +1664,11 @@ bool RSReflection::reflect(const char *OutputPackageName,
   if ((OutputPackageName == NULL) ||
       (*OutputPackageName == '\0') ||
       strcmp(OutputPackageName, "-") == 0)
-    C = new Context(InputFileName, "<Package Name>", ResourceId, true);
+    C = new Context(mRSContext->getReflectJavaPathName(), InputFileName,
+                    "<Package Name>", ResourceId, true);
   else
-    C = new Context(InputFileName, OutputPackageName, ResourceId, false);
+    C = new Context(mRSContext->getReflectJavaPathName(), InputFileName,
+                    OutputPackageName, ResourceId, false);
 
   if (C != NULL) {
     std::string ErrorMsg, ScriptClassName;
@@ -1772,6 +1744,28 @@ const char *const RSReflection::Context::Import[] = {
   "android.util.Log",
 };
 
+bool RSReflection::Context::openClassFile(const std::string &ClassName,
+                                          std::string &ErrorMsg) {
+  if (!mUseStdout) {
+    mOF.clear();
+    std::string Path =
+        RSSlangReflectUtils::ComputePackagedPath(mOutputPath.c_str(),
+                                                 mPackageName.c_str());
+
+    if (!SlangUtils::CreateDirectoryWithParents(Path, &ErrorMsg))
+      return false;
+
+    std::string ClassFile = Path + "/" + ClassName + ".java";
+
+    mOF.open(ClassFile.c_str());
+    if (!mOF.good()) {
+      ErrorMsg = "failed to open file '" + ClassFile + "' for write";
+      return false;
+    }
+  }
+  return true;
+}
+
 const char *RSReflection::Context::AccessModifierStr(AccessModifier AM) {
   switch (AM) {
     case AM_Public: return "public"; break;
@@ -1788,6 +1782,10 @@ bool RSReflection::Context::startClass(AccessModifier AM,
                                        std::string &ErrorMsg) {
   if (mVerbose)
     std::cout << "Generating " << ClassName << ".java ..." << std::endl;
+
+  // Open file for class
+  if (!openClassFile(ClassName, ErrorMsg))
+    return false;
 
   // License
   out() << mLicenseNote;

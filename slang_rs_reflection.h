@@ -33,6 +33,8 @@ class RSReflection {
 
     bool mVerbose;
 
+    std::string mOutputPath;
+
     std::string mInputRSFile;
 
     std::string mPackageName;
@@ -65,6 +67,9 @@ class RSReflection {
       return;
     }
 
+    bool openClassFile(const std::string &ClassName,
+                       std::string &ErrorMsg);
+
    public:
     typedef enum {
       AM_Public,
@@ -77,11 +82,13 @@ class RSReflection {
 
     static const char *AccessModifierStr(AccessModifier AM);
 
-    Context(const std::string &InputRSFile,
+    Context(const std::string &OutputPath,
+            const std::string &InputRSFile,
             const std::string &PackageName,
             const std::string &ResourceId,
             bool UseStdout)
         : mVerbose(true),
+          mOutputPath(OutputPath),
           mInputRSFile(InputRSFile),
           mPackageName(PackageName),
           mResourceId(ResourceId),
@@ -179,9 +186,6 @@ class RSReflection {
     inline void clearFieldIndexMap() { mFieldIndexMap.clear(); }
   };
 
-  bool openScriptFile(Context &C,
-                      const std::string &ClassName,
-                      std::string &ErrorMsg);
   bool genScriptClass(Context &C,
                       const std::string &ClassName,
                       std::string &ErrorMsg);

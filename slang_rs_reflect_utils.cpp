@@ -1,11 +1,11 @@
 #include "slang_rs_reflect_utils.h"
 
-#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 
-#include <sys/stat.h>
-#include <sys/types.h>
+#include "llvm/ADT/StringRef.h"
+
+#include "slang_utils.h"
 
 namespace slang {
 
@@ -83,36 +83,6 @@ std::string RSSlangReflectUtils::JavaClassNameFromRSFileName(
 std::string RSSlangReflectUtils::BCFileNameFromRSFileName(
     const char *rsFileName) {
     return InternalFileNameConvert(rsFileName, true);
-}
-
-bool RSSlangReflectUtils::mkdir_p(const char *path) {
-    char buf[256];
-    char *tmp, *p = NULL;
-    size_t len = strlen(path);
-
-    if (len + 1 <= sizeof(buf))
-        tmp = buf;
-    else
-        tmp = new char[len + 1];
-
-    strcpy(tmp, path);
-
-    if (tmp[len - 1] == '/')
-        tmp[len - 1] = 0;
-
-    for (p = tmp + 1; *p; p++) {
-        if (*p == '/') {
-            *p = 0;
-            mkdir(tmp, S_IRWXU);
-            *p = '/';
-        }
-    }
-    mkdir(tmp, S_IRWXU);
-
-    if (tmp != buf)
-        delete[] tmp;
-
-    return true;
 }
 
 static bool GenerateAccessorHeader(
@@ -249,7 +219,8 @@ bool RSSlangReflectUtils::GenerateBitCodeAccessor(
     const BitCodeAccessorContext &context) {
     string output_path = ComputePackagedPath(context.reflectPath,
                                              context.packageName);
-    if (!mkdir_p(output_path.c_str())) {
+    if (!SlangUtils::CreateDirectoryWithParents(llvm::StringRef(output_path),
+                                                NULL)) {
         fprintf(stderr, "Error: could not create dir %s\n",
                 output_path.c_str());
         return false;

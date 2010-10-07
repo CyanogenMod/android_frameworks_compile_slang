@@ -4,6 +4,8 @@
 
 #include "llvm/Target/TargetSelect.h"
 
+#include "llvm/System/Path.h"
+
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -31,6 +33,7 @@
 
 #include "clang/Parse/ParseAST.h"
 
+#include "slang_utils.h"
 #include "slang_backend.h"
 
 using namespace slang;
@@ -251,42 +254,19 @@ bool Slang::setInputSource(llvm::StringRef InputFile) {
   return true;
 }
 
-static void _mkdir_given_a_file(const char *file) {
-  char buf[256];
-  char *tmp, *p = NULL;
-  size_t len = strlen(file);
-
-  if (len + 1 <= sizeof(buf))
-    tmp = buf;
-  else
-    tmp = new char[len + 1];
-
-  strcpy(tmp, file);
-
-  if (tmp[len - 1] == '/')
-    tmp[len - 1] = 0;
-
-  for (p = tmp + 1; *p; p++) {
-    if (*p == '/') {
-      *p = 0;
-      mkdir(tmp, S_IRWXU);
-      *p = '/';
-    }
-  }
-
-  if (tmp != buf)
-    delete[] tmp;
-}
-
 bool Slang::setOutput(const char *OutputFile) {
+  llvm::sys::Path OutputFilePath(OutputFile);
   std::string Error;
 
   switch (mOT) {
     case OT_Dependency:
     case OT_Assembly:
     case OT_LLVMAssembly: {
-      _mkdir_given_a_file(OutputFile);
-      mOS.reset(new llvm::raw_fd_ostream(OutputFile, Error, 0));
+      if (!SlangUtils::CreateDirectoryWithParents(OutputFilePath.getDirname(),
+                                                  &Error))
+        mDiagnostics->Report(clang::diag::err_fe_error_opening) << OutputFile
+            << Error;
+      mOS.reset(new llvm::tool_output_file(OutputFile, Error, 0));
       break;
     }
     case OT_Nothing: {
@@ -295,15 +275,18 @@ bool Slang::setOutput(const char *OutputFile) {
     }
     case OT_Object:
     case OT_Bitcode: {
-      _mkdir_given_a_file(OutputFile);
-      mOS.reset(new llvm::raw_fd_ostream(OutputFile,
-                                         Error,
-                                         llvm::raw_fd_ostream::F_Binary));
+      if (!SlangUtils::CreateDirectoryWithParents(OutputFilePath.getDirname(),
+                                                  &Error))
+        mDiagnostics->Report(clang::diag::err_fe_error_opening) << OutputFile
+            << Error;
+      mOS.reset(new llvm::tool_output_file(OutputFile,
+                                           Error,
+                                           llvm::raw_fd_ostream::F_Binary));
       break;
     }
-    default:
+    default: {
       llvm_unreachable("Unknown compiler output type");
-      break;
+    }
   }
 
   if (!Error.empty()) {
@@ -319,8 +302,13 @@ bool Slang::setOutput(const char *OutputFile) {
 }
 
 bool Slang::setDepOutput(const char *OutputFile) {
+  llvm::sys::Path OutputFilePath(OutputFile);
   std::string Error;
-  _mkdir_given_a_file(OutputFile);
+
+  if (!SlangUtils::CreateDirectoryWithParents(OutputFilePath.getDirname(),
+                                              &Error))
+    mDiagnostics->Report(clang::diag::err_fe_error_opening) << OutputFile
+        << Error;
   mDOS.reset(new llvm::raw_fd_ostream(OutputFile, Error, 0));
 
   if (!Error.empty()) {

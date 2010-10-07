@@ -1,5 +1,5 @@
-#ifndef _SLANG_DIAGNOSTIC_BUFFER_H
-#define _SLANG_DIAGNOSTIC_BUFFER_H
+#ifndef _SLANG_COMPILER_DIAGNOSTIC_BUFFER_H
+#define _SLANG_COMPILER_DIAGNOSTIC_BUFFER_H
 
 #include "llvm/Support/raw_ostream.h"
 

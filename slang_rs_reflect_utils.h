@@ -59,10 +59,6 @@ class RSSlangReflectUtils {
   // rsFileName: the input .rs file name (with or without path).
   static std::string BCFileNameFromRSFileName(const char *rsFileName);
 
-  // "mkdir -p"
-  static bool mkdir_p(const char *path);
-
-
   // Generate the bit code accessor Java source file.
   static bool GenerateBitCodeAccessor(const BitCodeAccessorContext &context);
 };
