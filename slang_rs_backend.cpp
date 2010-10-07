@@ -10,6 +10,8 @@
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
 
+#include "llvm/System/Path.h"
+
 #include "llvm/Support/IRBuilder.h"
 
 #include "llvm/ADT/Twine.h"
@@ -17,6 +19,7 @@
 
 #include "clang/AST/DeclGroup.h"
 
+#include "slang_rs.h"
 #include "slang_rs_context.h"
 #include "slang_rs_metadata.h"
 #include "slang_rs_export_var.h"
@@ -52,17 +55,23 @@ RSBackend::RSBackend(RSContext *Context,
 void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
   // Disallow user-defined functions with prefix "rs"
   if (!mAllowRSPrefix) {
-    clang::DeclGroupRef::iterator I;
-    for (I = D.begin(); I != D.end(); I++) {
+    // Iterate all function declarations in the program.
+    for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end();
+         I != E; I++) {
       clang::FunctionDecl *FD = dyn_cast<clang::FunctionDecl>(*I);
-      if (!FD || !FD->isThisDeclarationADefinition()) continue;
-      if (FD->getName().startswith("rs")) {
-        mDiags.Report(clang::FullSourceLoc(FD->getLocStart(), mSourceMgr),
-                      mDiags.getCustomDiagID(clang::Diagnostic::Error,
-                                             "invalid function name prefix,"
-                                             " \"rs\" is reserved: '%0'")
-                      )
-            << FD->getNameAsString();
+      if (FD == NULL)
+        continue;
+      if (FD->getName().startswith("rs")) {  // Check prefix
+        clang::FullSourceLoc FSL(FD->getLocStart(), mSourceMgr);
+        clang::PresumedLoc PLoc = mSourceMgr.getPresumedLoc(FSL);
+        llvm::sys::Path HeaderFilename(PLoc.getFilename());
+
+        // Skip if that function declared in the RS default header.
+        if (SlangRS::IsRSHeaderFile(HeaderFilename.getLast().data()))
+          continue;
+        mDiags.Report(FSL, mDiags.getCustomDiagID(clang::Diagnostic::Error,
+                      "invalid function name prefix, \"rs\" is reserved: '%0'"))
+            << FD->getName();
       }
     }
   }

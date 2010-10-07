@@ -25,6 +25,8 @@ class SlangRS : public Slang {
 
 
  public:
+  static bool IsRSHeaderFile(const char *File);
+
   SlangRS(const char *Triple, const char *CPU, const char **Features);
 
   // The package name that's really applied will be filled in
