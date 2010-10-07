@@ -318,8 +318,25 @@ bool Slang::setOutput(const char *OutputFile) {
   return true;
 }
 
-bool Slang::setDepTargetBC(const char *targetBCFile) {
-  mDepTargetBCFileName = targetBCFile;
+bool Slang::setDepOutput(const char *OutputFile) {
+  std::string Error;
+  _mkdir_given_a_file(OutputFile);
+  mDOS.reset(new llvm::raw_fd_ostream(OutputFile, Error, 0));
+
+  if (!Error.empty()) {
+    mDOS.reset();
+    mDiagnostics->Report(clang::diag::err_fe_error_opening) << OutputFile
+                                                            << Error;
+    return false;
+  }
+
+  mDepOutputFileName = OutputFile;
+
+  return true;
+}
+
+bool Slang::setDepTargetBC(const char *TargetBCFile) {
+  mDepTargetBCFileName = TargetBCFile;
 
   return true;
 }
@@ -327,13 +344,13 @@ bool Slang::setDepTargetBC(const char *targetBCFile) {
 int Slang::generateDepFile() {
   if(mDiagnostics->getNumErrors() > 0)
     return mDiagnostics->getNumErrors();
-  if (mOS.get() == NULL)
+  if (mDOS.get() == NULL)
     return 1;
 
   /* Initialize options for generating dependency file */
   clang::DependencyOutputOptions DepOpts;
   DepOpts.IncludeSystemHeaders = 1;
-  DepOpts.OutputFile = mOutputFileName;
+  DepOpts.OutputFile = mDepOutputFileName;
   DepOpts.Targets.push_back(mDepTargetBCFileName);
 
   /* Per-compilation needed initialization */
@@ -359,9 +376,6 @@ int Slang::generateDepFile() {
 }
 
 int Slang::compile() {
-  if (mOT == OT_Dependency)
-    return generateDepFile();
-
   if (mDiagnostics->getNumErrors() > 0)
     return mDiagnostics->getNumErrors();
   if (mOS.get() == NULL)

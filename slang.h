@@ -93,12 +93,15 @@ class Slang {
   // Input file name
   std::string mInputFileName;
   std::string mOutputFileName;
+  std::string mDepOutputFileName;
   std::string mDepTargetBCFileName;
 
   OutputType mOT;
 
   // Output stream
   llvm::OwningPtr<llvm::raw_ostream> mOS;
+  // Dependency output stream
+  llvm::OwningPtr<llvm::raw_ostream> mDOS;
 
   std::vector<std::string> mIncludePaths;
 
@@ -144,12 +147,13 @@ class Slang {
 
   inline void setOutputType(OutputType OT) { mOT = OT; }
 
-  bool setOutput(const char *outputFile);
+  bool setOutput(const char *OutputFile);
   inline const std::string &getOutputFileName() const {
     return mOutputFileName;
   }
 
-  bool setDepTargetBC(const char *targetBCFile);
+  bool setDepOutput(const char *OutputFile);
+  bool setDepTargetBC(const char *TargetBCFile);
 
   int generateDepFile();
   int compile();

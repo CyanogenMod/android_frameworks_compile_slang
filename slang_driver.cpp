@@ -184,12 +184,13 @@ static const char* JavaReflectionPackageName;
 
 static const char* JavaReflectionPathName;
 static const char* OutputPathName;
-static const char* OutputDepPathName;
+static const char* DepOutputPathName;
 
 static std::vector<std::string> IncludePaths;
 
 static std::string* InputFileNames;
 static std::string* OutputFileNames;
+static std::string* DepOutputFileNames;
 static std::string* DepTargetBCFileNames;
 
 // Where to store the bc file.
@@ -203,6 +204,7 @@ static const char* FeatureEnabledList[MaxTargetFeature + 1];
 static int AllowRSPrefix = 0;
 static int Externalize = 0;
 static int NoLink = 1;
+static int CreateDeps = 0;
 
 /* Construct the command options table used in ParseOption::getopt_long */
 static void ConstructCommandOptions() {
@@ -215,7 +217,7 @@ static void ConstructCommandOptions() {
     { "emit-llvm",       no_argument, (int*) &OutputFileType, Slang::OT_LLVMAssembly },
     { "emit-bc",         no_argument, (int*) &OutputFileType, Slang::OT_Bitcode },
     { "emit-asm",        no_argument, NULL, 'S' },
-    { "emit-dep",        no_argument, (int*) &OutputFileType, Slang::OT_Dependency },
+    { "emit-dep",        no_argument, &CreateDeps, 1 },
     { "emit-obj",        no_argument, NULL, 'c' },
     { "emit-nothing",    no_argument, (int*) &OutputFileType, Slang::OT_Nothing },
 
@@ -346,12 +348,13 @@ static bool ParseOption(int Argc, char** Argv) {
 
   JavaReflectionPathName = NULL;
   OutputPathName = NULL;
-  OutputDepPathName = NULL;
+  DepOutputPathName = NULL;
 
   IncludePaths.clear();
 
   InputFileNames = NULL;
   OutputFileNames = NULL;
+  DepOutputFileNames = NULL;
   DepTargetBCFileNames = NULL;
 
   Verbose = false;
@@ -370,10 +373,19 @@ static bool ParseOption(int Argc, char** Argv) {
   /* Turn off the error message output by getopt_long */
   opterr = 0;
 
-  while((ch = getopt_long(Argc, Argv, "MSchvd:o:u:t:j:p:I:s:", SlangOpts, NULL)) != -1) {
+  while((ch = getopt_long(Argc, Argv, "M::Schvd:o:u:t:j:p:I:s:", SlangOpts, NULL)) != -1) {
     switch(ch) {
       case 'M':
-        OutputFileType = Slang::OT_Dependency;
+        CreateDeps = 1;
+        if (optarg) {
+          if (!strcmp(optarg, "D")) {
+            // We also want to guarantee a default compile in this case
+            OutputFileType = Slang::OT_Bitcode;
+          }
+          else {
+            goto found_unknown_option;
+          }
+        }
         break;
 
       case 'S':
@@ -385,7 +397,7 @@ static bool ParseOption(int Argc, char** Argv) {
         break;
 
       case 'd':
-        OutputDepPathName = optarg;
+        DepOutputPathName = optarg;
         break;
 
       case 'o':
@@ -477,6 +489,7 @@ static bool ParseOption(int Argc, char** Argv) {
         }
         break;
 
+found_unknown_option:
       default:
         cerr << "Unknown option: " << Argv[optind - 1] << endl;
         return false;
@@ -529,31 +542,34 @@ static bool ParseOption(int Argc, char** Argv) {
   FileCount = Argc;
   InputFileNames = new std::string[FileCount];
   OutputFileNames = new std::string[FileCount];
-  DepTargetBCFileNames = new std::string[FileCount];
+  if (CreateDeps) {
+    DepOutputFileNames = new std::string[FileCount];
+    DepTargetBCFileNames = new std::string[FileCount];
+  }
   int count;
   for (count = 0; count < FileCount; count++) {
     InputFileNames[count].assign(Argv[optind + count]);
 
-    if (OutputFileType == Slang::OT_Dependency) {
+    if (CreateDeps) {
       if (CreateFileName(DepTargetBCFileNames[count],
                          OutputPathName,
                          Argv[optind + count],
                          Slang::OT_Bitcode) < 0) {
         return false;
       }
-      if (CreateFileName(OutputFileNames[count],
-                         OutputDepPathName,
+      if (CreateFileName(DepOutputFileNames[count],
+                         DepOutputPathName,
                          Argv[optind + count],
                          Slang::OT_Dependency) < 0) {
         return false;
       }
-    } else {
-      if (CreateFileName(OutputFileNames[count],
-                         OutputPathName,
-                         Argv[optind + count],
-                         OutputFileType) < 0) {
-        return false;
-      }
+    }
+
+    if (CreateFileName(OutputFileNames[count],
+                       OutputPathName,
+                       Argv[optind + count],
+                       OutputFileType) < 0) {
+      return false;
     }
   }
 
@@ -580,8 +596,10 @@ static bool ParseOption(int Argc, char** Argv) {
     cout << endl;
 
     cout << "Output to: " << ((strcmp(OutputPathName, "-")) ? OutputPathName : "(standard output)") << ", type: ";
+    if (CreateDeps) {
+      cout << "Dependencies";
+    }
     switch(OutputFileType) {
-      case Slang::OT_Dependency: cout << "Dependencies"; break;
       case Slang::OT_Assembly: cout << "Target Assembly"; break;
       case Slang::OT_LLVMAssembly: cout << "LLVM Assembly"; break;
       case Slang::OT_Bitcode: cout << "Bitcode"; break;
@@ -762,7 +780,10 @@ int main(int argc, char** argv) {
       std::string beforeLink;
       if (NoLink) {
         SLANG_CALL_AND_CHECK( slang->setOutput(OutputFileNames[count].c_str()) );
-        SLANG_CALL_AND_CHECK( slang->setDepTargetBC(DepTargetBCFileNames[count].c_str()) );
+        if (CreateDeps) {
+          SLANG_CALL_AND_CHECK( slang->setDepOutput(DepOutputFileNames[count].c_str()) );
+          SLANG_CALL_AND_CHECK( slang->setDepTargetBC(DepTargetBCFileNames[count].c_str()) );
+        }
       } else {
         std::string stem = slang::RSSlangReflectUtils::BCFileNameFromRSFileName(
             InputFileNames[count].c_str());
@@ -778,7 +799,14 @@ int main(int argc, char** argv) {
 
         beforeLink.assign(tmpFileName);
         SLANG_CALL_AND_CHECK( slang->setOutput(beforeLink.c_str()) );
-        SLANG_CALL_AND_CHECK( slang->setDepTargetBC(beforeLink.c_str()) );
+        if (CreateDeps) {
+          SLANG_CALL_AND_CHECK( slang->setDepOutput(beforeLink.c_str()) );
+          SLANG_CALL_AND_CHECK( slang->setDepTargetBC(beforeLink.c_str()) );
+        }
+      }
+
+      if (CreateDeps) {
+        SLANG_CALL_AND_CHECK( slang->generateDepFile() <= 0 );
       }
 
       SLANG_CALL_AND_CHECK( slang->compile() <= 0 );
