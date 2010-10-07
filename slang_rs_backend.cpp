@@ -18,6 +18,7 @@
 #include "clang/AST/DeclGroup.h"
 
 #include "slang_rs_context.h"
+#include "slang_rs_metadata.h"
 #include "slang_rs_export_var.h"
 #include "slang_rs_export_func.h"
 #include "slang_rs_export_type.h"
@@ -78,7 +79,7 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
   // Dump export variable info
   if (mContext->hasExportVar()) {
     if (mExportVarMetadata == NULL)
-      mExportVarMetadata = mpModule->getOrInsertNamedMetadata("#rs_export_var");
+      mExportVarMetadata = mpModule->getOrInsertNamedMetadata(RS_EXPORT_VAR_MN);
 
     llvm::SmallVector<llvm::Value*, 2> ExportVarInfo;
 
@@ -122,7 +123,7 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
   if (mContext->hasExportFunc()) {
     if (mExportFuncMetadata == NULL)
       mExportFuncMetadata =
-          mpModule->getOrInsertNamedMetadata("#rs_export_func");
+          mpModule->getOrInsertNamedMetadata(RS_EXPORT_FUNC_MN);
 
     llvm::SmallVector<llvm::Value*, 1> ExportFuncInfo;
 
@@ -276,7 +277,7 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
 
         if (mExportTypeMetadata == NULL)
           mExportTypeMetadata =
-              mpModule->getOrInsertNamedMetadata("#rs_export_type");
+              mpModule->getOrInsertNamedMetadata(RS_EXPORT_TYPE_MN);
 
         mExportTypeMetadata->addOperand(
             llvm::MDNode::get(mLLVMContext,

@@ -6,20 +6,23 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
+
 #include "llvm/Analysis/Verifier.h"
+
 #include "llvm/Bitcode/ReaderWriter.h"
+
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/StandardPasses.h"
-#include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/raw_ostream.h"
+
 #include "llvm/System/Signals.h"
 #include "llvm/System/Path.h"
+
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/LinkAllVMCore.h"
+
+#include "slang_rs_metadata.h"
 
 using namespace llvm;
 
@@ -31,38 +34,44 @@ static cl::opt<std::string>
 OutputFilename("o", cl::Required, cl::desc("Override output filename"),
                cl::value_desc("<output bitcode file>"));
 
-static cl::opt<bool>
-Externalize("e", cl::Optional, cl::desc("To externalize"));
+static bool GetExportSymbolNames(NamedMDNode *N,
+                                 unsigned NameOpIdx,
+                                 std::vector<const char *> &Names) {
+  if (N == NULL)
+    return true;
 
-// GetExported - ...
-static void GetExported(NamedMDNode *N, std::vector<std::string> &Names) {
-  for (int i = 0, e = N->getNumOperands(); i != e; ++i) {
-    MDNode *exported_var = N->getOperand(i);
-    if (!exported_var) continue;
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    MDNode *V = N->getOperand(i);
+    if (V == NULL)
+      continue;
 
-    if (exported_var->getNumOperands() == 0) {
-      errs() << "Invalid RenderScript reflection data.\n";
-      abort();
+    if (V->getNumOperands() < (NameOpIdx + 1)) {
+      errs() << "Invalid metadata spec of " << N->getName()
+             << " in RenderScript executable. (#op)\n";
+      return false;
     }
 
-    MDString *name = dyn_cast<MDString>(exported_var->getOperand(0));
-    if (!name) {
-      errs() << "Invalid RenderScript reflection data.\n";
-      abort();
+    MDString *Name = dyn_cast<MDString>(V->getOperand(NameOpIdx));
+    if (Name == NULL) {
+      errs() << "Invalid metadata spec of " << N->getName()
+             << " in RenderScript executable. (#name)\n";
+      return false;
     }
 
-    Names.push_back(name->getString());
+    Names.push_back(Name->getString().data());
   }
+  return true;
 }
 
-// GetExportedGlobals - ...
-static void GetExportedGlobals(Module *M, std::vector<std::string> &Names) {
-  if (NamedMDNode *rs_export_var = M->getNamedMetadata("#rs_export_var")) {
-    GetExported(rs_export_var, Names);
-  }
-  if (NamedMDNode *rs_export_func = M->getNamedMetadata("#rs_export_func")) {
-    GetExported(rs_export_func, Names);
-  }
+static bool GetExportSymbols(Module *M, std::vector<const char *> &Names) {
+  bool Result = true;
+  // Variables marked as export must be externally visible
+  if (NamedMDNode *EV = M->getNamedMetadata(RS_EXPORT_VAR_MN))
+    Result |= GetExportSymbolNames(EV, RS_EXPORT_VAR_NAME, Names);
+  // So are those exported functions
+  if (NamedMDNode *EF = M->getNamedMetadata(RS_EXPORT_FUNC_MN))
+    Result |= GetExportSymbolNames(EF, RS_EXPORT_FUNC_NAME, Names);
+  return Result;
 }
 
 // LoadFile - Read the specified bitcode file in and return it.  This routine
@@ -110,8 +119,8 @@ int main(int argc, char **argv) {
   for (unsigned i = 1; i < InputFilenames.size(); ++i) {
     std::auto_ptr<Module> M(LoadFile(argv[0], InputFilenames[i], Context));
     if (M.get() == 0) {
-      errs() << argv[0] << ": error loading file '" << InputFilenames[i]
-             << "'\n";
+      errs() << argv[0] << ": error loading file '"
+             << InputFilenames[i] << "'\n";
       return 1;
     }
     if (Linker::LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
@@ -123,7 +132,8 @@ int main(int argc, char **argv) {
 
   std::string ErrorInfo;
   std::auto_ptr<raw_ostream>
-  Out(new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
+  Out(new raw_fd_ostream(OutputFilename.c_str(),
+                         ErrorInfo,
                          raw_fd_ostream::F_Binary));
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
@@ -138,29 +148,27 @@ int main(int argc, char **argv) {
   PassManager Passes;
 
   const std::string &ModuleDataLayout = Composite.get()->getDataLayout();
-  if (!ModuleDataLayout.empty()) {
+  if (!ModuleDataLayout.empty())
     if (TargetData *TD = new TargetData(ModuleDataLayout))
       Passes.add(TD);
-  }
 
-  if (!Externalize) {
-    std::vector<std::string> PublicAPINames;
-    PublicAPINames.push_back("init");
-    PublicAPINames.push_back("root");
-    GetExportedGlobals(Composite.get(), PublicAPINames);
+  // Some symbols must not be internalized
+  std::vector<const char *> ExportList;
+  ExportList.push_back("init");
+  ExportList.push_back("root");
 
-    std::vector<const char *> PublicAPINamesCStr;
-    for (int i = 0, e = PublicAPINames.size(); i != e; ++i) {
-      // errs() << "not internalizing: " << PublicAPINames[i] << '\n';
-      PublicAPINamesCStr.push_back(PublicAPINames[i].c_str());
-    }
+  if (!GetExportSymbols(Composite.get(), ExportList))
+    return 1;
 
-    Passes.add(createInternalizePass(PublicAPINamesCStr));
-  }
+  Passes.add(createInternalizePass(ExportList));
 
-  createStandardLTOPasses(&Passes, false, true, false);
+  createStandardLTOPasses(&Passes,
+                          /* Internalize = */false,
+                          /* RunInliner = */true,
+                          /* VerifyEach = */false);
   Passes.run(*Composite.get());
 
   WriteBitcodeToFile(Composite.get(), *Out);
+
   return 0;
 }

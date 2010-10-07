@@ -203,7 +203,6 @@ static slang::BitCodeStorageType BitCodeStorage(slang::BCST_APK_RESOURCE);
 static bool Verbose;
 static const char* FeatureEnabledList[MaxTargetFeature + 1];
 static int AllowRSPrefix = 0;
-static int Externalize = 0;
 static int NoLink = 1;
 static int CreateDeps = 0;
 
@@ -212,7 +211,6 @@ static void ConstructCommandOptions() {
   /* Basic slang command option */
   static struct option BasicSlangOpts[] = {
     { "allow-rs-prefix", no_argument, &AllowRSPrefix, 1 },
-    { "externalize", no_argument, &Externalize, 1 },
     { "no-link", no_argument, &NoLink, 1 },
 
     { "emit-llvm",       no_argument, (int*) &OutputFileType, Slang::OT_LLVMAssembly },
