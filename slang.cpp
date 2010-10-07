@@ -359,7 +359,7 @@ bool Slang::setAdditionalDepTarget(const char* AdditionalDepTargetFileName) {
 }
 
 int Slang::generateDepFile() {
-  if(mDiagnostics->getNumErrors() > 0)
+  if (mDiagnostics->getNumErrors() > 0)
     return mDiagnostics->getNumErrors();
   if (mDOS.get() == NULL)
     return 1;

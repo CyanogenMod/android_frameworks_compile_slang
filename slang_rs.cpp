@@ -13,7 +13,6 @@ using namespace slang;
   RS_HEADER_ENTRY(rs_types) \
   RS_HEADER_ENTRY(rs_cl) \
   RS_HEADER_ENTRY(rs_core) \
-  RS_HEADER_ENTRY(rs_graphics) \
   RS_HEADER_ENTRY(rs_math)
 
 #define RS_HEADER_ENTRY(x)  \

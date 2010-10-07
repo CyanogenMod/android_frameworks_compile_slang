@@ -154,20 +154,6 @@ LOCAL_MODULE_TAGS := optional
 include $(LOCAL_PATH)/SlangData.mk
 include $(BUILD_HOST_STATIC_LIBRARY)
 
-# Host static library containing rs_graphics.rsh
-# ========================================================
-include $(CLEAR_VARS)
-
-input_data_file := frameworks/base/libs/rs/scriptc/rs_graphics.rsh
-slangdata_output_var_name := rs_graphics_header
-
-LOCAL_IS_HOST_MODULE := true
-LOCAL_MODULE := librsheader-graphics
-LOCAL_MODULE_TAGS := optional
-
-include $(LOCAL_PATH)/SlangData.mk
-include $(BUILD_HOST_STATIC_LIBRARY)
-
 # Executable slang for host
 # ========================================================
 include $(CLEAR_VARS)
@@ -207,8 +193,7 @@ LOCAL_STATIC_LIBRARIES :=	\
 	librsheader-types	\
 	librsheader-cl  \
 	librsheader-core	\
-	librsheader-math	\
-	librsheader-graphics
+	librsheader-math
 
 LOCAL_REQUIRED_MODULES := llvm-rs-link
 

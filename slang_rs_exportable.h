@@ -6,28 +6,27 @@
 namespace slang {
 
 class RSExportable {
-public:
+ public:
   enum Kind {
     EX_FUNC,
     EX_TYPE,
     EX_VAR
   };
 
-private:
+ private:
   Kind mK;
 
-protected:
+ protected:
   RSExportable(RSContext *Context, RSExportable::Kind K) : mK(K) {
     Context->newExportable(this);
     return;
   }
 
-public:
+ public:
   inline Kind getKind() const { return mK; }
 
   virtual ~RSExportable() { }
 };
-
 }
 
 #endif  // _SLANG_COMPILER_RS_EXPORTABLE_HPP
