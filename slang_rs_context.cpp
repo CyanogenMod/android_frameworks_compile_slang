@@ -29,7 +29,7 @@ RSContext::RSContext(clang::Preprocessor *PP,
       mTarget(Target),
       mTargetData(NULL),
       mLLVMContext(llvm::getGlobalContext()),
-      mExportAllNonStaticVars(false),
+      mExportAllNonStaticVars(true),
       mExportAllNonStaticFuncs(false),
       mLicenseNote(NULL) {
   // For #pragma rs export_var
