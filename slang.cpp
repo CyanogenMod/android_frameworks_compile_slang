@@ -341,6 +341,10 @@ bool Slang::setDepTargetBC(const char *TargetBCFile) {
   return true;
 }
 
+bool Slang::setAdditionalDepTarget(const char* AdditionalDepTargetFileName) {
+  mAdditionalDepTargetFileName = AdditionalDepTargetFileName;
+}
+
 int Slang::generateDepFile() {
   if(mDiagnostics->getNumErrors() > 0)
     return mDiagnostics->getNumErrors();
@@ -351,6 +355,9 @@ int Slang::generateDepFile() {
   clang::DependencyOutputOptions DepOpts;
   DepOpts.IncludeSystemHeaders = 1;
   DepOpts.OutputFile = mDepOutputFileName;
+  if (!mAdditionalDepTargetFileName.empty()) {
+    DepOpts.Targets.push_back(mAdditionalDepTargetFileName);
+  }
   DepOpts.Targets.push_back(mDepTargetBCFileName);
 
   /* Per-compilation needed initialization */

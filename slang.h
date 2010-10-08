@@ -95,6 +95,7 @@ class Slang {
   std::string mOutputFileName;
   std::string mDepOutputFileName;
   std::string mDepTargetBCFileName;
+  std::string mAdditionalDepTargetFileName;
 
   OutputType mOT;
 
@@ -154,6 +155,7 @@ class Slang {
 
   bool setDepOutput(const char *OutputFile);
   bool setDepTargetBC(const char *TargetBCFile);
+  bool setAdditionalDepTarget(const char* AdditionalDepTargetFileName);
 
   int generateDepFile();
   int compile();

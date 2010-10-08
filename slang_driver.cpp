@@ -185,6 +185,7 @@ static const char* JavaReflectionPackageName;
 static const char* JavaReflectionPathName;
 static const char* OutputPathName;
 static const char* DepOutputPathName;
+static const char* AdditionalDepTarget;
 
 static std::vector<std::string> IncludePaths;
 
@@ -226,6 +227,7 @@ static void ConstructCommandOptions() {
 
     { "output-obj-path", required_argument, NULL, 'o' }, /* -o */
     { "output-dep-path", required_argument, NULL, 'd' }, /* -d */
+    { "additional-dep-target", required_argument, NULL, 'a' }, /* -a */
     { "cpu",    required_argument, NULL, 'u' }, /* -u */
     { "triple", required_argument, NULL, 't' }, /* -t */
 
@@ -355,6 +357,7 @@ static bool ParseOption(int Argc, char** Argv) {
   JavaReflectionPathName = NULL;
   OutputPathName = NULL;
   DepOutputPathName = NULL;
+  AdditionalDepTarget = NULL;
 
   IncludePaths.clear();
 
@@ -379,7 +382,7 @@ static bool ParseOption(int Argc, char** Argv) {
   /* Turn off the error message output by getopt_long */
   opterr = 0;
 
-  while((ch = getopt_long(Argc, Argv, "M::Schvd:o:u:t:j:p:I:s:", SlangOpts, NULL)) != -1) {
+  while((ch = getopt_long(Argc, Argv, "M::Schva:d:o:u:t:j:p:I:s:", SlangOpts, NULL)) != -1) {
     switch(ch) {
       case 'M':
         CreateDeps = 1;
@@ -404,6 +407,10 @@ static bool ParseOption(int Argc, char** Argv) {
 
       case 'd':
         DepOutputPathName = optarg;
+        break;
+
+      case 'a':
+        AdditionalDepTarget = optarg;
         break;
 
       case 'o':
@@ -778,6 +785,9 @@ int main(int argc, char** argv) {
     if (AllowRSPrefix)
       slang->allowRSPrefix(true);
 
+    if (AdditionalDepTarget)
+      slang->setAdditionalDepTarget(AdditionalDepTarget);
+
     for (count = 0; count < FileCount; count++) {
       /* Start compilation */
 
@@ -944,6 +954,8 @@ static void Usage(const char* CommandName) {
   OUTPUT_OPTION("-p", "--output-java-reflection-path=<PATH>", "Write reflection output at this path");
   OUTPUT_OPTION("-I", "--include-path=<PATH>", "Add a header search path");
   OUTPUT_OPTION("-s", "--bitcode-storage=<VALUE>", "Where to store the bc file. 'ar' means apk resource, 'jc' means Java code.");
+  OUTPUT_OPTION("-MD", "--emit-dep", "Output Make dependency (.d, as with -M) as well as any other specified targets.");
+  OUTPUT_OPTION("-a", "--additional-dep-target", "Add as additional target (usually a timestamp file used by the build system) to the dependency (.d).");
 
   cout << endl;
 
