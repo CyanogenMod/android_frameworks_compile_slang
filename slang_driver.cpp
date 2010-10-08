@@ -853,25 +853,14 @@ int main(int argc, char** argv) {
 
         char* link0 = linkFile();
         //char* link1 = linkFile1();
-        if (Externalize) {
-          char* cmdline[] = { const_cast<char*>(cmd.c_str()),
-                              const_cast<char*>("-e"),
-                              const_cast<char*>("-o"),
-                              const_cast<char*>(OutputFileNames[count].c_str()),
-                              const_cast<char*>(beforeLink.c_str()),
-                              link0,
-                              /*link1,*/ NULL };
-          execvp(cmd.c_str(), cmdline);
-        } else {
-          //cerr << cmd << " -o " << OutputFileNames[count] << " " << beforeLink << " " << link0 << endl;
-          char* cmdline[] = { const_cast<char*>(cmd.c_str()),
-                              const_cast<char*>("-o"),
-                              const_cast<char*>(OutputFileNames[count].c_str()),
-                              const_cast<char*>(beforeLink.c_str()),
-                              link0,
-                              /*link1,*/ NULL };
-          execvp(cmd.c_str(), cmdline);
-        }
+        cerr << cmd << " -o " << OutputFileNames[count] << " " << beforeLink << " " << link0 << endl;
+        char* cmdline[] = { const_cast<char*>(cmd.c_str()),
+                            const_cast<char*>("-o"),
+                            const_cast<char*>(OutputFileNames[count].c_str()),
+                            const_cast<char*>(beforeLink.c_str()),
+                            link0,
+                            /*link1,*/ NULL };
+        execvp(cmd.c_str(), cmdline);
       }
 
       waitForChild(pid);
