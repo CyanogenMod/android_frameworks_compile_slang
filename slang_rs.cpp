@@ -1,5 +1,7 @@
 #include "slang_rs.h"
 
+#include <cstring>
+
 #include "clang/Sema/SemaDiagnostic.h"
 
 #include "slang_rs_backend.h"
@@ -71,39 +73,42 @@ clang::ASTConsumer
 
 bool SlangRS::IsRSHeaderFile(const char *File) {
 #define RS_HEADER_ENTRY(x)  \
-  if (strcmp(File, #x "."RS_HEADER_SUFFIX) == 0) \
+  if (::strcmp(File, #x "."RS_HEADER_SUFFIX) == 0)  \
     return true;
 ENUM_RS_HEADER()
 #undef RS_HEADER_ENTRY
   // Deal with rs_graphics.rsh special case
-  if (strcmp(File, "rs_graphics."RS_HEADER_SUFFIX) == 0)
+  if (::strcmp(File, "rs_graphics."RS_HEADER_SUFFIX) == 0)
     return true;
   return false;
 }
 
-SlangRS::SlangRS(const char *Triple, const char *CPU, const char **Features)
-    : Slang(Triple, CPU, Features),  mRSContext(NULL), mAllowRSPrefix(false) {
+SlangRS::SlangRS(const std::string &Triple, const std::string &CPU,
+                 const std::vector<std::string> &Features)
+    : Slang(Triple, CPU, Features),
+      mRSContext(NULL),
+      mAllowRSPrefix(false) {
   return;
 }
 
-bool SlangRS::reflectToJava(const char *OutputPackageName,
-                            char *RealPackageNameBuf,
-                            int BufSize) {
+bool SlangRS::reflectToJava(const std::string &OutputPathBase,
+                            const std::string &OutputPackageName,
+                            std::string *RealPackageName) {
   if (mRSContext)
-    return mRSContext->reflectToJava(OutputPackageName,
+    return mRSContext->reflectToJava(OutputPathBase,
+                                     OutputPackageName,
                                      getInputFileName(),
                                      getOutputFileName(),
-                                     RealPackageNameBuf,
-                                     BufSize);
+                                     RealPackageName);
   else
     return false;
 }
 
-bool SlangRS::reflectToJavaPath(const char *OutputPathName) {
-  if (mRSContext)
-    return mRSContext->reflectToJavaPath(OutputPathName);
-  else
-    return false;
+void SlangRS::reset() {
+  Slang::reset();
+  delete mRSContext;
+  mRSContext = NULL;
+  return;
 }
 
 SlangRS::~SlangRS() {

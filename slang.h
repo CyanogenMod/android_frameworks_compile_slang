@@ -40,8 +40,6 @@ class Slang {
 
   static bool GlobalInitialized;
 
-  static void GlobalInitialization();
-
   static void LLVMErrorHandler(void *UserData, const std::string &Message);
 
  public:
@@ -67,7 +65,8 @@ class Slang {
   // The target being compiled for
   clang::TargetOptions mTargetOpts;
   llvm::OwningPtr<clang::TargetInfo> mTarget;
-  void createTarget(const char *Triple, const char *CPU, const char **Features);
+  void createTarget(const std::string &Triple, const std::string &CPU,
+                    const std::vector<std::string> &Features);
 
   // Below is for parsing and code generation
 
@@ -93,9 +92,10 @@ class Slang {
   // Input file name
   std::string mInputFileName;
   std::string mOutputFileName;
+
   std::string mDepOutputFileName;
   std::string mDepTargetBCFileName;
-  std::string mAdditionalDepTargetFileName;
+  std::vector<std::string> mAdditionalDepTargets;
 
   OutputType mOT;
 
@@ -133,7 +133,10 @@ class Slang {
 
   static const llvm::StringRef PragmaMetadataName;
 
-  Slang(const char *Triple, const char *CPU, const char **Features);
+  static void GlobalInitialization();
+
+  Slang(const std::string &Triple, const std::string &CPU,
+        const std::vector<std::string> &Features);
 
   bool setInputSource(llvm::StringRef InputFile, const char *Text,
                       size_t TextLength);
@@ -142,8 +145,8 @@ class Slang {
 
   inline const std::string &getInputFileName() const { return mInputFileName; }
 
-  inline void addIncludePath(const char *Path) {
-    mIncludePaths.push_back(Path);
+  inline void setIncludePaths(const std::vector<std::string> &IncludePaths) {
+    mIncludePaths = IncludePaths;
   }
 
   inline void setOutputType(OutputType OT) { mOT = OT; }
@@ -154,8 +157,13 @@ class Slang {
   }
 
   bool setDepOutput(const char *OutputFile);
-  bool setDepTargetBC(const char *TargetBCFile);
-  bool setAdditionalDepTarget(const char* AdditionalDepTargetFileName);
+  inline void setDepTargetBC(const char *TargetBCFile) {
+    mDepTargetBCFileName = TargetBCFile;
+  }
+  inline void setAdditionalDepTargets(
+      const std::vector<std::string> &AdditionalDepTargets) {
+    mAdditionalDepTargets = AdditionalDepTargets;
+  }
 
   int generateDepFile();
   int compile();
