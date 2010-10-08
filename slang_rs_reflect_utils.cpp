@@ -11,6 +11,22 @@ namespace slang {
 
 using std::string;
 
+string RSSlangReflectUtils::GetFileNameStem(const char* fileName) {
+    const char *dot = fileName + strlen(fileName);
+    const char *slash = dot - 1;
+    while (slash >= fileName) {
+        if (*slash == '/') {
+            break;
+        }
+        if ((*slash == '.') && (*dot == 0)) {
+            dot = slash;
+        }
+        --slash;
+    }
+    ++slash;
+    return string(slash, dot - slash);
+}
+
 string RSSlangReflectUtils::ComputePackagedPath(
     const char *prefixPath, const char *packageName) {
     string packaged_path(prefixPath);

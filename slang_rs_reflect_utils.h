@@ -29,6 +29,12 @@ class RSSlangReflectUtils {
     BitCodeStorageType bcStorage;
   };
 
+  // Return the stem of the file name, i.e., remove the dir and the extension.
+  // Eg, foo.ext -> foo
+  //     foo.bar.ext -> foo.bar
+  //     ./path/foo.ext -> foo
+  static std::string GetFileNameStem(const char* fileName);
+
   // Compuate a Java source file path from a given prefixPath and its package.
   // Eg, given prefixPath=./foo/bar and packageName=com.x.y, then it returns
   // ./foo/bar/com/x/y

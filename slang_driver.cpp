@@ -323,7 +323,13 @@ static int CreateFileName(std::string &Name,
     }
   }
 
-  _Name += slang::RSSlangReflectUtils::BCFileNameFromRSFileName(FileName);
+  if (type == Slang::OT_Dependency) {
+    // The build system wants the .d file name stem to be exactly the same as the
+    // source .rs file, instead of the .bc file.
+    _Name += slang::RSSlangReflectUtils::GetFileNameStem(FileName);
+  } else {
+    _Name += slang::RSSlangReflectUtils::BCFileNameFromRSFileName(FileName);
+  }
 
   int status = AddFileSuffix(_Name, type);
   if (status < 0) {
