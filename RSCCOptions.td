@@ -84,7 +84,7 @@ def output_dep_dir : Separate<"-output-dep-dir">, MetaVarName<"<directory>">,
   HelpText<"Specify output directory for dependencies output">;
 def _output_dep_dir : Separate<"-d">, Alias<output_dep_dir>;
 
-def additional_dep_target: Separate<"-additional-dep-target">,
+def additional_dep_target: Separate<"additional-dep-target">,
   HelpText<"Additional targets to show up in dependencies output">;
 def _additional_dep_target : Separate<"-a">, Alias<additional_dep_target>;
 
@@ -100,6 +100,3 @@ def __help : Flag<"-h">, Alias<help>;
 def version : Flag<"-version">,
   HelpText<"Print the assembler version">;
 def _version : Flag<"--version">, Alias<version>;
-
-// Compatible with old slang
-def no_link : Flag<"-no-link">;  // currently no effect
