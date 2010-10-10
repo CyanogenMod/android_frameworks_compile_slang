@@ -1649,7 +1649,8 @@ void RSReflection::genAddPaddingToElementBuiler(Context &C,
 #undef EB_ADD
 /******** Methods to create Element in Java of given record type /end ********/
 
-bool RSReflection::reflect(const char *OutputPackageName,
+bool RSReflection::reflect(const std::string &OutputPathBase,
+                           const std::string &OutputPackageName,
                            const std::string &InputFileName,
                            const std::string &OutputBCFileName) {
   Context *C = NULL;
@@ -1661,14 +1662,12 @@ bool RSReflection::reflect(const char *OutputPackageName,
   if (ResourceId.empty())
     ResourceId = "<Resource ID>";
 
-  if ((OutputPackageName == NULL) ||
-      (*OutputPackageName == '\0') ||
-      strcmp(OutputPackageName, "-") == 0)
-    C = new Context(mRSContext->getReflectJavaPathName(), InputFileName,
-                    "<Package Name>", ResourceId, true);
+  if (OutputPackageName.empty() || OutputPackageName == "-")
+    C = new Context(OutputPathBase, InputFileName, "<Package Name>",
+                    ResourceId, true);
   else
-    C = new Context(mRSContext->getReflectJavaPathName(), InputFileName,
-                    OutputPackageName, ResourceId, false);
+    C = new Context(OutputPathBase, InputFileName, OutputPackageName,
+                    ResourceId, false);
 
   if (C != NULL) {
     std::string ErrorMsg, ScriptClassName;
@@ -1749,7 +1748,7 @@ bool RSReflection::Context::openClassFile(const std::string &ClassName,
   if (!mUseStdout) {
     mOF.clear();
     std::string Path =
-        RSSlangReflectUtils::ComputePackagedPath(mOutputPath.c_str(),
+        RSSlangReflectUtils::ComputePackagedPath(mOutputPathBase.c_str(),
                                                  mPackageName.c_str());
 
     if (!SlangUtils::CreateDirectoryWithParents(Path, &ErrorMsg))

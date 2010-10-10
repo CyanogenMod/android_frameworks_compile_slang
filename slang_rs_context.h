@@ -111,13 +111,6 @@ class RSContext {
     mReflectJavaPackageName = S;
     return;
   }
-  inline void setReflectJavaPathName(const std::string &S) {
-    mReflectJavaPathName = S;
-    return;
-  }
-  inline std::string getReflectJavaPathName() const {
-    return mReflectJavaPathName;
-  }
 
   void processExport();
   inline void newExportable(RSExportable *E) {
@@ -169,12 +162,11 @@ class RSContext {
   // and return true.
   bool insertExportType(const llvm::StringRef &TypeName, RSExportType *Type);
 
-  bool reflectToJava(const char *OutputPackageName,
+  bool reflectToJava(const std::string &OutputPathBase,
+                     const std::string &OutputPackageName,
                      const std::string &InputFileName,
                      const std::string &OutputBCFileName,
-                     char realPackageName[],
-                     int bSize);
-  bool reflectToJavaPath(const char *OutputPathName);
+                     std::string *RealPackageName);
 
   ~RSContext();
 };

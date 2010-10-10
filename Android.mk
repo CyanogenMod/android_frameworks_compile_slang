@@ -159,7 +159,9 @@ include $(BUILD_HOST_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 include $(CLEAR_TBLGEN_VARS)
 
-LOCAL_MODULE := slang
+LOCAL_IS_HOST_MODULE := true
+LOCAL_MODULE := llvm-rs-cc
+LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE_CLASS := EXECUTABLES
 
@@ -170,11 +172,13 @@ TBLGEN_TABLES :=    \
 	Attrs.inc    \
 	DeclNodes.inc    \
 	DiagnosticCommonKinds.inc   \
+	DiagnosticDriverKinds.inc	\
+	DiagnosticSemaKinds.inc	\
 	StmtNodes.inc	\
-	DiagnosticSemaKinds.inc
+	RSCCOptions.inc
 
 LOCAL_SRC_FILES :=	\
-	slang_driver.cpp	\
+	llvm-rs-cc.cpp	\
 	slang_rs.cpp	\
 	slang_rs_context.cpp	\
 	slang_rs_pragma_handler.cpp	\
@@ -190,12 +194,20 @@ LOCAL_SHARED_LIBRARIES :=      \
 	libslang
 
 LOCAL_STATIC_LIBRARIES :=	\
+	libclangDriver	\
 	librsheader-types	\
 	librsheader-cl  \
 	librsheader-core	\
 	librsheader-math
 
 LOCAL_REQUIRED_MODULES := llvm-rs-link
+
+# For build RSCCOptions.inc from RSCCOptions.td
+intermediates := $(call local-intermediates-dir)
+LOCAL_GENERATED_SOURCES += $(intermediates)/RSCCOptions.inc
+$(intermediates)/RSCCOptions.inc: $(LOCAL_PATH)/RSCCOptions.td $(CLANG_ROOT_PATH)/include/clang/Driver/OptParser.td $(TBLGEN)
+	@echo "Building RenderScript compiler (llvm-rs-cc) Option tables with tblgen"
+	$(call transform-host-td-to-out,opt-parser-defs)
 
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
