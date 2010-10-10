@@ -27,15 +27,13 @@ class SlangRS : public Slang {
  public:
   static bool IsRSHeaderFile(const char *File);
 
-  SlangRS(const std::string &Triple, const std::string &CPU,
-          const std::vector<std::string> &Features);
+  SlangRS(const char *Triple, const char *CPU, const char **Features);
 
-  // The package name that's really applied will be filled in RealPackageName.
-  bool reflectToJava(const std::string &OutputPathBase,
-                     const std::string &OutputPackageName,
-                     std::string *RealPackageName);
-
-  virtual void reset();
+  // The package name that's really applied will be filled in
+  // RealPackageNameBuf. BufSize is the size of buffer RealPackageNameBuf.
+  bool reflectToJava(const char *outputPackageName,
+                     char *RealPackageNameBuf, int BufSize);
+  bool reflectToJavaPath(const char *OutputPathName);
 
   inline void allowRSPrefix(bool V = true) { mAllowRSPrefix = V; }
 

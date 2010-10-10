@@ -33,7 +33,7 @@ class RSReflection {
 
     bool mVerbose;
 
-    std::string mOutputPathBase;
+    std::string mOutputPath;
 
     std::string mInputRSFile;
 
@@ -82,13 +82,13 @@ class RSReflection {
 
     static const char *AccessModifierStr(AccessModifier AM);
 
-    Context(const std::string &OutputPathBase,
+    Context(const std::string &OutputPath,
             const std::string &InputRSFile,
             const std::string &PackageName,
             const std::string &ResourceId,
             bool UseStdout)
         : mVerbose(true),
-          mOutputPathBase(OutputPathBase),
+          mOutputPath(OutputPath),
           mInputRSFile(InputRSFile),
           mPackageName(PackageName),
           mResourceId(ResourceId),
@@ -260,8 +260,7 @@ class RSReflection {
     return;
   }
 
-  bool reflect(const std::string &OutputPathBase,
-               const std::string &OutputPackageName,
+  bool reflect(const char *OutputPackageName,
                const std::string &InputFileName,
                const std::string &OutputBCFileName);
 

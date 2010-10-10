@@ -231,32 +231,45 @@ bool RSContext::insertExportType(const llvm::StringRef &TypeName,
   }
 }
 
-bool RSContext::reflectToJava(const std::string &OutputPathBase,
-                              const std::string &OutputPackageName,
+bool RSContext::reflectToJava(const char *OutputPackageName,
                               const std::string &InputFileName,
                               const std::string &OutputBCFileName,
-                              std::string *RealPackageName) {
-  if (RealPackageName != NULL)
-    RealPackageName->clear();
+                              char realPackageName[],
+                              int bSize) {
+  if (realPackageName != NULL) {
+    *realPackageName = 0;
+  }
 
-  const std::string &PackageName =
-      ((OutputPackageName.empty()) ? mReflectJavaPackageName :
-                                     OutputPackageName);
-  if (PackageName.empty())
-    // no package name, just return
-    return true;
+  if (OutputPackageName == NULL) {
+    if (!mReflectJavaPackageName.empty()) {
+      OutputPackageName = mReflectJavaPackageName.c_str();
+    } else {
+      // no package name, just return
+      return true;
+    }
+  }
 
   // Copy back the really applied package name
-  RealPackageName->assign(PackageName);
+  if (realPackageName != NULL) {
+    strncpy(realPackageName, OutputPackageName, bSize - 1);
+  }
 
   RSReflection *R = new RSReflection(this);
-  bool ret = R->reflect(OutputPathBase, PackageName,
-                        InputFileName, OutputBCFileName);
+  bool ret = R->reflect(OutputPackageName, InputFileName, OutputBCFileName);
   if (!ret)
     fprintf(stderr, "RSContext::reflectToJava : failed to do reflection "
                     "(%s)\n", R->getLastError());
   delete R;
   return ret;
+}
+
+bool RSContext::reflectToJavaPath(const char *OutputPathName) {
+  if (OutputPathName == NULL)
+    // no path name, just return
+    return true;
+
+  setReflectJavaPathName(std::string(OutputPathName));
+  return true;
 }
 
 RSContext::~RSContext() {

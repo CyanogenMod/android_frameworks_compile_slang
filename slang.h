@@ -40,6 +40,8 @@ class Slang {
 
   static bool GlobalInitialized;
 
+  static void GlobalInitialization();
+
   static void LLVMErrorHandler(void *UserData, const std::string &Message);
 
  public:
@@ -65,8 +67,7 @@ class Slang {
   // The target being compiled for
   clang::TargetOptions mTargetOpts;
   llvm::OwningPtr<clang::TargetInfo> mTarget;
-  void createTarget(const std::string &Triple, const std::string &CPU,
-                    const std::vector<std::string> &Features);
+  void createTarget(const char *Triple, const char *CPU, const char **Features);
 
   // Below is for parsing and code generation
 
@@ -92,10 +93,9 @@ class Slang {
   // Input file name
   std::string mInputFileName;
   std::string mOutputFileName;
-
   std::string mDepOutputFileName;
   std::string mDepTargetBCFileName;
-  std::vector<std::string> mAdditionalDepTargets;
+  std::string mAdditionalDepTargetFileName;
 
   OutputType mOT;
 
@@ -133,10 +133,7 @@ class Slang {
 
   static const llvm::StringRef PragmaMetadataName;
 
-  static void GlobalInitialization();
-
-  Slang(const std::string &Triple, const std::string &CPU,
-        const std::vector<std::string> &Features);
+  Slang(const char *Triple, const char *CPU, const char **Features);
 
   bool setInputSource(llvm::StringRef InputFile, const char *Text,
                       size_t TextLength);
@@ -145,8 +142,8 @@ class Slang {
 
   inline const std::string &getInputFileName() const { return mInputFileName; }
 
-  inline void setIncludePaths(const std::vector<std::string> &IncludePaths) {
-    mIncludePaths = IncludePaths;
+  inline void addIncludePath(const char *Path) {
+    mIncludePaths.push_back(Path);
   }
 
   inline void setOutputType(OutputType OT) { mOT = OT; }
@@ -157,13 +154,8 @@ class Slang {
   }
 
   bool setDepOutput(const char *OutputFile);
-  inline void setDepTargetBC(const char *TargetBCFile) {
-    mDepTargetBCFileName = TargetBCFile;
-  }
-  inline void setAdditionalDepTargets(
-      const std::vector<std::string> &AdditionalDepTargets) {
-    mAdditionalDepTargets = AdditionalDepTargets;
-  }
+  bool setDepTargetBC(const char *TargetBCFile);
+  bool setAdditionalDepTarget(const char* AdditionalDepTargetFileName);
 
   int generateDepFile();
   int compile();

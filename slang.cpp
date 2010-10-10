@@ -44,9 +44,6 @@
 #include "llvm/Linker.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 
-#include "clang/Frontend/DiagnosticOptions.h"
-#include "clang/Frontend/TextDiagnosticPrinter.h"
-
 namespace {
   struct ForceSlangLinking {
     ForceSlangLinking() {
@@ -60,10 +57,6 @@ namespace {
       // llvm-rs-link needs following functions existing in libslang.
       llvm::ParseBitcodeFile(NULL, llvm::getGlobalContext(), NULL);
       llvm::Linker::LinkModules(NULL, NULL, NULL);
-
-      // llvm-rs-cc need this.
-      new clang::TextDiagnosticPrinter(llvm::errs(),
-                                       clang::DiagnosticOptions());
     }
   } ForceSlangLinking;
 }
@@ -149,23 +142,24 @@ void Slang::createDiagnostic() {
   return;
 }
 
-void Slang::createTarget(const std::string &Triple, const std::string &CPU,
-                         const std::vector<std::string> &Features) {
-  if (!Triple.empty())
+void Slang::createTarget(const char* Triple, const char* CPU,
+                         const char** Features) {
+  if (Triple != NULL)
     mTargetOpts.Triple = Triple;
   else
     mTargetOpts.Triple = DEFAULT_TARGET_TRIPLE_STRING;
 
-  if (!CPU.empty())
+  if (CPU != NULL)
     mTargetOpts.CPU = CPU;
-
-  if (!Features.empty())
-    mTargetOpts.Features = Features;
 
   mTarget.reset(clang::TargetInfo::CreateTargetInfo(*mDiagnostics,
                                                     mTargetOpts));
 
-  return;
+  if (Features != NULL)
+    for (int i = 0; Features[i] != NULL; i++)
+      mTargetOpts.Features.push_back(Features[i]);
+
+    return;
 }
 
 void Slang::createFileManager() {
@@ -233,8 +227,7 @@ clang::ASTConsumer
                      OT);
 }
 
-Slang::Slang(const std::string &Triple, const std::string &CPU,
-             const std::vector<std::string> &Features)
+Slang::Slang(const char *Triple, const char *CPU, const char **Features)
     : mDiagClient(NULL),
       mOT(OT_Default) {
   GlobalInitialization();
@@ -355,6 +348,16 @@ bool Slang::setDepOutput(const char *OutputFile) {
   return true;
 }
 
+bool Slang::setDepTargetBC(const char *TargetBCFile) {
+  mDepTargetBCFileName = TargetBCFile;
+
+  return true;
+}
+
+bool Slang::setAdditionalDepTarget(const char* AdditionalDepTargetFileName) {
+  mAdditionalDepTargetFileName = AdditionalDepTargetFileName;
+}
+
 int Slang::generateDepFile() {
   if (mDiagnostics->getNumErrors() > 0)
     return mDiagnostics->getNumErrors();
@@ -365,7 +368,9 @@ int Slang::generateDepFile() {
   clang::DependencyOutputOptions DepOpts;
   DepOpts.IncludeSystemHeaders = 1;
   DepOpts.OutputFile = mDepOutputFileName;
-  DepOpts.Targets = mAdditionalDepTargets;
+  if (!mAdditionalDepTargetFileName.empty()) {
+    DepOpts.Targets.push_back(mAdditionalDepTargetFileName);
+  }
   DepOpts.Targets.push_back(mDepTargetBCFileName);
 
   /* Per-compilation needed initialization */
