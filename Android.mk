@@ -154,7 +154,7 @@ LOCAL_MODULE_TAGS := optional
 include $(LOCAL_PATH)/SlangData.mk
 include $(BUILD_HOST_STATIC_LIBRARY)
 
-# Executable slang for host
+# Executable llvm-rs-cc for host
 # ========================================================
 include $(CLEAR_VARS)
 include $(CLEAR_TBLGEN_VARS)
