@@ -1,3 +1,4 @@
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
@@ -30,9 +31,17 @@ static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
                cl::desc("<input bitcode files>"));
 
-static cl::opt<std::string>
-OutputFilename("o", cl::Required, cl::desc("Override output filename"),
-               cl::value_desc("<output bitcode file>"));
+static cl::list<std::string>
+OutputFilenames("o", cl::desc("Override output filename"),
+                cl::value_desc("<output bitcode file>"));
+
+static cl::opt<bool>
+NoStdLib("nostdlib", cl::desc("Don't link RS default libraries"));
+
+static cl::list<std::string>
+    AdditionalLibs("l", cl::Prefix,
+                   cl::desc("Specify additional libraries to link to"),
+                   cl::value_desc("<library bitcode>"));
 
 static bool GetExportSymbolNames(NamedMDNode *N,
                                  unsigned NameOpIdx,
@@ -74,80 +83,120 @@ static bool GetExportSymbols(Module *M, std::vector<const char *> &Names) {
   return Result;
 }
 
-// LoadFile - Read the specified bitcode file in and return it.  This routine
-// searches the link path for the specified file to try to find it...
-//
-static inline std::auto_ptr<Module> LoadFile(const char *argv0,
-                                             const std::string &FN,
-                                             LLVMContext& Context) {
-  sys::Path Filename;
-  if (!Filename.set(FN)) {
-    errs() << "Invalid file name: '" << FN << "'\n";
-    return std::auto_ptr<Module>();
-  }
 
+static inline MemoryBuffer *LoadFileIntoMemory(const std::string &F) {
   std::string Err;
-  Module *Result = 0;
+  MemoryBuffer *MB = MemoryBuffer::getFile(F, &Err);
 
-  const std::string &FNStr = Filename.str();
-  MemoryBuffer *Buffer = MemoryBuffer::getFile(FNStr, &Err);
-  if (!Buffer) {
-    errs() << Err;
-    return std::auto_ptr<Module>();
-  }
-  Result = ParseBitcodeFile(Buffer, Context, &Err);
-  if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
+  if (MB == NULL)
+    errs() << "Failed to load `" << F << "' (" << Err << ")\n";
 
-  errs() << Err;
-  return std::auto_ptr<Module>();
+  return MB;
 }
 
-int main(int argc, char **argv) {
-  llvm_shutdown_obj X;
+static inline Module *ParseBitcodeFromMemoryBuffer(MemoryBuffer *MB,
+                                                   LLVMContext& Context) {
+  std::string Err;
+  Module *M = ParseBitcodeFile(MB, Context, &Err);
 
-  cl::ParseCommandLineOptions(argc, argv, "llvm-rs-link\n");
+  if (M == NULL)
+    errs() << "Corrupted bitcode file `" << MB->getBufferIdentifier()
+           <<  "' (" << Err << ")\n";
 
-  LLVMContext &Context = getGlobalContext();
-  std::auto_ptr<Module> Composite = LoadFile(argv[0], InputFilenames[0],
-                                             Context);
-  std::string ErrorMessage;
-  if (Composite.get() == 0) {
-    errs() << argv[0] << ": error loading file '"
-           << InputFilenames[0] << "'\n";
-    return 1;
-  }
-  for (unsigned i = 1; i < InputFilenames.size(); ++i) {
-    std::auto_ptr<Module> M(LoadFile(argv[0], InputFilenames[i], Context));
-    if (M.get() == 0) {
-      errs() << argv[0] << ": error loading file '"
-             << InputFilenames[i] << "'\n";
-      return 1;
+  return M;
+}
+
+// LoadBitcodeFile - Read the specified bitcode file in and return it.
+static inline Module *LoadBitcodeFile(const std::string &F,
+                                      LLVMContext& Context) {
+  MemoryBuffer *MB = LoadFileIntoMemory(F);
+  if (MB == NULL)
+    return NULL;
+
+  Module *M = ParseBitcodeFromMemoryBuffer(MB, Context);
+  if (M == NULL)
+    delete MB;
+
+  return M;
+}
+
+extern const char rslib_bc[];
+extern unsigned rslib_bc_size;
+
+static bool PreloadLibraries(bool NoStdLib,
+                             const std::vector<std::string> &AdditionalLibs,
+                             std::list<MemoryBuffer *> LibBitcode) {
+  MemoryBuffer *MB;
+
+  LibBitcode.clear();
+
+  if (!NoStdLib) {
+    // rslib.bc
+    MB = MemoryBuffer::getMemBufferCopy(StringRef(rslib_bc, rslib_bc_size),
+                                        "rslib.bc");
+    if (MB == NULL) {
+      errs() << "Failed to load (in-memory) `rslib.bc'!\n";
+      return false;
     }
-    if (Linker::LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
-      errs() << argv[0] << ": link error in '" << InputFilenames[i]
-             << "': " << ErrorMessage << "\n";
-      return 1;
+
+    LibBitcode.push_back(MB);
+  }
+
+  // Load additional libraries
+  for (std::vector<std::string>::const_iterator
+          I = AdditionalLibs.begin(), E = AdditionalLibs.end();
+       I != E;
+       I++) {
+    MB = LoadFileIntoMemory(*I);
+    if (MB == NULL)
+      return false;
+    LibBitcode.push_back(MB);
+  }
+
+  return true;
+}
+
+static void UnloadLibraries(std::list<MemoryBuffer *>& LibBitcode) {
+  for (std::list<MemoryBuffer *>::iterator
+          I = LibBitcode.begin(), E = LibBitcode.end();
+       I != E;
+       I++)
+    delete *I;
+  LibBitcode.clear();
+  return;
+}
+
+Module *PerformLinking(const std::string &InputFile,
+                       const std::list<MemoryBuffer *> &LibBitcode,
+                       LLVMContext &Context) {
+  std::string Err;
+  std::auto_ptr<Module> Composite(LoadBitcodeFile(InputFile, Context));
+
+  if (Composite.get() == NULL)
+    return NULL;
+
+  for (std::list<MemoryBuffer *>::const_iterator I = LibBitcode.begin(),
+          E = LibBitcode.end();
+       I != E;
+       I++) {
+    Module *Lib = ParseBitcodeFromMemoryBuffer(*I, Context);
+    if (Lib == NULL)
+      return NULL;
+
+    if (Linker::LinkModules(Composite.get(), Lib, &Err)) {
+      errs() << "Failed to link `" << InputFile << "' with library bitcode `"
+             << (*I)->getBufferIdentifier() << "' (" << Err << ")\n";
+      return NULL;
     }
   }
 
-  std::string ErrorInfo;
-  std::auto_ptr<raw_ostream>
-  Out(new raw_fd_ostream(OutputFilename.c_str(),
-                         ErrorInfo,
-                         raw_fd_ostream::F_Binary));
-  if (!ErrorInfo.empty()) {
-    errs() << ErrorInfo << '\n';
-    return 1;
-  }
+  return Composite.release();
+}
 
-  if (verifyModule(*Composite)) {
-    errs() << argv[0] << ": linked module is broken!\n";
-    return 1;
-  }
-
+bool OptimizeModule(Module *M) {
   PassManager Passes;
 
-  const std::string &ModuleDataLayout = Composite.get()->getDataLayout();
+  const std::string &ModuleDataLayout = M->getDataLayout();
   if (!ModuleDataLayout.empty())
     if (TargetData *TD = new TargetData(ModuleDataLayout))
       Passes.add(TD);
@@ -157,18 +206,79 @@ int main(int argc, char **argv) {
   ExportList.push_back("init");
   ExportList.push_back("root");
 
-  if (!GetExportSymbols(Composite.get(), ExportList))
-    return 1;
+  if (!GetExportSymbols(M, ExportList)) {
+    return false;
+  }
 
   Passes.add(createInternalizePass(ExportList));
 
+  // TODO(zonr): Do we need to run all LTO passes?
   createStandardLTOPasses(&Passes,
                           /* Internalize = */false,
                           /* RunInliner = */true,
                           /* VerifyEach = */false);
-  Passes.run(*Composite.get());
+  Passes.run(*M);
 
-  WriteBitcodeToFile(Composite.get(), *Out);
+  return true;
+}
 
-  return 0;
+int main(int argc, char **argv) {
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
+
+  cl::ParseCommandLineOptions(argc, argv, "llvm-rs-link\n");
+
+  std::list<MemoryBuffer *> LibBitcode;
+
+  if (!PreloadLibraries(NoStdLib, AdditionalLibs, LibBitcode))
+    return 1;
+
+  // No libraries specified to be linked
+  if (LibBitcode.size() == 0)
+    return 0;
+
+  LLVMContext &Context = getGlobalContext();
+  bool HasError = true;
+  std::string Err;
+
+  for (unsigned i = 0, e = InputFilenames.size(); i != e; i++) {
+    std::auto_ptr<Module> Linked(
+        PerformLinking(InputFilenames[i], LibBitcode, Context));
+
+    // Failed to link with InputFilenames[i] with LibBitcode
+    if (Linked.get() == NULL)
+      break;
+
+    // Verify linked module
+    if (verifyModule(*Linked, ReturnStatusAction, &Err)) {
+      errs() << InputFilenames[i] << " linked, but does not verify as "
+                                     "correct! (" << Err << ")\n";
+      break;
+    }
+
+    if (!OptimizeModule(Linked.get()))
+      break;
+
+    // Write out the module
+    tool_output_file Out(InputFilenames[i].c_str(), Err,
+                         raw_fd_ostream::F_Binary);
+
+    if (!Err.empty()) {
+      errs() << InputFilenames[i] << " linked, but failed to write out! "
+                                     "(" << Err << ")\n";
+      break;
+    }
+
+    WriteBitcodeToFile(Linked.get(), Out);
+
+    Out.keep();
+    Linked.reset();
+
+    if (i == (InputFilenames.size() - 1))
+      // This is the last file and no error occured.
+      HasError = false;
+  }
+
+  UnloadLibraries(LibBitcode);
+
+  return HasError;
 }

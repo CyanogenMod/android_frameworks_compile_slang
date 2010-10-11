@@ -75,6 +75,20 @@ include $(CLANG_TBLGEN_RULES_MK)
 include $(LLVM_GEN_INTRINSICS_MK)
 include $(BUILD_HOST_SHARED_LIBRARY)
 
+# Host static library containing rslib.bc
+# ========================================================
+include $(CLEAR_VARS)
+
+input_data_file := frameworks/compile/slang/rslib.bc
+slangdata_output_var_name := rslib_bc
+
+LOCAL_IS_HOST_MODULE := true
+LOCAL_MODULE := librslib
+LOCAL_MODULE_TAGS := optional
+
+include $(LOCAL_PATH)/SlangData.mk
+include $(BUILD_HOST_STATIC_LIBRARY)
+
 # Executable llvm-rs-link for host
 # ========================================================
 include $(CLEAR_VARS)
@@ -83,6 +97,7 @@ include $(CLEAR_TBLGEN_VARS)
 include $(LLVM_ROOT_PATH)/llvm.mk
 
 LOCAL_MODULE := llvm-rs-link
+LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE_CLASS := EXECUTABLES
 
@@ -91,6 +106,9 @@ LOCAL_SRC_FILES :=	\
 
 LOCAL_SHARED_LIBRARIES :=	\
 	libslang
+
+LOCAL_STATIC_LIBRARIES :=	\
+	librslib
 
 LOCAL_LDLIBS := -ldl -lpthread
 
