@@ -11,6 +11,7 @@
 #   define ELEMENT_DATA_TYPE_UNSIGNED_8     RSExportPrimitiveType::DataTypeUnsigned8
 #   define ELEMENT_DATA_TYPE_UNSIGNED_16    RSExportPrimitiveType::DataTypeUnsigned16
 #   define ELEMENT_DATA_TYPE_UNSIGNED_32    RSExportPrimitiveType::DataTypeUnsigned32
+#   define ELEMENT_DATA_TYPE_UNSIGNED_64    RSExportPrimitiveType::DataTypeUnsigned64
 #   define ELEMENT_DATA_TYPE_BOOL           RSExportPrimitiveType::DataTypeBool
 
 #   define ELEMENT_DATA_TYPE_UNSIGNED_565   RSExportPrimitiveType::DataTypeUnsigned565
@@ -119,6 +120,7 @@
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_8
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_16
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_32
+#   undef ELEMENT_DATA_TYPE_UNSIGNED_64
 #   undef ELEMENT_DATA_TYPE_BOOLEAN
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_565
 #   undef ELEMENT_DATA_TYPE_UNSIGNED_5551

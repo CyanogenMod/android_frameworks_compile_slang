@@ -144,7 +144,7 @@ class RSExportPrimitiveType : public RSExportType {
     DataTypeUnsigned8,
     DataTypeUnsigned16,
     DataTypeUnsigned32,
-    DataTypeUnSigned64,
+    DataTypeUnsigned64,
 
     DataTypeBoolean,
 

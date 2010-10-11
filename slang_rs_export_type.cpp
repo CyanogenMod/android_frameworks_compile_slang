@@ -75,6 +75,8 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
             return "ushort";                                            \
           else if (type == RSExportPrimitiveType::DataTypeUnsigned32)   \
             return "uint";                                              \
+          else if (type == RSExportPrimitiveType::DataTypeUnsigned64)   \
+            return "ulong";                                             \
           else if (type == RSExportPrimitiveType::DataTypeSigned8)      \
             return "char";                                              \
           else if (type == RSExportPrimitiveType::DataTypeSigned16)     \
@@ -618,8 +620,8 @@ const llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
       return llvm::Type::getInt32Ty(C);
       break;
     }
-    case DataTypeSigned64: {
-    // case DataTypeUnsigned64:
+    case DataTypeSigned64:
+    case DataTypeUnsigned64: {
       return llvm::Type::getInt64Ty(C);
       break;
     }
@@ -674,6 +676,7 @@ const char* RSExportVectorType::VectorTypeNameStore[][3] = {
   /* 6 */ { "float2",     "float3",   "float4" },
   /* 7 */ { "double2",    "double3",  "double4" },
   /* 8 */ { "long2",      "long3",    "long4" },
+  /* 9 */ { "ulong2",     "ulong3",   "ulong4" },
 };
 
 llvm::StringRef
@@ -710,6 +713,8 @@ RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT) {
         BaseElement = VectorTypeNameStore[7];                           \
       else if (type == RSExportPrimitiveType::DataTypeSigned64) \
         BaseElement = VectorTypeNameStore[8];                           \
+      else if (type == RSExportPrimitiveType::DataTypeUnsigned64) \
+        BaseElement = VectorTypeNameStore[9];                           \
       else if (type == RSExportPrimitiveType::DataTypeBoolean) \
         BaseElement = VectorTypeNameStore[0];                          \
       break;  \

@@ -121,6 +121,7 @@ static const char *GetVectorTypeName(const RSExportVectorType *EVT) {
       break;
     }
     case RSExportPrimitiveType::DataTypeSigned64:
+    case RSExportPrimitiveType::DataTypeUnsigned64:
     case RSExportPrimitiveType::DataTypeUnsigned32: {
       BaseElement = VectorTypeJavaNameMap[3];
       break;
@@ -301,7 +302,7 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
         "U8",   // RSExportPrimitiveType::DataTypeUnsigned8
         NULL,   // RSExportPrimitiveType::DataTypeUnsigned16
         "U32",  // RSExportPrimitiveType::DataTypeUnsigned32
-        NULL,   // RSExportPrimitiveType::DataTypeUnsigned64
+        "U64",  // RSExportPrimitiveType::DataTypeUnsigned64
         "BOOLEAN",  // RSExportPrimitiveType::DataTypeBoolean
 
         NULL,   // RSExportPrimitiveType::DataTypeUnsigned565
@@ -417,7 +418,7 @@ static const char *GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
     "Element.DataType.UNSIGNED_8",  // RSExportPrimitiveType::DataTypeUnsigned8
     "Element.DataType.UNSIGNED_16", // RSExportPrimitiveType::DataTypeUnsigned16
     "Element.DataType.UNSIGNED_32", // RSExportPrimitiveType::DataTypeUnsigned32
-    NULL,                           // RSExportPrimitiveType::DataTypeUnsigned64
+    "Element.DataType.UNSIGNED_64", // RSExportPrimitiveType::DataTypeUnsigned64
     "Element.DataType.BOOLEAN",     // RSExportPrimitiveType::DataTypeBoolean
 
     // RSExportPrimitiveType::DataTypeUnsigned565
