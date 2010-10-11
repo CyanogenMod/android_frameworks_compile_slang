@@ -218,8 +218,6 @@ LOCAL_STATIC_LIBRARIES :=	\
 	librsheader-core	\
 	librsheader-math
 
-LOCAL_REQUIRED_MODULES := llvm-rs-link
-
 # For build RSCCOptions.inc from RSCCOptions.td
 intermediates := $(call local-intermediates-dir)
 LOCAL_GENERATED_SOURCES += $(intermediates)/RSCCOptions.inc
