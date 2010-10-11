@@ -205,7 +205,9 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
       }
     }
 
-    if (Opts.mOutputType != Slang::OT_Bitcode)
+    if (Opts.mOutputDep &&
+        ((Opts.mOutputType != Slang::OT_Bitcode) &&
+         (Opts.mOutputType != Slang::OT_Dependency)))
       Diags.Report(clang::diag::err_drv_argument_not_allowed_with)
           << Args->getLastArg(OPT_M_Group)->getAsString(*Args)
           << Args->getLastArg(OPT_Output_Type_Group)->getAsString(*Args);
@@ -318,6 +320,7 @@ static bool GenerateBitcodeAccessor(const char *InputFile,
 static bool ExecuteCompilation(SlangRS &Compiler,
                                const char *InputFile,
                                const char *OutputFile,
+                               const char *BCOutputFile,
                                const char *DepOutputFile,
                                const RSCCOptions &Opts) {
   std::string RealPackageName;
@@ -338,8 +341,7 @@ static bool ExecuteCompilation(SlangRS &Compiler,
     if (!Compiler.setDepOutput(DepOutputFile))
       return false;
 
-    if (Opts.mOutputType != Slang::OT_Dependency)
-      Compiler.setDepTargetBC(OutputFile);
+    Compiler.setDepTargetBC(BCOutputFile);
     Compiler.setAdditionalDepTargets(Opts.mAdditionalDepTargets);
 
     if (Compiler.generateDepFile() > 0)
@@ -412,7 +414,8 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  const char *InputFile, *OutputFile, *DepOutputFile = NULL;
+  const char *InputFile, *OutputFile, *BCOutputFile = NULL,
+             *DepOutputFile = NULL;
   llvm::OwningPtr<SlangRS> Compiler(new SlangRS(Opts.mTriple, Opts.mCPU,
                                                 Opts.mFeatures));
 
@@ -426,10 +429,17 @@ int main(int argc, const char **argv) {
       else
         DepOutputFile = DetermineOutputFile(Opts.mOutputDepDir, InputFile,
                                             Slang::OT_Dependency, SavedStrings);
+
+      if (Opts.mOutputType == Slang::OT_Bitcode)
+        BCOutputFile = OutputFile;
+      else
+        BCOutputFile = DetermineOutputFile(Opts.mOutputDepDir, InputFile,
+                                           Slang::OT_Bitcode, SavedStrings);
     }
     if (!ExecuteCompilation(*Compiler,
                             InputFile,
                             OutputFile,
+                            BCOutputFile,
                             DepOutputFile,
                             Opts)) {
       llvm::errs() << Compiler->getErrorMessage();

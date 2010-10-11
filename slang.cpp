@@ -106,6 +106,29 @@ const std::string Slang::TargetDescription =
 // bcc.cpp)
 const llvm::StringRef Slang::PragmaMetadataName = "#pragma";
 
+static inline llvm::tool_output_file *OpenOutputFile(const char *OutputFile,
+                                                     unsigned Flags,
+                                                     std::string* Error,
+                                                     clang::Diagnostic* Diag) {
+  assert((OutputFile != NULL) && (Error != NULL) && (Diag != NULL) &&
+         "Invalid parameter!");
+
+  llvm::sys::Path OutputFilePath(OutputFile);
+
+  if (SlangUtils::CreateDirectoryWithParents(OutputFilePath.getDirname(),
+                                             Error)) {
+    llvm::tool_output_file *F =
+          new llvm::tool_output_file(OutputFile, *Error, Flags);
+    if (F != NULL)
+      return F;
+  }
+
+  // Report error here.
+  Diag->Report(clang::diag::err_fe_error_opening) << OutputFile << *Error;
+
+  return NULL;
+}
+
 void Slang::GlobalInitialization() {
   if (!GlobalInitialized) {
     // We only support x86, x64 and ARM target
@@ -289,31 +312,24 @@ bool Slang::setInputSource(llvm::StringRef InputFile) {
 bool Slang::setOutput(const char *OutputFile) {
   llvm::sys::Path OutputFilePath(OutputFile);
   std::string Error;
+  llvm::tool_output_file *OS = NULL;
 
   switch (mOT) {
     case OT_Dependency:
     case OT_Assembly:
     case OT_LLVMAssembly: {
-      if (!SlangUtils::CreateDirectoryWithParents(OutputFilePath.getDirname(),
-                                                  &Error))
-        mDiagnostics->Report(clang::diag::err_fe_error_opening) << OutputFile
-            << Error;
-      mOS.reset(new llvm::tool_output_file(OutputFile, Error, 0));
+      OS = OpenOutputFile(OutputFile, 0, &Error, mDiagnostics.getPtr());
       break;
     }
     case OT_Nothing: {
-      mOS.reset();
       break;
     }
     case OT_Object:
     case OT_Bitcode: {
-      if (!SlangUtils::CreateDirectoryWithParents(OutputFilePath.getDirname(),
-                                                  &Error))
-        mDiagnostics->Report(clang::diag::err_fe_error_opening) << OutputFile
-            << Error;
-      mOS.reset(new llvm::tool_output_file(OutputFile,
-                                           Error,
-                                           llvm::raw_fd_ostream::F_Binary));
+      OS = OpenOutputFile(OutputFile,
+                          llvm::raw_fd_ostream::F_Binary,
+                          &Error,
+                          mDiagnostics.getPtr());
       break;
     }
     default: {
@@ -321,12 +337,10 @@ bool Slang::setOutput(const char *OutputFile) {
     }
   }
 
-  if (!Error.empty()) {
-    mOS.reset();
-    mDiagnostics->Report(clang::diag::err_fe_error_opening) << OutputFile
-                                                            << Error;
+  if (!Error.empty())
     return false;
-  }
+
+  mOS.reset(OS);
 
   mOutputFileName = OutputFile;
 
@@ -337,18 +351,9 @@ bool Slang::setDepOutput(const char *OutputFile) {
   llvm::sys::Path OutputFilePath(OutputFile);
   std::string Error;
 
-  if (!SlangUtils::CreateDirectoryWithParents(OutputFilePath.getDirname(),
-                                              &Error))
-    mDiagnostics->Report(clang::diag::err_fe_error_opening) << OutputFile
-        << Error;
-  mDOS.reset(new llvm::raw_fd_ostream(OutputFile, Error, 0));
-
-  if (!Error.empty()) {
-    mDOS.reset();
-    mDiagnostics->Report(clang::diag::err_fe_error_opening) << OutputFile
-                                                            << Error;
+  mDOS.reset(OpenOutputFile(OutputFile, 0, &Error, mDiagnostics.getPtr()));
+  if (!Error.empty() || (mDOS.get() == NULL))
     return false;
-  }
 
   mDepOutputFileName = OutputFile;
 
@@ -361,21 +366,21 @@ int Slang::generateDepFile() {
   if (mDOS.get() == NULL)
     return 1;
 
-  /* Initialize options for generating dependency file */
+  // Initialize options for generating dependency file
   clang::DependencyOutputOptions DepOpts;
   DepOpts.IncludeSystemHeaders = 1;
   DepOpts.OutputFile = mDepOutputFileName;
   DepOpts.Targets = mAdditionalDepTargets;
   DepOpts.Targets.push_back(mDepTargetBCFileName);
 
-  /* Per-compilation needed initialization */
+  // Per-compilation needed initialization
   createPreprocessor();
   AttachDependencyFileGen(*mPP.get(), DepOpts);
 
-  /* Inform the diagnostic client we are processing a source file */
+  // Inform the diagnostic client we are processing a source file
   mDiagClient->BeginSourceFile(LangOpts, mPP.get());
 
-  /* Go through the source file (no operations necessary) */
+  // Go through the source file (no operations necessary)
   clang::Token Tok;
   mPP->EnterMainSourceFile();
   do {
@@ -384,8 +389,13 @@ int Slang::generateDepFile() {
 
   mPP->EndSourceFile();
 
-  /* Clean up after compilation */
+  // Declare success if no error
+  if (mDiagnostics->getNumErrors() == 0)
+    mDOS->keep();
+
+  // Clean up after compilation
   mPP.reset();
+  mDOS.reset();
 
   return mDiagnostics->getNumErrors();
 }
@@ -400,7 +410,7 @@ int Slang::compile() {
   createPreprocessor();
   createASTContext();
 
-  mBackend.reset(createBackend(CodeGenOpts, mOS.take(), mOT));
+  mBackend.reset(createBackend(CodeGenOpts, mOS.get(), mOT));
 
   // Inform the diagnostic client we are processing a source file
   mDiagClient->BeginSourceFile(LangOpts, mPP.get());
@@ -408,13 +418,18 @@ int Slang::compile() {
   // The core of the slang compiler
   ParseAST(*mPP, mBackend.get(), *mASTContext);
 
+  // Inform the diagnostic client we are done with previous source file
+  mDiagClient->EndSourceFile();
+
+  // Declare success if no error
+  if (mDiagnostics->getNumErrors() == 0)
+    mOS->keep();
+
   // The compilation ended, clear
   mBackend.reset();
   mASTContext.reset();
   mPP.reset();
-
-  // Inform the diagnostic client we are done with previous source file
-  mDiagClient->EndSourceFile();
+  mOS.reset();
 
   return mDiagnostics->getNumErrors();
 }

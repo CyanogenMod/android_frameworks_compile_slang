@@ -15,7 +15,7 @@
 #include "slang_diagnostic_buffer.h"
 
 namespace llvm {
-  class raw_ostream;
+  class tool_output_file;
 }
 
 namespace clang {
@@ -100,9 +100,9 @@ class Slang {
   OutputType mOT;
 
   // Output stream
-  llvm::OwningPtr<llvm::raw_ostream> mOS;
+  llvm::OwningPtr<llvm::tool_output_file> mOS;
   // Dependency output stream
-  llvm::OwningPtr<llvm::raw_ostream> mDOS;
+  llvm::OwningPtr<llvm::tool_output_file> mDOS;
 
   std::vector<std::string> mIncludePaths;
 
