@@ -432,9 +432,8 @@ int main(int argc, const char **argv) {
                             OutputFile,
                             DepOutputFile,
                             Opts)) {
-      llvm::errs() << "Failed to compile '" << InputFile << "' ("
-                   << Compiler->getErrorMessage() << ")";
-      break;
+      llvm::errs() << Compiler->getErrorMessage();
+      return 1;
     }
   }
 
