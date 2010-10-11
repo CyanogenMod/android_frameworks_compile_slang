@@ -212,7 +212,8 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
 
     Opts.mAllowRSPrefix = Args->hasArg(OPT_allow_rs_prefix);
 
-    Opts.mTriple = Args->getLastArgValue(OPT_triple);
+    Opts.mTriple = Args->getLastArgValue(OPT_triple,
+                                         "armv7-none-linux-gnueabi");
     Opts.mCPU = Args->getLastArgValue(OPT_target_cpu);
     Opts.mFeatures = Args->getAllArgValues(OPT_target_feature);
 
