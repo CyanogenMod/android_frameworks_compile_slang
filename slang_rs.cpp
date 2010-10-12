@@ -65,7 +65,7 @@ bool SlangRS::generateBitcodeAccessor(const std::string &OutputPathBase,
   return RSSlangReflectUtils::GenerateBitCodeAccessor(BCAccessorContext);
 }
 
-bool SlangRS::checkODR() {
+bool SlangRS::checkODR(const char *CurInputFile) {
   for (RSContext::ExportableList::iterator I = mRSContext->exportable_begin(),
           E = mRSContext->exportable_end();
        I != E;
@@ -139,7 +139,7 @@ bool SlangRS::checkODR() {
       llvm::StringMapEntry<ReflectedDefinitionTy> *ME =
           llvm::StringMapEntry<ReflectedDefinitionTy>::Create(RDKey.begin(),
                                                               RDKey.end());
-      ME->setValue(std::make_pair(ERT, getInputFileName().c_str()));
+      ME->setValue(std::make_pair(ERT, CurInputFile));
 
       if (!ReflectedDefinitions.insert(ME))
         delete ME;
@@ -300,7 +300,7 @@ bool SlangRS::compile(
           return false;
     }
 
-    if (!checkODR())
+    if (!checkODR(InputFile))
       return false;
 
     IOFileIter++;

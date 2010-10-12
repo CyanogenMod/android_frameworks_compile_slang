@@ -60,7 +60,9 @@ class SlangRS : public Slang {
   bool generateBitcodeAccessor(const std::string &OutputPathBase,
                                const std::string &PackageName);
 
-  bool checkODR();
+  // CurInputFile is the pointer to a char array holding the input filename
+  // and is valid before compile() ends.
+  bool checkODR(const char *CurInputFile);
 
  protected:
   virtual void initDiagnostic();
