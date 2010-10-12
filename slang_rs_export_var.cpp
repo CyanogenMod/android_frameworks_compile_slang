@@ -29,7 +29,6 @@ RSExportVar::RSExportVar(RSContext *Context,
                          const clang::VarDecl *VD,
                          const RSExportType *ET)
     : RSExportable(Context, RSExportable::EX_VAR),
-      mContext(Context),
       mName(VD->getName().data(), VD->getName().size()),
       mET(ET),
       mIsConst(false) {

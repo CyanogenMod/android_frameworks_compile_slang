@@ -37,7 +37,6 @@ namespace slang {
 class RSExportVar : public RSExportable {
   friend class RSContext;
  private:
-  RSContext *mContext;
   std::string mName;
   const RSExportType *mET;
   bool mIsConst;
@@ -51,7 +50,6 @@ class RSExportVar : public RSExportable {
  public:
   inline const std::string &getName() const { return mName; }
   inline const RSExportType *getType() const { return mET; }
-  inline RSContext *getRSContext() const { return mContext; }
   inline bool isConst() const { return mIsConst; }
 
   inline const clang::APValue &getInit() const { return mInit.Val; }

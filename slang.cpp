@@ -185,6 +185,7 @@ void Slang::createDiagnostic() {
   mDiagClient = new DiagnosticBuffer();
   // This takes the ownership of mDiagClient.
   mDiagnostics->setClient(mDiagClient);
+  initDiagnostic();
   return;
 }
 
@@ -272,11 +273,15 @@ clang::ASTConsumer
                      OT);
 }
 
-Slang::Slang(const std::string &Triple, const std::string &CPU,
-             const std::vector<std::string> &Features)
-    : mDiagClient(NULL),
-      mOT(OT_Default) {
+Slang::Slang() : mInitialized(false), mDiagClient(NULL), mOT(OT_Default) {
   GlobalInitialization();
+  return;
+}
+
+void Slang::init(const std::string &Triple, const std::string &CPU,
+                 const std::vector<std::string> &Features) {
+  if (mInitialized)
+    return;
 
   createDiagnostic();
   llvm::install_fatal_error_handler(LLVMErrorHandler, mDiagnostics.getPtr());
@@ -284,6 +289,8 @@ Slang::Slang(const std::string &Triple, const std::string &CPU,
   createTarget(Triple, CPU, Features);
   createFileManager();
   createSourceManager();
+
+  mInitialized = true;
 
   return;
 }

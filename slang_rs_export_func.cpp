@@ -112,7 +112,7 @@ RSExportFunc::checkParameterPacketType(const llvm::StructType *ParamTy) const {
     return false;
 
   const llvm::StructLayout *ParamTySL =
-      mContext->getTargetData()->getStructLayout(ParamTy);
+      getRSContext()->getTargetData()->getStructLayout(ParamTy);
 
   unsigned Index = 0;
   for (RSExportRecordType::const_field_iterator FI = ERT->fields_begin(),
@@ -135,7 +135,7 @@ RSExportFunc::checkParameterPacketType(const llvm::StructType *ParamTy) const {
 
     // Check size
     size_t T1Size = RSExportType::GetTypeAllocSize(F->getType());
-    size_t T2Size = mContext->getTargetData()->getTypeAllocSize(T2);
+    size_t T2Size = getRSContext()->getTargetData()->getTypeAllocSize(T2);
 
     if (T1Size != T2Size)
       return false;

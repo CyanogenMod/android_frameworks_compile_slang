@@ -133,6 +133,13 @@ class RSContext {
     if (E != NULL)
       mExportables.push_back(E);
   }
+  typedef ExportableList::iterator exportable_iterator;
+  exportable_iterator exportable_begin() {
+    return mExportables.begin();
+  }
+  exportable_iterator exportable_end() {
+    return mExportables.end();
+  }
 
   typedef ExportVarList::const_iterator const_export_var_iterator;
   const_export_var_iterator export_vars_begin() const {

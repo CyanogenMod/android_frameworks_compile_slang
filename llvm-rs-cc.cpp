@@ -365,8 +365,9 @@ int main(int argc, const char **argv) {
   std::list<std::pair<const char*, const char*> > IOFiles;
   std::list<std::pair<const char*, const char*> > DepFiles;
 
-  llvm::OwningPtr<SlangRS> Compiler(new SlangRS(Opts.mTriple, Opts.mCPU,
-                                                Opts.mFeatures));
+  llvm::OwningPtr<SlangRS> Compiler(new SlangRS());
+
+  Compiler->init(Opts.mTriple, Opts.mCPU, Opts.mFeatures);
 
   for (int i = 0, e = Inputs.size(); i != e; i++) {
     const char *InputFile = Inputs[i];

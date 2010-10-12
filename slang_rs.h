@@ -23,10 +23,13 @@
 #include <vector>
 #include <string>
 
+#include "llvm/ADT/StringMap.h"
+
 #include "slang_rs_reflect_utils.h"
 
 namespace slang {
   class RSContext;
+  class RSExportRecordType;
 
 class SlangRS : public Slang {
  private:
@@ -35,6 +38,20 @@ class SlangRS : public Slang {
 
   bool mAllowRSPrefix;
 
+  // Custom diagnostic identifiers
+  unsigned mDiagErrorInvalidOutputDepParameter;
+  unsigned mDiagErrorODR;
+
+  // FIXME: Should be std::list<RSExportable *> here. But currently we only
+  //        check ODR on record type.
+  //
+  // ReflectedDefinitions maps record type name to a pair:
+  //  <its RSExportRecordType instance,
+  //   the first file contains this record type definition>
+  typedef std::pair<RSExportRecordType*, const char*> ReflectedDefinitionTy;
+  typedef llvm::StringMap<ReflectedDefinitionTy> ReflectedDefinitionListTy;
+  ReflectedDefinitionListTy ReflectedDefinitions;
+
   // The package name that's really applied will be filled in RealPackageName.
   bool reflectToJava(const std::string &OutputPathBase,
                      const std::string &OutputPackageName,
@@ -42,6 +59,8 @@ class SlangRS : public Slang {
 
   bool generateBitcodeAccessor(const std::string &OutputPathBase,
                                const std::string &PackageName);
+
+  bool checkODR();
 
  protected:
   virtual void initDiagnostic();
@@ -57,8 +76,7 @@ class SlangRS : public Slang {
  public:
   static bool IsRSHeaderFile(const char *File);
 
-  SlangRS(const std::string &Triple, const std::string &CPU,
-          const std::vector<std::string> &Features);
+  SlangRS();
 
   // Compile bunch of RS files given in the llvm-rs-cc arguments. Return true if
   // all given input files are successfully compiled without errors.
@@ -69,7 +87,7 @@ class SlangRS : public Slang {
   //             target>. If @OutputDep is true, this parameter must be given
   //             with the same number of pairs given in @IOFiles.
   //
-  // @IncludePaths - User-defined include path.
+  // @IncludePaths - User-defined include paths.
   //
   // @AdditionalDepTargets - User-defined files added to the dependencies.
   //
@@ -79,7 +97,7 @@ class SlangRS : public Slang {
   //
   // @AllowRSPrefix - true to allow user-defined function prefixed with 'rs'.
   //
-  // @OutputDep - true if output dependecies file.
+  // @OutputDep - true if output dependecies file for each input file.
   //
   // @JavaReflectionPathBase - The path base for storing reflection files.
   //
@@ -95,6 +113,8 @@ class SlangRS : public Slang {
                bool AllowRSPrefix, bool OutputDep,
                const std::string &JavaReflectionPathBase,
                const std::string &JavaReflectionPackageName);
+
+  virtual void reset();
 
   virtual ~SlangRS();
 };

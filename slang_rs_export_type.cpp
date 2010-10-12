@@ -29,6 +29,10 @@
 #include "slang_rs_context.h"
 #include "slang_rs_export_element.h"
 
+#define CHECK_PARENT_EQUALITY(ParentClass, E) \
+  if (!ParentClass::equals(E))                \
+    return false;
+
 using namespace slang;
 
 /****************************** RSExportType ******************************/
@@ -413,7 +417,6 @@ RSExportType::RSExportType(RSContext *Context,
                            ExportClass Class,
                            const llvm::StringRef &Name)
     : RSExportable(Context, RSExportable::EX_TYPE),
-      mContext(Context),
       mClass(Class),
       // Make a copy on Name since memory stored @Name is either allocated in
       // ASTContext or allocated in GetTypeName which will be destroyed later.
@@ -426,6 +429,18 @@ RSExportType::RSExportType(RSContext *Context,
     // TODO(zonr): Need to check whether the insertion is successful or not.
     Context->insertExportType(llvm::StringRef(Name), this);
   return;
+}
+
+void RSExportType::keep() {
+  // Invalidate converted LLVM type.
+  mLLVMType = NULL;
+  RSExportable::keep();
+  return;
+}
+
+bool RSExportType::equals(const RSExportable *E) const {
+  CHECK_PARENT_EQUALITY(RSExportable, E);
+  return (static_cast<const RSExportType*>(E)->getClass() == getClass());
 }
 
 /************************** RSExportPrimitiveType **************************/
@@ -649,6 +664,11 @@ const llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
   return NULL;
 }
 
+bool RSExportPrimitiveType::equals(const RSExportable *E) const {
+  CHECK_PARENT_EQUALITY(RSExportType, E);
+  return (static_cast<const RSExportPrimitiveType*>(E)->getType() == getType());
+}
+
 /**************************** RSExportPointerType ****************************/
 
 const clang::Type *RSExportPointerType::IntegerType = NULL;
@@ -679,6 +699,17 @@ RSExportPointerType
 const llvm::Type *RSExportPointerType::convertToLLVMType() const {
   const llvm::Type *PointeeType = mPointeeType->getLLVMType();
   return llvm::PointerType::getUnqual(PointeeType);
+}
+
+void RSExportPointerType::keep() {
+  const_cast<RSExportType*>(mPointeeType)->keep();
+  RSExportType::keep();
+}
+
+bool RSExportPointerType::equals(const RSExportable *E) const {
+  CHECK_PARENT_EQUALITY(RSExportType, E);
+  return (static_cast<const RSExportPointerType*>(E)
+              ->getPointeeType()->equals(getPointeeType()));
 }
 
 /***************************** RSExportVectorType *****************************/
@@ -778,6 +809,12 @@ const llvm::Type *RSExportVectorType::convertToLLVMType() const {
   return llvm::VectorType::get(ElementType, getNumElement());
 }
 
+bool RSExportVectorType::equals(const RSExportable *E) const {
+  CHECK_PARENT_EQUALITY(RSExportPrimitiveType, E);
+  return (static_cast<const RSExportVectorType*>(E)->getNumElement()
+              == getNumElement());
+}
+
 /***************************** RSExportMatrixType *****************************/
 RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
                                                const clang::RecordType *RT,
@@ -849,6 +886,11 @@ const llvm::Type *RSExportMatrixType::convertToLLVMType() const {
   return llvm::StructType::get(C, X, NULL);
 }
 
+bool RSExportMatrixType::equals(const RSExportable *E) const {
+  CHECK_PARENT_EQUALITY(RSExportType, E);
+  return (static_cast<const RSExportMatrixType*>(E)->getDim() == getDim());
+}
+
 /************************* RSExportConstantArrayType *************************/
 RSExportConstantArrayType
 *RSExportConstantArrayType::Create(RSContext *Context,
@@ -876,6 +918,18 @@ RSExportConstantArrayType
 
 const llvm::Type *RSExportConstantArrayType::convertToLLVMType() const {
   return llvm::ArrayType::get(mElementType->getLLVMType(), getSize());
+}
+
+void RSExportConstantArrayType::keep() {
+  const_cast<RSExportType*>(mElementType)->keep();
+  RSExportType::keep();
+  return;
+}
+
+bool RSExportConstantArrayType::equals(const RSExportable *E) const {
+  CHECK_PARENT_EQUALITY(RSExportType, E);
+  return ((static_cast<const RSExportConstantArrayType*>(E)
+              ->getSize() == getSize()) && (mElementType->equals(E)));
 }
 
 /**************************** RSExportRecordType ****************************/
@@ -965,4 +1019,35 @@ const llvm::Type *RSExportRecordType::convertToLLVMType() const {
   return llvm::StructType::get(getRSContext()->getLLVMContext(),
                                FieldTypes,
                                mIsPacked);
+}
+
+void RSExportRecordType::keep() {
+  for (std::list<const Field*>::iterator I = mFields.begin(),
+          E = mFields.end();
+       I != E;
+       I++) {
+    const_cast<RSExportType*>((*I)->getType())->keep();
+  }
+  RSExportType::keep();
+  return;
+}
+
+bool RSExportRecordType::equals(const RSExportable *E) const {
+  CHECK_PARENT_EQUALITY(RSExportType, E);
+
+  const RSExportRecordType *ERT = static_cast<const RSExportRecordType*>(E);
+
+  if (ERT->getFields().size() != getFields().size())
+    return false;
+
+  const_field_iterator AI = fields_begin(), BI = ERT->fields_begin();
+
+  for (unsigned i = 0, e = getFields().size(); i != e; i++) {
+    if (!(*AI)->getType()->equals((*BI)->getType()))
+      return false;
+    AI++;
+    BI++;
+  }
+
+  return true;
 }

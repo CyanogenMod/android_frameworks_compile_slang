@@ -282,6 +282,7 @@ RSContext::~RSContext() {
           E = mExportables.end();
        I != E;
        I++) {
-    delete *I;
+    if (!(*I)->isKeep())
+      delete *I;
   }
 }

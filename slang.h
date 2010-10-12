@@ -71,6 +71,8 @@ class Slang {
   } OutputType;
 
  private:
+  bool mInitialized;
+
   // The diagnostics engine instance (for status reporting during compilation)
   llvm::IntrusiveRefCntPtr<clang::Diagnostic> mDiagnostics;
   // The clients of diagnostics engine. The ownership is taken by the
@@ -151,8 +153,10 @@ class Slang {
 
   static void GlobalInitialization();
 
-  Slang(const std::string &Triple, const std::string &CPU,
-        const std::vector<std::string> &Features);
+  Slang();
+
+  void init(const std::string &Triple, const std::string &CPU,
+            const std::vector<std::string> &Features);
 
   bool setInputSource(llvm::StringRef InputFile, const char *Text,
                       size_t TextLength);

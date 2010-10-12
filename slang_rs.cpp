@@ -24,6 +24,7 @@
 
 #include "slang_rs_backend.h"
 #include "slang_rs_context.h"
+#include "slang_rs_export_type.h"
 
 using namespace slang;
 
@@ -64,6 +65,92 @@ bool SlangRS::generateBitcodeAccessor(const std::string &OutputPathBase,
   return RSSlangReflectUtils::GenerateBitCodeAccessor(BCAccessorContext);
 }
 
+bool SlangRS::checkODR() {
+  for (RSContext::ExportableList::iterator I = mRSContext->exportable_begin(),
+          E = mRSContext->exportable_end();
+       I != E;
+       I++) {
+    RSExportable *E = *I;
+    if (E->getKind() != RSExportable::EX_TYPE)
+      continue;
+
+    RSExportType *ET = static_cast<RSExportType *>(E);
+    if (ET->getClass() != RSExportType::ExportClassRecord)
+      continue;
+
+    RSExportRecordType *ERT = static_cast<RSExportRecordType *>(ET);
+
+    // Artificial record types (create by us not by user in the source) always
+    // conforms the ODR.
+    if (ERT->isArtificial())
+      continue;
+
+    // Key to lookup ERT in ReflectedDefinitions
+    llvm::StringRef RDKey(ERT->getName());
+    ReflectedDefinitionListTy::const_iterator RD =
+        ReflectedDefinitions.find(RDKey);
+
+    if (RD != ReflectedDefinitions.end()) {
+      const RSExportRecordType *Reflected = RD->getValue().first;
+      // There's a record (struct) with the same name reflected before. Enforce
+      // ODR checking - the Reflected must hold *exactly* the same "definition"
+      // as the one defined previously. We say two record types A and B have the
+      // same definition iff:
+      //
+      //  struct A {              struct B {
+      //    Type(a1) a1,            Type(b1) b1,
+      //    Type(a2) a2,            Type(b1) b2,
+      //    ...                     ...
+      //    Type(aN) aN             Type(b3) b3,
+      //  };                      }
+      //  Cond. #1. They have same number of fields, i.e., N = M;
+      //  Cond. #2. for (i := 1 to N)
+      //              Type(ai) = Type(bi) must hold;
+      //  Cond. #3. for (i := 1 to N)
+      //              Name(ai) = Name(bi) must hold;
+      //
+      // where,
+      //  Type(F) = the type of field F and
+      //  Name(F) = the field name.
+
+      bool PassODR = false;
+      // Cond. #1 and Cond. #2
+      if (Reflected->equals(ERT)) {
+        // Cond #3.
+        RSExportRecordType::const_field_iterator AI = Reflected->fields_begin(),
+                                                 BI = ERT->fields_begin();
+
+        for (unsigned i = 0, e = Reflected->getFields().size(); i != e; i++) {
+          if ((*AI)->getName() != (*BI)->getName())
+            break;
+          AI++;
+          BI++;
+        }
+        PassODR = (AI == (Reflected->fields_end()));
+      }
+
+      if (!PassODR) {
+        getDiagnostics().Report(mDiagErrorODR) << Reflected->getName()
+                                               << getInputFileName()
+                                               << RD->getValue().second;
+        return false;
+      }
+    } else {
+      llvm::StringMapEntry<ReflectedDefinitionTy> *ME =
+          llvm::StringMapEntry<ReflectedDefinitionTy>::Create(RDKey.begin(),
+                                                              RDKey.end());
+      ME->setValue(std::make_pair(ERT, getInputFileName().c_str()));
+
+      if (!ReflectedDefinitions.insert(ME))
+        delete ME;
+
+      // Take the ownership of ERT such that it won't be freed in ~RSContext().
+      ERT->keep();
+    }
+
+  }
+  return true;
+}
 
 void SlangRS::initDiagnostic() {
   clang::Diagnostic &Diag = getDiagnostics();
@@ -75,6 +162,16 @@ void SlangRS::initDiagnostic() {
   Diag.setDiagnosticMapping(
       clang::diag::ext_typecheck_convert_discards_qualifiers,
       clang::diag::MAP_ERROR);
+
+  mDiagErrorInvalidOutputDepParameter =
+      Diag.getCustomDiagID(clang::Diagnostic::Error,
+                           "invalid parameter for output dependencies files.");
+
+  mDiagErrorODR =
+      Diag.getCustomDiagID(clang::Diagnostic::Error,
+                           "type '%0' in different translation unit (%1 v.s. "
+                           "%2) has incompatible type definition");
+
   return;
 }
 
@@ -126,11 +223,7 @@ ENUM_RS_HEADER()
   return false;
 }
 
-SlangRS::SlangRS(const std::string &Triple, const std::string &CPU,
-                 const std::vector<std::string> &Features)
-    : Slang(Triple, CPU, Features),
-      mRSContext(NULL),
-      mAllowRSPrefix(false) {
+SlangRS::SlangRS() : Slang(), mRSContext(NULL), mAllowRSPrefix(false) {
   return;
 }
 
@@ -147,8 +240,7 @@ bool SlangRS::compile(
     return true;
 
   if (OutputDep && (DepFiles.size() != IOFiles.size())) {
-    fprintf(stderr, "SlangRS::compile() : Invalid parameter for output "
-                    "dependencies files.\n");
+    getDiagnostics().Report(mDiagErrorInvalidOutputDepParameter);
     return false;
   }
 
@@ -208,13 +300,29 @@ bool SlangRS::compile(
           return false;
     }
 
+    if (!checkODR())
+      return false;
+
     IOFileIter++;
   }
 
   return true;
 }
 
+void SlangRS::reset() {
+  delete mRSContext;
+  mRSContext = NULL;
+  Slang::reset();
+  return;
+}
+
 SlangRS::~SlangRS() {
   delete mRSContext;
+  for (ReflectedDefinitionListTy::iterator I = ReflectedDefinitions.begin(),
+          E = ReflectedDefinitions.end();
+       I != E;
+       I++) {
+    delete I->getValue().first;
+  }
   return;
 }

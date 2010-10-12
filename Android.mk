@@ -202,6 +202,7 @@ LOCAL_SRC_FILES :=	\
 	slang_rs_context.cpp	\
 	slang_rs_pragma_handler.cpp	\
 	slang_rs_backend.cpp	\
+	slang_rs_exportable.cpp	\
 	slang_rs_export_type.cpp	\
 	slang_rs_export_element.cpp	\
 	slang_rs_export_var.cpp	\

@@ -41,13 +41,11 @@ class RSExportFunc : public RSExportable {
   friend class RSContext;
 
  private:
-  RSContext *mContext;
   std::string mName;
   RSExportRecordType *mParamPacketType;
 
   RSExportFunc(RSContext *Context, const llvm::StringRef &Name)
     : RSExportable(Context, RSExportable::EX_FUNC),
-      mContext(Context),
       mName(Name.data(), Name.size()),
       mParamPacketType(NULL) {
     return;
@@ -71,7 +69,6 @@ class RSExportFunc : public RSExportable {
   }
 
   inline const std::string &getName() const { return mName; }
-  inline RSContext *getRSContext() const { return mContext; }
 
   inline bool hasParam() const
     { return (mParamPacketType && !mParamPacketType->getFields().empty()); }

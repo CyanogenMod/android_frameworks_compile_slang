@@ -71,7 +71,6 @@ class RSExportType : public RSExportable {
   } ExportClass;
 
  private:
-  RSContext *mContext;
   ExportClass mClass;
   std::string mName;
 
@@ -137,8 +136,10 @@ class RSExportType : public RSExportable {
   static size_t GetTypeAllocSize(const RSExportType *ET);
   static unsigned char GetTypeAlignment(const RSExportType *ET);
 
-  const std::string &getName() const { return mName; }
-  inline RSContext *getRSContext() const { return mContext; }
+  inline const std::string &getName() const { return mName; }
+
+  virtual void keep();
+  virtual bool equals(const RSExportable *E) const;
 };  // RSExportType
 
 // Primitive types
@@ -261,6 +262,8 @@ class RSExportPrimitiveType : public RSExportType {
   inline bool isRSObjectType() const {
     return ((mType >= DataTypeRSElement) && (mType < DataTypeMax));
   }
+
+  virtual bool equals(const RSExportable *E) const;
 };  // RSExportPrimitiveType
 
 
@@ -288,7 +291,11 @@ class RSExportPointerType : public RSExportType {
  public:
   static const clang::Type *IntegerType;
 
+  virtual void keep();
+
   inline const RSExportType *getPointeeType() const { return mPointeeType; }
+
+  virtual bool equals(const RSExportable *E) const;
 };  // RSExportPointerType
 
 
@@ -325,6 +332,8 @@ class RSExportVectorType : public RSExportPrimitiveType {
   static llvm::StringRef GetTypeName(const clang::ExtVectorType *EVT);
 
   inline unsigned getNumElement() const { return mNumElement; }
+
+  virtual bool equals(const RSExportable *E) const;
 };
 
 // Only *square* *float* matrix is supported by now.
@@ -359,6 +368,8 @@ class RSExportMatrixType : public RSExportType {
                                     unsigned Dim);
 
   inline unsigned getDim() const { return mDim; }
+
+  virtual bool equals(const RSExportable *E) const;
 };
 
 class RSExportConstantArrayType : public RSExportType {
@@ -387,6 +398,9 @@ class RSExportConstantArrayType : public RSExportType {
  public:
   inline unsigned getSize() const { return mSize; }
   inline const RSExportType *getElementType() const { return mElementType; }
+
+  virtual void keep();
+  virtual bool equals(const RSExportable *E) const;
 };
 
 class RSExportRecordType : public RSExportType {
@@ -464,6 +478,9 @@ class RSExportRecordType : public RSExportType {
   inline bool isPacked() const { return mIsPacked; }
   inline bool isArtificial() const { return mIsArtificial; }
   inline size_t getAllocSize() const { return mAllocSize; }
+
+  virtual void keep();
+  virtual bool equals(const RSExportable *E) const;
 
   ~RSExportRecordType() {
     for (std::list<const Field*>::iterator I = mFields.begin(),
