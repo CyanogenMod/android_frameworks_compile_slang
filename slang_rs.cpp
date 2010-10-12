@@ -18,6 +18,8 @@
 
 #include <cstring>
 
+#include "clang/Frontend/FrontendDiagnostic.h"
+
 #include "clang/Sema/SemaDiagnostic.h"
 
 #include "slang_rs_backend.h"
@@ -39,12 +41,37 @@ using namespace slang;
 ENUM_RS_HEADER()
 #undef RS_HEADER_ENTRY
 
+bool SlangRS::reflectToJava(const std::string &OutputPathBase,
+                            const std::string &OutputPackageName,
+                            std::string *RealPackageName) {
+  return mRSContext->reflectToJava(OutputPathBase,
+                                   OutputPackageName,
+                                   getInputFileName(),
+                                   getOutputFileName(),
+                                   RealPackageName);
+}
+
+bool SlangRS::generateBitcodeAccessor(const std::string &OutputPathBase,
+                                      const std::string &PackageName) {
+  RSSlangReflectUtils::BitCodeAccessorContext BCAccessorContext;
+
+  BCAccessorContext.rsFileName = getInputFileName().c_str();
+  BCAccessorContext.bcFileName = getOutputFileName().c_str();
+  BCAccessorContext.reflectPath = OutputPathBase.c_str();
+  BCAccessorContext.packageName = PackageName.c_str();
+  BCAccessorContext.bcStorage = BCST_JAVA_CODE;   // Must be BCST_JAVA_CODE
+
+  return RSSlangReflectUtils::GenerateBitCodeAccessor(BCAccessorContext);
+}
+
+
 void SlangRS::initDiagnostic() {
   clang::Diagnostic &Diag = getDiagnostics();
-  if (!Diag.setDiagnosticGroupMapping(
-        "implicit-function-declaration", clang::diag::MAP_ERROR))
-    assert(false && "Unable to find option group "
-        "implicit-function-declaration");
+  if (Diag.setDiagnosticGroupMapping("implicit-function-declaration",
+                                     clang::diag::MAP_ERROR))
+    Diag.Report(clang::diag::warn_unknown_warning_option)
+        << "implicit-function-declaration";
+
   Diag.setDiagnosticMapping(
       clang::diag::ext_typecheck_convert_discards_qualifiers,
       clang::diag::MAP_ERROR);
@@ -107,24 +134,84 @@ SlangRS::SlangRS(const std::string &Triple, const std::string &CPU,
   return;
 }
 
-bool SlangRS::reflectToJava(const std::string &OutputPathBase,
-                            const std::string &OutputPackageName,
-                            std::string *RealPackageName) {
-  if (mRSContext)
-    return mRSContext->reflectToJava(OutputPathBase,
-                                     OutputPackageName,
-                                     getInputFileName(),
-                                     getOutputFileName(),
-                                     RealPackageName);
-  else
-    return false;
-}
+bool SlangRS::compile(
+    const std::list<std::pair<const char*, const char*> > &IOFiles,
+    const std::list<std::pair<const char*, const char*> > &DepFiles,
+    const std::vector<std::string> &IncludePaths,
+    const std::vector<std::string> &AdditionalDepTargets,
+    Slang::OutputType OutputType, BitCodeStorageType BitcodeStorage,
+    bool AllowRSPrefix, bool OutputDep,
+    const std::string &JavaReflectionPathBase,
+    const std::string &JavaReflectionPackageName) {
+  if (IOFiles.empty())
+    return true;
 
-void SlangRS::reset() {
-  Slang::reset();
-  delete mRSContext;
-  mRSContext = NULL;
-  return;
+  if (OutputDep && (DepFiles.size() != IOFiles.size())) {
+    fprintf(stderr, "SlangRS::compile() : Invalid parameter for output "
+                    "dependencies files.\n");
+    return false;
+  }
+
+  std::string RealPackageName;
+
+  const char *InputFile, *OutputFile, *BCOutputFile, *DepOutputFile;
+  std::list<std::pair<const char*, const char*> >::const_iterator
+      IOFileIter = IOFiles.begin(), DepFileIter = DepFiles.begin();
+
+  setIncludePaths(IncludePaths);
+  setOutputType(OutputType);
+  if (OutputDep)
+    setAdditionalDepTargets(AdditionalDepTargets);
+
+  mAllowRSPrefix = AllowRSPrefix;
+
+  for (unsigned i = 0, e = IOFiles.size(); i != e; i++) {
+    InputFile = IOFileIter->first;
+    OutputFile = IOFileIter->second;
+
+    reset();
+
+    if (!setInputSource(InputFile))
+      return false;
+
+    if (!setOutput(OutputFile))
+      return false;
+
+    if (OutputDep) {
+      BCOutputFile = DepFileIter->first;
+      DepOutputFile = DepFileIter->second;
+
+      setDepTargetBC(BCOutputFile);
+
+      if (!setDepOutput(DepOutputFile))
+        return false;
+
+      if (generateDepFile() > 0)
+        return false;
+
+      DepFileIter++;
+    }
+
+    if (Slang::compile() > 0)
+      return false;
+
+    if (OutputType != Slang::OT_Dependency) {
+      if (!reflectToJava(JavaReflectionPathBase,
+                         JavaReflectionPackageName,
+                         &RealPackageName))
+        return false;
+
+      if ((OutputType == Slang::OT_Bitcode) &&
+          (BitcodeStorage == BCST_JAVA_CODE) &&
+          !generateBitcodeAccessor(JavaReflectionPathBase,
+                                     RealPackageName.c_str()))
+          return false;
+    }
+
+    IOFileIter++;
+  }
+
+  return true;
 }
 
 SlangRS::~SlangRS() {

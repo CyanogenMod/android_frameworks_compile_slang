@@ -314,75 +314,6 @@ static const char *DetermineOutputFile(const std::string &OutputDir,
   return SaveStringInSet(SavedStrings, OutputFile);
 }
 
-static bool GenerateBitcodeAccessor(const char *InputFile,
-                                    const char *OutputFile,
-                                    const char *PackageName,
-                                    const RSCCOptions &Opts) {
-  if ((Opts.mOutputType != Slang::OT_Bitcode) ||
-      (Opts.mBitcodeStorage != BCST_JAVA_CODE))
-    return true;
-
-  RSSlangReflectUtils::BitCodeAccessorContext BCAccessorContext;
-  BCAccessorContext.rsFileName = InputFile;
-  BCAccessorContext.bcFileName = OutputFile;
-  BCAccessorContext.reflectPath = Opts.mJavaReflectionPathBase.c_str();
-  BCAccessorContext.packageName = PackageName;
-  BCAccessorContext.bcStorage = Opts.mBitcodeStorage;
-
-  return RSSlangReflectUtils::GenerateBitCodeAccessor(BCAccessorContext);
-}
-
-// ExecuteCompilation -
-static bool ExecuteCompilation(SlangRS &Compiler,
-                               const char *InputFile,
-                               const char *OutputFile,
-                               const char *BCOutputFile,
-                               const char *DepOutputFile,
-                               const RSCCOptions &Opts) {
-  std::string RealPackageName;
-
-  Compiler.reset();
-
-  Compiler.setIncludePaths(Opts.mIncludePaths);
-  Compiler.setOutputType(Opts.mOutputType);
-  Compiler.allowRSPrefix(Opts.mAllowRSPrefix);
-
-  if (!Compiler.setInputSource(InputFile))
-    return false;
-
-  if (!Compiler.setOutput(OutputFile))
-    return false;
-
-  if (Opts.mOutputDep) {
-    if (!Compiler.setDepOutput(DepOutputFile))
-      return false;
-
-    Compiler.setDepTargetBC(BCOutputFile);
-    Compiler.setAdditionalDepTargets(Opts.mAdditionalDepTargets);
-
-    if (Compiler.generateDepFile() > 0)
-      return false;
-  }
-
-  if (Compiler.compile() > 0)
-    return false;
-
-  if (Opts.mOutputType != Slang::OT_Dependency) {
-    if (!Compiler.reflectToJava(Opts.mJavaReflectionPathBase,
-                                Opts.mJavaReflectionPackageName,
-                                &RealPackageName))
-      return false;
-
-    if (!GenerateBitcodeAccessor(InputFile,
-                                 OutputFile,
-                                 RealPackageName.c_str(),
-                                 Opts))
-      return false;
-  }
-
-  return true;
-}
-
 int main(int argc, const char **argv) {
   std::set<std::string> SavedStrings;
   llvm::SmallVector<const char*, 256> ArgVector;
@@ -430,37 +361,53 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  const char *InputFile, *OutputFile, *BCOutputFile = NULL,
-             *DepOutputFile = NULL;
+  // Prepare input data for RS compiler.
+  std::list<std::pair<const char*, const char*> > IOFiles;
+  std::list<std::pair<const char*, const char*> > DepFiles;
+
   llvm::OwningPtr<SlangRS> Compiler(new SlangRS(Opts.mTriple, Opts.mCPU,
                                                 Opts.mFeatures));
 
   for (int i = 0, e = Inputs.size(); i != e; i++) {
-    InputFile = Inputs[i];
-    OutputFile = DetermineOutputFile(Opts.mOutputDir, InputFile,
-                                     Opts.mOutputType, SavedStrings);
+    const char *InputFile = Inputs[i];
+    const char *OutputFile =
+        DetermineOutputFile(Opts.mOutputDir, InputFile,
+                            Opts.mOutputType, SavedStrings);
+
     if (Opts.mOutputDep) {
-      if (Opts.mOutputType == Slang::OT_Dependency)
-        DepOutputFile = OutputFile;
-      else
-        DepOutputFile = DetermineOutputFile(Opts.mOutputDepDir, InputFile,
-                                            Slang::OT_Dependency, SavedStrings);
+      const char *BCOutputFile, *DepOutputFile;
 
       if (Opts.mOutputType == Slang::OT_Bitcode)
         BCOutputFile = OutputFile;
       else
         BCOutputFile = DetermineOutputFile(Opts.mOutputDepDir, InputFile,
                                            Slang::OT_Bitcode, SavedStrings);
+
+      if (Opts.mOutputType == Slang::OT_Dependency)
+        DepOutputFile = OutputFile;
+      else
+        DepOutputFile = DetermineOutputFile(Opts.mOutputDepDir, InputFile,
+                                            Slang::OT_Dependency, SavedStrings);
+
+      DepFiles.push_back(std::make_pair(BCOutputFile, DepOutputFile));
     }
-    if (!ExecuteCompilation(*Compiler,
-                            InputFile,
-                            OutputFile,
-                            BCOutputFile,
-                            DepOutputFile,
-                            Opts)) {
-      llvm::errs() << Compiler->getErrorMessage();
-      return 1;
-    }
+
+    IOFiles.push_back(std::make_pair(InputFile, OutputFile));
+  }
+
+  // Let's rock!
+  if (!Compiler->compile(IOFiles,
+                         DepFiles,
+                         Opts.mIncludePaths,
+                         Opts.mAdditionalDepTargets,
+                         Opts.mOutputType,
+                         Opts.mBitcodeStorage,
+                         Opts.mAllowRSPrefix,
+                         Opts.mOutputDep,
+                         Opts.mJavaReflectionPathBase,
+                         Opts.mJavaReflectionPackageName)) {
+    llvm::errs() << Compiler->getErrorMessage();
+    return 1;
   }
 
   return 0;

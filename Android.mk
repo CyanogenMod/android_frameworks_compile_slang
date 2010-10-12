@@ -191,6 +191,7 @@ TBLGEN_TABLES :=    \
 	DeclNodes.inc    \
 	DiagnosticCommonKinds.inc   \
 	DiagnosticDriverKinds.inc	\
+	DiagnosticFrontendKinds.inc	\
 	DiagnosticSemaKinds.inc	\
 	StmtNodes.inc	\
 	RSCCOptions.inc

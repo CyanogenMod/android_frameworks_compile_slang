@@ -19,6 +19,12 @@
 
 #include "slang.h"
 
+#include <list>
+#include <vector>
+#include <string>
+
+#include "slang_rs_reflect_utils.h"
+
 namespace slang {
   class RSContext;
 
@@ -28,6 +34,14 @@ class SlangRS : public Slang {
   RSContext *mRSContext;
 
   bool mAllowRSPrefix;
+
+  // The package name that's really applied will be filled in RealPackageName.
+  bool reflectToJava(const std::string &OutputPathBase,
+                     const std::string &OutputPackageName,
+                     std::string *RealPackageName);
+
+  bool generateBitcodeAccessor(const std::string &OutputPathBase,
+                               const std::string &PackageName);
 
  protected:
   virtual void initDiagnostic();
@@ -46,14 +60,41 @@ class SlangRS : public Slang {
   SlangRS(const std::string &Triple, const std::string &CPU,
           const std::vector<std::string> &Features);
 
-  // The package name that's really applied will be filled in RealPackageName.
-  bool reflectToJava(const std::string &OutputPathBase,
-                     const std::string &OutputPackageName,
-                     std::string *RealPackageName);
-
-  virtual void reset();
-
-  inline void allowRSPrefix(bool V = true) { mAllowRSPrefix = V; }
+  // Compile bunch of RS files given in the llvm-rs-cc arguments. Return true if
+  // all given input files are successfully compiled without errors.
+  //
+  // @IOFiles - List of pairs of <input file path, output file path>.
+  //
+  // @DepFiles - List of pairs of <output dep. file path, dependent bitcode
+  //             target>. If @OutputDep is true, this parameter must be given
+  //             with the same number of pairs given in @IOFiles.
+  //
+  // @IncludePaths - User-defined include path.
+  //
+  // @AdditionalDepTargets - User-defined files added to the dependencies.
+  //
+  // @OutputType - See Slang::OutputType.
+  //
+  // @BitcodeStorage - See BitCodeStorageType in slang_rs_reflect_util.cpp.
+  //
+  // @AllowRSPrefix - true to allow user-defined function prefixed with 'rs'.
+  //
+  // @OutputDep - true if output dependecies file.
+  //
+  // @JavaReflectionPathBase - The path base for storing reflection files.
+  //
+  // @JavaReflectionPackageName - The package name given by user in command
+  //                              line. This may override the package name
+  //                              specified in the .rs using #pragma.
+  //
+  bool compile(const std::list<std::pair<const char*, const char*> > &IOFiles,
+               const std::list<std::pair<const char*, const char*> > &DepFiles,
+               const std::vector<std::string> &IncludePaths,
+               const std::vector<std::string> &AdditionalDepTargets,
+               Slang::OutputType OutputType, BitCodeStorageType BitcodeStorage,
+               bool AllowRSPrefix, bool OutputDep,
+               const std::string &JavaReflectionPathBase,
+               const std::string &JavaReflectionPackageName);
 
   virtual ~SlangRS();
 };
