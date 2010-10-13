@@ -34,13 +34,8 @@ using namespace slang;
   RS_HEADER_ENTRY(rs_types) \
   RS_HEADER_ENTRY(rs_cl) \
   RS_HEADER_ENTRY(rs_core) \
-  RS_HEADER_ENTRY(rs_math)
-
-#define RS_HEADER_ENTRY(x)  \
-  extern const char x ## _header[]; \
-  extern unsigned x ## _header_size;
-ENUM_RS_HEADER()
-#undef RS_HEADER_ENTRY
+  RS_HEADER_ENTRY(rs_math)  \
+  RS_HEADER_ENTRY(rs_graphics)
 
 bool SlangRS::reflectToJava(const std::string &OutputPathBase,
                             const std::string &OutputPackageName,
@@ -179,8 +174,7 @@ void SlangRS::initPreprocessor() {
 
   std::string RSH;
 #define RS_HEADER_ENTRY(x)  \
-  RSH.append("#line 1 \"" #x "."RS_HEADER_SUFFIX"\"\n"); \
-  RSH.append(x ## _header, x ## _header_size);
+  RSH.append("#include \"" #x "."RS_HEADER_SUFFIX "\"\n");
 ENUM_RS_HEADER()
 #undef RS_HEADER_ENTRY
   PP.setPredefines(RSH);
@@ -216,9 +210,6 @@ bool SlangRS::IsRSHeaderFile(const char *File) {
     return true;
 ENUM_RS_HEADER()
 #undef RS_HEADER_ENTRY
-  // Deal with rs_graphics.rsh special case
-  if (::strcmp(File, "rs_graphics."RS_HEADER_SUFFIX) == 0)
-    return true;
   return false;
 }
 

@@ -131,62 +131,6 @@ include $(LLVM_HOST_BUILD_MK)
 include $(LLVM_GEN_INTRINSICS_MK)
 include $(BUILD_HOST_EXECUTABLE)
 
-# Host static library containing rs_types.rsh
-# ========================================================
-include $(CLEAR_VARS)
-
-input_data_file := frameworks/base/libs/rs/scriptc/rs_types.rsh
-slangdata_output_var_name := rs_types_header
-
-LOCAL_IS_HOST_MODULE := true
-LOCAL_MODULE := librsheader-types
-LOCAL_MODULE_TAGS := optional
-
-include $(LOCAL_PATH)/SlangData.mk
-include $(BUILD_HOST_STATIC_LIBRARY)
-
-# Host static library containing rs_cl.rsh
-# ========================================================
-include $(CLEAR_VARS)
-
-input_data_file := frameworks/base/libs/rs/scriptc/rs_cl.rsh
-slangdata_output_var_name := rs_cl_header
-
-LOCAL_IS_HOST_MODULE := true
-LOCAL_MODULE := librsheader-cl
-LOCAL_MODULE_TAGS := optional
-
-include $(LOCAL_PATH)/SlangData.mk
-include $(BUILD_HOST_STATIC_LIBRARY)
-
-# Host static library containing rs_cores.rsh
-# ========================================================
-include $(CLEAR_VARS)
-
-input_data_file := frameworks/base/libs/rs/scriptc/rs_core.rsh
-slangdata_output_var_name := rs_core_header
-
-LOCAL_IS_HOST_MODULE := true
-LOCAL_MODULE := librsheader-core
-LOCAL_MODULE_TAGS := optional
-
-include $(LOCAL_PATH)/SlangData.mk
-include $(BUILD_HOST_STATIC_LIBRARY)
-
-# Host static library containing rs_math.rsh
-# ========================================================
-include $(CLEAR_VARS)
-
-input_data_file := frameworks/base/libs/rs/scriptc/rs_math.rsh
-slangdata_output_var_name := rs_math_header
-
-LOCAL_IS_HOST_MODULE := true
-LOCAL_MODULE := librsheader-math
-LOCAL_MODULE_TAGS := optional
-
-include $(LOCAL_PATH)/SlangData.mk
-include $(BUILD_HOST_STATIC_LIBRARY)
-
 # Executable llvm-rs-cc for host
 # ========================================================
 include $(CLEAR_VARS)
@@ -229,11 +173,7 @@ LOCAL_SHARED_LIBRARIES :=      \
 	libslang
 
 LOCAL_STATIC_LIBRARIES :=	\
-	libclangDriver	\
-	librsheader-types	\
-	librsheader-cl  \
-	librsheader-core	\
-	librsheader-math
+	libclangDriver
 
 # For build RSCCOptions.inc from RSCCOptions.td
 intermediates := $(call local-intermediates-dir)

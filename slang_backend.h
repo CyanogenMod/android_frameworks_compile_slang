@@ -81,7 +81,7 @@ class Backend : public clang::ASTConsumer {
 
   const PragmaList &mPragmas;
 
-  // This handler will be invoked before Clang translate @Ctx to LLVM IR. This
+  // This handler will be invoked before Clang translates @Ctx to LLVM IR. This
   // give you an opportunity to modified the IR in AST level (scope information,
   // unoptimized IR, etc.). After the return from this method, slang will start
   // translate @Ctx into LLVM IR. One should not operate on @Ctx afterwards
