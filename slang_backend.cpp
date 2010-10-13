@@ -20,6 +20,7 @@
 #include "llvm/Metadata.h"
 #include "llvm/LLVMContext.h"
 
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -51,7 +52,7 @@ using namespace slang;
 void Backend::CreateFunctionPasses() {
   if (!mPerFunctionPasses) {
     mPerFunctionPasses = new llvm::FunctionPassManager(mpModule);
-    mPerFunctionPasses->add(new llvm::TargetData(*mpTargetData));
+    mPerFunctionPasses->add(new llvm::TargetData(mpModule));
 
     llvm::createStandardFunctionPasses(mPerFunctionPasses,
                                        mCodeGenOpts.OptimizationLevel);
@@ -62,7 +63,7 @@ void Backend::CreateFunctionPasses() {
 void Backend::CreateModulePasses() {
   if (!mPerModulePasses) {
     mPerModulePasses = new llvm::PassManager();
-    mPerModulePasses->add(new llvm::TargetData(*mpTargetData));
+    mPerModulePasses->add(new llvm::TargetData(mpModule));
 
     llvm::createStandardModulePasses(mPerModulePasses,
                                      mCodeGenOpts.OptimizationLevel,
@@ -85,7 +86,7 @@ bool Backend::CreateCodeGenPasses() {
     return true;
   } else {
     mCodeGenPasses = new llvm::FunctionPassManager(mpModule);
-    mCodeGenPasses->add(new llvm::TargetData(*mpTargetData));
+    mCodeGenPasses->add(new llvm::TargetData(mpModule));
   }
 
   // Create the TargetMachine for generating code.
@@ -116,15 +117,14 @@ bool Backend::CreateCodeGenPasses() {
   llvm::TargetMachine::setRelocationModel(llvm::Reloc::Static);
 
 
-  // The target with pointer size greater than 32 (e.g. x86_64 architecture) may
-  // need large data address model
-  if (mpTargetData->getPointerSizeInBits() > 32)
-    llvm::TargetMachine::setCodeModel(llvm::CodeModel::Medium);
-  else
-    // This is set for the linker (specify how large of the virtual addresses we
-    // can access for all unknown symbols.)
-
+  // This is set for the linker (specify how large of the virtual addresses we
+  // can access for all unknown symbols.)
+  if (mpModule->getPointerSize() == llvm::Module::Pointer32)
     llvm::TargetMachine::setCodeModel(llvm::CodeModel::Small);
+  else
+    // The target may have pointer size greater than 32 (e.g. x86_64
+    // architecture) may need large data address model
+    llvm::TargetMachine::setCodeModel(llvm::CodeModel::Medium);
 
   // Setup feature string
   std::string FeaturesStr;
@@ -184,7 +184,6 @@ Backend::Backend(clang::Diagnostic &Diags,
       mTargetOpts(TargetOpts),
       mpOS(OS),
       mOT(OT),
-      mpTargetData(NULL),
       mGen(NULL),
       mPerFunctionPasses(NULL),
       mPerModulePasses(NULL),
@@ -203,7 +202,6 @@ void Backend::Initialize(clang::ASTContext &Ctx) {
   mGen->Initialize(Ctx);
 
   mpModule = mGen->GetModule();
-  mpTargetData = new llvm::TargetData(Slang::TargetDescription);
 
   return;
 }
@@ -221,7 +219,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
   // or machine code, whatever.)
 
   // Silently ignore if we weren't initialized for some reason.
-  if (!mpModule || !mpTargetData)
+  if (!mpModule)
     return;
 
   llvm::Module *M = mGen->ReleaseModule();
@@ -328,7 +326,6 @@ void Backend::CompleteTentativeDefinition(clang::VarDecl *D) {
 
 Backend::~Backend() {
   delete mpModule;
-  delete mpTargetData;
   delete mGen;
   delete mPerFunctionPasses;
   delete mPerModulePasses;

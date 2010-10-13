@@ -19,8 +19,6 @@
 
 #include "llvm/PassManager.h"
 
-#include "llvm/Target/TargetData.h"
-
 #include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/FormattedStream.h"
 
@@ -56,8 +54,6 @@ class Backend : public clang::ASTConsumer {
   // Output stream
   llvm::raw_ostream *mpOS;
   Slang::OutputType mOT;
-
-  llvm::TargetData *mpTargetData;
 
   // This helps us translate Clang AST using into LLVM IR
   clang::CodeGenerator *mGen;

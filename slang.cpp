@@ -103,21 +103,6 @@ clang::LangOptions Slang::LangOpts;
 // Code generation option for the compiler
 clang::CodeGenOptions Slang::CodeGenOpts;
 
-const std::string Slang::TargetDescription =
-  "e-"  // little-endian
-  "p:32:32:32-"   // 32-bit pointer
-  "i1:8:8-"
-  "i8:8:8-"
-  "i16:16:16-"
-  "i32:32:32-"
-  "i64:64:64-"
-  "f32:32:32-"
-  "f64:64:64-"
-  "v64:64:64-"  // 64-bit vector (e.g. float2, int2, short4)
-  "v128:128:128-"
-  "a0:0:64-"
-  "n32";  // native CPU only support 32-bit integer width.
-
 // The named of metadata node that pragma resides (should be synced with
 // bcc.cpp)
 const llvm::StringRef Slang::PragmaMetadataName = "#pragma";

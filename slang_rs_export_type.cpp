@@ -720,10 +720,10 @@ const char* RSExportVectorType::VectorTypeNameStore[][3] = {
   /* 3 */ { "ushort2",    "ushort3",  "ushort4" },
   /* 4 */ { "int2",       "int3",     "int4" },
   /* 5 */ { "uint2",      "uint3",    "uint4" },
-  /* 6 */ { "float2",     "float3",   "float4" },
-  /* 7 */ { "double2",    "double3",  "double4" },
-  /* 8 */ { "long2",      "long3",    "long4" },
-  /* 9 */ { "ulong2",     "ulong3",   "ulong4" },
+  /* 6 */ { "long2",      "long3",    "long4" },
+  /* 7 */ { "ulong2",     "ulong3",   "ulong4" },
+  /* 8 */ { "float2",     "float3",   "float4" },
+  /* 9 */ { "double2",    "double3",  "double4" },
 };
 
 llvm::StringRef
@@ -754,13 +754,13 @@ RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT) {
         BaseElement = VectorTypeNameStore[4];                           \
       else if (type == RSExportPrimitiveType::DataTypeUnsigned32) \
         BaseElement = VectorTypeNameStore[5];                           \
-      else if (type == RSExportPrimitiveType::DataTypeFloat32) \
-        BaseElement = VectorTypeNameStore[6];                           \
-      else if (type == RSExportPrimitiveType::DataTypeFloat64) \
-        BaseElement = VectorTypeNameStore[7];                           \
       else if (type == RSExportPrimitiveType::DataTypeSigned64) \
-        BaseElement = VectorTypeNameStore[8];                           \
+        BaseElement = VectorTypeNameStore[6];                           \
       else if (type == RSExportPrimitiveType::DataTypeUnsigned64) \
+        BaseElement = VectorTypeNameStore[7];                           \
+      else if (type == RSExportPrimitiveType::DataTypeFloat32) \
+        BaseElement = VectorTypeNameStore[8];                           \
+      else if (type == RSExportPrimitiveType::DataTypeFloat64) \
         BaseElement = VectorTypeNameStore[9];                           \
       else if (type == RSExportPrimitiveType::DataTypeBoolean) \
         BaseElement = VectorTypeNameStore[0];                          \

@@ -147,8 +147,6 @@ class Slang {
                  OutputType OT);
 
  public:
-  static const std::string TargetDescription;
-
   static const llvm::StringRef PragmaMetadataName;
 
   static void GlobalInitialization();

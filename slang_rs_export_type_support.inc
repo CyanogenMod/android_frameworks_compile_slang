@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// SLANG_RS_SUPPORT_BUILTIN_TYPE(builtin_type, bits, type)
+// SLANG_RS_SUPPORT_BUILTIN_TYPE(builtin_type, type)
 #ifdef SLANG_RS_SUPPORT_BUILTIN_TYPE
   SLANG_RS_SUPPORT_BUILTIN_TYPE(clang::BuiltinType::Char_U,    RSExportPrimitiveType::DataTypeUnsigned8)
   SLANG_RS_SUPPORT_BUILTIN_TYPE(clang::BuiltinType::UChar,     RSExportPrimitiveType::DataTypeUnsigned8)

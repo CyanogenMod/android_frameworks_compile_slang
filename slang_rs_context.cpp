@@ -17,14 +17,17 @@
 #include "slang_rs_context.h"
 
 #include "llvm/LLVMContext.h"
+
 #include "llvm/Target/TargetData.h"
 
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Linkage.h"
+
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/ASTContext.h"
+
 #include "clang/Index/ASTLocation.h"
 
 #include "slang.h"
@@ -77,7 +80,7 @@ RSContext::RSContext(clang::Preprocessor *PP,
       "rs", RSPragmaHandler::CreatePragmaReflectLicenseHandler(this));
 
   // Prepare target data
-  mTargetData = new llvm::TargetData(Slang::TargetDescription);
+  mTargetData = new llvm::TargetData(Target->getTargetDescription());
 
   return;
 }

@@ -147,7 +147,6 @@ bool SlangRS::checkODR(const char *CurInputFile) {
       // Take the ownership of ERT such that it won't be freed in ~RSContext().
       ERT->keep();
     }
-
   }
   return true;
 }
