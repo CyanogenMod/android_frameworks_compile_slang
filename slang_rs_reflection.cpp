@@ -1157,11 +1157,11 @@ void RSReflection::genAllocateVarOfType(Context &C,
           static_cast<const RSExportConstantArrayType *>(T);
       const RSExportType *ElementType = ECAT->getElementType();
 
+      C.indent() << VarName << " = new " << GetTypeName(ElementType)
+                 << "[" << ECAT->getSize() << "];" << std::endl;
+
       // Primitive type element doesn't need allocation code.
       if (ElementType->getClass() != RSExportType::ExportClassPrimitive) {
-        C.indent() << VarName << " = new " << GetTypeName(ElementType)
-                   << "[" << ECAT->getSize() << "];" << std::endl;
-
         C.indent() << "for (int $ct = 0; $ct < " << ECAT->getSize() << "; "
                             "$ct++)";
         C.startBlock();
