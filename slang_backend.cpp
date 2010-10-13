@@ -182,6 +182,7 @@ Backend::Backend(clang::Diagnostic &Diags,
     : ASTConsumer(),
       mCodeGenOpts(CodeGenOpts),
       mTargetOpts(TargetOpts),
+      mpModule(NULL),
       mpOS(OS),
       mOT(OT),
       mGen(NULL),
@@ -190,7 +191,6 @@ Backend::Backend(clang::Diagnostic &Diags,
       mCodeGenPasses(NULL),
       mLLVMContext(llvm::getGlobalContext()),
       mDiags(Diags),
-      mpModule(NULL),
       mPragmas(Pragmas) {
   FormattedOutStream.setStream(*mpOS,
                                llvm::formatted_raw_ostream::PRESERVE_STREAM);
@@ -212,6 +212,8 @@ void Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
 }
 
 void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
+  HandleTranslationUnitPre(Ctx);
+
   mGen->HandleTranslationUnit(Ctx);
 
   // Here, we complete a translation unit (whole translation unit is now in LLVM
@@ -249,7 +251,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
     }
   }
 
-  HandleTranslationUnitEx(Ctx);
+  HandleTranslationUnitPost(mpModule);
 
   // Create passes for optimization and code emission
 

@@ -51,6 +51,8 @@ class Backend : public clang::ASTConsumer {
   const clang::CodeGenOptions &mCodeGenOpts;
   const clang::TargetOptions &mTargetOpts;
 
+  llvm::Module *mpModule;
+
   // Output stream
   llvm::raw_ostream *mpOS;
   Slang::OutputType mOT;
@@ -77,12 +79,20 @@ class Backend : public clang::ASTConsumer {
   llvm::LLVMContext &mLLVMContext;
   clang::Diagnostic &mDiags;
 
-  llvm::Module *mpModule;
-
   const PragmaList &mPragmas;
 
-  // Extra handler for subclass to handle translation unit before emission
-  virtual void HandleTranslationUnitEx(clang::ASTContext &Ctx) { return; }
+  // This handler will be invoked before Clang translate @Ctx to LLVM IR. This
+  // give you an opportunity to modified the IR in AST level (scope information,
+  // unoptimized IR, etc.). After the return from this method, slang will start
+  // translate @Ctx into LLVM IR. One should not operate on @Ctx afterwards
+  // since the changes applied on that never reflects to the LLVM module used
+  // in the final codegen.
+  virtual void HandleTranslationUnitPre(clang::ASTContext &Ctx) { return; }
+
+  // This handler will be invoked when Clang have converted AST tree to LLVM IR.
+  // The @M contains the resulting LLVM IR tree. After the return from this
+  // method, slang will start doing optimization and code generation for @M.
+  virtual void HandleTranslationUnitPost(llvm::Module *M) { return; }
 
  public:
   Backend(clang::Diagnostic &Diags,

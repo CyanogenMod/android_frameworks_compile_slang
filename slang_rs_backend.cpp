@@ -96,15 +96,13 @@ void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
   return;
 }
 
-void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
-  assert((&Ctx == mContext->getASTContext()) && "Unexpected AST context change"
-                                                " during LLVM IR generation");
+void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
   mContext->processExport();
 
   // Dump export variable info
   if (mContext->hasExportVar()) {
     if (mExportVarMetadata == NULL)
-      mExportVarMetadata = mpModule->getOrInsertNamedMetadata(RS_EXPORT_VAR_MN);
+      mExportVarMetadata = M->getOrInsertNamedMetadata(RS_EXPORT_VAR_MN);
 
     llvm::SmallVector<llvm::Value*, 2> ExportVarInfo;
 
@@ -148,7 +146,7 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
   if (mContext->hasExportFunc()) {
     if (mExportFuncMetadata == NULL)
       mExportFuncMetadata =
-          mpModule->getOrInsertNamedMetadata(RS_EXPORT_FUNC_MN);
+          M->getOrInsertNamedMetadata(RS_EXPORT_FUNC_MN);
 
     llvm::SmallVector<llvm::Value*, 1> ExportFuncInfo;
 
@@ -164,7 +162,7 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
         ExportFuncInfo.push_back(llvm::MDString::get(mLLVMContext,
                                                      EF->getName().c_str()));
       } else {
-        llvm::Function *F = mpModule->getFunction(EF->getName());
+        llvm::Function *F = M->getFunction(EF->getName());
         llvm::Function *HelperFunction;
         const std::string HelperFunctionName(".helper_" + EF->getName());
 
@@ -216,7 +214,7 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
               llvm::Function::Create(HelperFunctionType,
                                      llvm::GlobalValue::ExternalLinkage,
                                      HelperFunctionName,
-                                     mpModule);
+                                     M);
 
           HelperFunction->addFnAttr(llvm::Attribute::NoInline);
           HelperFunction->setCallingConv(F->getCallingConv());
@@ -302,7 +300,7 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
 
         if (mExportTypeMetadata == NULL)
           mExportTypeMetadata =
-              mpModule->getOrInsertNamedMetadata(RS_EXPORT_TYPE_MN);
+              M->getOrInsertNamedMetadata(RS_EXPORT_TYPE_MN);
 
         mExportTypeMetadata->addOperand(
             llvm::MDNode::get(mLLVMContext,
@@ -313,7 +311,7 @@ void RSBackend::HandleTranslationUnitEx(clang::ASTContext &Ctx) {
         std::string StructInfoMetadataName("%");
         StructInfoMetadataName.append(ET->getName());
         llvm::NamedMDNode *StructInfoMetadata =
-            mpModule->getOrInsertNamedMetadata(StructInfoMetadataName);
+            M->getOrInsertNamedMetadata(StructInfoMetadataName);
         llvm::SmallVector<llvm::Value*, 3> FieldInfo;
 
         assert(StructInfoMetadata->getNumOperands() == 0 &&

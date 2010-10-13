@@ -51,7 +51,10 @@ class RSBackend : public Backend {
   llvm::NamedMDNode *mExportTypeMetadata;
   llvm::NamedMDNode *mExportElementMetadata;
 
-  virtual void HandleTranslationUnitEx(clang::ASTContext &Ctx);
+ protected:
+  virtual void HandleTopLevelDecl(clang::DeclGroupRef D);
+
+  virtual void HandleTranslationUnitPost(llvm::Module *M);
 
  public:
   RSBackend(RSContext *Context,
@@ -63,8 +66,6 @@ class RSBackend : public Backend {
             Slang::OutputType OT,
             clang::SourceManager &SourceMgr,
             bool AllowRSPrefix);
-
-  virtual void HandleTopLevelDecl(clang::DeclGroupRef D);
 
   virtual ~RSBackend();
 };
