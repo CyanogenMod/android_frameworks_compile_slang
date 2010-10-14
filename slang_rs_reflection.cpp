@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/StringExtras.h"
 
 #include "slang_utils.h"
 #include "slang_rs_context.h"
@@ -308,18 +309,18 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
         static_cast<const RSExportPrimitiveType*>(ET);
     if (EPT->getKind() == RSExportPrimitiveType::DataKindUser) {
       static const char *PrimitiveBuiltinElementConstructMap[] = {
-        NULL,   // RSExportPrimitiveType::DataTypeFloat16
-        "F32",  // RSExportPrimitiveType::DataTypeFloat32
-        "F64",  // RSExportPrimitiveType::DataTypeFloat64
-        "I8",   // RSExportPrimitiveType::DataTypeSigned8
-        NULL,   // RSExportPrimitiveType::DataTypeSigned16
-        "I32",  // RSExportPrimitiveType::DataTypeSigned32
-        "I64",  // RSExportPrimitiveType::DataTypeSigned64
-        "U8",   // RSExportPrimitiveType::DataTypeUnsigned8
-        NULL,   // RSExportPrimitiveType::DataTypeUnsigned16
-        "U32",  // RSExportPrimitiveType::DataTypeUnsigned32
-        "U64",  // RSExportPrimitiveType::DataTypeUnsigned64
-        "BOOLEAN",  // RSExportPrimitiveType::DataTypeBoolean
+        NULL,               // RSExportPrimitiveType::DataTypeFloat16
+        "Element.F32",      // RSExportPrimitiveType::DataTypeFloat32
+        "Element.F64",      // RSExportPrimitiveType::DataTypeFloat64
+        "Element.I8",       // RSExportPrimitiveType::DataTypeSigned8
+        NULL,               // RSExportPrimitiveType::DataTypeSigned16
+        "Element.I32",      // RSExportPrimitiveType::DataTypeSigned32
+        "Element.I64",      // RSExportPrimitiveType::DataTypeSigned64
+        "Element.U8",       // RSExportPrimitiveType::DataTypeUnsigned8
+        NULL,               // RSExportPrimitiveType::DataTypeUnsigned16
+        "Element.U32",      // RSExportPrimitiveType::DataTypeUnsigned32
+        "Element.U64",      // RSExportPrimitiveType::DataTypeUnsigned64
+        "Element.BOOLEAN",  // RSExportPrimitiveType::DataTypeBoolean
 
         NULL,   // RSExportPrimitiveType::DataTypeUnsigned565
         NULL,   // RSExportPrimitiveType::DataTypeUnsigned5551
@@ -329,17 +330,17 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
         NULL,   // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix3x3
         NULL,   // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix4x4
 
-        "ELEMENT",      // RSExportPrimitiveType::DataTypeRSElement
-        "TYPE",         // RSExportPrimitiveType::DataTypeRSType
-        "ALLOCATION",   // RSExportPrimitiveType::DataTypeRSAllocation
-        "SAMPLER",      // RSExportPrimitiveType::DataTypeRSSampler
-        "SCRIPT",       // RSExportPrimitiveType::DataTypeRSScript
-        "MESH",         // RSExportPrimitiveType::DataTypeRSMesh
-        "PROGRAM_FRAGMENT",  // RSExportPrimitiveType::DataTypeRSProgramFragment
-        "PROGRAM_VERTEX",    // RSExportPrimitiveType::DataTypeRSProgramVertex
-        "PROGRAM_RASTER",    // RSExportPrimitiveType::DataTypeRSProgramRaster
-        "PROGRAM_STORE",     // RSExportPrimitiveType::DataTypeRSProgramStore
-        "FONT",       // RSExportPrimitiveType::DataTypeRSFont
+        "Element.ELEMENT",      // RSExportPrimitiveType::DataTypeRSElement
+        "Element.TYPE",         // RSExportPrimitiveType::DataTypeRSType
+        "Element.ALLOCATION",   // RSExportPrimitiveType::DataTypeRSAllocation
+        "Element.SAMPLER",      // RSExportPrimitiveType::DataTypeRSSampler
+        "Element.SCRIPT",       // RSExportPrimitiveType::DataTypeRSScript
+        "Element.MESH",         // RSExportPrimitiveType::DataTypeRSMesh
+        "Element.PROGRAM_FRAGMENT",  // RSExportPrimitiveType::DataTypeRSProgramFragment
+        "Element.PROGRAM_VERTEX",    // RSExportPrimitiveType::DataTypeRSProgramVertex
+        "Element.PROGRAM_RASTER",    // RSExportPrimitiveType::DataTypeRSProgramRaster
+        "Element.PROGRAM_STORE",     // RSExportPrimitiveType::DataTypeRSProgramStore
+        "Element.FONT",              // RSExportPrimitiveType::DataTypeRSFont
       };
       unsigned TypeId = EPT->getType();
 
@@ -348,58 +349,47 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
         return PrimitiveBuiltinElementConstructMap[ EPT->getType() ];
     } else if (EPT->getKind() == RSExportPrimitiveType::DataKindPixelA) {
       if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
-        return "A_8";
+        return "Element.A_8";
     } else if (EPT->getKind() == RSExportPrimitiveType::DataKindPixelRGB) {
       if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned565)
-        return "RGB_565";
+        return "Element.RGB_565";
       else if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
-        return "RGB_888";
+        return "Element.RGB_888";
     } else if (EPT->getKind() == RSExportPrimitiveType::DataKindPixelRGBA) {
       if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned5551)
-        return "RGBA_5551";
+        return "Element.RGBA_5551";
       else if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned4444)
-        return "RGBA_4444";
+        return "Element.RGBA_4444";
       else if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
-        return "RGBA_8888";
+        return "Element.RGBA_8888";
     }
   } else if (ET->getClass() == RSExportType::ExportClassVector) {
     const RSExportVectorType *EVT = static_cast<const RSExportVectorType*>(ET);
     if (EVT->getKind() == RSExportPrimitiveType::DataKindUser) {
       if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
         if (EVT->getNumElement() == 2)
-          return "F32_2";
+          return "Element.F32_2";
         else if (EVT->getNumElement() == 3)
-          return "F32_3";
+          return "Element.F32_3";
         else if (EVT->getNumElement() == 4)
-          return "F32_4";
+          return "Element.F32_4";
       } else if (EVT->getType() == RSExportPrimitiveType::DataTypeUnsigned8) {
         if (EVT->getNumElement() == 4)
-          return "U8_4";
+          return "Element.U8_4";
       }
     }
   } else if (ET->getClass() == RSExportType::ExportClassMatrix) {
     const RSExportMatrixType *EMT = static_cast<const RSExportMatrixType *>(ET);
     switch (EMT->getDim()) {
-      case 2: {
-        return "MATRIX_2X2";
-        break;
-      }
-      case 3: {
-        return "MATRIX_3X3";
-        break;
-      }
-      case 4: {
-        return "MATRIX_4X4";
-        break;
-      }
-      default: {
-        assert(false && "Unsupported dimension of matrix");
-      }
+      case 2: return "Element.MATRIX_2X2";
+      case 3: return "Element.MATRIX_3X3";
+      case 4: return "Element.MATRIX_4X4";
+      default: assert(false && "Unsupported dimension of matrix");
     }
   } else if (ET->getClass() == RSExportType::ExportClassPointer) {
     // Treat pointer type variable as unsigned int
     // TODO(zonr): this is target dependent
-    return "USER_I32";
+    return "Element.USER_I32";
   }
 
   return NULL;
@@ -833,10 +823,10 @@ void RSReflection::genPointerTypeExportVariable(Context &C,
   PointeeType = static_cast<const RSExportPointerType*>(ET)->getPointeeType();
   TypeName = GetTypeName(ET);
 
-  // bind_*()
   C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
              << EV->getName() << ";" << std::endl;
 
+  // bind_*()
   C.startFunction(Context::AM_Public,
                   false,
                   "void",
@@ -1070,11 +1060,29 @@ void RSReflection::genPackVarOfType(Context &C,
     case RSExportType::ExportClassConstantArray: {
       const RSExportConstantArrayType *ECAT =
           static_cast<const RSExportConstantArrayType *>(ET);
-      C.indent() << "for (int ct = 0; ct < " << ECAT->getSize() << "; ct++)";
+
+      // TODO(zonr): more elegant way. Currently, we obtain the unique index
+      //             variable (this method involves recursive call which means
+      //             we may have more than one level loop, therefore we can't
+      //             always use the same index variable name here) name given
+      //             in the for-loop from counting the '.' in @VarName.
+      unsigned Level = 0;
+      size_t LastDotPos = 0;
+      std::string ElementVarName(VarName);
+
+      while (LastDotPos != std::string::npos) {
+        LastDotPos = ElementVarName.find_first_of('.', LastDotPos + 1);
+        Level++;
+      }
+      std::string IndexVarName("ct");
+      IndexVarName.append(llvm::utostr_32(Level));
+
+      C.indent() << "for (int " << IndexVarName << " = 0; " <<
+                          IndexVarName << " < " << ECAT->getSize() << "; " <<
+                          IndexVarName << "++)";
       C.startBlock();
 
-      std::string ElementVarName(VarName);
-      ElementVarName.append("[ct]");
+      ElementVarName.append("[" + IndexVarName + "]");
       genPackVarOfType(C, ECAT->getElementType(), ElementVarName.c_str(),
                        FieldPackerName);
 
@@ -1293,7 +1301,7 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   1,
                   "RenderScript",
                   RenderScriptVar);
-  genBuildElement(C, ERT, RenderScriptVar);
+  genBuildElement(C, "eb", ERT, RenderScriptVar, /* IsInline = */false);
   C.endFunction();
 
   C.startFunction(Context::AM_Public,
@@ -1479,13 +1487,11 @@ void RSReflection::genTypeClassCopyAll(Context &C,
 /******************** Methods to generate type class /end ********************/
 
 /********** Methods to create Element in Java of given record type ***********/
-void RSReflection::genBuildElement(Context &C, const RSExportRecordType *ERT,
-                                   const char *RenderScriptVar) {
-  const char *ElementBuilderName = "eb";
-
-  // Create element builder
-  //    C.startBlock(true);
-
+void RSReflection::genBuildElement(Context &C,
+                                   const char *ElementBuilderName,
+                                   const RSExportRecordType *ERT,
+                                   const char *RenderScriptVar,
+                                   bool IsInline) {
   C.indent() << "Element.Builder " << ElementBuilderName << " = "
       "new Element.Builder(" << RenderScriptVar << ");" << std::endl;
 
@@ -1494,25 +1500,29 @@ void RSReflection::genBuildElement(Context &C, const RSExportRecordType *ERT,
                                 ERT,
                                 "",
                                 ElementBuilderName,
-                                RenderScriptVar);
+                                RenderScriptVar,
+                                /* ArraySize = */0);
 
-  C.indent() << "return " << ElementBuilderName << ".create();" << std::endl;
-
-  //   C.endBlock();
+  if (!IsInline)
+    C.indent() << "return " << ElementBuilderName << ".create();" << std::endl;
   return;
 }
 
-#define EB_ADD(x)                                                   \
+#define EB_ADD(x) do {                                              \
   C.indent() << ElementBuilderName                                  \
-             << ".add(Element." << x << ", \"" << VarName << "\");" \
-             << std::endl;                                          \
-  C.incFieldIndex()
+             << ".add(" << x << ", \"" << VarName << "\"";  \
+  if (ArraySize > 0)                                                \
+    C.out() << ", " << ArraySize;                                   \
+  C.out() << ");" << std::endl;                                     \
+  C.incFieldIndex();                                                \
+} while (false)
 
 void RSReflection::genAddElementToElementBuilder(Context &C,
                                                  const RSExportType *ET,
                                                  const std::string &VarName,
                                                  const char *ElementBuilderName,
-                                                 const char *RenderScriptVar) {
+                                                 const char *RenderScriptVar,
+                                                 unsigned ArraySize) {
   const char *ElementConstruct = GetBuiltinElementConstruct(ET);
 
   if (ElementConstruct != NULL) {
@@ -1535,23 +1545,23 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
         case RSExportPrimitiveType::DataKindPixelRGB:
         case RSExportPrimitiveType::DataKindPixelRGBA: {
           // Element.createPixel()
-          EB_ADD("createPixel(" << RenderScriptVar << ", "
-                                << DataTypeName << ", "
-                                << DataKindName << ")");
+          EB_ADD("Element.createPixel(" << RenderScriptVar << ", "
+                                        << DataTypeName << ", "
+                                        << DataKindName << ")");
           break;
         }
         case RSExportPrimitiveType::DataKindUser:
         default: {
           if (EPT->getClass() == RSExportType::ExportClassPrimitive) {
             // Element.createUser()
-            EB_ADD("createUser(" << RenderScriptVar << ", "
-                                 << DataTypeName << ")");
+            EB_ADD("Element.createUser(" << RenderScriptVar << ", "
+                                         << DataTypeName << ")");
           } else {
             assert((ET->getClass() == RSExportType::ExportClassVector) &&
                    "Unexpected type.");
-            EB_ADD("createVector(" << RenderScriptVar << ", "
-                                   << DataTypeName << ", "
-                                   << Size << ")");
+            EB_ADD("Element.createVector(" << RenderScriptVar << ", "
+                                           << DataTypeName << ", "
+                                           << Size << ")");
           }
           break;
         }
@@ -1569,18 +1579,27 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
     } else if (ET->getClass() == RSExportType::ExportClassConstantArray) {
       const RSExportConstantArrayType *ECAT =
           static_cast<const RSExportConstantArrayType *>(ET);
-      C.indent() << "for (int ct = 0; ct < " << ECAT->getSize() << "; ct++)";
-      C.startBlock();
 
-      std::string ElementVarName(VarName);
-      ElementVarName.append("[\" + ct + \"]");
-      genAddElementToElementBuilder(C,
-                                    ECAT->getElementType(),
-                                    ElementVarName,
-                                    ElementBuilderName,
-                                    RenderScriptVar);
+      const RSExportType *ElementType = ECAT->getElementType();
+      if (ElementType->getClass() != RSExportType::ExportClassRecord) {
+        genAddElementToElementBuilder(C,
+                                      ECAT->getElementType(),
+                                      VarName,
+                                      ElementBuilderName,
+                                      RenderScriptVar,
+                                      ECAT->getSize());
+      } else {
+        std::string NewElementBuilderName(ElementBuilderName);
+        NewElementBuilderName.append(1, '_');
 
-      C.endBlock();
+        genBuildElement(C,
+                        NewElementBuilderName.c_str(),
+                        static_cast<const RSExportRecordType*>(ElementType),
+                        RenderScriptVar,
+                        /* IsInline = */true);
+        ArraySize = ECAT->getSize();
+        EB_ADD(NewElementBuilderName << ".create()");
+      }
     } else if (ET->getClass() == RSExportType::ExportClassRecord) {
       // Simalar to case of RSExportType::ExportClassRecord in genPackVarOfType.
       //
@@ -1613,11 +1632,26 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
 
         // eb.add(...)
         C.addFieldIndexMapping(F);
-        genAddElementToElementBuilder(C,
-                                      F->getType(),
-                                      FieldName,
-                                      ElementBuilderName,
-                                      RenderScriptVar);
+        if (F->getType()->getClass() != RSExportType::ExportClassRecord) {
+          genAddElementToElementBuilder(C,
+                                        F->getType(),
+                                        FieldName,
+                                        ElementBuilderName,
+                                        RenderScriptVar,
+                                        0);
+        } else {
+          std::string NewElementBuilderName(ElementBuilderName);
+          NewElementBuilderName.append(1, '_');
+
+          genBuildElement(C,
+                          NewElementBuilderName.c_str(),
+                          static_cast<const RSExportRecordType*>(F->getType()),
+                          RenderScriptVar,
+                          /* IsInline = */true);
+
+          const std::string &VarName = FieldName;  // Hack for EB_ADD macro
+          EB_ADD(NewElementBuilderName << ".create()");
+        }
 
         // There is padding within the field type
         genAddPaddingToElementBuiler(C,
@@ -1629,12 +1663,10 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
       }
 
       // There maybe some padding after the struct
-      //unsigned char align = RSExportType::GetTypeAlignment(ERT);
-      //size_t siz = RSExportType::GetTypeAllocSize(ERT);
-      size_t siz1 = RSExportType::GetTypeStoreSize(ERT);
+      size_t RecordStoreSize = RSExportType::GetTypeStoreSize(ERT);
 
       genAddPaddingToElementBuiler(C,
-                                   siz1 - Pos,
+                                   RecordStoreSize - Pos,
                                    ElementBuilderName,
                                    RenderScriptVar);
     } else {
@@ -1647,16 +1679,17 @@ void RSReflection::genAddPaddingToElementBuiler(Context &C,
                                                 int PaddingSize,
                                                 const char *ElementBuilderName,
                                                 const char *RenderScriptVar) {
+  unsigned ArraySize = 0;   // Hack the EB_ADD macro
   while (PaddingSize > 0) {
     const std::string &VarName = C.createPaddingField();
     if (PaddingSize >= 4) {
-      EB_ADD("U32(" << RenderScriptVar << ")");
+      EB_ADD("Element.U32(" << RenderScriptVar << ")");
       PaddingSize -= 4;
     } else if (PaddingSize >= 2) {
-      EB_ADD("U16(" << RenderScriptVar << ")");
+      EB_ADD("Element.U16(" << RenderScriptVar << ")");
       PaddingSize -= 2;
     } else if (PaddingSize >= 1) {
-      EB_ADD("U8(" << RenderScriptVar << ")");
+      EB_ADD("Element.U8(" << RenderScriptVar << ")");
       PaddingSize -= 1;
     }
   }

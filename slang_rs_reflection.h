@@ -244,13 +244,16 @@ class RSReflection {
   void genTypeClassCopyAll(Context &C, const RSExportRecordType *ERT);
 
   void genBuildElement(Context &C,
+                       const char *ElementBuilderName,
                        const RSExportRecordType *ERT,
-                       const char *RenderScriptVar);
+                       const char *RenderScriptVar,
+                       bool IsInline);
   void genAddElementToElementBuilder(Context &C,
                                      const RSExportType *ERT,
                                      const std::string &VarName,
                                      const char *ElementBuilderName,
-                                     const char *RenderScriptVar);
+                                     const char *RenderScriptVar,
+                                     unsigned ArraySize);
   void genAddPaddingToElementBuiler(Context &C,
                                     int PaddingSize,
                                     const char *ElementBuilderName,
