@@ -242,6 +242,7 @@ class RSReflection {
   void genTypeClassComponentSetter(Context &C, const RSExportRecordType *ERT);
   void genTypeClassComponentGetter(Context &C, const RSExportRecordType *ERT);
   void genTypeClassCopyAll(Context &C, const RSExportRecordType *ERT);
+  void genTypeClassResize(Context &C);
 
   void genBuildElement(Context &C,
                        const char *ElementBuilderName,

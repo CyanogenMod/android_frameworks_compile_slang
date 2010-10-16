@@ -507,14 +507,10 @@ void RSReflection::genScriptClassConstructor(Context &C) {
                   NULL,
                   C.getClassName(),
                   4,
-                  "RenderScript",
-                  "rs",
-                  "Resources",
-                  "resources",
-                  "int",
-                  "id",
-                  "boolean",
-                  "isRoot");
+                  "RenderScript", "rs",
+                  "Resources", "resources",
+                  "int", "id",
+                  "boolean", "isRoot");
   // Call constructor of super class
   C.indent() << "super(rs, resources, id, isRoot);" << std::endl;
 
@@ -792,8 +788,7 @@ void RSReflection::genPrimitiveTypeExportVariable(Context &C,
                     "void",
                     "set_" + EV->getName(),
                     1,
-                    TypeName,
-                    "v");
+                    TypeName, "v");
     C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
 
     if (EPT->isRSObjectType())
@@ -832,8 +827,7 @@ void RSReflection::genPointerTypeExportVariable(Context &C,
                   "void",
                   "bind_" + EV->getName(),
                   1,
-                  TypeName.c_str(),
-                  "v");
+                  TypeName.c_str(), "v");
 
   C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
   C.indent() << "if (v == null) bindAllocation(null, "RS_EXPORT_VAR_INDEX_PREFIX
@@ -874,8 +868,7 @@ void RSReflection::genVectorTypeExportVariable(Context &C,
                     "void",
                     "set_" + EV->getName(),
                     1,
-                    TypeName,
-                    "v");
+                    TypeName, "v");
     C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
 
     if (genCreateFieldPacker(C, EVT, FieldPackerName))
@@ -981,8 +974,7 @@ void RSReflection::genRecordTypeExportVariable(Context &C,
                     "void",
                     "set_" + EV->getName(),
                     1,
-                    TypeName.c_str(),
-                    "v");
+                    TypeName.c_str(), "v");
     C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
 
     if (genCreateFieldPacker(C, ERT, FieldPackerName))
@@ -1242,6 +1234,7 @@ bool RSReflection::genTypeClass(Context &C,
   genTypeClassComponentSetter(C, ERT);
   genTypeClassComponentGetter(C, ERT);
   genTypeClassCopyAll(C, ERT);
+  genTypeClassResize(C);
 
   C.endClass();
 
@@ -1299,8 +1292,7 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   "Element",
                   "createElement",
                   1,
-                  "RenderScript",
-                  RenderScriptVar);
+                  "RenderScript", RenderScriptVar);
   genBuildElement(C, "eb", ERT, RenderScriptVar, /* IsInline = */false);
   C.endFunction();
 
@@ -1309,10 +1301,8 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   NULL,
                   C.getClassName(),
                   2,
-                  "RenderScript",
-                  RenderScriptVar,
-                  "int",
-                  "count");
+                  "RenderScript", RenderScriptVar,
+                  "int", "count");
 
   C.indent() << RS_TYPE_ITEM_BUFFER_NAME" = null;" << std::endl;
   C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME" = null;" << std::endl;
@@ -1332,10 +1322,8 @@ void RSReflection::genTypeClassCopyToArray(Context &C,
                   "void",
                   "copyToArray",
                   2,
-                  RS_TYPE_ITEM_CLASS_NAME,
-                  "i",
-                  "int",
-                  "index");
+                  RS_TYPE_ITEM_CLASS_NAME, "i",
+                  "int", "index");
 
   genNewItemBufferPackerIfNull(C);
   C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME
@@ -1355,12 +1343,9 @@ void RSReflection::genTypeClassItemSetter(Context &C,
                   "void",
                   "set",
                   3,
-                  RS_TYPE_ITEM_CLASS_NAME,
-                  "i",
-                  "int",
-                  "index",
-                  "boolean",
-                  "copyNow");
+                  RS_TYPE_ITEM_CLASS_NAME, "i",
+                  "int", "index",
+                  "boolean", "copyNow");
   genNewItemBufferIfNull(C, NULL);
   C.indent() << RS_TYPE_ITEM_BUFFER_NAME"[index] = i;" << std::endl;
 
@@ -1385,8 +1370,7 @@ void RSReflection::genTypeClassItemGetter(Context &C,
                   RS_TYPE_ITEM_CLASS_NAME,
                   "get",
                   1,
-                  "int",
-                  "index");
+                  "int", "index");
   C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return null;"
              << std::endl;
   C.indent() << "return "RS_TYPE_ITEM_BUFFER_NAME"[index];" << std::endl;
@@ -1409,12 +1393,9 @@ void RSReflection::genTypeClassComponentSetter(Context &C,
                     false,
                     "void",
                     "set_" + F->getName(), 3,
-                    "int",
-                    "index",
-                    GetTypeName(F->getType()).c_str(),
-                    "v",
-                    "boolean",
-                    "copyNow");
+                    "int", "index",
+                    GetTypeName(F->getType()).c_str(), "v",
+                    "boolean", "copyNow");
     genNewItemBufferPackerIfNull(C);
     genNewItemBufferIfNull(C, "index");
     C.indent() << RS_TYPE_ITEM_BUFFER_NAME"[index]." << F->getName()
@@ -1459,8 +1440,7 @@ void RSReflection::genTypeClassComponentGetter(Context &C,
                     GetTypeName(F->getType()).c_str(),
                     "get_" + F->getName(),
                     1,
-                    "int",
-                    "index");
+                    "int", "index");
     C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return "
                << GetTypeNullValue(F->getType()) << ";" << std::endl;
     C.indent() << "return "RS_TYPE_ITEM_BUFFER_NAME"[index]." << F->getName()
@@ -1479,6 +1459,27 @@ void RSReflection::genTypeClassCopyAll(Context &C,
              << std::endl;
   C.indent() << "mAllocation.data("RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());"
              << std::endl;
+
+  C.endFunction();
+  return;
+}
+
+void RSReflection::genTypeClassResize(Context &C) {
+  C.startFunction(Context::AM_Public,
+                  false,
+                  "void",
+                  "resize",
+                  1,
+                  "int", "newSize");
+
+  C.indent() << "int oldSize = mItemArray.length;" << std::endl;
+  C.indent() << "int copySize = Math.min(oldSize, newSize);" << std::endl;
+  C.indent() << "if (copySize == oldSize) return;" << std::endl;
+  C.indent() << "Item ni[] = new Item[newSize];" << std::endl;
+  C.indent() << "System.arraycopy(mItemArray, 0, ni, 0, copySize);"
+             << std::endl;
+  C.indent() << "mItemArray = ni;" << std::endl;
+  C.indent() << "mAllocation.resize(newSize);" << std::endl;
 
   C.endFunction();
   return;
