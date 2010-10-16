@@ -33,25 +33,23 @@ RSExportElement::ElementInfoMapTy RSExportElement::ElementInfoMap;
 void RSExportElement::Init() {
   if (!Initialized) {
     // Initialize ElementInfoMap
-#define USE_ELEMENT_DATA_TYPE
-#define USE_ELEMENT_DATA_KIND
-#define DEF_ELEMENT(_name, _dk, _dt, _norm, _vsize)     \
-    {                                                   \
-      ElementInfo *EI = new ElementInfo;                \
-      EI->kind = GET_ELEMENT_DATA_KIND(_dk);            \
-      EI->type = GET_ELEMENT_DATA_TYPE(_dt);            \
-      EI->normalized = _norm;                           \
-      EI->vsize = _vsize;                               \
-                                                        \
-      llvm::StringRef Name(_name);                      \
-      ElementInfoMap.insert(                            \
-          ElementInfoMapTy::value_type::Create(         \
-              Name.begin(),                             \
-              Name.end(),                               \
-              ElementInfoMap.getAllocator(),            \
-              EI));                                     \
+#define ENUM_RS_DATA_ELEMENT(_name, _dk, _dt, _norm, _vsize)  \
+    {                                                         \
+      ElementInfo *EI = new ElementInfo;                      \
+      EI->kind = RSExportPrimitiveType::DataKind ## _dk;      \
+      EI->type = RSExportPrimitiveType::DataType ## _dt;      \
+      EI->normalized = _norm;                                 \
+      EI->vsize = _vsize;                                     \
+                                                              \
+      llvm::StringRef Name(_name);                            \
+      ElementInfoMap.insert(                                  \
+          ElementInfoMapTy::value_type::Create(               \
+              Name.begin(),                                   \
+              Name.end(),                                     \
+              ElementInfoMap.getAllocator(),                  \
+              EI));                                           \
     }
-#include "slang_rs_export_element_support.inc"
+#include "RSDataElementEnums.inc"
 
     Initialized = true;
   }

@@ -151,59 +151,29 @@ class RSExportPrimitiveType : public RSExportType {
   typedef enum {
     DataTypeUnknown = -1,
 
-    DataTypeFloat16 = 0,
-    DataTypeFloat32,
-    DataTypeFloat64,
-    DataTypeSigned8,
-    DataTypeSigned16,
-    DataTypeSigned32,
-    DataTypeSigned64,
-    DataTypeUnsigned8,
-    DataTypeUnsigned16,
-    DataTypeUnsigned32,
-    DataTypeUnsigned64,
-
-    DataTypeBoolean,
-
-    DataTypeUnsigned565,
-    DataTypeUnsigned5551,
-    DataTypeUnsigned4444,
-
-    // Actually, there's no any instance of RSExportPrimitiveType which mType
-    // is of the value DataTypeRSMatrix*. DataTypeRSMatrix* enumeration here is
-    // only for RSExportPrimitiveType::GetRSObjectType to *recognize* the struct
-    // rs_matrix{2x2, 3x3, 4x4}. These matrix type are represented as
-    // RSExportMatrixType.
-    DataTypeRSMatrix2x2,
-    DataTypeRSMatrix3x3,
-    DataTypeRSMatrix4x4,
-
-    DataTypeRSElement,
-    DataTypeRSType,
-    DataTypeRSAllocation,
-    DataTypeRSSampler,
-    DataTypeRSScript,
-    DataTypeRSMesh,
-    DataTypeRSProgramFragment,
-    DataTypeRSProgramVertex,
-    DataTypeRSProgramRaster,
-    DataTypeRSProgramStore,
-    DataTypeRSFont,
+#define ENUM_RS_DATA_TYPE(type, cname, bits)  \
+    DataType ## type,
+#include "RSDataTypeEnums.inc"
+#undef ENUM_RS_DATA_TYPE
 
     DataTypeMax
   } DataType;
 
   // From graphics/java/android/renderscript/Element.java: Element.DataKind
   typedef enum {
-    DataKindUser,
-    DataKindPixelL,
-    DataKindPixelA,
-    DataKindPixelLA,
-    DataKindPixelRGB,
-    DataKindPixelRGBA
+    DataKindUnknown = -1
+#define ENUM_RS_DATA_KIND(kind) \
+    , DataKind ## kind
+#include "RSDataKindEnums.inc"
+#undef ENUM_RS_DATA_KIND
   } DataKind;
 
  private:
+  // NOTE: There's no any instance of RSExportPrimitiveType which mType
+  // is of the value DataTypeRSMatrix*. DataTypeRSMatrix* enumeration here is
+  // only for RSExportPrimitiveType::GetRSObjectType to *recognize* the struct
+  // rs_matrix{2x2, 3x3, 4x4}. These matrix type are represented as
+  // RSExportMatrixType.
   DataType mType;
   DataKind mKind;
   bool mNormalized;
@@ -324,8 +294,6 @@ class RSExportVectorType : public RSExportPrimitiveType {
                                     const llvm::StringRef &TypeName,
                                     DataKind DK = DataKindUser,
                                     bool Normalized = false);
-
-  static const char *VectorTypeNameStore[][3];
 
   virtual const llvm::Type *convertToLLVMType() const;
  public:

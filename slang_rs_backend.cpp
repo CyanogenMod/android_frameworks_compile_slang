@@ -118,20 +118,38 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
           llvm::MDString::get(mLLVMContext, EV->getName().c_str()));
 
       // Type name
-      if (ET->getClass() == RSExportType::ExportClassPrimitive)
-        ExportVarInfo.push_back(
-            llvm::MDString::get(
+      switch (ET->getClass()) {
+        case RSExportType::ExportClassPrimitive: {
+          ExportVarInfo.push_back(
+              llvm::MDString::get(
                 mLLVMContext, llvm::utostr_32(
-                    static_cast<const RSExportPrimitiveType*>(ET)->getType())));
-      else if (ET->getClass() == RSExportType::ExportClassPointer)
-        ExportVarInfo.push_back(
-            llvm::MDString::get(
+                  static_cast<const RSExportPrimitiveType*>(ET)->getType())));
+          break;
+        }
+        case RSExportType::ExportClassPointer: {
+          ExportVarInfo.push_back(
+              llvm::MDString::get(
                 mLLVMContext, ("*" + static_cast<const RSExportPointerType*>(ET)
-                               ->getPointeeType()->getName()).c_str()));
-      else
-        ExportVarInfo.push_back(
-            llvm::MDString::get(mLLVMContext,
-                                EV->getType()->getName().c_str()));
+                  ->getPointeeType()->getName()).c_str()));
+          break;
+        }
+        case RSExportType::ExportClassMatrix: {
+          ExportVarInfo.push_back(
+              llvm::MDString::get(
+                mLLVMContext, llvm::utostr_32(
+                  RSExportPrimitiveType::DataTypeRSMatrix2x2 +
+                  static_cast<const RSExportMatrixType*>(ET)->getDim() - 2)));
+          break;
+        }
+        case RSExportType::ExportClassVector:
+        case RSExportType::ExportClassConstantArray:
+        case RSExportType::ExportClassRecord: {
+          ExportVarInfo.push_back(
+              llvm::MDString::get(mLLVMContext,
+                EV->getType()->getName().c_str()));
+          break;
+        }
+      }
 
       mExportVarMetadata->addOperand(
           llvm::MDNode::get(mLLVMContext,

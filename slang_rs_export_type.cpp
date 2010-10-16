@@ -81,43 +81,17 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
       const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(clang::BuiltinType, T);
 
       switch (BT->getKind()) {
-        // Compiler is smart enough to optimize following *big if branches*
-        // since they all become "constant comparison" after macro expansion
-#define SLANG_RS_SUPPORT_BUILTIN_TYPE(builtin_type, type)       \
-        case builtin_type: {                                    \
-          if (type == RSExportPrimitiveType::DataTypeFloat32)           \
-            return "float";                                             \
-          else if (type == RSExportPrimitiveType::DataTypeFloat64)      \
-            return "double";                                            \
-          else if (type == RSExportPrimitiveType::DataTypeUnsigned8)    \
-            return "uchar";                                             \
-          else if (type == RSExportPrimitiveType::DataTypeUnsigned16)   \
-            return "ushort";                                            \
-          else if (type == RSExportPrimitiveType::DataTypeUnsigned32)   \
-            return "uint";                                              \
-          else if (type == RSExportPrimitiveType::DataTypeUnsigned64)   \
-            return "ulong";                                             \
-          else if (type == RSExportPrimitiveType::DataTypeSigned8)      \
-            return "char";                                              \
-          else if (type == RSExportPrimitiveType::DataTypeSigned16)     \
-            return "short";                                             \
-          else if (type == RSExportPrimitiveType::DataTypeSigned32)     \
-            return "int";                                               \
-          else if (type == RSExportPrimitiveType::DataTypeSigned64)     \
-            return "long";                                              \
-          else if (type == RSExportPrimitiveType::DataTypeBoolean)      \
-            return "bool";                                              \
-          else                                                          \
-            assert(false && "Unknow data type of supported builtin");   \
-          break;                                                        \
+#define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
+        case builtin_type:                                    \
+          return cname;                                       \
+        break;
+#include "RSClangBuiltinEnums.inc"
+#undef ENUM_SUPPORT_BUILTIN_TYPE
+        default: {
+          assert(false && "Unknown data type of the builtin");
+          break;
         }
-#include "slang_rs_export_type_support.inc"
-
-          default: {
-            assert(false && "Unknown data type of the builtin");
-            break;
-          }
-        }
+      }
       break;
     }
     case clang::Type::Record: {
@@ -188,17 +162,15 @@ const clang::Type *RSExportType::TypeExportable(
       const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(clang::BuiltinType, T);
 
       switch (BT->getKind()) {
-#define SLANG_RS_SUPPORT_BUILTIN_TYPE(builtin_type, type)       \
+#define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
         case builtin_type:
-#include "slang_rs_export_type_support.inc"
-        {
+#include "RSClangBuiltinEnums.inc"
+#undef ENUM_SUPPORT_BUILTIN_TYPE
           return T;
-        }
         default: {
           return NULL;
         }
       }
-      // Never be here
     }
     case clang::Type::Record: {
       if (RSExportPrimitiveType::GetRSObjectType(T) !=
@@ -462,10 +434,10 @@ RSExportPrimitiveType::GetRSObjectType(const llvm::StringRef &TypeName) {
     return DataTypeUnknown;
 
   if (RSObjectTypeMap->empty()) {
-#define USE_ELEMENT_DATA_TYPE
-#define DEF_RS_OBJECT_TYPE(type, name)                                  \
-    RSObjectTypeMap->GetOrCreateValue(name, GET_ELEMENT_DATA_TYPE(type));
-#include "slang_rs_export_element_support.inc"
+#define ENUM_RS_OBJECT_TYPE(type, cname)                            \
+    RSObjectTypeMap->GetOrCreateValue(cname, DataType ## type);
+#include "RSObjectTypeEnums.inc"
+#undef ENUM_RS_OBJECT_TYPE
   }
 
   RSObjectTypeMapTy::const_iterator I = RSObjectTypeMap->find(TypeName);
@@ -484,46 +456,16 @@ RSExportPrimitiveType::GetRSObjectType(const clang::Type *T) {
   return GetRSObjectType( RSExportType::GetTypeName(T) );
 }
 
-const size_t
-RSExportPrimitiveType::SizeOfDataTypeInBits[
-    RSExportPrimitiveType::DataTypeMax + 1] = {
-  16,  // DataTypeFloat16
-  32,  // DataTypeFloat32
-  64,  // DataTypeFloat64
-  8,   // DataTypeSigned8
-  16,  // DataTypeSigned16
-  32,  // DataTypeSigned32
-  64,  // DataTypeSigned64
-  8,   // DataTypeUnsigned8
-  16,  // DataTypeUnsigned16
-  32,  // DataTypeUnsigned32
-  64,  // DataTypeUnSigned64
-  1,   // DataTypeBoolean
-
-  16,  // DataTypeUnsigned565
-  16,  // DataTypeUnsigned5551
-  16,  // DataTypeUnsigned4444
-
-  128,  // DataTypeRSMatrix2x2
-  288,  // DataTypeRSMatrix3x3
-  512,  // DataTypeRSMatrix4x4
-
-  32,  // DataTypeRSElement
-  32,  // DataTypeRSType
-  32,  // DataTypeRSAllocation
-  32,  // DataTypeRSSampler
-  32,  // DataTypeRSScript
-  32,  // DataTypeRSMesh
-  32,  // DataTypeRSProgramFragment
-  32,  // DataTypeRSProgramVertex
-  32,  // DataTypeRSProgramRaster
-  32,  // DataTypeRSProgramStore
-  32,  // DataTypeRSFont
-  0
+const size_t RSExportPrimitiveType::SizeOfDataTypeInBits[] = {
+#define ENUM_RS_DATA_TYPE(type, cname, bits)  \
+  bits,
+#include "RSDataTypeEnums.inc"
+#undef ENUM_RS_DATA_TYPE
+  0   // DataTypeMax
 };
 
 size_t RSExportPrimitiveType::GetSizeInBits(const RSExportPrimitiveType *EPT) {
-  assert(((EPT->getType() >= DataTypeFloat32) &&
+  assert(((EPT->getType() > DataTypeUnknown) &&
           (EPT->getType() < DataTypeMax)) &&
          "RSExportPrimitiveType::GetSizeInBits : unknown data type");
   return SizeOfDataTypeInBits[ static_cast<int>(EPT->getType()) ];
@@ -538,36 +480,30 @@ RSExportPrimitiveType::GetDataType(const clang::Type *T) {
     case clang::Type::Builtin: {
       const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(clang::BuiltinType, T);
       switch (BT->getKind()) {
-#define SLANG_RS_SUPPORT_BUILTIN_TYPE(builtin_type, type)       \
-        case builtin_type: {                                    \
-          return type;                                          \
-          break;                                                \
+#define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
+        case builtin_type: {                                  \
+          return DataType ## type;                            \
         }
-#include "slang_rs_export_type_support.inc"
-
-        // The size of types Long, ULong and WChar depend on platform so we
-        // abandon the support to them. Type of its size exceeds 32 bits (e.g.
-        // int64_t, double, etc.): no support
-
+#include "RSClangBuiltinEnums.inc"
+#undef ENUM_SUPPORT_BUILTIN_TYPE
+        // The size of type WChar depend on platform so we abandon the support
+        // to them.
         default: {
-          // TODO(zonr): warn that the type is unsupported
-          fprintf(stderr, "RSExportPrimitiveType::GetDataType : built-in type "
-                          "has no corresponding data type for built-in type");
+          fprintf(stderr, "RSExportPrimitiveType::GetDataType : unsupported "
+                          "built-in type '%s'\n.", T->getTypeClassName());
           break;
         }
       }
       break;
     }
-
     case clang::Type::Record: {
       // must be RS object type
       return RSExportPrimitiveType::GetRSObjectType(T);
       break;
     }
-
     default: {
       fprintf(stderr, "RSExportPrimitiveType::GetDataType : type '%s' is not "
-                      "supported primitive type", T->getTypeClassName());
+                      "supported primitive type\n", T->getTypeClassName());
       break;
     }
   }
@@ -713,19 +649,6 @@ bool RSExportPointerType::equals(const RSExportable *E) const {
 }
 
 /***************************** RSExportVectorType *****************************/
-const char* RSExportVectorType::VectorTypeNameStore[][3] = {
-  /* 0 */ { "char2",      "char3",    "char4" },
-  /* 1 */ { "uchar2",     "uchar3",   "uchar4" },
-  /* 2 */ { "short2",     "short3",   "short4" },
-  /* 3 */ { "ushort2",    "ushort3",  "ushort4" },
-  /* 4 */ { "int2",       "int3",     "int4" },
-  /* 5 */ { "uint2",      "uint3",    "uint4" },
-  /* 6 */ { "long2",      "long3",    "long4" },
-  /* 7 */ { "ulong2",     "ulong3",   "ulong4" },
-  /* 8 */ { "float2",     "float3",   "float4" },
-  /* 9 */ { "double2",    "double3",  "double4" },
-};
-
 llvm::StringRef
 RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT) {
   const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
@@ -735,49 +658,25 @@ RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT) {
 
   const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(clang::BuiltinType,
                                                   ElementType);
-  const char **BaseElement = NULL;
+  if ((EVT->getNumElements() < 1) ||
+      (EVT->getNumElements() > 4))
+    return llvm::StringRef();
 
   switch (BT->getKind()) {
     // Compiler is smart enough to optimize following *big if branches* since
     // they all become "constant comparison" after macro expansion
-#define SLANG_RS_SUPPORT_BUILTIN_TYPE(builtin_type, type)       \
-    case builtin_type: {                                                \
-      if (type == RSExportPrimitiveType::DataTypeSigned8) \
-        BaseElement = VectorTypeNameStore[0];                           \
-      else if (type == RSExportPrimitiveType::DataTypeUnsigned8) \
-        BaseElement = VectorTypeNameStore[1];                           \
-      else if (type == RSExportPrimitiveType::DataTypeSigned16) \
-        BaseElement = VectorTypeNameStore[2];                           \
-      else if (type == RSExportPrimitiveType::DataTypeUnsigned16) \
-        BaseElement = VectorTypeNameStore[3];                           \
-      else if (type == RSExportPrimitiveType::DataTypeSigned32) \
-        BaseElement = VectorTypeNameStore[4];                           \
-      else if (type == RSExportPrimitiveType::DataTypeUnsigned32) \
-        BaseElement = VectorTypeNameStore[5];                           \
-      else if (type == RSExportPrimitiveType::DataTypeSigned64) \
-        BaseElement = VectorTypeNameStore[6];                           \
-      else if (type == RSExportPrimitiveType::DataTypeUnsigned64) \
-        BaseElement = VectorTypeNameStore[7];                           \
-      else if (type == RSExportPrimitiveType::DataTypeFloat32) \
-        BaseElement = VectorTypeNameStore[8];                           \
-      else if (type == RSExportPrimitiveType::DataTypeFloat64) \
-        BaseElement = VectorTypeNameStore[9];                           \
-      else if (type == RSExportPrimitiveType::DataTypeBoolean) \
-        BaseElement = VectorTypeNameStore[0];                          \
-      break;  \
+#define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
+    case builtin_type: {                                      \
+      const char *Name[] = { cname"2", cname"3", cname"4" };  \
+      return Name[EVT->getNumElements() - 2];                 \
+      break;                                                  \
     }
-#include "slang_rs_export_type_support.inc"
+#include "RSClangBuiltinEnums.inc"
+#undef ENUM_SUPPORT_BUILTIN_TYPE
     default: {
       return llvm::StringRef();
     }
   }
-
-  if ((BaseElement != NULL) &&
-      (EVT->getNumElements() > 1) &&
-      (EVT->getNumElements() <= 4))
-    return BaseElement[EVT->getNumElements() - 2];
-  else
-    return llvm::StringRef();
 }
 
 RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
