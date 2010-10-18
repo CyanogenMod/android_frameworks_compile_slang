@@ -16,6 +16,7 @@
 
 #include <string>
 #include <cstring>
+#include <cstdio>
 
 #define PRIMITIVE_DATA_TYPE_ENUMS                         \
     ENUM_PRIMITIVE_DATA_TYPE(Float16, NULL, 128)          \
