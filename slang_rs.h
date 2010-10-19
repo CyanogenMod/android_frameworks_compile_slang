@@ -27,6 +27,10 @@
 
 #include "slang_rs_reflect_utils.h"
 
+namespace clang {
+  class FunctionDecl;
+}
+
 namespace slang {
   class RSContext;
   class RSExportRecordType;
@@ -77,6 +81,11 @@ class SlangRS : public Slang {
 
  public:
   static bool IsRSHeaderFile(const char *File);
+  // FIXME: Determine whether a function is in RS header (i.e., one of the RS
+  //        built-in APIs) should only need its names (we need a "list" of RS
+  //        built-in APIs).
+  static bool IsFunctionInRSHeaderFile(const clang::FunctionDecl *FD,
+                                       const clang::SourceManager &SourceMgr);
 
   SlangRS();
 

@@ -54,6 +54,8 @@ class RSBackend : public Backend {
  protected:
   virtual void HandleTopLevelDecl(clang::DeclGroupRef D);
 
+  virtual void HandleTranslationUnitPre(clang::ASTContext& C);
+
   virtual void HandleTranslationUnitPost(llvm::Module *M);
 
  public:

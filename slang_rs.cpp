@@ -18,6 +18,8 @@
 
 #include <cstring>
 
+#include "llvm/System/Path.h"
+
 #include "clang/Frontend/FrontendDiagnostic.h"
 
 #include "clang/Sema/SemaDiagnostic.h"
@@ -213,6 +215,15 @@ bool SlangRS::IsRSHeaderFile(const char *File) {
 ENUM_RS_HEADER()
 #undef RS_HEADER_ENTRY
   return false;
+}
+
+bool SlangRS::IsFunctionInRSHeaderFile(const clang::FunctionDecl *FD,
+                                       const clang::SourceManager &SourceMgr) {
+  clang::FullSourceLoc FSL(FD->getLocStart(), SourceMgr);
+  clang::PresumedLoc PLoc = SourceMgr.getPresumedLoc(FSL);
+  llvm::sys::Path HeaderFilename(PLoc.getFilename());
+
+  return IsRSHeaderFile(HeaderFilename.getLast().data());
 }
 
 SlangRS::SlangRS() : Slang(), mRSContext(NULL), mAllowRSPrefix(false) {
