@@ -18,46 +18,7 @@
 #include <cstring>
 #include <cstdio>
 
-#define PRIMITIVE_DATA_TYPE_ENUMS                         \
-    ENUM_PRIMITIVE_DATA_TYPE(Float16, NULL, 128)          \
-    ENUM_PRIMITIVE_DATA_TYPE(Float32, "float", 256)       \
-    ENUM_PRIMITIVE_DATA_TYPE(Float64, "double", 512)      \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed8, "char", 64)         \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed16, "short", 128)      \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed32, "int", 256)        \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed64, "long", 512)       \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned8, "uchar", 64)      \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned16, "ushort", 128)   \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned32, "uint", 256)     \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned64, "ulong", 512)    \
-    ENUM_PRIMITIVE_DATA_TYPE(Boolean, "bool", 8)          \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned565, "u565", 128)    \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned5551, "u5551", 128)  \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned4444, "u4444", 128)
-
-#define RS_OBJECT_DATA_TYPE_ENUMS                                       \
-    ENUM_RS_OBJECT_DATA_TYPE(RSMatrix2x2, "rs_matrix2x2")               \
-    ENUM_RS_OBJECT_DATA_TYPE(RSMatrix3x3, "rs_matrix3x3")               \
-    ENUM_RS_OBJECT_DATA_TYPE(RSMatrix4x4, "rs_matrix4x4")               \
-    ENUM_RS_OBJECT_DATA_TYPE(RSElement, "rs_element")                   \
-    ENUM_RS_OBJECT_DATA_TYPE(RSType, "rs_type")                         \
-    ENUM_RS_OBJECT_DATA_TYPE(RSAllocation, "rs_allocation")             \
-    ENUM_RS_OBJECT_DATA_TYPE(RSSampler, "rs_sampler")                   \
-    ENUM_RS_OBJECT_DATA_TYPE(RSScript, "rs_script")                     \
-    ENUM_RS_OBJECT_DATA_TYPE(RSMesh, "rs_mesh")                         \
-    ENUM_RS_OBJECT_DATA_TYPE(RSProgramFragment, "rs_program_fragment")  \
-    ENUM_RS_OBJECT_DATA_TYPE(RSProgramVertex, "rs_program_vertex")      \
-    ENUM_RS_OBJECT_DATA_TYPE(RSProgramRaster, "rs_program_raster")      \
-    ENUM_RS_OBJECT_DATA_TYPE(RSProgramStore, "rs_program_store")        \
-    ENUM_RS_OBJECT_DATA_TYPE(RSFont, "rs_font")
-
-#define RS_DATA_KIND_ENUMS        \
-    ENUM_RS_DATA_KIND(User)       \
-    ENUM_RS_DATA_KIND(PixelL)     \
-    ENUM_RS_DATA_KIND(PixelA)     \
-    ENUM_RS_DATA_KIND(PixelLA)    \
-    ENUM_RS_DATA_KIND(PixelRGB)   \
-    ENUM_RS_DATA_KIND(PixelRGBA)
+#include "slang_rs_type_spec.h"
 
 enum {
 #define ENUM_PRIMITIVE_DATA_TYPE(x, name, bits) x,
@@ -184,7 +145,7 @@ class RSDataElementSpec {
 static int GenRSDataTypeEnums(const RSDataTypeSpec *const DataTypes[],
                               unsigned NumDataTypes) {
   for (unsigned i = 0; i < NumDataTypes; i++)
-    printf("ENUM_RS_DATA_TYPE(%s, \"%s\", %u)\n",
+    printf("ENUM_RS_DATA_TYPE(%s, \"%s\", %lu)\n",
            DataTypes[i]->getTypeName(),
            DataTypes[i]->getTypePragmaName(),
            DataTypes[i]->getSizeInBit());

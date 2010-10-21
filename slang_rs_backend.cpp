@@ -221,7 +221,7 @@ clang::Expr *RSObjectRefCounting::CreateZeroInitializerForRSObject(
                                          FloatTy,
                                          Loc);
 
-      unsigned N;
+      unsigned N = 0;
       if (DT == RSExportPrimitiveType::DataTypeRSMatrix2x2)
         N = 2;
       else if (DT == RSExportPrimitiveType::DataTypeRSMatrix3x3)
