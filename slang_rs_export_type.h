@@ -110,6 +110,11 @@ class RSExportType : public RSExportable {
   // (all of these information are target dependent) without dealing with these
   // by ourselves.
   virtual const llvm::Type *convertToLLVMType() const = 0;
+  // Record type may recursively referece its type definition. We need a
+  // temporary type setup before the type construction gets done.
+  inline void setAbstractLLVMType(const llvm::Type *LLVMType) const {
+    mLLVMType = LLVMType;
+  }
 
   virtual ~RSExportType() {}
  public:
@@ -138,7 +143,7 @@ class RSExportType : public RSExportable {
 
   inline const std::string &getName() const { return mName; }
 
-  virtual void keep();
+  virtual bool keep();
   virtual bool equals(const RSExportable *E) const;
 };  // RSExportType
 
@@ -154,7 +159,6 @@ class RSExportPrimitiveType : public RSExportType {
 #define ENUM_RS_DATA_TYPE(type, cname, bits)  \
     DataType ## type,
 #include "RSDataTypeEnums.inc"
-#undef ENUM_RS_DATA_TYPE
 
     DataTypeMax
   } DataType;
@@ -165,7 +169,6 @@ class RSExportPrimitiveType : public RSExportType {
 #define ENUM_RS_DATA_KIND(kind) \
     , DataKind ## kind
 #include "RSDataKindEnums.inc"
-#undef ENUM_RS_DATA_KIND
   } DataKind;
 
  private:
@@ -261,7 +264,7 @@ class RSExportPointerType : public RSExportType {
  public:
   static const clang::Type *IntegerType;
 
-  virtual void keep();
+  virtual bool keep();
 
   inline const RSExportType *getPointeeType() const { return mPointeeType; }
 
@@ -367,7 +370,7 @@ class RSExportConstantArrayType : public RSExportType {
   inline unsigned getSize() const { return mSize; }
   inline const RSExportType *getElementType() const { return mElementType; }
 
-  virtual void keep();
+  virtual bool keep();
   virtual bool equals(const RSExportable *E) const;
 };
 
@@ -447,7 +450,7 @@ class RSExportRecordType : public RSExportType {
   inline bool isArtificial() const { return mIsArtificial; }
   inline size_t getAllocSize() const { return mAllocSize; }
 
-  virtual void keep();
+  virtual bool keep();
   virtual bool equals(const RSExportable *E) const;
 
   ~RSExportRecordType() {
