@@ -18,12 +18,10 @@
 
 using namespace slang;
 
-bool RSExportable::keep() {
-  if (isKeep())
-    return false;
+void RSExportable::keep() {
   // Invalidate associated Context.
   mContext = NULL;
-  return true;
+  return;
 }
 
 bool RSExportable::equals(const RSExportable *E) const {

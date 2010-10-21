@@ -48,8 +48,7 @@ class RSExportable {
   // When keep() is invoked, mKeep will set to true and the associated RSContext
   // won't free this RSExportable object in its destructor. The deallcation
   // responsibility is then transferred to the object who invoked this function.
-  // Return false if the exportable is kept or failed to keep.
-  virtual bool keep();
+  virtual void keep();
   inline bool isKeep() const { return (mContext == NULL); }
 
   virtual bool equals(const RSExportable *E) const;

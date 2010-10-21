@@ -188,7 +188,6 @@ static int GenRSDataTypeEnums(const RSDataTypeSpec *const DataTypes[],
            DataTypes[i]->getTypeName(),
            DataTypes[i]->getTypePragmaName(),
            DataTypes[i]->getSizeInBit());
-  printf("#undef ENUM_RS_DATA_TYPE");
   return 0;
 }
 
@@ -204,7 +203,6 @@ static int GenClangBuiltinEnum(
            ClangBuilitinsMap[i]->getBuiltinTypeKind(),
            ClangBuilitinsMap[i]->getDataType()->getTypeName(),
            ClangBuilitinsMap[i]->getDataType()->getTypePragmaName());
-  printf("#undef ENUM_SUPPORT_BUILTIN_TYPE");
   return 0;
 }
 
@@ -219,7 +217,6 @@ static int GenRSObjectTypeEnums(const RSDataTypeSpec *const DataTypes[],
       printf("ENUM_RS_OBJECT_TYPE(%s, \"%s\")\n",
              DataTypes[i]->getTypeName(),
              DataTypes[i]->getTypePragmaName());
-  printf("#undef ENUM_RS_OBJECT_TYPE");
   return 0;
 }
 
@@ -231,7 +228,6 @@ int GenRSDataKindEnums(const RSDataKindSpec *const DataKinds[],
                        unsigned NumDataKinds) {
   for (unsigned i = 0; i < NumDataKinds; i++)
     printf("ENUM_RS_DATA_KIND(%s)\n", DataKinds[i]->getKindName());
-  printf("#undef ENUM_RS_DATA_KIND");
   return 0;
 }
 
@@ -248,7 +244,6 @@ int GenRSDataElementEnums(const RSDataElementSpec *const DataElements[],
            DataElements[i]->getDataType()->getTypeName(),
            ((DataElements[i]->isNormal()) ? "true" : "false"),
            DataElements[i]->getVectorSize());
-  printf("#undef ENUM_RS_DATA_ELEMENT");
   return 0;
 }
 

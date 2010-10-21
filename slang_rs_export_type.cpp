@@ -86,6 +86,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
           return cname;                                       \
         break;
 #include "RSClangBuiltinEnums.inc"
+#undef ENUM_SUPPORT_BUILTIN_TYPE
         default: {
           assert(false && "Unknown data type of the builtin");
           break;
@@ -164,6 +165,7 @@ const clang::Type *RSExportType::TypeExportable(
 #define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
         case builtin_type:
 #include "RSClangBuiltinEnums.inc"
+#undef ENUM_SUPPORT_BUILTIN_TYPE
           return T;
         default: {
           return NULL;
@@ -401,12 +403,11 @@ RSExportType::RSExportType(RSContext *Context,
   return;
 }
 
-bool RSExportType::keep() {
-  if (!RSExportable::keep())
-    return false;
+void RSExportType::keep() {
   // Invalidate converted LLVM type.
   mLLVMType = NULL;
-  return true;
+  RSExportable::keep();
+  return;
 }
 
 bool RSExportType::equals(const RSExportable *E) const {
@@ -436,6 +437,7 @@ RSExportPrimitiveType::GetRSObjectType(const llvm::StringRef &TypeName) {
 #define ENUM_RS_OBJECT_TYPE(type, cname)                            \
     RSObjectTypeMap->GetOrCreateValue(cname, DataType ## type);
 #include "RSObjectTypeEnums.inc"
+#undef ENUM_RS_OBJECT_TYPE
   }
 
   RSObjectTypeMapTy::const_iterator I = RSObjectTypeMap->find(TypeName);
@@ -458,6 +460,7 @@ const size_t RSExportPrimitiveType::SizeOfDataTypeInBits[] = {
 #define ENUM_RS_DATA_TYPE(type, cname, bits)  \
   bits,
 #include "RSDataTypeEnums.inc"
+#undef ENUM_RS_DATA_TYPE
   0   // DataTypeMax
 };
 
@@ -482,6 +485,7 @@ RSExportPrimitiveType::GetDataType(const clang::Type *T) {
           return DataType ## type;                            \
         }
 #include "RSClangBuiltinEnums.inc"
+#undef ENUM_SUPPORT_BUILTIN_TYPE
         // The size of type WChar depend on platform so we abandon the support
         // to them.
         default: {
@@ -633,11 +637,9 @@ const llvm::Type *RSExportPointerType::convertToLLVMType() const {
   return llvm::PointerType::getUnqual(PointeeType);
 }
 
-bool RSExportPointerType::keep() {
-  if (!RSExportType::keep())
-    return false;
+void RSExportPointerType::keep() {
   const_cast<RSExportType*>(mPointeeType)->keep();
-  return true;
+  RSExportType::keep();
 }
 
 bool RSExportPointerType::equals(const RSExportable *E) const {
@@ -670,6 +672,7 @@ RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT) {
       break;                                                  \
     }
 #include "RSClangBuiltinEnums.inc"
+#undef ENUM_SUPPORT_BUILTIN_TYPE
     default: {
       return llvm::StringRef();
     }
@@ -816,11 +819,10 @@ const llvm::Type *RSExportConstantArrayType::convertToLLVMType() const {
   return llvm::ArrayType::get(mElementType->getLLVMType(), getSize());
 }
 
-bool RSExportConstantArrayType::keep() {
-  if (!RSExportType::keep())
-    return false;
+void RSExportConstantArrayType::keep() {
   const_cast<RSExportType*>(mElementType)->keep();
-  return true;
+  RSExportType::keep();
+  return;
 }
 
 bool RSExportConstantArrayType::equals(const RSExportable *E) const {
@@ -901,14 +903,10 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
 }
 
 const llvm::Type *RSExportRecordType::convertToLLVMType() const {
-  // Create an opaque type since struct may reference itself recursively.
-  llvm::PATypeHolder ResultHolder =
-      llvm::OpaqueType::get(getRSContext()->getLLVMContext());
-  setAbstractLLVMType(ResultHolder.get());
-
   std::vector<const llvm::Type*> FieldTypes;
 
-  for (const_field_iterator FI = fields_begin(), FE = fields_end();
+  for (const_field_iterator FI = fields_begin(),
+           FE = fields_end();
        FI != FE;
        FI++) {
     const Field *F = *FI;
@@ -917,27 +915,20 @@ const llvm::Type *RSExportRecordType::convertToLLVMType() const {
     FieldTypes.push_back(FET->getLLVMType());
   }
 
-  llvm::StructType *ST = llvm::StructType::get(getRSContext()->getLLVMContext(),
-                                               FieldTypes,
-                                               mIsPacked);
-  if (ST != NULL)
-    static_cast<llvm::OpaqueType*>(ResultHolder.get())
-        ->refineAbstractTypeTo(ST);
-  else
-    return NULL;
-  return ResultHolder.get();
+  return llvm::StructType::get(getRSContext()->getLLVMContext(),
+                               FieldTypes,
+                               mIsPacked);
 }
 
-bool RSExportRecordType::keep() {
-  if (!RSExportType::keep())
-    return false;
+void RSExportRecordType::keep() {
   for (std::list<const Field*>::iterator I = mFields.begin(),
           E = mFields.end();
        I != E;
        I++) {
     const_cast<RSExportType*>((*I)->getType())->keep();
   }
-  return true;
+  RSExportType::keep();
+  return;
 }
 
 bool RSExportRecordType::equals(const RSExportable *E) const {
