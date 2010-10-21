@@ -190,6 +190,7 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
         case OPT_MD: {
           Opts.mOutputDep = 1;
           Opts.mOutputType = Slang::OT_Bitcode;
+          break;
         }
         default: {
           assert(false && "Invalid option in M group!");
