@@ -122,6 +122,9 @@ struct RSVectorType {
   // vsize is encoded in base.b[2]
 };
 
+// RSMatrixType is actually a specialize class of RSPrimitiveType whose value of
+// dt (data type) can only be RS_DT_RSMatrix2x2, RS_DT_RSMatrix3x3 and
+// RS_DT_RSMatrix4x4.
 struct RSMatrixType {
   struct RSTypeBase base;
 };
@@ -195,6 +198,9 @@ union RSType {
     RS_VECTOR_TYPE_GET_VECTOR_SIZE(R) = (V)
 
 // RSMatrixType
+#define RS_MATRIX_TYPE_GET_DATA_TYPE(R) RS_PRIMITIVE_TYPE_GET_DATA_TYPE(R)
+#define RS_MATRIX_TYPE_SET_DATA_TYPE(R, V)  \
+    RS_MATRIX_TYPE_GET_DATA_TYPE(R) = (V)
 
 // RSConstantArrayType
 #define RS_CONSTANT_ARRAY_TYPE_GET_ELEMENT_TYPE(R) \

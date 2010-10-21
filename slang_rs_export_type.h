@@ -50,6 +50,8 @@
 #define DUMMY_TYPE_NAME_FOR_RS_CONSTANT_ARRAY_TYPE  \
     DUMMY_RS_TYPE_NAME_PREFIX"ConstantArray"DUMMY_RS_TYPE_NAME_POSTFIX
 
+union RSType;
+
 namespace llvm {
   class Type;
 }   // namespace llvm
@@ -76,6 +78,8 @@ class RSExportType : public RSExportable {
 
   // Cache the result after calling convertToLLVMType() at the first time
   mutable const llvm::Type *mLLVMType;
+  // Cache the result after calling convertToSpecType() at the first time
+  mutable union RSType *mSpecType;
 
  protected:
   RSExportType(RSContext *Context,
@@ -116,7 +120,12 @@ class RSExportType : public RSExportable {
     mLLVMType = LLVMType;
   }
 
-  virtual ~RSExportType() {}
+  virtual union RSType *convertToSpecType() const = 0;
+  inline void setSpecTypeTemporarily(union RSType *SpecType) const {
+    mSpecType = SpecType;
+  }
+
+  virtual ~RSExportType();
  public:
   static bool NormalizeType(const clang::Type *&T, llvm::StringRef &TypeName);
   // @T may not be normalized
@@ -134,12 +143,17 @@ class RSExportType : public RSExportable {
     return mLLVMType;
   }
 
+  inline const union RSType *getSpecType() const {
+    if (mSpecType == NULL)
+      mSpecType = convertToSpecType();
+    return mSpecType;
+  }
+
   // Return the number of bits necessary to hold the specified RSExportType
   static size_t GetTypeStoreSize(const RSExportType *ET);
 
   // The size of allocation of specified RSExportType (alignment considered)
   static size_t GetTypeAllocSize(const RSExportType *ET);
-  static unsigned char GetTypeAlignment(const RSExportType *ET);
 
   inline const std::string &getName() const { return mName; }
 
@@ -219,6 +233,7 @@ class RSExportPrimitiveType : public RSExportType {
   }
 
   virtual const llvm::Type *convertToLLVMType() const;
+  virtual union RSType *convertToSpecType() const;
  public:
   // @T may not be normalized
   static RSExportPrimitiveType *Create(RSContext *Context,
@@ -261,6 +276,7 @@ class RSExportPointerType : public RSExportType {
                                      const llvm::StringRef &TypeName);
 
   virtual const llvm::Type *convertToLLVMType() const;
+  virtual union RSType *convertToSpecType() const;
  public:
   static const clang::Type *IntegerType;
 
@@ -299,6 +315,7 @@ class RSExportVectorType : public RSExportPrimitiveType {
                                     bool Normalized = false);
 
   virtual const llvm::Type *convertToLLVMType() const;
+  virtual union RSType *convertToSpecType() const;
  public:
   static llvm::StringRef GetTypeName(const clang::ExtVectorType *EVT);
 
@@ -330,6 +347,7 @@ class RSExportMatrixType : public RSExportType {
   }
 
   virtual const llvm::Type *convertToLLVMType() const;
+  virtual union RSType *convertToSpecType() const;
  public:
   // @RT was normalized by calling RSExportType::TypeExportable() before
   // calling this.
@@ -366,6 +384,7 @@ class RSExportConstantArrayType : public RSExportType {
                                            const clang::ConstantArrayType *CAT);
 
   virtual const llvm::Type *convertToLLVMType() const;
+  virtual union RSType *convertToSpecType() const;
  public:
   inline unsigned getSize() const { return mSize; }
   inline const RSExportType *getElementType() const { return mElementType; }
@@ -444,6 +463,7 @@ class RSExportRecordType : public RSExportType {
                                     bool mIsArtificial = false);
 
   virtual const llvm::Type *convertToLLVMType() const;
+  virtual union RSType *convertToSpecType() const;
  public:
   inline const std::list<const Field*>& getFields() const { return mFields; }
   inline bool isPacked() const { return mIsPacked; }
