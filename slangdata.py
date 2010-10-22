@@ -61,9 +61,9 @@ def file2asm(var_name):
         sys.stdout.write(", ")
       else:
         sys.stdout.write(",")
-  # always ends with 0x0 (can fix assembler warnings)
+  # always ends with 0x0
+  sys.stdout.write("0x00")
   if col != 0:
-    sys.stdout.write("0x00")
     sys.stdout.write("\n")
 
   # encode file size

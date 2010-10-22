@@ -145,8 +145,8 @@ static bool PreloadLibraries(bool NoStdLib,
 
   if (!NoStdLib) {
     // rslib.bc
-    MB = MemoryBuffer::getMemBufferCopy(StringRef(rslib_bc, rslib_bc_size),
-                                        "rslib.bc");
+    MB = MemoryBuffer::getMemBuffer(StringRef(rslib_bc, rslib_bc_size),
+                                    "rslib.bc");
     if (MB == NULL) {
       errs() << "Failed to load (in-memory) `rslib.bc'!\n";
       return false;
