@@ -188,7 +188,8 @@ LOCAL_SRC_FILES :=	\
 	slang_rs_export_var.cpp	\
 	slang_rs_export_func.cpp	\
 	slang_rs_reflection.cpp \
-	slang_rs_reflect_utils.cpp
+	slang_rs_reflect_utils.cpp  \
+	slang_rs_metadata_spec_encoder.cpp
 
 LOCAL_SHARED_LIBRARIES :=      \
 	libslang
