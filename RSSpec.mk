@@ -38,6 +38,12 @@ $(intermediates)/RSDataTypeEnums.inc: $(RS_SPEC_GEN)
 	$(call generate-rs-spec-inc,rs-data-type-enums)
 endif
 
+ifneq ($(findstring RSMatrixTypeEnums.inc,$(RS_SPEC_TABLES)),)
+LOCAL_GENERATED_SOURCES += $(intermediates)/RSMatrixTypeEnums.inc
+$(intermediates)/RSMatrixTypeEnums.inc: $(RS_SPEC_GEN)
+	$(call generate-rs-spec-inc,rs-matrix-type-enums)
+endif
+
 ifneq ($(findstring RSObjectTypeEnums.inc,$(RS_SPEC_TABLES)),)
 LOCAL_GENERATED_SOURCES += $(intermediates)/RSObjectTypeEnums.inc
 $(intermediates)/RSObjectTypeEnums.inc: $(RS_SPEC_GEN)

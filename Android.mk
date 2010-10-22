@@ -174,6 +174,7 @@ RS_SPEC_TABLES :=	\
 	RSDataTypeEnums.inc	\
 	RSDataElementEnums.inc	\
 	RSDataKindEnums.inc	\
+	RSMatrixTypeEnums.inc	\
 	RSObjectTypeEnums.inc
 
 LOCAL_SRC_FILES :=	\

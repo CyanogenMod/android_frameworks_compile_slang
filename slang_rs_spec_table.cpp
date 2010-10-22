@@ -22,11 +22,28 @@
 
 enum {
 #define ENUM_PRIMITIVE_DATA_TYPE(x, name, bits) x,
+#define PRIMITIVE_DATA_TYPE_RANGE(x, y) \
+    FirstPrimitiveType = x, \
+    LastPrimitiveType = y,
   PRIMITIVE_DATA_TYPE_ENUMS
 #undef ENUM_PRIMITIVE_DATA_TYPE
+#undef PRIMITIVE_DATA_TYPE_RANGE
+
+#define ENUM_RS_MATRIX_DATA_TYPE(x, name, dim) x,
+#define RS_MATRIX_DATA_TYPE_RANGE(x, y)  \
+    FirstRSMatrixType = x,  \
+    LastRSMatrixType = y,
+  RS_MATRIX_DATA_TYPE_ENUMS
+#undef ENUM_RS_MATRIX_DATA_TYPE
+#undef RS_MATRIX_DATA_TYPE_RANGE
+
 #define ENUM_RS_OBJECT_DATA_TYPE(x, name) x,
+#define RS_OBJECT_DATA_TYPE_RANGE(x, y) \
+    FirstRSObjectType = x,  \
+    LastRSObjectType = y,
   RS_OBJECT_DATA_TYPE_ENUMS
 #undef ENUM_RS_OBJECT_DATA_TYPE
+#undef RS_OBJECT_DATA_TYPE_RANGE
 };
 
 enum {
@@ -43,7 +60,11 @@ class RSDataTypeSpec {
   size_t mBits;
 
  protected:
-  bool mIsRSObject;
+  enum {
+    DT_PrimitiveClass,
+    DT_RSMatrixClass,
+    DT_RSObjectClass
+  } mClass;
 
  public:
   RSDataTypeSpec(const char *TypeName,
@@ -52,14 +73,32 @@ class RSDataTypeSpec {
       : mTypeName(TypeName),
         mTypePragmaName(TypePragmaName),
         mBits(Bits),
-        mIsRSObject(false) {
+        mClass(DT_PrimitiveClass) {
     return;
   }
 
   inline const char *getTypeName() const { return mTypeName; }
   inline const char *getTypePragmaName() const { return mTypePragmaName; }
   inline size_t getSizeInBit() const { return mBits; }
-  inline bool isRSObject() const { return mIsRSObject; }
+  inline bool isRSMatrix() const { return (mClass == DT_RSMatrixClass); }
+  inline bool isRSObject() const { return (mClass == DT_RSObjectClass); }
+};
+
+class RSMatrixDataTypeSpec : public RSDataTypeSpec {
+ private:
+  unsigned mDim;
+
+ public:
+  RSMatrixDataTypeSpec(const char *TypeName,
+                       const char *TypePragmaName,
+                       unsigned Dim)
+      : RSDataTypeSpec(TypeName, TypePragmaName, Dim * Dim * sizeof(float)),
+        mDim(Dim) {
+    mClass = DT_RSMatrixClass;
+    return;
+  }
+
+  inline unsigned getDim() const { return mDim; }
 };
 
 class RSObjectDataTypeSpec : public RSDataTypeSpec {
@@ -67,7 +106,7 @@ class RSObjectDataTypeSpec : public RSDataTypeSpec {
   RSObjectDataTypeSpec(const char *TypeName,
                        const char *TypePragmaName)
       : RSDataTypeSpec(TypeName, TypePragmaName, 32 /* opaque pointer */) {
-    mIsRSObject = true;
+    mClass = DT_RSObjectClass;
     return;
   }
 };
@@ -140,16 +179,69 @@ class RSDataElementSpec {
 
 // -gen-rs-data-type-enums
 //
+// ENUM_PRIMITIVE_DATA_TYPE(type, cname, bits)
+// ENUM_PRIMITIVE_DATA_TYPE_RANGE(begin_type, end_type)
+// ENUM_RS_MATRIX_DATA_TYPE(type, cname, bits)
+// ENUM_RS_MATRIX_DATA_TYPE_RANGE(begin_type, end_type)
+// ENUM_RS_OBJECT_DATA_TYPE(type, cname, bits)
+// ENUM_RS_OBJECT_DATA_TYPE_RANGE(begin_type, end_type)
+//
 // ENUM_RS_DATA_TYPE(type, cname, bits)
 // e.g., ENUM_RS_DATA_TYPE(Float32, "float", 256)
 static int GenRSDataTypeEnums(const RSDataTypeSpec *const DataTypes[],
                               unsigned NumDataTypes) {
-  for (unsigned i = 0; i < NumDataTypes; i++)
-    printf("ENUM_RS_DATA_TYPE(%s, \"%s\", %lu)\n",
-           DataTypes[i]->getTypeName(),
-           DataTypes[i]->getTypePragmaName(),
-           DataTypes[i]->getSizeInBit());
-  printf("#undef ENUM_RS_DATA_TYPE");
+  // Alias missing #define
+#define ALIAS_DEF(x, y) \
+  printf("#ifndef " #x "\n");  \
+  printf("#define " #x "(type, cname, bits) " #y "(type, cname, bits)\n");  \
+  printf("#endif\n\n")
+  ALIAS_DEF(ENUM_PRIMITIVE_DATA_TYPE, ENUM_RS_DATA_TYPE);
+  ALIAS_DEF(ENUM_RS_MATRIX_DATA_TYPE, ENUM_RS_DATA_TYPE);
+  ALIAS_DEF(ENUM_RS_OBJECT_DATA_TYPE, ENUM_RS_DATA_TYPE);
+#undef ALIAS_DEF
+
+#define ALIAS_DEF(x) \
+  printf("#ifndef " #x "\n");  \
+  printf("#define " #x "(begin_type, end_type)\n");  \
+  printf("#endif\n\n")
+  ALIAS_DEF(ENUM_PRIMITIVE_DATA_TYPE_RANGE);
+  ALIAS_DEF(ENUM_RS_MATRIX_DATA_TYPE_RANGE);
+  ALIAS_DEF(ENUM_RS_OBJECT_DATA_TYPE_RANGE);
+#undef ALIAS_DEF
+
+#define DEF(x) \
+  printf(#x "(%s, \"%s\", %lu)\n",  \
+         DataTypes[i]->getTypeName(), \
+         DataTypes[i]->getTypePragmaName(), \
+         DataTypes[i]->getSizeInBit());
+#define DEF_RANGE(x, begin, end)  \
+  printf(#x "(%s, %s)\n\n", \
+         DataTypes[begin]->getTypeName(), \
+         DataTypes[end]->getTypeName())
+  for (unsigned i = FirstPrimitiveType; i <= LastPrimitiveType; i++)
+    DEF(ENUM_PRIMITIVE_DATA_TYPE);
+  DEF_RANGE(ENUM_PRIMITIVE_DATA_TYPE_RANGE,
+            FirstPrimitiveType, LastPrimitiveType);
+  for (unsigned i = FirstRSMatrixType; i <= LastRSMatrixType; i++)
+    DEF(ENUM_RS_MATRIX_DATA_TYPE)
+  DEF_RANGE(ENUM_RS_MATRIX_DATA_TYPE_RANGE,
+            FirstRSMatrixType, LastRSMatrixType);
+  for (unsigned i = FirstRSObjectType; i <= LastRSObjectType; i++)
+    DEF(ENUM_RS_OBJECT_DATA_TYPE)
+  DEF_RANGE(ENUM_RS_OBJECT_DATA_TYPE_RANGE,
+            FirstRSObjectType, LastRSObjectType);
+#undef DEF
+#undef DEF_RANGE
+
+#define UNDEF(x)  \
+  printf("#undef " #x "\n")
+  UNDEF(ENUM_PRIMITIVE_DATA_TYPE);
+  UNDEF(ENUM_RS_MATRIX_DATA_TYPE);
+  UNDEF(ENUM_RS_OBJECT_DATA_TYPE);
+  UNDEF(ENUM_PRIMITIVE_DATA_TYPE_RANGE);
+  UNDEF(ENUM_RS_MATRIX_DATA_TYPE_RANGE);
+  UNDEF(ENUM_RS_OBJECT_DATA_TYPE_RANGE);
+  UNDEF(ENUM_RS_DATA_TYPE);
   return 0;
 }
 
@@ -169,10 +261,29 @@ static int GenClangBuiltinEnum(
   return 0;
 }
 
+// -gen-rs-matrix-type-enums
+//
+// ENUM_RS_MATRIX_TYPE(type, cname, dim)
+// e.g., ENUM_RS_MATRIX_TYPE(RSMatrix2x2, "rs_matrix2x2", 2)
+static int GenRSMatrixTypeEnums(const RSDataTypeSpec *const DataTypes[],
+                                unsigned NumDataTypes) {
+  for (unsigned i = 0; i < NumDataTypes; i++)
+    if (DataTypes[i]->isRSMatrix()) {
+      const RSMatrixDataTypeSpec *const MatrixDataType =
+          static_cast<const RSMatrixDataTypeSpec *const>(DataTypes[i]);
+      printf("ENUM_RS_MATRIX_TYPE(%s, \"%s\", %u)\n",
+             MatrixDataType->getTypeName(),
+             MatrixDataType->getTypePragmaName(),
+             MatrixDataType->getDim());
+    }
+  printf("#undef ENUM_RS_MATRIX_TYPE");
+  return 0;
+}
+
 // -gen-rs-object-type-enums
 //
 // ENUM_RS_OBJECT_TYPE(type, cname)
-// e.g., ENUM_RS_OBJECT_TYPE(RSMatrix2x2, "rs_matrix2x2")
+// e.g., ENUM_RS_OBJECT_TYPE(RSElement, "rs_element")
 static int GenRSObjectTypeEnums(const RSDataTypeSpec *const DataTypes[],
                                 unsigned NumDataTypes) {
   for (unsigned i = 0; i < NumDataTypes; i++)
@@ -222,12 +333,24 @@ int main(int argc, char **argv) {
   RSDataTypeSpec *DataTypes[] = {
 #define ENUM_PRIMITIVE_DATA_TYPE(x, name, bits) \
   new RSDataTypeSpec(#x , name, bits),
+#define PRIMITIVE_DATA_TYPE_RANGE(x, y)
   PRIMITIVE_DATA_TYPE_ENUMS
 #undef ENUM_PRIMITIVE_DATA_TYPE
+#undef PRIMITIVE_DATA_TYPE_RANGE
+
+#define ENUM_RS_MATRIX_DATA_TYPE(x, name, dim) \
+  new RSMatrixDataTypeSpec(#x , name, dim),
+#define RS_MATRIX_DATA_TYPE_RANGE(x, y)
+  RS_MATRIX_DATA_TYPE_ENUMS
+#undef ENUM_RS_MATRIX_DATA_TYPE
+#undef RS_MATRIX_DATA_TYPE_RANGE
+
 #define ENUM_RS_OBJECT_DATA_TYPE(x, name)  \
   new RSObjectDataTypeSpec(#x, name),
+#define RS_OBJECT_DATA_TYPE_RANGE(x, y)
   RS_OBJECT_DATA_TYPE_ENUMS
 #undef ENUM_RS_OBJECT_DATA_TYPE
+#undef RS_OBJECT_DATA_TYPE_RANGE
   };
 
   unsigned NumDataTypes = sizeof(DataTypes) / sizeof(DataTypes[0]);
@@ -313,6 +436,8 @@ int main(int argc, char **argv) {
     Result = GenRSDataTypeEnums(DataTypes, NumDataTypes);
   else if (::strcmp(argv[1], "-gen-clang-builtin-enums") == 0)
     Result = GenClangBuiltinEnum(ClangBuilitinsMap, NumClangBuilitins);
+  else if (::strcmp(argv[1], "-gen-rs-matrix-type-enums") == 0)
+    Result = GenRSMatrixTypeEnums(DataTypes, NumDataTypes);
   else if (::strcmp(argv[1], "-gen-rs-object-type-enums") == 0)
     Result = GenRSObjectTypeEnums(DataTypes, NumDataTypes);
   else if (::strcmp(argv[1], "-gen-rs-data-kind-enums") == 0)

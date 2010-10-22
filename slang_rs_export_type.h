@@ -170,8 +170,21 @@ class RSExportPrimitiveType : public RSExportType {
   typedef enum {
     DataTypeUnknown = -1,
 
+#define ENUM_PRIMITIVE_DATA_TYPE_RANGE(begin_type, end_type)  \
+    FirstPrimitiveType = DataType ## begin_type,  \
+    LastPrimitiveType = DataType ## end_type,
+
+#define ENUM_RS_MATRIX_DATA_TYPE_RANGE(begin_type, end_type)  \
+    FirstRSMatrixType = DataType ## begin_type,  \
+    LastRSMatrixType = DataType ## end_type,
+
+#define ENUM_RS_OBJECT_DATA_TYPE_RANGE(begin_type, end_type)  \
+    FirstRSObjectType = DataType ## begin_type,  \
+    LastRSObjectType = DataType ## end_type,
+
 #define ENUM_RS_DATA_TYPE(type, cname, bits)  \
     DataType ## type,
+
 #include "RSDataTypeEnums.inc"
 
     DataTypeMax
@@ -195,8 +208,8 @@ class RSExportPrimitiveType : public RSExportType {
   DataKind mKind;
   bool mNormalized;
 
-  typedef llvm::StringMap<DataType> RSObjectTypeMapTy;
-  static llvm::ManagedStatic<RSObjectTypeMapTy> RSObjectTypeMap;
+  typedef llvm::StringMap<DataType> RSSpecificTypeMapTy;
+  static llvm::ManagedStatic<RSSpecificTypeMapTy> RSSpecificTypeMap;
 
   static llvm::Type *RSObjectLLVMType;
 
@@ -240,8 +253,11 @@ class RSExportPrimitiveType : public RSExportType {
                                        const clang::Type *T,
                                        DataKind DK = DataKindUser);
 
-  static DataType GetRSObjectType(const llvm::StringRef &TypeName);
-  static DataType GetRSObjectType(const clang::Type *T);
+  static DataType GetRSSpecificType(const llvm::StringRef &TypeName);
+  static DataType GetRSSpecificType(const clang::Type *T);
+
+  static bool IsRSMatrixType(DataType DT);
+  static bool IsRSObjectType(DataType DT);
 
   static size_t GetSizeInBits(const RSExportPrimitiveType *EPT);
 

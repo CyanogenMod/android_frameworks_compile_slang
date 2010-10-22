@@ -172,7 +172,7 @@ const clang::Type *RSExportType::TypeExportable(
       }
     }
     case clang::Type::Record: {
-      if (RSExportPrimitiveType::GetRSObjectType(T) !=
+      if (RSExportPrimitiveType::GetRSSpecificType(T) !=
           RSExportPrimitiveType::DataTypeUnknown)
         return T;  // RS object type, no further checks are needed
 
@@ -281,7 +281,7 @@ RSExportType *RSExportType::Create(RSContext *Context,
   switch (T->getTypeClass()) {
     case clang::Type::Record: {
       RSExportPrimitiveType::DataType dt =
-          RSExportPrimitiveType::GetRSObjectType(TypeName);
+          RSExportPrimitiveType::GetRSSpecificType(TypeName);
       switch (dt) {
         case RSExportPrimitiveType::DataTypeUnknown: {
           // User-defined types
@@ -421,8 +421,8 @@ RSExportType::~RSExportType() {
 }
 
 /************************** RSExportPrimitiveType **************************/
-llvm::ManagedStatic<RSExportPrimitiveType::RSObjectTypeMapTy>
-RSExportPrimitiveType::RSObjectTypeMap;
+llvm::ManagedStatic<RSExportPrimitiveType::RSSpecificTypeMapTy>
+RSExportPrimitiveType::RSSpecificTypeMap;
 
 llvm::Type *RSExportPrimitiveType::RSObjectLLVMType = NULL;
 
@@ -434,30 +434,41 @@ bool RSExportPrimitiveType::IsPrimitiveType(const clang::Type *T) {
 }
 
 RSExportPrimitiveType::DataType
-RSExportPrimitiveType::GetRSObjectType(const llvm::StringRef &TypeName) {
+RSExportPrimitiveType::GetRSSpecificType(const llvm::StringRef &TypeName) {
   if (TypeName.empty())
     return DataTypeUnknown;
 
-  if (RSObjectTypeMap->empty()) {
+  if (RSSpecificTypeMap->empty()) {
+#define ENUM_RS_MATRIX_TYPE(type, cname, dim)                       \
+    RSSpecificTypeMap->GetOrCreateValue(cname, DataType ## type);
+#include "RSMatrixTypeEnums.inc"
 #define ENUM_RS_OBJECT_TYPE(type, cname)                            \
-    RSObjectTypeMap->GetOrCreateValue(cname, DataType ## type);
+    RSSpecificTypeMap->GetOrCreateValue(cname, DataType ## type);
 #include "RSObjectTypeEnums.inc"
   }
 
-  RSObjectTypeMapTy::const_iterator I = RSObjectTypeMap->find(TypeName);
-  if (I == RSObjectTypeMap->end())
+  RSSpecificTypeMapTy::const_iterator I = RSSpecificTypeMap->find(TypeName);
+  if (I == RSSpecificTypeMap->end())
     return DataTypeUnknown;
   else
     return I->getValue();
 }
 
 RSExportPrimitiveType::DataType
-RSExportPrimitiveType::GetRSObjectType(const clang::Type *T) {
+RSExportPrimitiveType::GetRSSpecificType(const clang::Type *T) {
   T = GET_CANONICAL_TYPE(T);
   if ((T == NULL) || (T->getTypeClass() != clang::Type::Record))
     return DataTypeUnknown;
 
-  return GetRSObjectType( RSExportType::GetTypeName(T) );
+  return GetRSSpecificType( RSExportType::GetTypeName(T) );
+}
+
+bool RSExportPrimitiveType::IsRSMatrixType(DataType DT) {
+  return ((DT >= FirstRSMatrixType) && (DT <= LastRSMatrixType));
+}
+
+bool RSExportPrimitiveType::IsRSObjectType(DataType DT) {
+  return ((DT >= FirstRSObjectType) && (DT <= LastRSObjectType));
 }
 
 const size_t RSExportPrimitiveType::SizeOfDataTypeInBits[] = {
@@ -500,8 +511,7 @@ RSExportPrimitiveType::GetDataType(const clang::Type *T) {
     }
     case clang::Type::Record: {
       // must be RS object type
-      return RSExportPrimitiveType::GetRSObjectType(T);
-      break;
+      return RSExportPrimitiveType::GetRSSpecificType(T);
     }
     default: {
       fprintf(stderr, "RSExportPrimitiveType::GetDataType : type '%s' is not "

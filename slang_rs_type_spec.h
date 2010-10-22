@@ -40,12 +40,16 @@
     ENUM_PRIMITIVE_DATA_TYPE(Boolean, "bool", 8)          \
     ENUM_PRIMITIVE_DATA_TYPE(Unsigned565, "u565", 128)    \
     ENUM_PRIMITIVE_DATA_TYPE(Unsigned5551, "u5551", 128)  \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned4444, "u4444", 128)
+    ENUM_PRIMITIVE_DATA_TYPE(Unsigned4444, "u4444", 128)  \
+    PRIMITIVE_DATA_TYPE_RANGE(Float16, Unsigned4444)
+
+#define RS_MATRIX_DATA_TYPE_ENUMS                             \
+    ENUM_RS_MATRIX_DATA_TYPE(RSMatrix2x2, "rs_matrix2x2", 2)  \
+    ENUM_RS_MATRIX_DATA_TYPE(RSMatrix3x3, "rs_matrix3x3", 3)  \
+    ENUM_RS_MATRIX_DATA_TYPE(RSMatrix4x4, "rs_matrix4x4", 4)  \
+    RS_MATRIX_DATA_TYPE_RANGE(RSMatrix2x2, RSMatrix4x4)
 
 #define RS_OBJECT_DATA_TYPE_ENUMS                                       \
-    ENUM_RS_OBJECT_DATA_TYPE(RSMatrix2x2, "rs_matrix2x2")               \
-    ENUM_RS_OBJECT_DATA_TYPE(RSMatrix3x3, "rs_matrix3x3")               \
-    ENUM_RS_OBJECT_DATA_TYPE(RSMatrix4x4, "rs_matrix4x4")               \
     ENUM_RS_OBJECT_DATA_TYPE(RSElement, "rs_element")                   \
     ENUM_RS_OBJECT_DATA_TYPE(RSType, "rs_type")                         \
     ENUM_RS_OBJECT_DATA_TYPE(RSAllocation, "rs_allocation")             \
@@ -56,7 +60,8 @@
     ENUM_RS_OBJECT_DATA_TYPE(RSProgramVertex, "rs_program_vertex")      \
     ENUM_RS_OBJECT_DATA_TYPE(RSProgramRaster, "rs_program_raster")      \
     ENUM_RS_OBJECT_DATA_TYPE(RSProgramStore, "rs_program_store")        \
-    ENUM_RS_OBJECT_DATA_TYPE(RSFont, "rs_font")
+    ENUM_RS_OBJECT_DATA_TYPE(RSFont, "rs_font")                         \
+    RS_OBJECT_DATA_TYPE_RANGE(RSElement, RSFont)
 
 #define RS_DATA_KIND_ENUMS        \
     ENUM_RS_DATA_KIND(User)       \
@@ -75,11 +80,29 @@ enum RSTypeClass {
 
 enum RSDataType {
 #define ENUM_PRIMITIVE_DATA_TYPE(x, name, bits) RS_DT_ ## x,
-#define ENUM_RS_OBJECT_DATA_TYPE(x, name) RS_DT_ ## x,
+#define PRIMITIVE_DATA_TYPE_RANGE(x, y) \
+    RS_DT_FirstPrimitiveType = RS_DT_ ## x, \
+    RS_DT_LastPrimitiveType = RS_DT_ ## y,
   PRIMITIVE_DATA_TYPE_ENUMS
-  RS_OBJECT_DATA_TYPE_ENUMS
 #undef ENUM_PRIMITIVE_DATA_TYPE
+#undef PRIMITIVE_DATA_TYPE_RANGE
+
+#define ENUM_RS_MATRIX_DATA_TYPE(x, name, dim) RS_DT_ ## x,
+#define RS_MATRIX_DATA_TYPE_RANGE(x, y) \
+      RS_DT_FirstMatrixType = RS_DT_ ## x,  \
+      RS_DT_LastMatrixType = RS_DT_ ## y,
+  RS_MATRIX_DATA_TYPE_ENUMS
+#undef ENUM_RS_MATRIX_DATA_TYPE
+#undef RS_MATRIX_DATA_TYPE_RANGE
+
+#define ENUM_RS_OBJECT_DATA_TYPE(x, name) RS_DT_ ## x,
+#define RS_OBJECT_DATA_TYPE_RANGE(x, y) \
+    RS_DT_FirstRSObjectType = RS_DT_ ## x,  \
+    RS_DT_LastRSObjectType = RS_DT_ ## y,
+  RS_OBJECT_DATA_TYPE_ENUMS
 #undef ENUM_RS_OBJECT_DATA_TYPE
+#undef RS_OBJECT_DATA_TYPE_RANGE
+
   RS_DT_USER_DEFINED
 };
 

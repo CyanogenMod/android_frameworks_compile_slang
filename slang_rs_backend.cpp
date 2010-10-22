@@ -116,10 +116,12 @@ namespace {
 
     inline Scope *getCurrentScope() { return mScopeStack.top(); }
 
-    // Return false if the process was terminated early. I.e., Type of variable
-    // in VD is not an RS object type.
+    // Return false if the type of variable declared in VD is not an RS object
+    // type.
     static bool InitializeRSObject(clang::VarDecl *VD);
-    static clang::Expr *CreateZeroInitializerForRSObject(
+    // Return an zero-initializer expr of the type DT. This processes both
+    // RS matrix type and RS object type.
+    static clang::Expr *CreateZeroInitializerForRSSpecificType(
         RSExportPrimitiveType::DataType DT,
         clang::ASTContext &C,
         const clang::SourceLocation &Loc);
@@ -146,7 +148,7 @@ namespace {
 bool RSObjectRefCounting::InitializeRSObject(clang::VarDecl *VD) {
   const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
   RSExportPrimitiveType::DataType DT =
-      RSExportPrimitiveType::GetRSObjectType(T);
+      RSExportPrimitiveType::GetRSSpecificType(T);
 
   if (DT == RSExportPrimitiveType::DataTypeUnknown)
     return false;
@@ -156,9 +158,9 @@ bool RSObjectRefCounting::InitializeRSObject(clang::VarDecl *VD) {
     // This can potentially be done as part of the assignment pass.
   } else {
     clang::Expr *ZeroInitializer =
-        CreateZeroInitializerForRSObject(DT,
-                                         VD->getASTContext(),
-                                         VD->getLocation());
+        CreateZeroInitializerForRSSpecificType(DT,
+                                               VD->getASTContext(),
+                                               VD->getLocation());
 
     if (ZeroInitializer) {
       ZeroInitializer->setType(T->getCanonicalTypeInternal());
@@ -166,10 +168,10 @@ bool RSObjectRefCounting::InitializeRSObject(clang::VarDecl *VD) {
     }
   }
 
-  return true;
+  return RSExportPrimitiveType::IsRSObjectType(DT);
 }
 
-clang::Expr *RSObjectRefCounting::CreateZeroInitializerForRSObject(
+clang::Expr *RSObjectRefCounting::CreateZeroInitializerForRSSpecificType(
     RSExportPrimitiveType::DataType DT,
     clang::ASTContext &C,
     const clang::SourceLocation &Loc) {
