@@ -1188,7 +1188,7 @@ void RSReflection::genAllocateVarOfType(Context &C,
 void RSReflection::genNewItemBufferIfNull(Context &C, const char *Index) {
   C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) "
                   RS_TYPE_ITEM_BUFFER_NAME" = "
-                    "new "RS_TYPE_ITEM_CLASS_NAME"[mType.getX() /* count */];"
+                    "new "RS_TYPE_ITEM_CLASS_NAME"[getType().getX() /* count */];"
              << std::endl;
   if (Index != NULL)
     C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME"[" << Index << "] == null) "
@@ -1201,7 +1201,7 @@ void RSReflection::genNewItemBufferPackerIfNull(Context &C) {
   C.indent() << "if ("RS_TYPE_ITEM_BUFFER_PACKER_NAME" == null) "
                   RS_TYPE_ITEM_BUFFER_PACKER_NAME" = "
                     "new FieldPacker("
-                      RS_TYPE_ITEM_CLASS_NAME".sizeof * mType.getX()/* count */"
+                      RS_TYPE_ITEM_CLASS_NAME".sizeof * getType().getX()/* count */"
                     ");" << std::endl;
   return;
 }
@@ -1472,13 +1472,16 @@ void RSReflection::genTypeClassResize(Context &C) {
                   1,
                   "int", "newSize");
 
+  C.indent() << "if (mItemArray != null) ";
+  C.startBlock();
   C.indent() << "int oldSize = mItemArray.length;" << std::endl;
   C.indent() << "int copySize = Math.min(oldSize, newSize);" << std::endl;
-  C.indent() << "if (copySize == oldSize) return;" << std::endl;
+  C.indent() << "if (newSize == oldSize) return;" << std::endl;
   C.indent() << "Item ni[] = new Item[newSize];" << std::endl;
   C.indent() << "System.arraycopy(mItemArray, 0, ni, 0, copySize);"
              << std::endl;
   C.indent() << "mItemArray = ni;" << std::endl;
+  C.endBlock();
   C.indent() << "mAllocation.resize(newSize);" << std::endl;
 
   C.endFunction();
