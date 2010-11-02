@@ -71,29 +71,6 @@ RSBackend::RSBackend(RSContext *Context,
   return;
 }
 
-void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
-  // Disallow user-defined functions with prefix "rs"
-  if (!mAllowRSPrefix) {
-    // Iterate all function declarations in the program.
-    for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end();
-         I != E; I++) {
-      clang::FunctionDecl *FD = dyn_cast<clang::FunctionDecl>(*I);
-      if (FD == NULL)
-        continue;
-      if (!FD->getName().startswith("rs"))  // Check prefix
-        continue;
-      if (!SlangRS::IsFunctionInRSHeaderFile(FD, mSourceMgr))
-        mDiags.Report(clang::FullSourceLoc(FD->getLocation(), mSourceMgr),
-                      mDiags.getCustomDiagID(clang::Diagnostic::Error,
-                                             "invalid function name prefix, "
-                                             "\"rs\" is reserved: '%0'"))
-            << FD->getName();
-    }
-  }
-
-  Backend::HandleTopLevelDecl(D);
-  return;
-}
 ///////////////////////////////////////////////////////////////////////////////
 
 namespace {
@@ -307,17 +284,55 @@ void RSObjectRefCounting::VisitBinAssign(clang::BinaryOperator *AS) {
   return;
 }
 
+// 1) Add zero initialization of local RS object types
+void RSBackend::AnnotateFunction(clang::FunctionDecl *FD) {
+  if (FD &&
+      FD->hasBody() &&
+      !SlangRS::IsFunctionInRSHeaderFile(FD, mSourceMgr)) {
+    RSObjectRefCounting RSObjectRefCounter;
+    RSObjectRefCounter.Visit(FD->getBody());
+  }
+  return;
+}
+
+void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
+  // Disallow user-defined functions with prefix "rs"
+  if (!mAllowRSPrefix) {
+    // Iterate all function declarations in the program.
+    for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end();
+         I != E; I++) {
+      clang::FunctionDecl *FD = dyn_cast<clang::FunctionDecl>(*I);
+      if (FD == NULL)
+        continue;
+      if (!FD->getName().startswith("rs"))  // Check prefix
+        continue;
+      if (!SlangRS::IsFunctionInRSHeaderFile(FD, mSourceMgr))
+        mDiags.Report(clang::FullSourceLoc(FD->getLocation(), mSourceMgr),
+                      mDiags.getCustomDiagID(clang::Diagnostic::Error,
+                                             "invalid function name prefix, "
+                                             "\"rs\" is reserved: '%0'"))
+            << FD->getName();
+    }
+  }
+
+  // Process any non-static function declarations
+  for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; I++) {
+    AnnotateFunction(dyn_cast<clang::FunctionDecl>(*I));
+  }
+
+  Backend::HandleTopLevelDecl(D);
+  return;
+}
+
 void RSBackend::HandleTranslationUnitPre(clang::ASTContext& C) {
-  RSObjectRefCounting RSObjectRefCounter;
   clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
 
+  // Process any static function declarations
   for (clang::DeclContext::decl_iterator I = TUDecl->decls_begin(),
           E = TUDecl->decls_end(); I != E; I++) {
     if ((I->getKind() >= clang::Decl::firstFunction) &&
         (I->getKind() <= clang::Decl::lastFunction)) {
-      clang::FunctionDecl *FD = static_cast<clang::FunctionDecl*>(*I);
-      if (FD->hasBody() && !SlangRS::IsFunctionInRSHeaderFile(FD, mSourceMgr))
-        RSObjectRefCounter.Visit( FD->getBody());
+      AnnotateFunction(static_cast<clang::FunctionDecl*>(*I));
     }
   }
 

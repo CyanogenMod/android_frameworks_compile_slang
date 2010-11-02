@@ -32,6 +32,7 @@ namespace clang {
   class CodeGenerator;
   class ASTContext;
   class DeclGroupRef;
+  class FunctionDecl;
 }
 
 namespace slang {
@@ -50,6 +51,8 @@ class RSBackend : public Backend {
   llvm::NamedMDNode *mExportFuncMetadata;
   llvm::NamedMDNode *mExportTypeMetadata;
   llvm::NamedMDNode *mExportElementMetadata;
+
+  void AnnotateFunction(clang::FunctionDecl *FD);
 
  protected:
   virtual void HandleTopLevelDecl(clang::DeclGroupRef D);
