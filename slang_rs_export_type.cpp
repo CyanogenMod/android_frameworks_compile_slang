@@ -924,7 +924,7 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
   // Struct layout construct by clang. We rely on this for obtaining the
   // alloc size of a struct and offset of every field in that struct.
   const clang::ASTRecordLayout *RL =
-      &Context->getASTContext()->getASTRecordLayout(RD);
+      &Context->getASTContext().getASTRecordLayout(RD);
   assert((RL != NULL) && "Failed to retrieve the struct layout from Clang.");
 
   RSExportRecordType *ERT =

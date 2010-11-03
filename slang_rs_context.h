@@ -58,9 +58,9 @@ class RSContext {
   typedef llvm::StringMap<RSExportType*> ExportTypeMap;
 
  private:
-  clang::Preprocessor *mPP;
-  clang::ASTContext *mCtx;
-  const clang::TargetInfo *mTarget;
+  clang::Preprocessor &mPP;
+  clang::ASTContext &mCtx;
+  const clang::TargetInfo &mTarget;
 
   llvm::TargetData *mTargetData;
   llvm::LLVMContext &mLLVMContext;
@@ -87,16 +87,16 @@ class RSContext {
   ExportTypeMap mExportTypes;
 
  public:
-  RSContext(clang::Preprocessor *PP,
-            clang::ASTContext *Ctx,
-            const clang::TargetInfo *Target);
+  RSContext(clang::Preprocessor &PP,
+            clang::ASTContext &Ctx,
+            const clang::TargetInfo &Target);
 
-  inline clang::Preprocessor *getPreprocessor() const { return mPP; }
-  inline clang::ASTContext *getASTContext() const { return mCtx; }
+  inline clang::Preprocessor &getPreprocessor() const { return mPP; }
+  inline clang::ASTContext &getASTContext() const { return mCtx; }
   inline const llvm::TargetData *getTargetData() const { return mTargetData; }
   inline llvm::LLVMContext &getLLVMContext() const { return mLLVMContext; }
   inline const clang::SourceManager *getSourceManager() const {
-    return &mPP->getSourceManager();
+    return &mPP.getSourceManager();
   }
 
   inline void setLicenseNote(const std::string &S) {
