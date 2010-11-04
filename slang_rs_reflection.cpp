@@ -506,13 +506,12 @@ void RSReflection::genScriptClassConstructor(Context &C) {
                   false,
                   NULL,
                   C.getClassName(),
-                  4,
+                  3,
                   "RenderScript", "rs",
                   "Resources", "resources",
-                  "int", "id",
-                  "boolean", "isRoot");
+                  "int", "id");
   // Call constructor of super class
-  C.indent() << "super(rs, resources, id, isRoot);" << std::endl;
+  C.indent() << "super(rs, resources, id);" << std::endl;
 
   // If an exported variable has initial value, reflect it
 
@@ -526,6 +525,32 @@ void RSReflection::genScriptClassConstructor(Context &C) {
   }
 
   C.endFunction();
+
+  C.startFunction(Context::AM_Public,
+                  false,
+                  NULL,
+                  C.getClassName(),
+                  4,
+                  "RenderScript", "rs",
+                  "Resources", "resources",
+                  "int", "id",
+                  "boolean", "isRoot");
+  // Call constructor of super class
+  C.indent() << "super(rs, resources, id);" << std::endl;
+
+  // If an exported variable has initial value, reflect it
+
+  for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
+           E = mRSContext->export_vars_end();
+       I != E;
+       I++) {
+    const RSExportVar *EV = *I;
+    if (!EV->getInit().isUninit())
+      genInitExportVariable(C, EV->getType(), EV->getName(), EV->getInit());
+  }
+
+  C.endFunction();
+  
   return;
 }
 
