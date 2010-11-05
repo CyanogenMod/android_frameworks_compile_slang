@@ -187,9 +187,9 @@ void SlangRS::initPreprocessor() {
 }
 
 void SlangRS::initASTContext() {
-  mRSContext = new RSContext(&getPreprocessor(),
-                             &getASTContext(),
-                             &getTargetInfo());
+  mRSContext = new RSContext(getPreprocessor(),
+                             getASTContext(),
+                             getTargetInfo());
   return;
 }
 

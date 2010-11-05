@@ -40,9 +40,9 @@
 
 using namespace slang;
 
-RSContext::RSContext(clang::Preprocessor *PP,
-                     clang::ASTContext *Ctx,
-                     const clang::TargetInfo *Target)
+RSContext::RSContext(clang::Preprocessor &PP,
+                     clang::ASTContext &Ctx,
+                     const clang::TargetInfo &Target)
     : mPP(PP),
       mCtx(Ctx),
       mTarget(Target),
@@ -52,35 +52,35 @@ RSContext::RSContext(clang::Preprocessor *PP,
       mExportAllNonStaticFuncs(false),
       mLicenseNote(NULL) {
   // For #pragma rs export_var
-  PP->AddPragmaHandler(
+  PP.AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaExportVarHandler(this));
 
   // For #pragma rs export_var_all
-  PP->AddPragmaHandler(
+  PP.AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaExportVarAllHandler(this));
 
   // For #pragma rs export_func
-  PP->AddPragmaHandler(
+  PP.AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaExportFuncHandler(this));
 
   // For #pragma rs export_func_all
-  PP->AddPragmaHandler(
+  PP.AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaExportFuncAllHandler(this));
 
   // For #pragma rs export_type
-  PP->AddPragmaHandler(
+  PP.AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaExportTypeHandler(this));
 
   // For #pragma rs java_package_name
-  PP->AddPragmaHandler(
+  PP.AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaJavaPackageNameHandler(this));
 
   // For #pragma rs set_reflect_license
-  PP->AddPragmaHandler(
+  PP.AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaReflectLicenseHandler(this));
 
   // Prepare target data
-  mTargetData = new llvm::TargetData(Target->getTargetDescription());
+  mTargetData = new llvm::TargetData(Target.getTargetDescription());
 
   return;
 }
@@ -126,12 +126,12 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
 
 
 bool RSContext::processExportType(const llvm::StringRef &Name) {
-  clang::TranslationUnitDecl *TUDecl = mCtx->getTranslationUnitDecl();
+  clang::TranslationUnitDecl *TUDecl = mCtx.getTranslationUnitDecl();
 
   assert(TUDecl != NULL && "Translation unit declaration (top-level "
                            "declaration) is null object");
 
-  const clang::IdentifierInfo *II = mPP->getIdentifierInfo(Name);
+  const clang::IdentifierInfo *II = mPP.getIdentifierInfo(Name);
   if (II == NULL)
     // TODO(zonr): alert identifier @Name mark as an exportable type cannot be
     //             found
@@ -140,7 +140,7 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
   clang::DeclContext::lookup_const_result R = TUDecl->lookup(II);
   RSExportType *ET = NULL;
 
-  RSExportPointerType::IntegerType = mCtx->IntTy.getTypePtr();
+  RSExportPointerType::IntegerType = mCtx.IntTy.getTypePtr();
 
   for (clang::DeclContext::lookup_const_iterator I = R.first, E = R.second;
        I != E;
@@ -184,7 +184,7 @@ void RSContext::processExport() {
   }
 
   // Export variable
-  clang::TranslationUnitDecl *TUDecl = mCtx->getTranslationUnitDecl();
+  clang::TranslationUnitDecl *TUDecl = mCtx.getTranslationUnitDecl();
   for (clang::DeclContext::decl_iterator DI = TUDecl->decls_begin(),
            DE = TUDecl->decls_end();
        DI != TUDecl->decls_end();

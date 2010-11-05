@@ -39,16 +39,16 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
   if (FD->getNumParams() <= 0) {
     F->mParamPacketType = NULL;
   } else {
-    clang::ASTContext *Ctx = Context->getASTContext();
+    clang::ASTContext &Ctx = Context->getASTContext();
 
     std::string Id(DUMMY_RS_TYPE_NAME_PREFIX"helper_func_param:");
     Id.append(F->getName()).append(DUMMY_RS_TYPE_NAME_POSTFIX);
 
     clang::RecordDecl *RD =
-        clang::RecordDecl::Create(*Ctx, clang::TTK_Struct,
-                                  Ctx->getTranslationUnitDecl(),
+        clang::RecordDecl::Create(Ctx, clang::TTK_Struct,
+                                  Ctx.getTranslationUnitDecl(),
                                   clang::SourceLocation(),
-                                  &Ctx->Idents.get(Id));
+                                  &Ctx.Idents.get(Id));
 
     for (unsigned i = 0; i < FD->getNumParams(); i++) {
       const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
@@ -61,7 +61,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
                         F->getName().c_str());
 
       clang::FieldDecl *FD =
-          clang::FieldDecl::Create(*Ctx,
+          clang::FieldDecl::Create(Ctx,
                                    RD,
                                    clang::SourceLocation(),
                                    PVD->getIdentifier(),
@@ -74,7 +74,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
 
     RD->completeDefinition();
 
-    clang::QualType T = Ctx->getTagDeclType(RD);
+    clang::QualType T = Ctx.getTagDeclType(RD);
     assert(!T.isNull());
 
     RSExportType *ET =
