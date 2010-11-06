@@ -1,0 +1,73 @@
+/*
+ * Copyright 2010, The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <stack>
+
+#include "clang/AST/StmtVisitor.h"
+
+#include "slang_rs_export_type.h"
+
+using namespace slang;
+
+namespace clang {
+  class Expr;
+}
+
+class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
+ private:
+  class Scope {
+   private:
+    clang::CompoundStmt *mCS;      // Associated compound statement ({ ... })
+    std::list<clang::Decl*> mRSO;  // Declared RS objects in this scope
+
+   public:
+    Scope(clang::CompoundStmt *CS) : mCS(CS) {
+      return;
+    }
+
+    inline void addRSObject(clang::Decl* D) {
+      mRSO.push_back(D);
+      return;
+    }
+  };
+
+  std::stack<Scope*> mScopeStack;
+
+  inline Scope *getCurrentScope() {
+    return mScopeStack.top();
+  }
+
+  // Return false if the type of variable declared in VD is not an RS object
+  // type.
+  static bool InitializeRSObject(clang::VarDecl *VD);
+
+  // Return a zero-initializer expr of the type DT. This processes both
+  // RS matrix type and RS object type.
+  static clang::Expr *CreateZeroInitializerForRSSpecificType(
+      RSExportPrimitiveType::DataType DT,
+      clang::ASTContext &C,
+      const clang::SourceLocation &Loc);
+
+ public:
+  void VisitStmt(clang::Stmt *S);
+  void VisitDeclStmt(clang::DeclStmt *DS);
+  void VisitCompoundStmt(clang::CompoundStmt *CS);
+  void VisitBinAssign(clang::BinaryOperator *AS);
+
+  // We believe that RS objects are never involved in CompoundAssignOperator.
+  // I.e., rs_allocation foo; foo += bar;
+};
+

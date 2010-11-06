@@ -19,6 +19,7 @@
 
 #include "slang_backend.h"
 #include "slang_pragma_recorder.h"
+#include "slang_rs_object_ref_count.h"
 
 namespace llvm {
   class NamedMDNode;
@@ -51,6 +52,8 @@ class RSBackend : public Backend {
   llvm::NamedMDNode *mExportFuncMetadata;
   llvm::NamedMDNode *mExportTypeMetadata;
   llvm::NamedMDNode *mExportElementMetadata;
+
+  RSObjectRefCount mRefCount;
 
   void AnnotateFunction(clang::FunctionDecl *FD);
 
