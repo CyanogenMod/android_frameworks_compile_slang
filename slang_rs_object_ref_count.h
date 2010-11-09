@@ -31,24 +31,42 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
   class Scope {
    private:
     clang::CompoundStmt *mCS;      // Associated compound statement ({ ... })
-    std::list<clang::Decl*> mRSO;  // Declared RS objects in this scope
+    std::list<clang::VarDecl*> mRSO;  // Declared RS objects in this scope
+
+    // RSSetObjectFD and RSClearObjectFD holds FunctionDecl of rsSetObject()
+    // and rsClearObject() in the current ASTContext.
+    static clang::FunctionDecl *RSSetObjectFD[];
+    static clang::FunctionDecl *RSClearObjectFD[];
 
    public:
     Scope(clang::CompoundStmt *CS) : mCS(CS) {
       return;
     }
 
-    inline void addRSObject(clang::Decl* D) {
-      mRSO.push_back(D);
+    inline void addRSObject(clang::VarDecl* VD) {
+      mRSO.push_back(VD);
       return;
     }
+
+    // Initialize RSSetObjectFD and RSClearObjectFD.
+    static void GetRSRefCountingFunctions(clang::ASTContext &C);
+
+    void InsertLocalVarDestructors();
+    void AppendToCompoundStatement(clang::ASTContext& C,
+                                   std::list<clang::Expr*> &rsClearObject);
+
+    static clang::Expr *ClearRSObject(clang::VarDecl *VD);
   };
 
   std::stack<Scope*> mScopeStack;
+  bool RSInitFD;
 
   inline Scope *getCurrentScope() {
     return mScopeStack.top();
   }
+
+  // TODO: Composite types and arrays based on RS object types need to be
+  // handled for both zero-initialization + clearing.
 
   // Return false if the type of variable declared in VD is not an RS object
   // type.
@@ -62,6 +80,19 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
       const clang::SourceLocation &Loc);
 
  public:
+  RSObjectRefCount()
+      : RSInitFD(false) {
+    return;
+  }
+
+  void Init(clang::ASTContext &C) {
+    if (!RSInitFD) {
+      Scope::GetRSRefCountingFunctions(C);
+      RSInitFD = true;
+    }
+    return;
+  }
+
   void VisitStmt(clang::Stmt *S);
   void VisitDeclStmt(clang::DeclStmt *DS);
   void VisitCompoundStmt(clang::CompoundStmt *CS);

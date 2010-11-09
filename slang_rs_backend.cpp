@@ -69,6 +69,7 @@ void RSBackend::AnnotateFunction(clang::FunctionDecl *FD) {
   if (FD &&
       FD->hasBody() &&
       !SlangRS::IsFunctionInRSHeaderFile(FD, mSourceMgr)) {
+    mRefCount.Init(mContext->getASTContext());
     mRefCount.Visit(FD->getBody());
   }
   return;
