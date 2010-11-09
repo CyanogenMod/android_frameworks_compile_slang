@@ -19,14 +19,14 @@
 #include <string>
 #include <vector>
 
+#include "llvm/Analysis/Verifier.h"
+
+#include "llvm/Bitcode/ReaderWriter.h"
+
 #include "llvm/Linker.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
-
-#include "llvm/Analysis/Verifier.h"
-
-#include "llvm/Bitcode/ReaderWriter.h"
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -38,32 +38,35 @@
 
 #include "slang_rs_metadata.h"
 
-using namespace llvm;
+using llvm::errs;
+using llvm::LLVMContext;
+using llvm::MemoryBuffer;
+using llvm::Module;
 
-static cl::list<std::string>
-InputFilenames(cl::Positional, cl::OneOrMore,
-               cl::desc("<input bitcode files>"));
+static llvm::cl::list<std::string>
+InputFilenames(llvm::cl::Positional, llvm::cl::OneOrMore,
+               llvm::cl::desc("<input bitcode files>"));
 
-static cl::list<std::string>
-OutputFilenames("o", cl::desc("Override output filename"),
-                cl::value_desc("<output bitcode file>"));
+static llvm::cl::list<std::string>
+OutputFilenames("o", llvm::cl::desc("Override output filename"),
+                llvm::cl::value_desc("<output bitcode file>"));
 
-static cl::opt<bool>
-NoStdLib("nostdlib", cl::desc("Don't link RS default libraries"));
+static llvm::cl::opt<bool>
+NoStdLib("nostdlib", llvm::cl::desc("Don't link RS default libraries"));
 
-static cl::list<std::string>
-    AdditionalLibs("l", cl::Prefix,
-                   cl::desc("Specify additional libraries to link to"),
-                   cl::value_desc("<library bitcode>"));
+static llvm::cl::list<std::string>
+    AdditionalLibs("l", llvm::cl::Prefix,
+                   llvm::cl::desc("Specify additional libraries to link to"),
+                   llvm::cl::value_desc("<library bitcode>"));
 
-static bool GetExportSymbolNames(NamedMDNode *N,
+static bool GetExportSymbolNames(llvm::NamedMDNode *N,
                                  unsigned NameOpIdx,
                                  std::vector<const char *> &Names) {
   if (N == NULL)
     return true;
 
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    MDNode *V = N->getOperand(i);
+    llvm::MDNode *V = N->getOperand(i);
     if (V == NULL)
       continue;
 
@@ -73,7 +76,8 @@ static bool GetExportSymbolNames(NamedMDNode *N,
       return false;
     }
 
-    MDString *Name = dyn_cast<MDString>(V->getOperand(NameOpIdx));
+    llvm::MDString *Name =
+        llvm::dyn_cast<llvm::MDString>(V->getOperand(NameOpIdx));
     if (Name == NULL) {
       errs() << "Invalid metadata spec of " << N->getName()
              << " in RenderScript executable. (#name)\n";
@@ -88,14 +92,13 @@ static bool GetExportSymbolNames(NamedMDNode *N,
 static bool GetExportSymbols(Module *M, std::vector<const char *> &Names) {
   bool Result = true;
   // Variables marked as export must be externally visible
-  if (NamedMDNode *EV = M->getNamedMetadata(RS_EXPORT_VAR_MN))
+  if (llvm::NamedMDNode *EV = M->getNamedMetadata(RS_EXPORT_VAR_MN))
     Result |= GetExportSymbolNames(EV, RS_EXPORT_VAR_NAME, Names);
   // So are those exported functions
-  if (NamedMDNode *EF = M->getNamedMetadata(RS_EXPORT_FUNC_MN))
+  if (llvm::NamedMDNode *EF = M->getNamedMetadata(RS_EXPORT_FUNC_MN))
     Result |= GetExportSymbolNames(EF, RS_EXPORT_FUNC_NAME, Names);
   return Result;
 }
-
 
 static inline MemoryBuffer *LoadFileIntoMemory(const std::string &F) {
   std::string Err;
@@ -145,7 +148,7 @@ static bool PreloadLibraries(bool NoStdLib,
 
   if (!NoStdLib) {
     // rslib.bc
-    MB = MemoryBuffer::getMemBuffer(StringRef(rslib_bc, rslib_bc_size),
+    MB = MemoryBuffer::getMemBuffer(llvm::StringRef(rslib_bc, rslib_bc_size),
                                     "rslib.bc");
     if (MB == NULL) {
       errs() << "Failed to load (in-memory) `rslib.bc'!\n";
@@ -196,7 +199,7 @@ Module *PerformLinking(const std::string &InputFile,
     if (Lib == NULL)
       return NULL;
 
-    if (Linker::LinkModules(Composite.get(), Lib, &Err)) {
+    if (llvm::Linker::LinkModules(Composite.get(), Lib, &Err)) {
       errs() << "Failed to link `" << InputFile << "' with library bitcode `"
              << (*I)->getBufferIdentifier() << "' (" << Err << ")\n";
       return NULL;
@@ -207,11 +210,11 @@ Module *PerformLinking(const std::string &InputFile,
 }
 
 bool OptimizeModule(Module *M) {
-  PassManager Passes;
+  llvm::PassManager Passes;
 
   const std::string &ModuleDataLayout = M->getDataLayout();
   if (!ModuleDataLayout.empty())
-    if (TargetData *TD = new TargetData(ModuleDataLayout))
+    if (llvm::TargetData *TD = new llvm::TargetData(ModuleDataLayout))
       Passes.add(TD);
 
   // Some symbols must not be internalized
@@ -223,7 +226,7 @@ bool OptimizeModule(Module *M) {
     return false;
   }
 
-  Passes.add(createInternalizePass(ExportList));
+  Passes.add(llvm::createInternalizePass(ExportList));
 
   // TODO(zonr): Do we need to run all LTO passes?
   createStandardLTOPasses(&Passes,
@@ -236,9 +239,9 @@ bool OptimizeModule(Module *M) {
 }
 
 int main(int argc, char **argv) {
-  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
+  llvm::llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
 
-  cl::ParseCommandLineOptions(argc, argv, "llvm-rs-link\n");
+  llvm::cl::ParseCommandLineOptions(argc, argv, "llvm-rs-link\n");
 
   std::list<MemoryBuffer *> LibBitcode;
 
@@ -249,7 +252,7 @@ int main(int argc, char **argv) {
   if (LibBitcode.size() == 0)
     return 0;
 
-  LLVMContext &Context = getGlobalContext();
+  LLVMContext &Context = llvm::getGlobalContext();
   bool HasError = true;
   std::string Err;
 
@@ -262,7 +265,7 @@ int main(int argc, char **argv) {
       break;
 
     // Verify linked module
-    if (verifyModule(*Linked, ReturnStatusAction, &Err)) {
+    if (verifyModule(*Linked, llvm::ReturnStatusAction, &Err)) {
       errs() << InputFilenames[i] << " linked, but does not verify as "
                                      "correct! (" << Err << ")\n";
       break;
@@ -272,8 +275,8 @@ int main(int argc, char **argv) {
       break;
 
     // Write out the module
-    tool_output_file Out(InputFilenames[i].c_str(), Err,
-                         raw_fd_ostream::F_Binary);
+    llvm::tool_output_file Out(InputFilenames[i].c_str(), Err,
+                               llvm::raw_fd_ostream::F_Binary);
 
     if (!Err.empty()) {
       errs() << InputFilenames[i] << " linked, but failed to write out! "

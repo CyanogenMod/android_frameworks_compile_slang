@@ -16,15 +16,17 @@
 
 #include "slang_rs_export_func.h"
 
-#include "llvm/DerivedTypes.h"
-#include "llvm/Target/TargetData.h"
+#include <string>
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 
+#include "llvm/DerivedTypes.h"
+#include "llvm/Target/TargetData.h"
+
 #include "slang_rs_context.h"
 
-using namespace slang;
+namespace slang {
 
 RSExportFunc *RSExportFunc::Create(RSContext *Context,
                                    const clang::FunctionDecl *FD) {
@@ -143,3 +145,5 @@ RSExportFunc::checkParameterPacketType(const llvm::StructType *ParamTy) const {
 
   return true;
 }
+
+}  // namespace slang

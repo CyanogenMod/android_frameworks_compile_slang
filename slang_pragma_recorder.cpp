@@ -16,12 +16,14 @@
 
 #include "slang_pragma_recorder.h"
 
+#include <string>
+
 #include "clang/Basic/TokenKinds.h"
 
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Token.h"
 
-using namespace slang;
+namespace slang {
 
 bool PragmaRecorder::GetPragmaNameFromToken(const clang::Token &Token,
                                             std::string &PragmaName) {
@@ -90,3 +92,5 @@ void PragmaRecorder::HandlePragma(clang::Preprocessor &PP,
 
   return;
 }
+
+}  // namespace slang

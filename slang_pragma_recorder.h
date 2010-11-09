@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_PRAGMA_HANDLER_H
-#define _SLANG_COMPILER_PRAGMA_HANDLER_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_PRAGMA_RECORDER_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_PRAGMA_RECORDER_H_
 
 #include <list>
 #include <string>
+#include <utility>
 
 #include "clang/Lex/Pragma.h"
 
@@ -49,4 +50,4 @@ class PragmaRecorder : public clang::PragmaHandler {
 };
 }
 
-#endif  // _SLANG_COMPILER_PRAGMA_HANDLER_H
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_PRAGMA_RECORDER_H_  NOLINT

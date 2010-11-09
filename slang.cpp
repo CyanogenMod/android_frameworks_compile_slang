@@ -18,73 +18,75 @@
 
 #include <stdlib.h>
 
+#include <string>
+#include <vector>
+
+#include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
+
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/LangOptions.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/TargetOptions.h"
+
+#include "clang/Frontend/CodeGenOptions.h"
+#include "clang/Frontend/DiagnosticOptions.h"
+#include "clang/Frontend/DependencyOutputOptions.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Frontend/Utils.h"
+
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/HeaderSearch.h"
+
+#include "clang/Parse/ParseAST.h"
+
+#include "llvm/Bitcode/ReaderWriter.h"
+
+// More force linking
+#include "llvm/Linker.h"
+
 // Force linking all passes/vmcore stuffs to libslang.so
 #include "llvm/LinkAllPasses.h"
 #include "llvm/LinkAllVMCore.h"
-
-#include "llvm/Target/TargetSelect.h"
-
-#include "llvm/System/Path.h"
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 
-#include "clang/Basic/LangOptions.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/TargetInfo.h"
-#include "clang/Basic/TargetOptions.h"
+#include "llvm/System/Path.h"
 
-#include "clang/Frontend/DependencyOutputOptions.h"
-#include "clang/Frontend/FrontendDiagnostic.h"
-#include "clang/Frontend/Utils.h"
+#include "llvm/Target/TargetSelect.h"
 
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Lex/HeaderSearch.h"
-
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/ASTContext.h"
-
-#include "clang/Basic/FileManager.h"
-
-#include "clang/Frontend/CodeGenOptions.h"
-#include "clang/Frontend/FrontendDiagnostic.h"
-
-#include "clang/Parse/ParseAST.h"
-
-#include "slang_utils.h"
 #include "slang_backend.h"
-
-// More force linking
-#include "llvm/Linker.h"
-#include "llvm/Bitcode/ReaderWriter.h"
-
-#include "clang/Frontend/DiagnosticOptions.h"
-#include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "slang_utils.h"
 
 namespace {
-  struct ForceSlangLinking {
-    ForceSlangLinking() {
-      // We must reference the functions in such a way that compilers will not
-      // delete it all as dead code, even with whole program optimization,
-      // yet is effectively a NO-OP. As the compiler isn't smart enough
-      // to know that getenv() never returns -1, this will do the job.
-      if (std::getenv("bar") != reinterpret_cast<char*>(-1))
-        return;
 
-      // llvm-rs-link needs following functions existing in libslang.
-      llvm::ParseBitcodeFile(NULL, llvm::getGlobalContext(), NULL);
-      llvm::Linker::LinkModules(NULL, NULL, NULL);
+struct ForceSlangLinking {
+  ForceSlangLinking() {
+    // We must reference the functions in such a way that compilers will not
+    // delete it all as dead code, even with whole program optimization,
+    // yet is effectively a NO-OP. As the compiler isn't smart enough
+    // to know that getenv() never returns -1, this will do the job.
+    if (std::getenv("bar") != reinterpret_cast<char*>(-1))
+      return;
 
-      // llvm-rs-cc need this.
-      new clang::TextDiagnosticPrinter(llvm::errs(),
-                                       clang::DiagnosticOptions());
-    }
-  } ForceSlangLinking;
-}
+    // llvm-rs-link needs following functions existing in libslang.
+    llvm::ParseBitcodeFile(NULL, llvm::getGlobalContext(), NULL);
+    llvm::Linker::LinkModules(NULL, NULL, NULL);
 
-using namespace slang;
+    // llvm-rs-cc need this.
+    new clang::TextDiagnosticPrinter(llvm::errs(),
+                                     clang::DiagnosticOptions());
+  }
+} ForceSlangLinking;
+
+}  // namespace
+
+namespace slang {
 
 #if defined(__arm__)
 #   define DEFAULT_TARGET_TRIPLE_STRING "armv7-none-linux-gnueabi"
@@ -250,7 +252,7 @@ clang::ASTConsumer
 *Slang::createBackend(const clang::CodeGenOptions& CodeGenOpts,
                       llvm::raw_ostream *OS,
                       OutputType OT) {
-  return new Backend(*mDiagnostics,
+  return new Backend(mDiagnostics.getPtr(),
                      CodeGenOpts,
                      mTargetOpts,
                      mPragmas,
@@ -452,3 +454,5 @@ Slang::~Slang() {
   llvm::llvm_shutdown();
   return;
 }
+
+}  // namespace slang

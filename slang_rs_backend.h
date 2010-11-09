@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_RS_BACKEND_H
-#define _SLANG_COMPILER_RENDER_SCRIPT_BACKEND_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_BACKEND_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_BACKEND_H_
 
 #include "slang_backend.h"
 #include "slang_pragma_recorder.h"
@@ -66,7 +66,7 @@ class RSBackend : public Backend {
 
  public:
   RSBackend(RSContext *Context,
-            clang::Diagnostic &Diags,
+            clang::Diagnostic *Diags,
             const clang::CodeGenOptions &CodeGenOpts,
             const clang::TargetOptions &TargetOpts,
             const PragmaList &Pragmas,
@@ -79,4 +79,4 @@ class RSBackend : public Backend {
 };
 }
 
-#endif  // _SLANG_COMPILER_BACKEND_H
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_BACKEND_H_  NOLINT

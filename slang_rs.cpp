@@ -17,18 +17,22 @@
 #include "slang_rs.h"
 
 #include <cstring>
-
-#include "llvm/System/Path.h"
+#include <list>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "clang/Frontend/FrontendDiagnostic.h"
 
 #include "clang/Sema/SemaDiagnostic.h"
 
+#include "llvm/System/Path.h"
+
 #include "slang_rs_backend.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
 
-using namespace slang;
+namespace slang {
 
 #define RS_HEADER_SUFFIX  "rsh"
 
@@ -198,7 +202,7 @@ clang::ASTConsumer
                         llvm::raw_ostream *OS,
                         Slang::OutputType OT) {
     return new RSBackend(mRSContext,
-                         getDiagnostics(),
+                         &getDiagnostics(),
                          CodeGenOpts,
                          getTargetOptions(),
                          mPragmas,
@@ -329,3 +333,5 @@ SlangRS::~SlangRS() {
   }
   return;
 }
+
+}  // namespace slang

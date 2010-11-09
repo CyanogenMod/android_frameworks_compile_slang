@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_RS_EXPORT_TYPE_H
-#define _SLANG_COMPILER_RS_EXPORT_TYPE_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_TYPE_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_TYPE_H_
 
-#include <set>
 #include <list>
+#include <set>
 #include <string>
 
-#include "llvm/Support/ManagedStatic.h"
-
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
-
-#include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/Type.h"
+
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
+
+#include "llvm/Support/ManagedStatic.h"
 
 #include "slang_rs_exportable.h"
 
@@ -114,7 +114,7 @@ class RSExportType : public RSExportable {
   // (all of these information are target dependent) without dealing with these
   // by ourselves.
   virtual const llvm::Type *convertToLLVMType() const = 0;
-  // Record type may recursively referece its type definition. We need a
+  // Record type may recursively reference its type definition. We need a
   // temporary type setup before the type construction gets done.
   inline void setAbstractLLVMType(const llvm::Type *LLVMType) const {
     mLLVMType = LLVMType;
@@ -502,4 +502,4 @@ class RSExportRecordType : public RSExportType {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_RS_EXPORT_TYPE_H
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_TYPE_H_  NOLINT

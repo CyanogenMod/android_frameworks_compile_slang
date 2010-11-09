@@ -16,12 +16,12 @@
 
 #include "slang_diagnostic_buffer.h"
 
+#include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/SourceManager.h"
+
 #include "llvm/ADT/SmallString.h"
 
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/SourceLocation.h"
-
-using namespace slang;
+namespace slang {
 
 DiagnosticBuffer::DiagnosticBuffer() : mSOS(NULL) {
   mSOS = new llvm::raw_string_ostream(mDiags);
@@ -72,3 +72,5 @@ DiagnosticBuffer::~DiagnosticBuffer() {
   delete mSOS;
   return;
 }
+
+}  // namespace slang

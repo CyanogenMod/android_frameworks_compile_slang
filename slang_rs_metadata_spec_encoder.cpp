@@ -16,16 +16,16 @@
 
 #include "slang_rs_metadata_spec.h"
 
-#include <map>
-#include <list>
-#include <string>
 #include <cstdlib>
-
-#include "llvm/Module.h"
-#include "llvm/Metadata.h"
+#include <list>
+#include <map>
+#include <string>
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+
+#include "llvm/Metadata.h"
+#include "llvm/Module.h"
 
 #include "slang_rs_type_spec.h"
 
@@ -79,11 +79,11 @@ class RSMetadataEncoderInternal {
   // This function check the return value of function:
   //   joinString, encodeTypeBase, encode*Type(), encodeRSType, encodeRSVar,
   //   and encodeRSFunc. Return false if the value of Index indicates failure.
-  inline bool checkReturnIndex(unsigned &Index) {
-    if (Index == 0)
+  inline bool checkReturnIndex(unsigned *Index) {
+    if (*Index == 0)
       return false;
     else
-      Index--;
+      (*Index)--;
     return true;
   }
 
@@ -102,14 +102,13 @@ RS_DATA_TYPE_CLASS_ENUMS
   int flushTypeInfo();
 
  public:
-  RSMetadataEncoderInternal(llvm::Module *M);
+  explicit RSMetadataEncoderInternal(llvm::Module *M);
 
   int encodeRSVar(const RSVar *V);
   int encodeRSFunc(const RSFunction *F);
 
   int finalize();
 };
-
 }
 
 RSMetadataEncoderInternal::RSMetadataEncoderInternal(llvm::Module *M)
@@ -179,7 +178,7 @@ unsigned RSMetadataEncoderInternal::encodePrimitiveType(const union RSType *T) {
 unsigned RSMetadataEncoderInternal::encodePointerType(const union RSType *T) {
   // Encode pointee type first
   unsigned PointeeType = encodeRSType(RS_POINTER_TYPE_GET_POINTEE_TYPE(T));
-  if (!checkReturnIndex(PointeeType))
+  if (!checkReturnIndex(&PointeeType))
     return 0;
 
   unsigned Res = encodeTypeBaseAsKey(RS_GET_TYPE_BASE(T));
@@ -201,7 +200,7 @@ RSMetadataEncoderInternal::encodeConstantArrayType(const union RSType *T) {
   // Encode element type
   unsigned ElementType =
       encodeRSType(RS_CONSTANT_ARRAY_TYPE_GET_ELEMENT_TYPE(T));
-  if (!checkReturnIndex(ElementType))
+  if (!checkReturnIndex(&ElementType))
     return 0;
 
   unsigned Res = encodeTypeBase(RS_GET_TYPE_BASE(T));
@@ -225,11 +224,11 @@ unsigned RSMetadataEncoderInternal::encodeRecordType(const union RSType *T) {
 
   // Encode this record type into mTypes. Encode record name string first.
   unsigned RecordName = joinString(RecordInfoMetadataName);
-  if (!checkReturnIndex(RecordName))
+  if (!checkReturnIndex(&RecordName))
     return 0;
 
   unsigned Base = encodeTypeBase(RS_GET_TYPE_BASE(T));
-  if (!checkReturnIndex(Base))
+  if (!checkReturnIndex(&Base))
     return 0;
 
   // Push record name after encoding the type base
@@ -263,7 +262,7 @@ unsigned RSMetadataEncoderInternal::encodeRecordType(const union RSType *T) {
   for (unsigned i = 0; i < RS_RECORD_TYPE_GET_NUM_FIELDS(T); i++) {
     // 1. field name
     unsigned FieldName = joinString(RS_RECORD_TYPE_GET_FIELD_NAME(T, i));
-    if (!checkReturnIndex(FieldName))
+    if (!checkReturnIndex(&FieldName))
       return 0;
     if (!EncodeInteger(mModule->getContext(),
                        FieldName,
@@ -272,7 +271,7 @@ unsigned RSMetadataEncoderInternal::encodeRecordType(const union RSType *T) {
 
     // 2. field type
     unsigned FieldType = encodeRSType(RS_RECORD_TYPE_GET_FIELD_TYPE(T, i));
-    if (!checkReturnIndex(FieldType))
+    if (!checkReturnIndex(&FieldType))
       return 0;
     if (!EncodeInteger(mModule->getContext(),
                        FieldType,
@@ -312,7 +311,7 @@ int RSMetadataEncoderInternal::encodeRSVar(const RSVar *V) {
 
   // 1. var name
   unsigned VarName = joinString(V->name);
-  if (!checkReturnIndex(VarName))
+  if (!checkReturnIndex(&VarName))
     return -2;
 
   // 2. type
@@ -342,7 +341,7 @@ int RSMetadataEncoderInternal::encodeRSFunc(const RSFunction *F) {
 
   // 1. var name
   unsigned FuncName = joinString(F->name);
-  if (!checkReturnIndex(FuncName))
+  if (!checkReturnIndex(&FuncName))
     return -2;
 
   llvm::SmallVector<llvm::Value*, 1> FuncInfo;

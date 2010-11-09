@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_RS_EXPORT_ELEMENT_H
-#define _SLANG_COMPILER_RS_EXPORT_ELEMENT_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_ELEMENT_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_ELEMENT_H_
 
 #include <string>
 
+#include "clang/Lex/Token.h"
+
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
-
-#include "clang/Lex/Token.h"
 
 #include "slang_rs_export_type.h"
 
@@ -69,4 +69,4 @@ class RSExportElement {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_RS_EXPORT_ELEMENT_H
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_ELEMENT_H_  NOLINT

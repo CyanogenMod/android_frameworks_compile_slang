@@ -18,6 +18,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <string>
 
 #include "llvm/ADT/StringRef.h"
 
@@ -187,7 +188,8 @@ static bool GenerateJavaCodeAccessorMethod(
     fclose(pfin);
 
     // output the internal accessor method
-    fprintf(pfout, "  private static int bitCodeLength = %d;\n\n", total_length);
+    fprintf(pfout, "  private static int bitCodeLength = %d;\n\n",
+        total_length);
     fprintf(pfout, "  private static byte[] getBitCodeInternal() {\n");
     fprintf(pfout, "    byte[] bc = new byte[bitCodeLength];\n");
     fprintf(pfout, "    int offset = 0;\n");

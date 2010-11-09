@@ -16,32 +16,32 @@
 
 #include "slang_rs_backend.h"
 
-#include <vector>
 #include <string>
-
-#include "llvm/Metadata.h"
-#include "llvm/Constant.h"
-#include "llvm/Constants.h"
-#include "llvm/Module.h"
-#include "llvm/Function.h"
-#include "llvm/DerivedTypes.h"
-
-#include "llvm/Support/IRBuilder.h"
+#include <vector>
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/StringExtras.h"
 
+#include "llvm/Constant.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/Metadata.h"
+#include "llvm/Module.h"
+
+#include "llvm/Support/IRBuilder.h"
+
 #include "slang_rs.h"
 #include "slang_rs_context.h"
-#include "slang_rs_metadata.h"
-#include "slang_rs_export_var.h"
 #include "slang_rs_export_func.h"
 #include "slang_rs_export_type.h"
+#include "slang_rs_export_var.h"
+#include "slang_rs_metadata.h"
 
-using namespace slang;
+namespace slang {
 
 RSBackend::RSBackend(RSContext *Context,
-                     clang::Diagnostic &Diags,
+                     clang::Diagnostic *Diags,
                      const clang::CodeGenOptions &CodeGenOpts,
                      const clang::TargetOptions &TargetOpts,
                      const PragmaList &Pragmas,
@@ -410,3 +410,5 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
 RSBackend::~RSBackend() {
   return;
 }
+
+}  // namespace slang

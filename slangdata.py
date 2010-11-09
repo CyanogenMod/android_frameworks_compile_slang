@@ -15,9 +15,14 @@
 # limitations under the License.
 #
 
-import os, sys
 
-def print_header(var_name):
+"""Convert Slang data files to assembly output."""
+
+import sys
+
+
+def PrintHeader(var_name):
+  """Print out header for assembly file."""
   sys.stdout.write("""
 #ifdef __APPLE_CC__
 /*\n\
@@ -39,8 +44,10 @@ _%s:\n\
 #endif\n\
 """ % (var_name, var_name, var_name, var_name))
 
-def file2asm(var_name):
-  print_header(var_name)
+
+def File2Asm(var_name):
+  """Convert file to assembly output."""
+  PrintHeader(var_name)
 
   input_size = 0
   col = 0
@@ -67,15 +74,16 @@ def file2asm(var_name):
     sys.stdout.write("\n")
 
   # encode file size
-  print_header(var_name + "_size")
+  PrintHeader(var_name + "_size")
   sys.stdout.write("  .long %d\n" % input_size)
+
 
 def main(argv):
   if len(argv) < 2:
     print "usage: %s <name>" % argv[0]
     return 1
 
-  file2asm(argv[1])
+  File2Asm(argv[1])
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   main(sys.argv)

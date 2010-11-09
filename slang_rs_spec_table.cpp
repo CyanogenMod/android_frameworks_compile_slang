@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include <string>
-#include <cstring>
 #include <cstdio>
+#include <cstring>
+
+#include <string>
 
 #include "slang_rs_type_spec.h"
 
@@ -87,12 +88,13 @@ class RSDataTypeSpec {
 class RSMatrixDataTypeSpec : public RSDataTypeSpec {
  private:
   unsigned mDim;
+  static float ignore;
 
  public:
   RSMatrixDataTypeSpec(const char *TypeName,
                        const char *TypePragmaName,
                        unsigned Dim)
-      : RSDataTypeSpec(TypeName, TypePragmaName, Dim * Dim * sizeof(float)),
+      : RSDataTypeSpec(TypeName, TypePragmaName, Dim * Dim * sizeof(ignore)),
         mDim(Dim) {
     mClass = DT_RSMatrixClass;
     return;
@@ -213,7 +215,7 @@ static int GenRSDataTypeEnums(const RSDataTypeSpec *const DataTypes[],
   printf(#x "(%s, \"%s\", %lu)\n",  \
          DataTypes[i]->getTypeName(), \
          DataTypes[i]->getTypePragmaName(), \
-         DataTypes[i]->getSizeInBit());
+         (unsigned long) DataTypes[i]->getSizeInBit());  // NOLINT(runtime/int)
 #define DEF_RANGE(x, begin, end)  \
   printf(#x "(%s, %s)\n\n", \
          DataTypes[begin]->getTypeName(), \
@@ -362,20 +364,25 @@ int main(int argc, char **argv) {
     new ClangBuiltinTypeMap("clang::BuiltinType::UChar",  DataTypes[Unsigned8]),
     new ClangBuiltinTypeMap("clang::BuiltinType::Char16", DataTypes[Signed16]),
     new ClangBuiltinTypeMap("clang::BuiltinType::Char32", DataTypes[Signed32]),
-    new ClangBuiltinTypeMap("clang::BuiltinType::UShort", DataTypes[Unsigned16]),
-    new ClangBuiltinTypeMap("clang::BuiltinType::UInt",   DataTypes[Unsigned32]),
-    new ClangBuiltinTypeMap("clang::BuiltinType::ULong",  DataTypes[Unsigned32]),
-    new ClangBuiltinTypeMap("clang::BuiltinType::ULongLong", DataTypes[Unsigned64]),
+    new ClangBuiltinTypeMap(
+      "clang::BuiltinType::UShort", DataTypes[Unsigned16]),
+    new ClangBuiltinTypeMap(
+      "clang::BuiltinType::UInt", DataTypes[Unsigned32]),
+    new ClangBuiltinTypeMap(
+      "clang::BuiltinType::ULong",  DataTypes[Unsigned32]),
+    new ClangBuiltinTypeMap(
+      "clang::BuiltinType::ULongLong", DataTypes[Unsigned64]),
 
     new ClangBuiltinTypeMap("clang::BuiltinType::Char_S", DataTypes[Signed8]),
     new ClangBuiltinTypeMap("clang::BuiltinType::SChar",  DataTypes[Signed8]),
     new ClangBuiltinTypeMap("clang::BuiltinType::Short",  DataTypes[Signed16]),
     new ClangBuiltinTypeMap("clang::BuiltinType::Int",    DataTypes[Signed32]),
     new ClangBuiltinTypeMap("clang::BuiltinType::Long",   DataTypes[Signed64]),
-    new ClangBuiltinTypeMap("clang::BuiltinType::LongLong", DataTypes[Signed64]),
+    new ClangBuiltinTypeMap(
+      "clang::BuiltinType::LongLong", DataTypes[Signed64]),
 
     new ClangBuiltinTypeMap("clang::BuiltinType::Float",  DataTypes[Float32]),
-    new ClangBuiltinTypeMap("clang::BuiltinType::Double", DataTypes[Float64]),
+    new ClangBuiltinTypeMap("clang::BuiltinType::Double", DataTypes[Float64])
   };
 
   unsigned NumClangBuilitins =

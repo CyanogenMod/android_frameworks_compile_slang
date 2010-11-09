@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 
-#include "slang.h"
-
+#include <cstdlib>
+#include <list>
 #include <set>
 #include <string>
-#include <cstdlib>
-
-#include "llvm/ADT/SmallVector.h"
-
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/MemoryBuffer.h"
-
-#include "llvm/System/Path.h"
+#include <utility>
+#include <vector>
 
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
@@ -37,20 +30,26 @@
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 
+#include "llvm/ADT/SmallVector.h"
+
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
+
+#include "llvm/System/Path.h"
+
+#include "slang.h"
 #include "slang_rs.h"
 #include "slang_rs_reflect_utils.h"
 
-using namespace slang;
-
-using namespace clang::driver::options;
-
 // Class under clang::driver used are enumerated here.
+using clang::driver::arg_iterator;
+using clang::driver::options::DriverOption;
 using clang::driver::Arg;
 using clang::driver::ArgList;
 using clang::driver::InputArgList;
 using clang::driver::Option;
 using clang::driver::OptTable;
-using clang::driver::arg_iterator;
 
 // SaveStringInSet, ExpandArgsFromBuf and ExpandArgv are all copied from
 // $(CLANG_ROOT)/tools/driver/driver.cpp for processing argc/argv passed in
@@ -106,7 +105,7 @@ class RSCCOptions {
   std::string mOutputDir;
 
   // The output type
-  Slang::OutputType mOutputType;
+  slang::Slang::OutputType mOutputType;
 
   unsigned mAllowRSPrefix : 1;
 
@@ -125,7 +124,7 @@ class RSCCOptions {
 
   std::string mJavaReflectionPackageName;
 
-  BitCodeStorageType mBitcodeStorage;
+  slang::BitCodeStorageType mBitcodeStorage;
 
   unsigned mOutputDep : 1;
 
@@ -137,8 +136,8 @@ class RSCCOptions {
   unsigned mShowVersion : 1;  // Show the -version text.
 
   RSCCOptions() {
-    mOutputType = Slang::OT_Bitcode;
-    mBitcodeStorage = BCST_APK_RESOURCE;
+    mOutputType = slang::Slang::OT_Bitcode;
+    mBitcodeStorage = slang::BCST_APK_RESOURCE;
     mOutputDep = 0;
     mShowHelp = 0;
     mShowVersion = 0;
@@ -184,12 +183,12 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
       switch (A->getOption().getID()) {
         case OPT_M: {
           Opts.mOutputDep = 1;
-          Opts.mOutputType = Slang::OT_Dependency;
+          Opts.mOutputType = slang::Slang::OT_Dependency;
           break;
         }
         case OPT_MD: {
           Opts.mOutputDep = 1;
-          Opts.mOutputType = Slang::OT_Bitcode;
+          Opts.mOutputType = slang::Slang::OT_Bitcode;
           break;
         }
         default: {
@@ -201,19 +200,19 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
     if (const Arg *A = Args->getLastArg(OPT_Output_Type_Group)) {
       switch (A->getOption().getID()) {
         case OPT_emit_asm: {
-          Opts.mOutputType = Slang::OT_Assembly;
+          Opts.mOutputType = slang::Slang::OT_Assembly;
           break;
         }
         case OPT_emit_llvm: {
-          Opts.mOutputType = Slang::OT_LLVMAssembly;
+          Opts.mOutputType = slang::Slang::OT_LLVMAssembly;
           break;
         }
         case OPT_emit_bc: {
-          Opts.mOutputType = Slang::OT_Bitcode;
+          Opts.mOutputType = slang::Slang::OT_Bitcode;
           break;
         }
         case OPT_emit_nothing: {
-          Opts.mOutputType = Slang::OT_Nothing;
+          Opts.mOutputType = slang::Slang::OT_Nothing;
           break;
         }
         default: {
@@ -223,8 +222,8 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
     }
 
     if (Opts.mOutputDep &&
-        ((Opts.mOutputType != Slang::OT_Bitcode) &&
-         (Opts.mOutputType != Slang::OT_Dependency)))
+        ((Opts.mOutputType != slang::Slang::OT_Bitcode) &&
+         (Opts.mOutputType != slang::Slang::OT_Dependency)))
       Diags.Report(clang::diag::err_drv_argument_not_allowed_with)
           << Args->getLastArg(OPT_M_Group)->getAsString(*Args)
           << Args->getLastArg(OPT_Output_Type_Group)->getAsString(*Args);
@@ -244,9 +243,9 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
     llvm::StringRef BitcodeStorageValue =
         Args->getLastArgValue(OPT_bitcode_storage);
     if (BitcodeStorageValue == "ar")
-      Opts.mBitcodeStorage = BCST_APK_RESOURCE;
+      Opts.mBitcodeStorage = slang::BCST_APK_RESOURCE;
     else if (BitcodeStorageValue == "jc")
-      Opts.mBitcodeStorage = BCST_JAVA_CODE;
+      Opts.mBitcodeStorage = slang::BCST_JAVA_CODE;
     else if (!BitcodeStorageValue.empty())
       Diags.Report(clang::diag::err_drv_invalid_value)
           << OptParser->getOptionName(OPT_bitcode_storage)
@@ -266,9 +265,9 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
 
 static const char *DetermineOutputFile(const std::string &OutputDir,
                                        const char *InputFile,
-                                       Slang::OutputType OutputTyupe,
+                                       slang::Slang::OutputType OutputType,
                                        std::set<std::string> &SavedStrings) {
-  if (OutputTyupe == Slang::OT_Nothing)
+  if (OutputType == slang::Slang::OT_Nothing)
     return "/dev/null";
 
   std::string OutputFile(OutputDir);
@@ -278,35 +277,37 @@ static const char *DetermineOutputFile(const std::string &OutputDir,
       (OutputFile[OutputFile.size() - 1]) != '/')
     OutputFile.append(1, '/');
 
-  if (OutputTyupe == Slang::OT_Dependency)
+  if (OutputType == slang::Slang::OT_Dependency) {
     // The build system wants the .d file name stem to be exactly the same as
     // the source .rs file, instead of the .bc file.
-    OutputFile.append(RSSlangReflectUtils::GetFileNameStem(InputFile));
-  else
-    OutputFile.append(RSSlangReflectUtils::BCFileNameFromRSFileName(InputFile));
+    OutputFile.append(slang::RSSlangReflectUtils::GetFileNameStem(InputFile));
+  } else {
+    OutputFile.append(
+        slang::RSSlangReflectUtils::BCFileNameFromRSFileName(InputFile));
+  }
 
-  switch (OutputTyupe) {
-    case Slang::OT_Dependency: {
+  switch (OutputType) {
+    case slang::Slang::OT_Dependency: {
       OutputFile.append(".d");
       break;
     }
-    case Slang::OT_Assembly: {
+    case slang::Slang::OT_Assembly: {
       OutputFile.append(".S");
       break;
     }
-    case Slang::OT_LLVMAssembly: {
+    case slang::Slang::OT_LLVMAssembly: {
       OutputFile.append(".ll");
       break;
     }
-    case Slang::OT_Object: {
+    case slang::Slang::OT_Object: {
       OutputFile.append(".o");
       break;
     }
-    case Slang::OT_Bitcode: {
+    case slang::Slang::OT_Bitcode: {
       OutputFile.append(".bc");
       break;
     }
-    case Slang::OT_Nothing:
+    case slang::Slang::OT_Nothing:
     default: {
       assert(false && "Invalid output type!");
     }
@@ -336,7 +337,7 @@ int main(int argc, const char **argv) {
   DiagClient->setPrefix(Argv0);
   clang::Diagnostic Diags(DiagClient);
 
-  Slang::GlobalInitialization();
+  slang::Slang::GlobalInitialization();
 
   ParseArguments(ArgVector, Inputs, Opts, Diags);
 
@@ -366,7 +367,7 @@ int main(int argc, const char **argv) {
   std::list<std::pair<const char*, const char*> > IOFiles;
   std::list<std::pair<const char*, const char*> > DepFiles;
 
-  llvm::OwningPtr<SlangRS> Compiler(new SlangRS());
+  llvm::OwningPtr<slang::SlangRS> Compiler(new slang::SlangRS());
 
   Compiler->init(Opts.mTriple, Opts.mCPU, Opts.mFeatures);
 
@@ -379,17 +380,21 @@ int main(int argc, const char **argv) {
     if (Opts.mOutputDep) {
       const char *BCOutputFile, *DepOutputFile;
 
-      if (Opts.mOutputType == Slang::OT_Bitcode)
+      if (Opts.mOutputType == slang::Slang::OT_Bitcode)
         BCOutputFile = OutputFile;
       else
-        BCOutputFile = DetermineOutputFile(Opts.mOutputDepDir, InputFile,
-                                           Slang::OT_Bitcode, SavedStrings);
+        BCOutputFile = DetermineOutputFile(Opts.mOutputDepDir,
+                                           InputFile,
+                                           slang::Slang::OT_Bitcode,
+                                           SavedStrings);
 
-      if (Opts.mOutputType == Slang::OT_Dependency)
+      if (Opts.mOutputType == slang::Slang::OT_Dependency)
         DepOutputFile = OutputFile;
       else
-        DepOutputFile = DetermineOutputFile(Opts.mOutputDepDir, InputFile,
-                                            Slang::OT_Dependency, SavedStrings);
+        DepOutputFile = DetermineOutputFile(Opts.mOutputDepDir,
+                                            InputFile,
+                                            slang::Slang::OT_Dependency,
+                                            SavedStrings);
 
       DepFiles.push_back(std::make_pair(BCOutputFile, DepOutputFile));
     }

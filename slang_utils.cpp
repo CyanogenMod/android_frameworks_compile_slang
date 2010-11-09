@@ -16,12 +16,16 @@
 
 #include "slang_utils.h"
 
+#include <string>
+
 #include "llvm/System/Path.h"
 
-using namespace slang;
+namespace slang {
 
 bool SlangUtils::CreateDirectoryWithParents(llvm::StringRef Dir,
                                             std::string* Error) {
   return !llvm::sys::Path(Dir).createDirectoryOnDisk(/* create_parents = */true,
                                                      Error);
 }
+
+}  // namespace slang

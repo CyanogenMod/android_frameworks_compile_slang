@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_RS_REFLECTION_H
-#define _SLANG_COMPILER_RS_REFLECTION_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_H_
 
-#include <map>
-#include <vector>
-#include <string>
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <string>
+#include <vector>
 
 #include "llvm/ADT/StringExtras.h"
 
@@ -69,7 +69,8 @@ class RSReflection {
 
     // A mapping from a field in a record type to its index in the rsType
     // instance. Only used when generates TypeClass (ScriptField_*).
-    typedef std::map<const RSExportRecordType::Field*, unsigned> FieldIndexMapTy;
+    typedef std::map<const RSExportRecordType::Field*, unsigned>
+        FieldIndexMapTy;
     FieldIndexMapTy mFieldIndexMap;
     // Field index of current processing TypeClass.
     unsigned mFieldIndex;
@@ -295,4 +296,4 @@ class RSReflection {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_RS_REFLECTION_H
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_H_  NOLINT

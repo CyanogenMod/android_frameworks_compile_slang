@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_BACKEND_H
-#define _SLANG_COMPILER_BACKEND_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_BACKEND_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_BACKEND_H_
+
+#include "clang/AST/ASTConsumer.h"
 
 #include "llvm/PassManager.h"
 
-#include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/FormattedStream.h"
-
-#include "clang/AST/ASTConsumer.h"
+#include "llvm/Support/StandardPasses.h"
 
 #include "slang.h"
 #include "slang_pragma_recorder.h"
@@ -95,7 +95,7 @@ class Backend : public clang::ASTConsumer {
   virtual void HandleTranslationUnitPost(llvm::Module *M) { return; }
 
  public:
-  Backend(clang::Diagnostic &Diags,
+  Backend(clang::Diagnostic *Diags,
           const clang::CodeGenOptions &CodeGenOpts,
           const clang::TargetOptions &TargetOpts,
           const PragmaList &Pragmas,
@@ -132,4 +132,4 @@ class Backend : public clang::ASTConsumer {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_BACKEND_H
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_BACKEND_H_  NOLINT

@@ -16,16 +16,16 @@
 
 #include "slang_rs_export_element.h"
 
-#include "clang/Basic/SourceLocation.h"
-#include "clang/Basic/IdentifierTable.h"
-
 #include "clang/AST/Decl.h"
 #include "clang/AST/Type.h"
+
+#include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/IdentifierTable.h"
 
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
 
-using namespace slang;
+namespace slang {
 
 bool RSExportElement::Initialized = false;
 RSExportElement::ElementInfoMapTy RSExportElement::ElementInfoMap;
@@ -164,3 +164,5 @@ RSExportElement::GetElementInfo(const llvm::StringRef &Name) {
   else
     return I->getValue();
 }
+
+}  // namespace slang

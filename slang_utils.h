@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_UTILS_H
-#define _SLANG_COMPILER_UTILS_H
+#ifndef _COMPILE_SLANG_SLANG_UTILS_H_  // NOLINT
+#define _COMPILE_SLANG_SLANG_UTILS_H_
 
 #include <string>
 
@@ -35,4 +35,4 @@ class SlangUtils {
 };
 }
 
-#endif  // _SLANG_COMPILER_UTILS_H
+#endif  // _COMPILE_SLANG_SLANG_UTILS_H_  NOLINT

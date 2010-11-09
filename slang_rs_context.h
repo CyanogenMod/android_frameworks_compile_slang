@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_RS_CONTEXT_H
-#define _SLANG_COMPILER_RS_CONTEXT_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_CONTEXT_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_CONTEXT_H_
 
-#include <map>
-#include <list>
-#include <string>
 #include <cstdio>
+#include <list>
+#include <map>
+#include <string>
+
+#include "clang/Lex/Preprocessor.h"
 
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/StringMap.h"
-
-#include "clang/Lex/Preprocessor.h"
 
 namespace llvm {
   class LLVMContext;
@@ -196,4 +196,4 @@ class RSContext {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_RS_CONTEXT_H
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_CONTEXT_H_  NOLINT

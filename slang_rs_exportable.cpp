@@ -16,7 +16,7 @@
 
 #include "slang_rs_exportable.h"
 
-using namespace slang;
+namespace slang {
 
 bool RSExportable::keep() {
   if (isKeep())
@@ -29,3 +29,5 @@ bool RSExportable::keep() {
 bool RSExportable::equals(const RSExportable *E) const {
   return ((E == NULL) ? false : (mK == E->mK));
 }
+
+}  // namespace slang

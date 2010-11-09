@@ -16,19 +16,23 @@
 
 #include "slang_rs_reflection.h"
 
-#include <utility>
+#include <sys/stat.h>
+
 #include <cstdarg>
 #include <cctype>
-#include <sys/stat.h>
+
+#include <algorithm>
+#include <string>
+#include <utility>
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringExtras.h"
 
-#include "slang_utils.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_var.h"
 #include "slang_rs_export_func.h"
 #include "slang_rs_reflect_utils.h"
+#include "slang_utils.h"
 
 #define RS_SCRIPT_CLASS_NAME_PREFIX      "ScriptC_"
 #define RS_SCRIPT_CLASS_SUPER_CLASS_NAME "ScriptC"
@@ -49,7 +53,7 @@
 #define RS_EXPORT_VAR_ALLOCATION_PREFIX  "mAlloction_"
 #define RS_EXPORT_VAR_DATA_STORAGE_PREFIX "mData_"
 
-using namespace slang;
+namespace slang {
 
 // Some utility function using internal in RSReflection
 static bool GetClassNameFromFileName(const std::string &FileName,
@@ -336,11 +340,16 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
         "Element.SAMPLER",      // RSExportPrimitiveType::DataTypeRSSampler
         "Element.SCRIPT",       // RSExportPrimitiveType::DataTypeRSScript
         "Element.MESH",         // RSExportPrimitiveType::DataTypeRSMesh
-        "Element.PROGRAM_FRAGMENT",  // RSExportPrimitiveType::DataTypeRSProgramFragment
-        "Element.PROGRAM_VERTEX",    // RSExportPrimitiveType::DataTypeRSProgramVertex
-        "Element.PROGRAM_RASTER",    // RSExportPrimitiveType::DataTypeRSProgramRaster
-        "Element.PROGRAM_STORE",     // RSExportPrimitiveType::DataTypeRSProgramStore
-        "Element.FONT",              // RSExportPrimitiveType::DataTypeRSFont
+        "Element.PROGRAM_FRAGMENT",
+          // RSExportPrimitiveType::DataTypeRSProgramFragment
+        "Element.PROGRAM_VERTEX",
+          // RSExportPrimitiveType::DataTypeRSProgramVertex
+        "Element.PROGRAM_RASTER",
+          // RSExportPrimitiveType::DataTypeRSProgramRaster
+        "Element.PROGRAM_STORE",
+          // RSExportPrimitiveType::DataTypeRSProgramStore
+        "Element.FONT",
+          // RSExportPrimitiveType::DataTypeRSFont
       };
       unsigned TypeId = EPT->getType();
 
@@ -414,18 +423,22 @@ static const char *GetElementDataKindName(RSExportPrimitiveType::DataKind DK) {
 
 static const char *GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
   static const char *ElementDataTypeNameMap[] = {
-    NULL,                           // RSExportPrimitiveType::DataTypeFloat16
-    "Element.DataType.FLOAT_32",    // RSExportPrimitiveType::DataTypeFloat32
-    "Element.DataType.FLOAT_64",    // RSExportPrimitiveType::DataTypeFloat64
-    "Element.DataType.SIGNED_8",    // RSExportPrimitiveType::DataTypeSigned8
-    "Element.DataType.SIGNED_16",   // RSExportPrimitiveType::DataTypeSigned16
-    "Element.DataType.SIGNED_32",   // RSExportPrimitiveType::DataTypeSigned32
-    "Element.DataType.SIGNED_64",   // RSExportPrimitiveType::DataTypeSigned64
-    "Element.DataType.UNSIGNED_8",  // RSExportPrimitiveType::DataTypeUnsigned8
-    "Element.DataType.UNSIGNED_16", // RSExportPrimitiveType::DataTypeUnsigned16
-    "Element.DataType.UNSIGNED_32", // RSExportPrimitiveType::DataTypeUnsigned32
-    "Element.DataType.UNSIGNED_64", // RSExportPrimitiveType::DataTypeUnsigned64
-    "Element.DataType.BOOLEAN",     // RSExportPrimitiveType::DataTypeBoolean
+    NULL,                            // RSExportPrimitiveType::DataTypeFloat16
+    "Element.DataType.FLOAT_32",     // RSExportPrimitiveType::DataTypeFloat32
+    "Element.DataType.FLOAT_64",     // RSExportPrimitiveType::DataTypeFloat64
+    "Element.DataType.SIGNED_8",     // RSExportPrimitiveType::DataTypeSigned8
+    "Element.DataType.SIGNED_16",    // RSExportPrimitiveType::DataTypeSigned16
+    "Element.DataType.SIGNED_32",    // RSExportPrimitiveType::DataTypeSigned32
+    "Element.DataType.SIGNED_64",    // RSExportPrimitiveType::DataTypeSigned64
+    "Element.DataType.UNSIGNED_8",   // RSExportPrimitiveType::DataTypeUnsigned8
+    "Element.DataType.UNSIGNED_16",
+      // RSExportPrimitiveType::DataTypeUnsigned16
+    "Element.DataType.UNSIGNED_32",
+      // RSExportPrimitiveType::DataTypeUnsigned32
+    "Element.DataType.UNSIGNED_64",
+      // RSExportPrimitiveType::DataTypeUnsigned64
+    "Element.DataType.BOOLEAN",
+      // RSExportPrimitiveType::DataTypeBoolean
 
     // RSExportPrimitiveType::DataTypeUnsigned565
     "Element.DataType.UNSIGNED_5_6_5",
@@ -435,9 +448,9 @@ static const char *GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
     "Element.DataType.UNSIGNED_4_4_4_4",
 
     // DataTypeRSMatrix* must have been resolved in GetBuiltinElementConstruct()
-    NULL, // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix2x2
-    NULL, // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix3x3
-    NULL, // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix4x4
+    NULL,  // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix2x2
+    NULL,  // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix3x3
+    NULL,  // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix4x4
 
     "Element.DataType.RS_ELEMENT",  // RSExportPrimitiveType::DataTypeRSElement
     "Element.DataType.RS_TYPE",     // RSExportPrimitiveType::DataTypeRSType
@@ -550,7 +563,7 @@ void RSReflection::genScriptClassConstructor(Context &C) {
   }
 
   C.endFunction();
-  
+
   return;
 }
 
@@ -569,9 +582,10 @@ void RSReflection::genInitBoolExportVariable(Context &C,
   return;
 }
 
-void RSReflection::genInitPrimitiveExportVariable(Context &C,
-                                                  const std::string &VarName,
-                                                  const clang::APValue &Val) {
+void RSReflection::genInitPrimitiveExportVariable(
+      Context &C,
+      const std::string &VarName,
+      const clang::APValue &Val) {
   assert(!Val.isUninit() && "Not a valid initializer");
 
   C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
@@ -794,8 +808,9 @@ void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
   return;
 }
 
-void RSReflection::genPrimitiveTypeExportVariable(Context &C,
-                                                  const RSExportVar *EV) {
+void RSReflection::genPrimitiveTypeExportVariable(
+    Context &C,
+    const RSExportVar *EV) {
   assert((EV->getType()->getClass() == RSExportType::ExportClassPrimitive) &&
          "Variable should be type of primitive here");
 
@@ -943,8 +958,9 @@ void RSReflection::genMatrixTypeExportVariable(Context &C,
   return;
 }
 
-void RSReflection::genConstantArrayTypeExportVariable(Context &C,
-                                                      const RSExportVar *EV) {
+void RSReflection::genConstantArrayTypeExportVariable(
+    Context &C,
+    const RSExportVar *EV) {
   assert((EV->getType()->getClass() == RSExportType::ExportClassConstantArray)&&
          "Variable should be type of constant array here");
 
@@ -1210,10 +1226,12 @@ void RSReflection::genAllocateVarOfType(Context &C,
   return;
 }
 
-void RSReflection::genNewItemBufferIfNull(Context &C, const char *Index) {
-  C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) "
-                  RS_TYPE_ITEM_BUFFER_NAME" = "
-                    "new "RS_TYPE_ITEM_CLASS_NAME"[getType().getX() /* count */];"
+void RSReflection::genNewItemBufferIfNull(Context &C,
+                                          const char *Index) {
+  C.indent() << "if (" RS_TYPE_ITEM_BUFFER_NAME " == null) "
+                  RS_TYPE_ITEM_BUFFER_NAME " = "
+                    "new " RS_TYPE_ITEM_CLASS_NAME
+                      "[getType().getX() /* count */];"
              << std::endl;
   if (Index != NULL)
     C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME"[" << Index << "] == null) "
@@ -1223,11 +1241,11 @@ void RSReflection::genNewItemBufferIfNull(Context &C, const char *Index) {
 }
 
 void RSReflection::genNewItemBufferPackerIfNull(Context &C) {
-  C.indent() << "if ("RS_TYPE_ITEM_BUFFER_PACKER_NAME" == null) "
-                  RS_TYPE_ITEM_BUFFER_PACKER_NAME" = "
-                    "new FieldPacker("
-                      RS_TYPE_ITEM_CLASS_NAME".sizeof * getType().getX()/* count */"
-                    ");" << std::endl;
+  C.indent() << "if (" RS_TYPE_ITEM_BUFFER_PACKER_NAME " == null) "
+                  RS_TYPE_ITEM_BUFFER_PACKER_NAME " = "
+                    "new FieldPacker(" RS_TYPE_ITEM_CLASS_NAME
+                      ".sizeof * getType().getX()/* count */"
+                        ");" << std::endl;
   return;
 }
 
@@ -1269,7 +1287,8 @@ bool RSReflection::genTypeClass(Context &C,
   return true;
 }
 
-void RSReflection::genTypeItemClass(Context &C, const RSExportRecordType *ERT) {
+void RSReflection::genTypeItemClass(Context &C,
+                                    const RSExportRecordType *ERT) {
   C.indent() << "static public class "RS_TYPE_ITEM_CLASS_NAME;
   C.startBlock();
 
@@ -1880,7 +1899,7 @@ bool RSReflection::Context::startClass(AccessModifier AM,
   out() << std::endl;
 
   // Imports
-  for (unsigned i = 0;i < (sizeof(Import) / sizeof(const char*)); i++)
+  for (unsigned i = 0; i < (sizeof(Import) / sizeof(const char*)); i++)
     out() << "import " << Import[i] << ";" << std::endl;
   out() << std::endl;
 
@@ -1988,3 +2007,5 @@ void RSReflection::Context::endFunction() {
   endBlock();
   return;
 }
+
+}  // namespace slang

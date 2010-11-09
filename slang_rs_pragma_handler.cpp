@@ -16,6 +16,8 @@
 
 #include "slang_rs_pragma_handler.h"
 
+#include <string>
+
 #include "clang/Basic/TokenKinds.h"
 
 #include "clang/Lex/LiteralSupport.h"
@@ -24,7 +26,7 @@
 
 #include "slang_rs_context.h"
 
-using namespace slang;
+namespace slang {
 
 namespace {  // Anonymous namespace
 
@@ -180,7 +182,7 @@ class RSReflectLicensePragmaHandler : public RSPragmaHandler {
   }
 };
 
-}   // Anonymous namespace
+}  // namespace
 
 RSPragmaHandler *
 RSPragmaHandler::CreatePragmaExportVarHandler(RSContext *Context) {
@@ -292,3 +294,5 @@ void RSPragmaHandler::handleOptionalStringLiateralParamPragma(
     this->handleItem("");
   }
 }
+
+}  // namespace slang

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_SLANG_RS_METADATA_SPEC_HPP
-#define _SLANG_COMPILER_SLANG_RS_METADATA_SPEC_HPP
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_METADATA_SPEC_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_METADATA_SPEC_H_
 
-// Design Philosiphy:
+// Design Philosophy:
 //  Expensive encoding but cheap decoding process.
 //
 // 1. A string table concatenates ALL strings (including '\0' in t)
@@ -68,7 +68,7 @@ void DestroyRSMetadataEncoder(RSMetadataEncoder *E);
 // every thing goes well. This will also call the DestroyRSMetadataEncoder().
 int FinalizeRSMetadataEncoder(RSMetadataEncoder *E);
 
-// TODO: Decoder
+// TODO(slang): Decoder
 struct RSMetadata {
   unsigned num_vars;
   unsigned num_funcs;
@@ -82,4 +82,4 @@ struct RSMetadata {
 // struct RSMetadata *RSDecodeMetadata(llvm::Module *M);
 // void RSReleaseMetadata(struct RSMetadata *MD);
 
-#endif  // _SLANG_COMPILER_SLANG_RS_METADATA_SPEC_HPP
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_METADATA_SPEC_H_  NOLINT

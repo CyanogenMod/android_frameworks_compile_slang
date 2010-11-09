@@ -16,6 +16,8 @@
 
 #include "slang_rs_object_ref_count.h"
 
+#include <list>
+
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/OperationKinds.h"
@@ -25,7 +27,7 @@
 #include "slang_rs.h"
 #include "slang_rs_export_type.h"
 
-using namespace slang;
+namespace slang {
 
 clang::FunctionDecl *RSObjectRefCount::Scope::
     RSSetObjectFD[RSExportPrimitiveType::LastRSObjectType -
@@ -62,8 +64,7 @@ void RSObjectRefCount::Scope::GetRSRefCountingFunctions(
         assert((FD->getNumParams() == 1) &&
                "Invalid rsClearObject function prototype (# params)");
         RSObjectFD = RSClearObjectFD;
-      }
-      else {
+      } else {
         continue;
       }
 
@@ -90,7 +91,7 @@ void RSObjectRefCount::Scope::AppendToCompoundStatement(
   // Destructor code will be inserted before any return statement.
   // Any subsequent statements in the compound statement are then placed
   // after our new code.
-  // TODO: This should also handle the case of goto/break/continue.
+  // TODO(srhines): This should also handle the case of goto/break/continue.
   clang::CompoundStmt::body_iterator bI = mCS->body_begin();
   clang::CompoundStmt::body_iterator bE = mCS->body_end();
 
@@ -147,7 +148,7 @@ void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
   if (RSClearObjectCalls.size() > 0) {
     clang::ASTContext &C = (*mRSO.begin())->getASTContext();
     AppendToCompoundStatement(C, RSClearObjectCalls);
-    // TODO: This should also be extended to append destructors to any
+    // TODO(srhines): This should also be extended to append destructors to any
     // further nested scope (we need another visitor here from within the
     // current compound statement in case they call return/goto).
   }
@@ -193,10 +194,10 @@ clang::Expr *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
 
   // Get address of RSObject in VD
   clang::Expr *AddrRefRSVar =
-      new (C) clang::UnaryOperator(RefRSVar,
-                                   clang::UO_AddrOf,
-                                   ClearObjectFDArgType,
-                                   Loc);
+      new(C) clang::UnaryOperator(RefRSVar,
+                                  clang::UO_AddrOf,
+                                  ClearObjectFDArgType,
+                                  Loc);
 
   clang::Expr *RefRSClearObjectFD =
       clang::DeclRefExpr::Create(C,
@@ -216,12 +217,12 @@ clang::Expr *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
                                       clang::VK_RValue);
 
   clang::CallExpr *RSClearObjectCall =
-      new (C) clang::CallExpr(C,
-                              RSClearObjectFP,
-                              &AddrRefRSVar,
-                              1,
-                              ClearObjectFD->getCallResultType(),
-                              clang::SourceLocation());
+      new(C) clang::CallExpr(C,
+                             RSClearObjectFP,
+                             &AddrRefRSVar,
+                             1,
+                             ClearObjectFD->getCallResultType(),
+                             clang::SourceLocation());
 
   return RSClearObjectCall;
 }
@@ -235,7 +236,7 @@ bool RSObjectRefCount::InitializeRSObject(clang::VarDecl *VD) {
     return false;
 
   if (VD->hasInit()) {
-    // TODO: Update the reference count of RS object in initializer.
+    // TODO(srhines): Update the reference count of RS object in initializer.
     // This can potentially be done as part of the assignment pass.
   } else {
     clang::Expr *ZeroInitializer =
@@ -281,7 +282,7 @@ clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
                                           NULL,
                                           clang::VK_RValue);
 
-      Res = new (C) clang::InitListExpr(C, Loc, &CastToNull, 1, Loc);
+      Res = new(C) clang::InitListExpr(C, Loc, &CastToNull, 1, Loc);
       break;
     }
     case RSExportPrimitiveType::DataTypeRSMatrix2x2:
@@ -317,13 +318,13 @@ clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
       for (unsigned i = 0; i < sizeof(InitVals) / sizeof(InitVals[0]); i++)
         InitVals[i] = Float0Val;
       clang::Expr *InitExpr =
-          new (C) clang::InitListExpr(C, Loc, InitVals, N * N, Loc);
+          new(C) clang::InitListExpr(C, Loc, InitVals, N * N, Loc);
       InitExpr->setType(C.getConstantArrayType(FloatTy,
                                                llvm::APInt(32, 4),
                                                clang::ArrayType::Normal,
                                                /* EltTypeQuals = */0));
 
-      Res = new (C) clang::InitListExpr(C, Loc, &InitExpr, 1, Loc);
+      Res = new(C) clang::InitListExpr(C, Loc, &InitExpr, 1, Loc);
       break;
     }
     case RSExportPrimitiveType::DataTypeUnknown:
@@ -374,8 +375,8 @@ void RSObjectRefCount::VisitCompoundStmt(clang::CompoundStmt *CS) {
     VisitStmt(CS);
 
     // Destroy the scope
-    // TODO: Update reference count of the RS object refenced by
-    //       getCurrentScope().
+    // TODO(srhines): Update reference count of the RS object refenced by
+    //                getCurrentScope().
     assert((getCurrentScope() == S) && "Corrupted scope stack!");
     S->InsertLocalVarDestructors();
     mScopeStack.pop();
@@ -385,7 +386,7 @@ void RSObjectRefCount::VisitCompoundStmt(clang::CompoundStmt *CS) {
 }
 
 void RSObjectRefCount::VisitBinAssign(clang::BinaryOperator *AS) {
-  // TODO: Update reference count
+  // TODO(srhines): Update reference count
   return;
 }
 
@@ -400,4 +401,4 @@ void RSObjectRefCount::VisitStmt(clang::Stmt *S) {
   return;
 }
 
-
+}  // namespace slang

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_RS_EXPORT_FUNC_H
-#define _SLANG_COMPILER_RS_EXPORT_FUNC_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_FUNC_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_FUNC_H_
 
 #include <list>
 #include <string>
 
 #include "llvm/ADT/StringRef.h"
 
-#include "slang_rs_exportable.h"
 #include "slang_rs_export_type.h"
+#include "slang_rs_exportable.h"
 
 namespace llvm {
   class StructType;
@@ -87,4 +87,4 @@ class RSExportFunc : public RSExportable {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_RS_EXPORT_FUNC_H
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_FUNC_H_  NOLINT

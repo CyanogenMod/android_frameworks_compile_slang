@@ -16,9 +16,32 @@
 
 #include "slang_backend.h"
 
+#include <string>
+#include <vector>
+
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclGroup.h"
+
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/TargetOptions.h"
+
+#include "clang/CodeGen/ModuleBuilder.h"
+
+#include "clang/Frontend/CodeGenOptions.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
+
+#include "llvm/Assembly/PrintModulePass.h"
+
+#include "llvm/Bitcode/ReaderWriter.h"
+
+#include "llvm/CodeGen/RegAllocRegistry.h"
+#include "llvm/CodeGen/SchedulerRegistry.h"
+
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Metadata.h"
-#include "llvm/LLVMContext.h"
 
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -26,28 +49,9 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/SubtargetFeature.h"
 
-#include "llvm/CodeGen/RegAllocRegistry.h"
-#include "llvm/CodeGen/SchedulerRegistry.h"
-
-#include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/Bitcode/ReaderWriter.h"
-
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclGroup.h"
-#include "clang/AST/ASTContext.h"
-
-#include "clang/Basic/TargetInfo.h"
-#include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/TargetOptions.h"
-
-#include "clang/Frontend/CodeGenOptions.h"
-#include "clang/Frontend/FrontendDiagnostic.h"
-
-#include "clang/CodeGen/ModuleBuilder.h"
-
 #include "slang.h"
 
-using namespace slang;
+namespace slang {
 
 void Backend::CreateFunctionPasses() {
   if (!mPerFunctionPasses) {
@@ -173,7 +177,7 @@ bool Backend::CreateCodeGenPasses() {
   return true;
 }
 
-Backend::Backend(clang::Diagnostic &Diags,
+Backend::Backend(clang::Diagnostic *Diags,
                  const clang::CodeGenOptions &CodeGenOpts,
                  const clang::TargetOptions &TargetOpts,
                  const PragmaList &Pragmas,
@@ -190,7 +194,7 @@ Backend::Backend(clang::Diagnostic &Diags,
       mPerModulePasses(NULL),
       mCodeGenPasses(NULL),
       mLLVMContext(llvm::getGlobalContext()),
-      mDiags(Diags),
+      mDiags(*Diags),
       mPragmas(Pragmas) {
   FormattedOutStream.setStream(*mpOS,
                                llvm::formatted_raw_ostream::PRESERVE_STREAM);
@@ -334,3 +338,5 @@ Backend::~Backend() {
   delete mCodeGenPasses;
   return;
 }
+
+}  // namespace slang

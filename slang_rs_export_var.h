@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_RS_EXPORT_VAR_H
-#define _SLANG_COMPILER_RS_EXPORT_VAR_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_VAR_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_VAR_H_
 
 #include <string>
 
-#include "llvm/ADT/StringRef.h"
-
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
+
+#include "llvm/ADT/StringRef.h"
 
 #include "slang_rs_exportable.h"
 
@@ -57,4 +57,4 @@ class RSExportVar : public RSExportable {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMPILER_RS_EXPORT_VAR_H
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_VAR_H_  NOLINT

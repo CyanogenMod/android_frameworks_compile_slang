@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_OBJECT_REF_COUNT_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_OBJECT_REF_COUNT_H_
+
+#include <list>
 #include <stack>
 
 #include "clang/AST/StmtVisitor.h"
 
 #include "slang_rs_export_type.h"
 
-using namespace slang;
-
 namespace clang {
   class Expr;
 }
+
+namespace slang {
 
 class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
  private:
@@ -39,7 +43,7 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
     static clang::FunctionDecl *RSClearObjectFD[];
 
    public:
-    Scope(clang::CompoundStmt *CS) : mCS(CS) {
+    explicit Scope(clang::CompoundStmt *CS) : mCS(CS) {
       return;
     }
 
@@ -65,8 +69,8 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
     return mScopeStack.top();
   }
 
-  // TODO: Composite types and arrays based on RS object types need to be
-  // handled for both zero-initialization + clearing.
+  // TODO(srhines): Composite types and arrays based on RS object types need
+  // to be handled for both zero-initialization + clearing.
 
   // Return false if the type of variable declared in VD is not an RS object
   // type.
@@ -102,3 +106,6 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
   // I.e., rs_allocation foo; foo += bar;
 };
 
+}  // namespace slang
+
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_OBJECT_REF_COUNT_H_  NOLINT

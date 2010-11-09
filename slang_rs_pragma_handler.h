@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMILER_RS_PRAGMA_HANDLER_H
-#define _SLANG_COMILER_RS_PRAGMA_HANDLER_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_PRAGMA_HANDLER_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_PRAGMA_HANDLER_H_
 
 #include <string>
 
@@ -64,7 +64,8 @@ class RSPragmaHandler : public clang::PragmaHandler {
   static RSPragmaHandler *CreatePragmaExportFuncHandler(RSContext *Context);
   static RSPragmaHandler *CreatePragmaExportFuncAllHandler(RSContext *Context);
   static RSPragmaHandler *CreatePragmaExportTypeHandler(RSContext *Context);
-  static RSPragmaHandler *CreatePragmaJavaPackageNameHandler(RSContext *Context);
+  static RSPragmaHandler *CreatePragmaJavaPackageNameHandler(
+      RSContext *Context);
   static RSPragmaHandler *CreatePragmaReflectLicenseHandler(RSContext *Context);
 
   virtual void HandlePragma(clang::Preprocessor &PP,
@@ -73,4 +74,4 @@ class RSPragmaHandler : public clang::PragmaHandler {
 
 }   // namespace slang
 
-#endif  // _SLANG_COMILER_RS_PRAGMA_HANDLER_H
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_PRAGMA_HANDLER_H_  NOLINT

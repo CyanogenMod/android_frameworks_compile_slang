@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_RS_EXPORTABLE_HPP
-#define _SLANG_COMPILER_RS_EXPORTABLE_HPP
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORTABLE_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORTABLE_H_
 
 #include "slang_rs_context.h"
 
@@ -60,4 +60,4 @@ class RSExportable {
 };
 }
 
-#endif  // _SLANG_COMPILER_RS_EXPORTABLE_HPP
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORTABLE_H_  NOLINT

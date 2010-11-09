@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_DIAGNOSTIC_BUFFER_H
-#define _SLANG_COMPILER_DIAGNOSTIC_BUFFER_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_DIAGNOSTIC_BUFFER_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_DIAGNOSTIC_BUFFER_H_
 
-#include "llvm/Support/raw_ostream.h"
+#include <string>
 
 #include "clang/Basic/Diagnostic.h"
 
-#include <string>
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
   class raw_string_ostream;
@@ -55,4 +55,4 @@ class DiagnosticBuffer : public clang::DiagnosticClient {
 };
 }
 
-#endif  // _SLANG_DIAGNOSTIC_BUFFER_H
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_DIAGNOSTIC_BUFFER_H_  NOLINT

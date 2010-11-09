@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SLANG_COMPILER_RS_METADATA_HPP
-#define SLANG_COMPILER_RS_METADATA_HPP
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_METADATA_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_METADATA_H_
 
 // MN stands for "metadata name"
 #define RS_EXPORT_VAR_MN  "#rs_export_var"
@@ -27,4 +27,4 @@
 
 #define RS_EXPORT_TYPE_MN "#rs_export_type"
 
-#endif  // SLANG_COMPILER_RS_METADATA_HPP
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_METADATA_H_  NOLINT

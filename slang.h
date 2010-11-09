@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_SLANG_H
-#define _SLANG_COMPILER_SLANG_H
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_H_
 
 #include <cstdio>
 #include <string>
 #include <vector>
 
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/IntrusiveRefCntPtr.h"
-
 #include "clang/Basic/TargetOptions.h"
 
-#include "slang_pragma_recorder.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/StringRef.h"
+
 #include "slang_diagnostic_buffer.h"
+#include "slang_pragma_recorder.h"
 
 namespace llvm {
   class tool_output_file;
@@ -194,6 +194,7 @@ class Slang {
 
   virtual ~Slang();
 };
-}
 
-#endif  // _SLANG_COMPILER_SLANG_H
+}  // namespace slang
+
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_H_  NOLINT

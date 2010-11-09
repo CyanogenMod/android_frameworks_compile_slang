@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_SLANG_RS_TYPE_SPEC_HPP
-#define _SLANG_COMPILER_SLANG_RS_TYPE_SPEC_HPP
+#ifndef _COMPILE_SLANG_SLANG_RS_TYPE_SPEC_H_  // NOLINT
+#define _COMPILE_SLANG_SLANG_RS_TYPE_SPEC_H_
 
 #define RS_DATA_TYPE_CLASS_ENUMS            \
     ENUM_RS_DATA_TYPE_CLASS(Primitive)      \
@@ -161,7 +161,7 @@ struct RSConstantArrayType {
 };
 
 struct RSRecordField {
-  const char *name; // field name
+  const char *name;  // field name
   const union RSType *type;
   enum RSDataKind dk;
 };
@@ -263,4 +263,4 @@ union RSType {
 #define RS_RECORD_TYPE_SET_FIELD_DATA_KIND(R, I, V) \
     RS_RECORD_TYPE_GET_FIELD_DATA_KIND(R, I) = (V)
 
-#endif  // _SLANG_COMPILER_SLANG_RS_TYPE_SPEC_HPP
+#endif  // _COMPILE_SLANG_SLANG_RS_TYPE_SPEC_H_  NOLINT

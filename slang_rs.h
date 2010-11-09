@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef _SLANG_COMPILER_SLANG_RS_HPP
-#define _SLANG_COMPILER_SLANG_RS_HPP
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_H_
 
 #include "slang.h"
 
 #include <list>
-#include <vector>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "llvm/ADT/StringMap.h"
 
@@ -131,4 +132,4 @@ class SlangRS : public Slang {
 };
 }
 
-#endif  // _SLANG_COMPILER_SLANG_RS_HPP
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_H_  NOLINT

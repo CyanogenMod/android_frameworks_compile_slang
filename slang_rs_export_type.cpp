@@ -16,15 +16,18 @@
 
 #include "slang_rs_export_type.h"
 
+#include <list>
 #include <vector>
 
-#include "llvm/Type.h"
-#include "llvm/DerivedTypes.h"
+#include "clang/AST/RecordLayout.h"
 
 #include "llvm/ADT/StringExtras.h"
+
+#include "llvm/DerivedTypes.h"
+
 #include "llvm/Target/TargetData.h"
 
-#include "clang/AST/RecordLayout.h"
+#include "llvm/Type.h"
 
 #include "slang_rs_context.h"
 #include "slang_rs_export_element.h"
@@ -34,7 +37,7 @@
   if (!ParentClass::equals(E))                \
     return false;
 
-using namespace slang;
+namespace slang {
 
 /****************************** RSExportType ******************************/
 bool RSExportType::NormalizeType(const clang::Type *&T,
@@ -1006,7 +1009,7 @@ union RSType *RSExportRecordType::convertToSpecType() const {
   unsigned AllocSize = sizeof(union RSType) +
                        sizeof(struct RSRecordField) * NumFields;
   llvm::OwningPtr<union RSType> ST(
-      reinterpret_cast<union RSType*>(operator new (AllocSize)));
+      reinterpret_cast<union RSType*>(operator new(AllocSize)));
 
   ::memset(ST.get(), 0, AllocSize);
 
@@ -1037,7 +1040,7 @@ union RSType *RSExportRecordType::convertToSpecType() const {
     RS_RECORD_TYPE_SET_FIELD_DATA_KIND(ST, FieldIdx, DK);
   }
 
-  // TODO: Check whether all fields were created normaly.
+  // TODO(slang): Check whether all fields were created normally.
 
   return ST.take();
 }
@@ -1073,3 +1076,5 @@ bool RSExportRecordType::equals(const RSExportable *E) const {
 
   return true;
 }
+
+}  // namespace slang

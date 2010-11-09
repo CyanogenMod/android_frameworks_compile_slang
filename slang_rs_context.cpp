@@ -16,29 +16,31 @@
 
 #include "slang_rs_context.h"
 
+#include <string>
+
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclBase.h"
+#include "clang/AST/Type.h"
+
+#include "clang/Basic/Linkage.h"
+#include "clang/Basic/TargetInfo.h"
+
+#include "clang/Index/ASTLocation.h"
+
 #include "llvm/LLVMContext.h"
 
 #include "llvm/Target/TargetData.h"
 
-#include "clang/Basic/TargetInfo.h"
-#include "clang/Basic/Linkage.h"
-
-#include "clang/AST/Type.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclBase.h"
-#include "clang/AST/ASTContext.h"
-
-#include "clang/Index/ASTLocation.h"
-
 #include "slang.h"
-#include "slang_rs_reflection.h"
-#include "slang_rs_exportable.h"
-#include "slang_rs_export_var.h"
 #include "slang_rs_export_func.h"
 #include "slang_rs_export_type.h"
+#include "slang_rs_export_var.h"
+#include "slang_rs_exportable.h"
 #include "slang_rs_pragma_handler.h"
+#include "slang_rs_reflection.h"
 
-using namespace slang;
+namespace slang {
 
 RSContext::RSContext(clang::Preprocessor &PP,
                      clang::ASTContext &Ctx,
@@ -289,3 +291,5 @@ RSContext::~RSContext() {
       delete *I;
   }
 }
+
+}  // namespace slang

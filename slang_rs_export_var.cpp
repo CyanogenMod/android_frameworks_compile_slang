@@ -16,14 +16,14 @@
 
 #include "slang_rs_export_var.h"
 
-#include "llvm/ADT/APSInt.h"
-
 #include "clang/AST/Type.h"
+
+#include "llvm/ADT/APSInt.h"
 
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
 
-using namespace slang;
+namespace slang {
 
 RSExportVar::RSExportVar(RSContext *Context,
                          const clang::VarDecl *VD,
@@ -74,3 +74,5 @@ RSExportVar::RSExportVar(RSContext *Context,
 
   return;
 }
+
+}  // namespace slang
