@@ -283,12 +283,21 @@ clang::Expr *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
 }
 
 bool RSObjectRefCount::InitializeRSObject(clang::VarDecl *VD) {
+  bool IsArrayType = false;
   const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
+
+  // Loop through array types to get to base type
+  while (T && T->isArrayType()) {
+    T = T->getArrayElementTypeNoTypeQual();
+    IsArrayType = true;
+  }
+
   RSExportPrimitiveType::DataType DT =
       RSExportPrimitiveType::GetRSSpecificType(T);
 
-  if (DT == RSExportPrimitiveType::DataTypeUnknown)
+  if (DT == RSExportPrimitiveType::DataTypeUnknown) {
     return false;
+  }
 
   if (VD->hasInit()) {
     // TODO(srhines): Update the reference count of RS object in initializer.
@@ -305,7 +314,9 @@ bool RSObjectRefCount::InitializeRSObject(clang::VarDecl *VD) {
     }
   }
 
-  return RSExportPrimitiveType::IsRSObjectType(DT);
+  // TODO(srhines): Skip returning true in the case of array objects because
+  // we don't have looping destructor support yet.
+  return !IsArrayType && RSExportPrimitiveType::IsRSObjectType(DT);
 }
 
 clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
