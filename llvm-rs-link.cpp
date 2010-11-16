@@ -141,7 +141,7 @@ extern unsigned rslib_bc_size;
 
 static bool PreloadLibraries(bool NoStdLib,
                              const std::vector<std::string> &AdditionalLibs,
-                             std::list<MemoryBuffer *> LibBitcode) {
+                             std::list<MemoryBuffer *> &LibBitcode) {
   MemoryBuffer *MB;
 
   LibBitcode.clear();
