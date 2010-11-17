@@ -831,12 +831,8 @@ void RSReflection::genPrimitiveTypeExportVariable(
                     TypeName, "v");
     C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
 
-    if (EPT->isRSObjectType())
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName()
-                 << ", (v == null) ? 0 : v.getID());" << std::endl;
-    else
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName()
-                 << ", v);" << std::endl;
+    C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName()
+               << ", v);" << std::endl;
 
     C.endFunction();
   }
