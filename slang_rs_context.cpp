@@ -51,7 +51,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mTargetData(NULL),
       mLLVMContext(llvm::getGlobalContext()),
       mExportAllNonStaticVars(true),
-      mExportAllNonStaticFuncs(false),
+      mExportAllNonStaticFuncs(true),
       mLicenseNote(NULL) {
   // For #pragma rs export_var
   PP.AddPragmaHandler(
@@ -105,16 +105,28 @@ bool RSContext::processExportVar(const clang::VarDecl *VD) {
   return true;
 }
 
+static bool isSpecialRSFunc(const llvm::StringRef& Name) {
+  static llvm::StringRef FuncInit("init");
+  static llvm::StringRef FuncRoot("root");
+  return Name.equals(FuncInit) || Name.equals(FuncRoot);
+}
+
 bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
   assert(!FD->getName().empty() && "Function name should not be empty");
 
-  if (!FD->isThisDeclarationADefinition())
-    return false;
+  if (!FD->isThisDeclarationADefinition()) {
+    return true;
+  }
 
   if (FD->getStorageClass() != clang::SC_None) {
     fprintf(stderr, "RSContext::processExportFunc : cannot export extern or "
                     "static function '%s'\n", FD->getName().str().c_str());
     return false;
+  }
+
+  // Do not reflect specialized RS functions like init/root.
+  if (isSpecialRSFunc(FD->getName())) {
+    return true;
   }
 
   RSExportFunc *EF = RSExportFunc::Create(this, FD);
