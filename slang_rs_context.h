@@ -67,12 +67,7 @@ class RSContext {
 
   ExportableList mExportables;
 
-  // Record the variables/types/elements annotated in #pragma to be exported
-  NeedExportVarSet mNeedExportVars;
-  NeedExportFuncSet mNeedExportFuncs;
   NeedExportTypeSet mNeedExportTypes;
-  bool mExportAllNonStaticVars;
-  bool mExportAllNonStaticFuncs;
 
   std::string *mLicenseNote;
   std::string mReflectJavaPackageName;
@@ -104,25 +99,11 @@ class RSContext {
   }
   inline const std::string *getLicenseNote() const { return mLicenseNote; }
 
-  inline void addExportVar(const std::string &S) {
-    mNeedExportVars.insert(S);
-    return;
-  }
-  inline void addExportFunc(const std::string &S) {
-    mNeedExportFuncs.insert(S);
-    return;
-  }
   inline void addExportType(const std::string &S) {
     mNeedExportTypes.insert(S);
     return;
   }
 
-  inline void setExportAllNonStaticVars(bool flag) {
-    mExportAllNonStaticVars = flag;
-  }
-  inline void setExportAllNonStaticFuncs(bool flag) {
-    mExportAllNonStaticFuncs = flag;
-  }
   inline void setReflectJavaPackageName(const std::string &S) {
     mReflectJavaPackageName = S;
     return;

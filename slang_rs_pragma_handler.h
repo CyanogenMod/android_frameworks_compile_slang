@@ -59,10 +59,6 @@ class RSPragmaHandler : public clang::PragmaHandler {
                                                clang::Token &FirstToken);
 
  public:
-  static RSPragmaHandler *CreatePragmaExportVarHandler(RSContext *Context);
-  static RSPragmaHandler *CreatePragmaExportVarAllHandler(RSContext *Context);
-  static RSPragmaHandler *CreatePragmaExportFuncHandler(RSContext *Context);
-  static RSPragmaHandler *CreatePragmaExportFuncAllHandler(RSContext *Context);
   static RSPragmaHandler *CreatePragmaExportTypeHandler(RSContext *Context);
   static RSPragmaHandler *CreatePragmaJavaPackageNameHandler(
       RSContext *Context);

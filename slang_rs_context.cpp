@@ -50,25 +50,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mTarget(Target),
       mTargetData(NULL),
       mLLVMContext(llvm::getGlobalContext()),
-      mExportAllNonStaticVars(true),
-      mExportAllNonStaticFuncs(true),
       mLicenseNote(NULL) {
-  // For #pragma rs export_var
-  PP.AddPragmaHandler(
-      "rs", RSPragmaHandler::CreatePragmaExportVarHandler(this));
-
-  // For #pragma rs export_var_all
-  PP.AddPragmaHandler(
-      "rs", RSPragmaHandler::CreatePragmaExportVarAllHandler(this));
-
-  // For #pragma rs export_func
-  PP.AddPragmaHandler(
-      "rs", RSPragmaHandler::CreatePragmaExportFuncHandler(this));
-
-  // For #pragma rs export_func_all
-  PP.AddPragmaHandler(
-      "rs", RSPragmaHandler::CreatePragmaExportFuncAllHandler(this));
-
   // For #pragma rs export_type
   PP.AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaExportTypeHandler(this));
@@ -188,15 +170,6 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
 }
 
 void RSContext::processExport() {
-  if (mNeedExportVars.empty() &&
-      mNeedExportFuncs.empty() &&
-      !mExportAllNonStaticVars && !mExportAllNonStaticFuncs) {
-    fprintf(stderr, "note: No reflection because there are no #pragma "
-                    "rs export_var(...), #pragma rs export_func(...), "
-                    "#pragma rs export_var_all, or #pragma rs "
-                    "export_func_all\n");
-  }
-
   // Export variable
   clang::TranslationUnitDecl *TUDecl = mCtx.getTranslationUnitDecl();
   for (clang::DeclContext::decl_iterator DI = TUDecl->decls_begin(),
@@ -205,31 +178,20 @@ void RSContext::processExport() {
        DI++) {
     if (DI->getKind() == clang::Decl::Var) {
       clang::VarDecl *VD = (clang::VarDecl*) (*DI);
-      if (mExportAllNonStaticVars &&
-          (VD->getLinkage() == clang::ExternalLinkage)) {
+      if (VD->getLinkage() == clang::ExternalLinkage) {
         if (!processExportVar(VD)) {
           fprintf(stderr, "RSContext::processExport : failed to export var "
                           "'%s'\n", VD->getNameAsString().c_str());
-        }
-      } else {
-        NeedExportVarSet::iterator EI = mNeedExportVars.find(VD->getName());
-        if (EI != mNeedExportVars.end() && processExportVar(VD)) {
-          mNeedExportVars.erase(EI);
         }
       }
     } else if (DI->getKind() == clang::Decl::Function) {
       // Export functions
       clang::FunctionDecl *FD = (clang::FunctionDecl*) (*DI);
-      if (mExportAllNonStaticFuncs &&
-          (FD->getLinkage() == clang::ExternalLinkage)) {
+      if (FD->getLinkage() == clang::ExternalLinkage) {
         if (!processExportFunc(FD)) {
           fprintf(stderr, "RSContext::processExport : failed to export func "
                           "'%s'\n", FD->getNameAsString().c_str());
         }
-      } else {
-        NeedExportFuncSet::iterator EI = mNeedExportFuncs.find(FD->getName());
-        if (EI != mNeedExportFuncs.end() && processExportFunc(FD))
-          mNeedExportFuncs.erase(EI);
       }
     }
   }

@@ -30,61 +30,6 @@ namespace slang {
 
 namespace {  // Anonymous namespace
 
-class RSExportVarPragmaHandler : public RSPragmaHandler {
- private:
-  void handleItem(const std::string &Item) {
-    mContext->addExportVar(Item);
-  }
-
- public:
-  RSExportVarPragmaHandler(llvm::StringRef Name, RSContext *Context)
-      : RSPragmaHandler(Name, Context) {
-    return;
-  }
-
-  void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
-    this->handleItemListPragma(PP, FirstToken);
-  }
-};
-
-class RSExportVarAllPragmaHandler : public RSPragmaHandler {
- public:
-  RSExportVarAllPragmaHandler(llvm::StringRef Name, RSContext *Context)
-      : RSPragmaHandler(Name, Context) { return; }
-
-  void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
-    this->handleNonParamPragma(PP, FirstToken);
-    mContext->setExportAllNonStaticVars(true);
-  }
-};
-
-class RSExportFuncPragmaHandler : public RSPragmaHandler {
- private:
-  void handleItem(const std::string &Item) {
-    mContext->addExportFunc(Item);
-  }
-
- public:
-  RSExportFuncPragmaHandler(llvm::StringRef Name,
-                            RSContext *Context)
-      : RSPragmaHandler(Name, Context) { return; }
-
-  void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
-    this->handleItemListPragma(PP, FirstToken);
-  }
-};
-
-class RSExportFuncAllPragmaHandler : public RSPragmaHandler {
- public:
-  RSExportFuncAllPragmaHandler(llvm::StringRef Name, RSContext *Context)
-      : RSPragmaHandler(Name, Context) { return; }
-
-  void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
-    this->handleNonParamPragma(PP, FirstToken);
-    mContext->setExportAllNonStaticFuncs(true);
-  }
-};
-
 class RSExportTypePragmaHandler : public RSPragmaHandler {
  private:
   void handleItem(const std::string &Item) {
@@ -183,26 +128,6 @@ class RSReflectLicensePragmaHandler : public RSPragmaHandler {
 };
 
 }  // namespace
-
-RSPragmaHandler *
-RSPragmaHandler::CreatePragmaExportVarHandler(RSContext *Context) {
-  return new RSExportVarPragmaHandler("export_var", Context);
-}
-
-RSPragmaHandler *
-RSPragmaHandler::CreatePragmaExportVarAllHandler(RSContext *Context) {
-  return new RSExportVarPragmaHandler("export_var_all", Context);
-}
-
-RSPragmaHandler *
-RSPragmaHandler::CreatePragmaExportFuncHandler(RSContext *Context) {
-  return new RSExportFuncPragmaHandler("export_func", Context);
-}
-
-RSPragmaHandler *
-RSPragmaHandler::CreatePragmaExportFuncAllHandler(RSContext *Context) {
-  return new RSExportFuncPragmaHandler("export_func_all", Context);
-}
 
 RSPragmaHandler *
 RSPragmaHandler::CreatePragmaExportTypeHandler(RSContext *Context) {
