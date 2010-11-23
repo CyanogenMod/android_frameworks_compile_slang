@@ -51,7 +51,7 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
       : RSPragmaHandler(Name, Context) { return; }
 
   void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
-    // FIXME: Need to validate the extracted package name from paragma.
+    // FIXME: Need to validate the extracted package name from pragma.
     // Currently "all chars" specified in pragma will be treated as package
     // name.
     //

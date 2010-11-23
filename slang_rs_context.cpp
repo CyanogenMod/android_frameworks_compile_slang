@@ -237,9 +237,12 @@ bool RSContext::reflectToJava(const std::string &OutputPathBase,
   const std::string &PackageName =
       ((OutputPackageName.empty()) ? mReflectJavaPackageName :
                                      OutputPackageName);
-  if (PackageName.empty())
-    // no package name, just return
-    return true;
+  if (PackageName.empty()) {
+    std::cerr << "Error: Missing \"#pragma rs "
+              << "java_package_name(com.foo.bar)\" in "
+              << InputFileName << std::endl;
+    return false;
+  }
 
   // Copy back the really applied package name
   RealPackageName->assign(PackageName);
