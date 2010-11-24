@@ -19,8 +19,9 @@ __author__ = 'Android'
 
 class Options(object):
   def __init__(self):
-    pass
+    return
   verbose = 0
+  cleanup = 1
 
 
 def CompareFiles(filename):
@@ -81,26 +82,51 @@ def ExecTest(dirname):
     if Options.verbose:
       print 'stderr is different'
 
-  os.remove('stdout.txt')
-  os.remove('stderr.txt')
-  shutil.rmtree('tmp/')
+  if Options.cleanup:
+    os.remove('stdout.txt')
+    os.remove('stderr.txt')
+    shutil.rmtree('tmp/')
 
   os.chdir('..')
   return passed
 
 
+def Usage():
+  print ('Usage: %s [OPTION]... [TESTNAME]...'
+         'RenderScript Compiler Test Harness\n'
+         'Runs TESTNAMEs (all tests by default)\n'
+         'Available Options:\n'
+         '  -h, --help          Help message\n'
+         '  -n, --no-cleanup    Don\'t clean up after running tests\n'
+         '  -v, --verbose       Verbose output\n'
+        ) % (sys.argv[0]),
+  return
+
+
 def main():
   passed = 0
   failed = 0
+  files = []
 
   for arg in sys.argv[1:]:
-    if arg == '-v':
+    if arg in ('-h', '--help'):
+      Usage()
+      return 0
+    elif arg in ('-n', '--no-cleanup'):
+      Options.cleanup = 0
+    elif arg in ('-v', '--verbose'):
       Options.verbose = 1
     else:
-      print >> sys.stderr, 'Invalid argument %s' % arg
-      return 1
+      # Test list to run
+      if os.path.isdir(arg):
+        files.append(arg)
+      else:
+        print >> sys.stderr, 'Invalid test or option: %s' % arg
+        return 1
 
-  files = os.listdir('.')
+  if not files:
+    files = os.listdir('.')
+
   for f in files:
     if os.path.isdir(f):
       if ExecTest(f):
