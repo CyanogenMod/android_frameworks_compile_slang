@@ -1,0 +1,1 @@
+Error: Missing "#pragma rs java_package_name(com.foo.bar)" in no_java_package_name.rs
