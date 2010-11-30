@@ -104,8 +104,52 @@ void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
   return;
 }
 
-void RSBackend::HandleTranslationUnitPre(clang::ASTContext& C) {
+namespace {
+
+bool ValidateVar(clang::VarDecl *VD) {
+  llvm::StringRef TypeName;
+  const clang::Type *T = VD->getType().getTypePtr();
+  if (!RSExportType::NormalizeType(T, TypeName)) {
+    return false;
+  }
+  return true;
+}
+
+bool ValidateASTContext(clang::ASTContext &C, clang::Diagnostic &Diags) {
+  bool valid = true;
   clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
+  for (clang::DeclContext::decl_iterator DI = TUDecl->decls_begin(),
+          DE = TUDecl->decls_end();
+       DI != DE;
+       DI++) {
+    if (DI->getKind() == clang::Decl::Var) {
+      clang::VarDecl *VD = (clang::VarDecl*) (*DI);
+      if (VD->getLinkage() == clang::ExternalLinkage) {
+        if (!ValidateVar(VD)) {
+          valid = false;
+          VD = VD->getCanonicalDecl();
+          Diags.Report(clang::FullSourceLoc(VD->getLocation(),
+                                            C.getSourceManager()),
+                       Diags.getCustomDiagID(clang::Diagnostic::Error,
+                                             "variable cannot be "
+                                             "exported: '%0'"))
+              << VD->getName();
+        }
+      }
+    }
+  }
+
+  return valid;
+}
+
+}  // end namespace
+
+void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
+  clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
+
+  if (!ValidateASTContext(C, mDiags)) {
+    return;
+  }
 
   // Process any static function declarations
   for (clang::DeclContext::decl_iterator I = TUDecl->decls_begin(),
@@ -124,6 +168,7 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
   if (!mContext->processExport()) {
     mDiags.Report(mDiags.getCustomDiagID(clang::Diagnostic::Error,
                                          "elements cannot be exported"));
+    return;
   }
 
   // Dump export variable info

@@ -1,5 +1,3 @@
 Field `i' in Record `s' contains unsupported type
 : int *identifier
-RSContext::processExport : failed to export var 'myStruct'
-ptr_in_struct.rs:4:1: warning: declaration does not declare anything
-error: elements cannot be exported
+ptr_in_struct.rs:8:10: error: variable cannot be exported: 'myStruct'

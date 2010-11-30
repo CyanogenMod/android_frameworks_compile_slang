@@ -174,7 +174,7 @@ bool RSContext::processExport() {
   clang::TranslationUnitDecl *TUDecl = mCtx.getTranslationUnitDecl();
   for (clang::DeclContext::decl_iterator DI = TUDecl->decls_begin(),
            DE = TUDecl->decls_end();
-       DI != TUDecl->decls_end();
+       DI != DE;
        DI++) {
     if (DI->getKind() == clang::Decl::Var) {
       clang::VarDecl *VD = (clang::VarDecl*) (*DI);
