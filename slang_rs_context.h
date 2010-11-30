@@ -109,7 +109,7 @@ class RSContext {
     return;
   }
 
-  void processExport();
+  bool processExport();
   inline void newExportable(RSExportable *E) {
     if (E != NULL)
       mExportables.push_back(E);

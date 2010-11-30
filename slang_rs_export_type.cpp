@@ -45,7 +45,7 @@ bool RSExportType::NormalizeType(const clang::Type *&T,
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  if ((T = RSExportType::TypeExportable(T, SPS)) == NULL)
+  if ((T = RSExportType::TypeExportable(T, SPS, false)) == NULL)
     // TODO(zonr): warn that type not exportable.
     return false;
 
@@ -152,7 +152,8 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
 
 const clang::Type *RSExportType::TypeExportable(
     const clang::Type *T,
-    llvm::SmallPtrSet<const clang::Type*, 8>& SPS) {
+    llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
+    bool InRecord) {
   // Normalize first
   if ((T = GET_CANONICAL_TYPE(T)) == NULL)
     return NULL;
@@ -200,7 +201,7 @@ const clang::Type *RSExportType::TypeExportable(
         const clang::Type *FT = GetTypeOfDecl(FD);
         FT = GET_CANONICAL_TYPE(FT);
 
-        if (!TypeExportable(FT, SPS)) {
+        if (!TypeExportable(FT, SPS, true)) {
           fprintf(stderr, "Field `%s' in Record `%s' contains unsupported "
                           "type\n", FD->getNameAsString().c_str(),
                                     RD->getNameAsString().c_str());
@@ -212,6 +213,9 @@ const clang::Type *RSExportType::TypeExportable(
       return T;
     }
     case clang::Type::Pointer: {
+      if (InRecord) {
+        return NULL;
+      }
       const clang::PointerType *PT = UNSAFE_CAST_TYPE(clang::PointerType, T);
       const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
 
@@ -220,7 +224,7 @@ const clang::Type *RSExportType::TypeExportable(
       // We don't support pointer with array-type pointee or unsupported pointee
       // type
       if (PointeeType->isArrayType() ||
-         (TypeExportable(PointeeType, SPS) == NULL) )
+          (TypeExportable(PointeeType, SPS, InRecord) == NULL))
         return NULL;
       else
         return T;
@@ -236,7 +240,7 @@ const clang::Type *RSExportType::TypeExportable(
       const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
 
       if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
-          (TypeExportable(ElementType, SPS) == NULL))
+          (TypeExportable(ElementType, SPS, InRecord) == NULL))
         return NULL;
       else
         return T;
@@ -258,7 +262,7 @@ const clang::Type *RSExportType::TypeExportable(
                         "or higher dimension of constant is not supported.\n");
         return NULL;
       }
-      if (TypeExportable(ElementType, SPS) == NULL)
+      if (TypeExportable(ElementType, SPS, InRecord) == NULL)
         return NULL;
       else
         return T;

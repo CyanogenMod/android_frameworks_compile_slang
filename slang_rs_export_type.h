@@ -103,7 +103,8 @@ class RSExportType : public RSExportable {
   static const clang::Type
   *TypeExportable(const clang::Type *T,
                   // Contain the checked type for recursion
-                  llvm::SmallPtrSet<const clang::Type*, 8> &SPS);
+                  llvm::SmallPtrSet<const clang::Type*, 8> &SPS,
+                  bool InRecord);
 
   // This function convert the RSExportType to LLVM type. Actually, it should be
   // "convert Clang type to LLVM type." However, clang doesn't make this API

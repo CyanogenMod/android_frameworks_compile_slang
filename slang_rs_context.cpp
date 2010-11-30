@@ -169,7 +169,7 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
   return (ET != NULL);
 }
 
-void RSContext::processExport() {
+bool RSContext::processExport() {
   // Export variable
   clang::TranslationUnitDecl *TUDecl = mCtx.getTranslationUnitDecl();
   for (clang::DeclContext::decl_iterator DI = TUDecl->decls_begin(),
@@ -182,6 +182,7 @@ void RSContext::processExport() {
         if (!processExportVar(VD)) {
           fprintf(stderr, "RSContext::processExport : failed to export var "
                           "'%s'\n", VD->getNameAsString().c_str());
+          return false;
         }
       }
     } else if (DI->getKind() == clang::Decl::Function) {
@@ -191,6 +192,7 @@ void RSContext::processExport() {
         if (!processExportFunc(FD)) {
           fprintf(stderr, "RSContext::processExport : failed to export func "
                           "'%s'\n", FD->getNameAsString().c_str());
+          return false;
         }
       }
     }
@@ -204,10 +206,11 @@ void RSContext::processExport() {
     if (!processExportType(EI->getKey())) {
       fprintf(stderr, "RSContext::processExport : failed to export type "
               "'%s'\n", EI->getKey().str().c_str());
+      return false;
     }
   }
 
-  return;
+  return true;
 }
 
 bool RSContext::insertExportType(const llvm::StringRef &TypeName,
