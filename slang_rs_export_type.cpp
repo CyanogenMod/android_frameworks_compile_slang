@@ -39,21 +39,190 @@
 
 namespace slang {
 
-/****************************** RSExportType ******************************/
-bool RSExportType::NormalizeType(const clang::Type *&T,
-                                 llvm::StringRef &TypeName) {
+namespace {
+
+const clang::Type *TypeExportableHelper(
+    const clang::Type *T,
+    llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
+    clang::Diagnostic *Diags,
+    clang::SourceManager *SM,
+    const clang::RecordDecl *TopLevelRecord) {
+  // Normalize first
+  if ((T = GET_CANONICAL_TYPE(T)) == NULL)
+    return NULL;
+
+  if (SPS.count(T))
+    return T;
+
+  switch (T->getTypeClass()) {
+    case clang::Type::Builtin: {
+      const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(clang::BuiltinType, T);
+
+      switch (BT->getKind()) {
+#define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
+        case builtin_type:
+#include "RSClangBuiltinEnums.inc"
+          return T;
+        default: {
+          return NULL;
+        }
+      }
+    }
+    case clang::Type::Record: {
+      if (RSExportPrimitiveType::GetRSSpecificType(T) !=
+          RSExportPrimitiveType::DataTypeUnknown)
+        return T;  // RS object type, no further checks are needed
+
+      // Check internal struct
+      const clang::RecordDecl *RD = T->getAsStructureType()->getDecl();
+      if (RD != NULL)
+        RD = RD->getDefinition();
+
+      if (!TopLevelRecord) {
+        TopLevelRecord = RD;
+      }
+      if (RD->getName().empty()) {
+        if (Diags && SM) {
+          Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
+                        Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                               "anonymous structures cannot "
+                                               "be exported"));
+        }
+        return NULL;
+      }
+
+      // Fast check
+      if (RD->hasFlexibleArrayMember() || RD->hasObjectMember())
+        return NULL;
+
+      // Insert myself into checking set
+      SPS.insert(T);
+
+      // Check all element
+      for (clang::RecordDecl::field_iterator FI = RD->field_begin(),
+               FE = RD->field_end();
+           FI != FE;
+           FI++) {
+        const clang::FieldDecl *FD = *FI;
+        const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
+        FT = GET_CANONICAL_TYPE(FT);
+
+        if (!TypeExportableHelper(FT, SPS, Diags, SM, TopLevelRecord)) {
+          return NULL;
+        }
+      }
+
+      return T;
+    }
+    case clang::Type::Pointer: {
+      if (TopLevelRecord) {
+        if (Diags && SM) {
+          Diags->Report(clang::FullSourceLoc(TopLevelRecord->getLocation(),
+                            *SM),
+                        Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                               "structures containing pointers "
+                                               "cannot be exported: '%0'"))
+              << TopLevelRecord->getName();
+        }
+        return NULL;
+      }
+      const clang::PointerType *PT = UNSAFE_CAST_TYPE(clang::PointerType, T);
+      const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
+
+      if (PointeeType->getTypeClass() == clang::Type::Pointer)
+        return T;
+      // We don't support pointer with array-type pointee or unsupported pointee
+      // type
+      if (PointeeType->isArrayType() ||
+          (TypeExportableHelper(PointeeType, SPS, Diags, SM,
+                                TopLevelRecord) == NULL))
+        return NULL;
+      else
+        return T;
+    }
+    case clang::Type::ExtVector: {
+      const clang::ExtVectorType *EVT =
+          UNSAFE_CAST_TYPE(clang::ExtVectorType, T);
+      // Only vector with size 2, 3 and 4 are supported.
+      if (EVT->getNumElements() < 2 || EVT->getNumElements() > 4)
+        return NULL;
+
+      // Check base element type
+      const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
+
+      if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
+          (TypeExportableHelper(ElementType, SPS, Diags, SM,
+                                TopLevelRecord) == NULL))
+        return NULL;
+      else
+        return T;
+    }
+    case clang::Type::ConstantArray: {
+      const clang::ConstantArrayType *CAT =
+          UNSAFE_CAST_TYPE(clang::ConstantArrayType, T);
+
+      // Check size
+      if (CAT->getSize().getActiveBits() > 32) {
+        fprintf(stderr, "RSExportConstantArrayType::Create : array with too "
+                        "large size (> 2^32).\n");
+        return NULL;
+      }
+      // Check element type
+      const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
+      if (ElementType->isArrayType()) {
+        fprintf(stderr, "RSExportType::TypeExportableHelper : constant array "
+                        "with 2 or higher dimension of constant is not "
+                        "supported.\n");
+        return NULL;
+      }
+      if (TypeExportableHelper(ElementType, SPS, Diags, SM,
+                               TopLevelRecord) == NULL)
+        return NULL;
+      else
+        return T;
+    }
+    default: {
+      return NULL;
+    }
+  }
+}
+
+// Return the type that can be used to create RSExportType, will always return
+// the canonical type
+// If the Type T is not exportable, this function returns NULL. Diags and SM
+// are used to generate proper Clang diagnostic messages when a
+// non-exportable type is detected. TopLevelRecord is used to capture the
+// highest struct (in the case of a nested hierarchy) for detecting other
+// types that cannot be exported (mostly pointers within a struct).
+static const clang::Type *TypeExportable(const clang::Type *T,
+                                         clang::Diagnostic *Diags,
+                                         clang::SourceManager *SM) {
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  if ((T = RSExportType::TypeExportable(T, SPS, false)) == NULL)
-    // TODO(zonr): warn that type not exportable.
-    return false;
+  return TypeExportableHelper(T, SPS, Diags, SM, NULL);
+}
 
+}  // namespace
+
+/****************************** RSExportType ******************************/
+bool RSExportType::NormalizeType(const clang::Type *&T,
+                                 llvm::StringRef &TypeName,
+                                 clang::Diagnostic *Diags,
+                                 clang::SourceManager *SM) {
+  if ((T = TypeExportable(T, Diags, SM)) == NULL) {
+    return false;
+  }
   // Get type name
   TypeName = RSExportType::GetTypeName(T);
-  if (TypeName.empty())
-    // TODO(zonr): warning that the type is unnamed.
+  if (TypeName.empty()) {
+    if (Diags && SM) {
+      Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                           "anonymous types cannot "
+                                           "be exported"));
+    }
     return false;
+  }
 
   return true;
 }
@@ -123,7 +292,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
       // "*" plus pointee name
       const clang::Type *PT = GET_POINTEE_TYPE(T);
       llvm::StringRef PointeeName;
-      if (NormalizeType(PT, PointeeName)) {
+      if (NormalizeType(PT, PointeeName, NULL, NULL)) {
         char *Name = new char[ 1 /* * */ + PointeeName.size() + 1 ];
         Name[0] = '*';
         memcpy(Name + 1, PointeeName.data(), PointeeName.size());
@@ -150,128 +319,6 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
   return llvm::StringRef();
 }
 
-const clang::Type *RSExportType::TypeExportable(
-    const clang::Type *T,
-    llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
-    bool InRecord) {
-  // Normalize first
-  if ((T = GET_CANONICAL_TYPE(T)) == NULL)
-    return NULL;
-
-  if (SPS.count(T))
-    return T;
-
-  switch (T->getTypeClass()) {
-    case clang::Type::Builtin: {
-      const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(clang::BuiltinType, T);
-
-      switch (BT->getKind()) {
-#define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
-        case builtin_type:
-#include "RSClangBuiltinEnums.inc"
-          return T;
-        default: {
-          return NULL;
-        }
-      }
-    }
-    case clang::Type::Record: {
-      if (RSExportPrimitiveType::GetRSSpecificType(T) !=
-          RSExportPrimitiveType::DataTypeUnknown)
-        return T;  // RS object type, no further checks are needed
-
-      // Check internal struct
-      const clang::RecordDecl *RD = T->getAsStructureType()->getDecl();
-      if (RD != NULL)
-        RD = RD->getDefinition();
-
-      // Fast check
-      if (RD->hasFlexibleArrayMember() || RD->hasObjectMember())
-        return NULL;
-
-      // Insert myself into checking set
-      SPS.insert(T);
-
-      // Check all element
-      for (clang::RecordDecl::field_iterator FI = RD->field_begin(),
-               FE = RD->field_end();
-           FI != FE;
-           FI++) {
-        const clang::FieldDecl *FD = *FI;
-        const clang::Type *FT = GetTypeOfDecl(FD);
-        FT = GET_CANONICAL_TYPE(FT);
-
-        if (!TypeExportable(FT, SPS, true)) {
-          fprintf(stderr, "Field `%s' in Record `%s' contains unsupported "
-                          "type\n", FD->getNameAsString().c_str(),
-                                    RD->getNameAsString().c_str());
-          FT->dump();
-          return NULL;
-        }
-      }
-
-      return T;
-    }
-    case clang::Type::Pointer: {
-      if (InRecord) {
-        return NULL;
-      }
-      const clang::PointerType *PT = UNSAFE_CAST_TYPE(clang::PointerType, T);
-      const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
-
-      if (PointeeType->getTypeClass() == clang::Type::Pointer)
-        return T;
-      // We don't support pointer with array-type pointee or unsupported pointee
-      // type
-      if (PointeeType->isArrayType() ||
-          (TypeExportable(PointeeType, SPS, InRecord) == NULL))
-        return NULL;
-      else
-        return T;
-    }
-    case clang::Type::ExtVector: {
-      const clang::ExtVectorType *EVT =
-          UNSAFE_CAST_TYPE(clang::ExtVectorType, T);
-      // Only vector with size 2, 3 and 4 are supported.
-      if (EVT->getNumElements() < 2 || EVT->getNumElements() > 4)
-        return NULL;
-
-      // Check base element type
-      const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
-
-      if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
-          (TypeExportable(ElementType, SPS, InRecord) == NULL))
-        return NULL;
-      else
-        return T;
-    }
-    case clang::Type::ConstantArray: {
-      const clang::ConstantArrayType *CAT =
-          UNSAFE_CAST_TYPE(clang::ConstantArrayType, T);
-
-      // Check size
-      if (CAT->getSize().getActiveBits() > 32) {
-        fprintf(stderr, "RSExportConstantArrayType::Create : array with too "
-                        "large size (> 2^32).\n");
-        return NULL;
-      }
-      // Check element type
-      const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
-      if (ElementType->isArrayType()) {
-        fprintf(stderr, "RSExportType::TypeExportable : constant array with 2 "
-                        "or higher dimension of constant is not supported.\n");
-        return NULL;
-      }
-      if (TypeExportable(ElementType, SPS, InRecord) == NULL)
-        return NULL;
-      else
-        return T;
-    }
-    default: {
-      return NULL;
-    }
-  }
-}
 
 RSExportType *RSExportType::Create(RSContext *Context,
                                    const clang::Type *T,
@@ -367,7 +414,7 @@ RSExportType *RSExportType::Create(RSContext *Context,
 
 RSExportType *RSExportType::Create(RSContext *Context, const clang::Type *T) {
   llvm::StringRef TypeName;
-  if (NormalizeType(T, TypeName))
+  if (NormalizeType(T, TypeName, NULL, NULL))
     return Create(Context, T, TypeName);
   else
     return NULL;
@@ -549,10 +596,12 @@ RSExportPrimitiveType *RSExportPrimitiveType::Create(RSContext *Context,
                                                      const clang::Type *T,
                                                      DataKind DK) {
   llvm::StringRef TypeName;
-  if (RSExportType::NormalizeType(T, TypeName) && IsPrimitiveType(T))
+  if (RSExportType::NormalizeType(T, TypeName, NULL, NULL) &&
+      IsPrimitiveType(T)) {
     return Create(Context, T, TypeName, DK);
-  else
+  } else {
     return NULL;
+  }
 }
 
 const llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {

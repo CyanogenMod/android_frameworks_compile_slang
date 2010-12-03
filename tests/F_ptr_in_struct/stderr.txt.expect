@@ -1,3 +1,1 @@
-Field `i' in Record `s' contains unsupported type
-: int *identifier
-ptr_in_struct.rs:8:10: error: variable cannot be exported: 'myStruct'
+ptr_in_struct.rs:4:8: error: structures containing pointers cannot be exported: 's'

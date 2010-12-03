@@ -106,10 +106,11 @@ void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
 
 namespace {
 
-bool ValidateVar(clang::VarDecl *VD) {
+bool ValidateVar(clang::VarDecl *VD, clang::Diagnostic *Diags,
+    clang::SourceManager *SM) {
   llvm::StringRef TypeName;
   const clang::Type *T = VD->getType().getTypePtr();
-  if (!RSExportType::NormalizeType(T, TypeName)) {
+  if (!RSExportType::NormalizeType(T, TypeName, Diags, SM)) {
     return false;
   }
   return true;
@@ -125,15 +126,8 @@ bool ValidateASTContext(clang::ASTContext &C, clang::Diagnostic &Diags) {
     if (DI->getKind() == clang::Decl::Var) {
       clang::VarDecl *VD = (clang::VarDecl*) (*DI);
       if (VD->getLinkage() == clang::ExternalLinkage) {
-        if (!ValidateVar(VD)) {
+        if (!ValidateVar(VD, &Diags, &C.getSourceManager())) {
           valid = false;
-          VD = VD->getCanonicalDecl();
-          Diags.Report(clang::FullSourceLoc(VD->getLocation(),
-                                            C.getSourceManager()),
-                       Diags.getCustomDiagID(clang::Diagnostic::Error,
-                                             "variable cannot be "
-                                             "exported: '%0'"))
-              << VD->getName();
         }
       }
     }
@@ -142,7 +136,7 @@ bool ValidateASTContext(clang::ASTContext &C, clang::Diagnostic &Diags) {
   return valid;
 }
 
-}  // end namespace
+}  // namespace
 
 void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
   clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();

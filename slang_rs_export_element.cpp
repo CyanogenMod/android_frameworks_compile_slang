@@ -69,7 +69,7 @@ RSExportType *RSExportElement::Create(RSContext *Context,
 
   assert(EI != NULL && "Element info not found");
 
-  if (!RSExportType::NormalizeType(T, TypeName))
+  if (!RSExportType::NormalizeType(T, TypeName, NULL, NULL))
     return NULL;
 
   switch (T->getTypeClass()) {

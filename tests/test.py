@@ -48,6 +48,12 @@ def ExecTest(dirname):
   rs_files = glob.glob('*.rs')
   args = base_args + rs_files
 
+  if Options.verbose > 1:
+    print 'Executing:',
+    for arg in args:
+      print arg,
+    print
+
   # Execute the command and check the resulting shell return value.
   # All tests that are expected to FAIL have directory names that
   # start with 'F_'. Other tests that are expected to PASS have
@@ -64,7 +70,7 @@ def ExecTest(dirname):
       if Options.verbose:
         print 'Command failed on valid input'
   else:
-    passed = False
+    passed = (ret == 0)
     if Options.verbose:
       print 'Test Directory name should start with an F or a P'
 
@@ -107,6 +113,7 @@ def main():
   passed = 0
   failed = 0
   files = []
+  failed_tests = []
 
   for arg in sys.argv[1:]:
     if arg in ('-h', '--help'):
@@ -115,7 +122,7 @@ def main():
     elif arg in ('-n', '--no-cleanup'):
       Options.cleanup = 0
     elif arg in ('-v', '--verbose'):
-      Options.verbose = 1
+      Options.verbose += 1
     else:
       # Test list to run
       if os.path.isdir(arg):
@@ -125,7 +132,12 @@ def main():
         return 1
 
   if not files:
-    files = os.listdir('.')
+    tmp_files = os.listdir('.')
+    # Only run tests that are known to PASS or FAIL
+    # Disabled tests can be marked D_ and invoked explicitly
+    for f in tmp_files:
+      if os.path.isdir(f) and (f[0:2] == 'F_' or f[0:2] == 'P_'):
+        files.append(f)
 
   for f in files:
     if os.path.isdir(f):
@@ -133,9 +145,14 @@ def main():
         passed += 1
       else:
         failed += 1
+        failed_tests.append(f)
 
   print 'Tests Passed: %d\n' % passed,
   print 'Tests Failed: %d\n' % failed,
+  if failed:
+    print 'Failures:',
+    for t in failed_tests:
+      print t,
 
   return failed != 0
 

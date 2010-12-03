@@ -89,7 +89,7 @@ class RSExportType : public RSExportable {
   // Let's make it private since there're some prerequisites to call this
   // function.
   //
-  // @T was normalized by calling RSExportType::TypeExportable().
+  // @T was normalized by calling RSExportType::NormalizeType().
   // @TypeName was retrieve from RSExportType::GetTypeName() before calling
   //           this.
   //
@@ -98,13 +98,6 @@ class RSExportType : public RSExportable {
                               const llvm::StringRef &TypeName);
 
   static llvm::StringRef GetTypeName(const clang::Type *T);
-  // Return the type that can be used to create RSExportType, will always return
-  // the canonical type
-  static const clang::Type
-  *TypeExportable(const clang::Type *T,
-                  // Contain the checked type for recursion
-                  llvm::SmallPtrSet<const clang::Type*, 8> &SPS,
-                  bool InRecord);
 
   // This function convert the RSExportType to LLVM type. Actually, it should be
   // "convert Clang type to LLVM type." However, clang doesn't make this API
@@ -128,7 +121,12 @@ class RSExportType : public RSExportable {
 
   virtual ~RSExportType();
  public:
-  static bool NormalizeType(const clang::Type *&T, llvm::StringRef &TypeName);
+  // This function additionally verifies that the Type T is exportable.
+  // If it is not, this function returns false. Otherwise it returns true.
+  static bool NormalizeType(const clang::Type *&T,
+                            llvm::StringRef &TypeName,
+                            clang::Diagnostic *Diags,
+                            clang::SourceManager *SM);
   // @T may not be normalized
   static RSExportType *Create(RSContext *Context, const clang::Type *T);
   static RSExportType *CreateFromDecl(RSContext *Context,
@@ -215,7 +213,7 @@ class RSExportPrimitiveType : public RSExportType {
   static llvm::Type *RSObjectLLVMType;
 
   static const size_t SizeOfDataTypeInBits[];
-  // @T was normalized by calling RSExportType::TypeExportable() before calling
+  // @T was normalized by calling RSExportType::NormalizeType() before calling
   // this.
   // @TypeName was retrieved from RSExportType::GetTypeName() before calling
   // this
@@ -226,7 +224,7 @@ class RSExportPrimitiveType : public RSExportType {
                                        bool Normalized = false);
 
  protected:
-  // T is normalized by calling RSExportType::TypeExportable() before
+  // T is normalized by calling RSExportType::NormalizeType() before
   // calling this
   static bool IsPrimitiveType(const clang::Type *T);
 
@@ -286,7 +284,7 @@ class RSExportPointerType : public RSExportType {
     return;
   }
 
-  // @PT was normalized by calling RSExportType::TypeExportable() before calling
+  // @PT was normalized by calling RSExportType::NormalizeType() before calling
   // this.
   static RSExportPointerType *Create(RSContext *Context,
                                      const clang::PointerType *PT,
@@ -323,7 +321,7 @@ class RSExportVectorType : public RSExportPrimitiveType {
     return;
   }
 
-  // @EVT was normalized by calling RSExportType::TypeExportable() before
+  // @EVT was normalized by calling RSExportType::NormalizeType() before
   // calling this.
   static RSExportVectorType *Create(RSContext *Context,
                                     const clang::ExtVectorType *EVT,
@@ -366,7 +364,7 @@ class RSExportMatrixType : public RSExportType {
   virtual const llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
  public:
-  // @RT was normalized by calling RSExportType::TypeExportable() before
+  // @RT was normalized by calling RSExportType::NormalizeType() before
   // calling this.
   static RSExportMatrixType *Create(RSContext *Context,
                                     const clang::RecordType *RT,
@@ -395,7 +393,7 @@ class RSExportConstantArrayType : public RSExportType {
     return;
   }
 
-  // @CAT was normalized by calling RSExportType::TypeExportable() before
+  // @CAT was normalized by calling RSExportType::NormalizeType() before
   // calling this.
   static RSExportConstantArrayType *Create(RSContext *Context,
                                            const clang::ConstantArrayType *CAT);
@@ -470,7 +468,7 @@ class RSExportRecordType : public RSExportType {
     return;
   }
 
-  // @RT was normalized by calling RSExportType::TypeExportable() before calling
+  // @RT was normalized by calling RSExportType::NormalizeType() before calling
   // this.
   // @TypeName was retrieved from RSExportType::GetTypeName() before calling
   // this.
