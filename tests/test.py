@@ -46,6 +46,7 @@ def ExecTest(dirname):
                 '-I ../../../../../frameworks/base/libs/rs/scriptc/')
   base_args = cmd_string.split()
   rs_files = glob.glob('*.rs')
+  rs_files.sort()
   args = base_args + rs_files
 
   if Options.verbose > 1:
