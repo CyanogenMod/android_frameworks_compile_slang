@@ -74,7 +74,23 @@ const clang::Type *TypeExportableHelper(
         return T;  // RS object type, no further checks are needed
 
       // Check internal struct
-      const clang::RecordDecl *RD = T->getAsStructureType()->getDecl();
+      clang::RecordDecl *RD = NULL;
+      if (T->isUnionType()) {
+        RD = T->getAsUnionType()->getDecl();
+        if (Diags && SM) {
+          Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
+                        Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                               "unions cannot "
+                                               "be exported: '%0'"))
+              << RD->getName();
+        }
+        return NULL;
+      } else if (!T->isStructureType()) {
+        assert(false && "Unknown type cannot be exported");
+        return NULL;
+      }
+
+      RD = T->getAsStructureType()->getDecl();
       if (RD != NULL)
         RD = RD->getDefinition();
 
@@ -267,7 +283,14 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
       break;
     }
     case clang::Type::Record: {
-      const clang::RecordDecl *RD = T->getAsStructureType()->getDecl();
+      clang::RecordDecl *RD;
+      if (T->isStructureType()) {
+        RD = T->getAsStructureType()->getDecl();
+      }
+      else {
+        break;
+      }
+
       llvm::StringRef Name = RD->getName();
       if (Name.empty()) {
           if (RD->getTypedefForAnonDecl() != NULL)

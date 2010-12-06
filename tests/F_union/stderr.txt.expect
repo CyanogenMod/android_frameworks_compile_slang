@@ -1,0 +1,1 @@
+union.rs:4:7: error: unions cannot be exported: 'u'
