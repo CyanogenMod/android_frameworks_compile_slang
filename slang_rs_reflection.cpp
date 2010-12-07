@@ -539,31 +539,6 @@ void RSReflection::genScriptClassConstructor(Context &C) {
 
   C.endFunction();
 
-  C.startFunction(Context::AM_Public,
-                  false,
-                  NULL,
-                  C.getClassName(),
-                  4,
-                  "RenderScript", "rs",
-                  "Resources", "resources",
-                  "int", "id",
-                  "boolean", "isRoot");
-  // Call constructor of super class
-  C.indent() << "super(rs, resources, id);" << std::endl;
-
-  // If an exported variable has initial value, reflect it
-
-  for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
-           E = mRSContext->export_vars_end();
-       I != E;
-       I++) {
-    const RSExportVar *EV = *I;
-    if (!EV->getInit().isUninit())
-      genInitExportVariable(C, EV->getType(), EV->getName(), EV->getInit());
-  }
-
-  C.endFunction();
-
   return;
 }
 
@@ -1497,7 +1472,7 @@ void RSReflection::genTypeClassCopyAll(Context &C,
   C.indent() << "for (int ct = 0; ct < "RS_TYPE_ITEM_BUFFER_NAME".length; ct++)"
                   " copyToArray("RS_TYPE_ITEM_BUFFER_NAME"[ct], ct);"
              << std::endl;
-  C.indent() << "mAllocation.data("RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());"
+  C.indent() << "mAllocation.copyFrom("RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());"
              << std::endl;
 
   C.endFunction();
