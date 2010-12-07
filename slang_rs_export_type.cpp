@@ -977,8 +977,10 @@ bool RSExportConstantArrayType::keep() {
 
 bool RSExportConstantArrayType::equals(const RSExportable *E) const {
   CHECK_PARENT_EQUALITY(RSExportType, E);
-  return ((static_cast<const RSExportConstantArrayType*>(E)
-              ->getSize() == getSize()) && (mElementType->equals(E)));
+  const RSExportConstantArrayType *RHS =
+      static_cast<const RSExportConstantArrayType*>(E);
+  return ((getSize() == RHS->getSize()) &&
+          (getElementType()->equals(RHS->getElementType())));
 }
 
 /**************************** RSExportRecordType ****************************/
