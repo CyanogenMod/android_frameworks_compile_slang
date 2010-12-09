@@ -1327,6 +1327,23 @@ void RSReflection::genTypeClassConstructor(Context &C,
   C.indent() << "init(" << RenderScriptVar << ", count);" << std::endl;
   C.endFunction();
 
+  C.startFunction(Context::AM_Public,
+                  false,
+                  NULL,
+                  C.getClassName(),
+                  3,
+                  "RenderScript", RenderScriptVar,
+                  "int", "count",
+                  "int", "usages");
+
+  C.indent() << RS_TYPE_ITEM_BUFFER_NAME" = null;" << std::endl;
+  C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME" = null;" << std::endl;
+  C.indent() << "mElement = createElement(" << RenderScriptVar << ");"
+             << std::endl;
+  // Call init() in super class
+  C.indent() << "init(" << RenderScriptVar << ", count, usages);" << std::endl;
+  C.endFunction();
+
   return;
 }
 
