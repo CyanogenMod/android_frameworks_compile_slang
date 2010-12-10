@@ -46,6 +46,7 @@ const clang::Type *TypeExportableHelper(
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
     clang::Diagnostic *Diags,
     clang::SourceManager *SM,
+    const clang::VarDecl *VD,
     const clang::RecordDecl *TopLevelRecord) {
   // Normalize first
   if ((T = GET_CANONICAL_TYPE(T)) == NULL)
@@ -123,7 +124,7 @@ const clang::Type *TypeExportableHelper(
         const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
         FT = GET_CANONICAL_TYPE(FT);
 
-        if (!TypeExportableHelper(FT, SPS, Diags, SM, TopLevelRecord)) {
+        if (!TypeExportableHelper(FT, SPS, Diags, SM, VD, TopLevelRecord)) {
           return NULL;
         }
       }
@@ -150,7 +151,7 @@ const clang::Type *TypeExportableHelper(
       // We don't support pointer with array-type pointee or unsupported pointee
       // type
       if (PointeeType->isArrayType() ||
-          (TypeExportableHelper(PointeeType, SPS, Diags, SM,
+          (TypeExportableHelper(PointeeType, SPS, Diags, SM, VD,
                                 TopLevelRecord) == NULL))
         return NULL;
       else
@@ -167,7 +168,7 @@ const clang::Type *TypeExportableHelper(
       const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
 
       if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
-          (TypeExportableHelper(ElementType, SPS, Diags, SM,
+          (TypeExportableHelper(ElementType, SPS, Diags, SM, VD,
                                 TopLevelRecord) == NULL))
         return NULL;
       else
@@ -190,8 +191,66 @@ const clang::Type *TypeExportableHelper(
                         "with 2 or higher dimension of constant is not "
                         "supported.\n");
         return NULL;
+      } else if (ElementType->isExtVectorType()) {
+        const clang::ExtVectorType *EVT =
+            static_cast<const clang::ExtVectorType*>(ElementType);
+        unsigned numElements = EVT->getNumElements();
+
+        const clang::Type *BaseElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
+        if (!RSExportPrimitiveType::IsPrimitiveType(BaseElementType)) {
+          if (Diags && SM) {
+            Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                                 "vectors of non-primitive "
+                                                 "types cannot be exported"));
+
+            if (TopLevelRecord) {
+              Diags->Report(clang::FullSourceLoc(TopLevelRecord->getLocation(),
+                                *SM),
+                            Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                                 "vectors of non-primitive "
+                                                 "types cannot be exported: "
+                                                 "'%0'"))
+                   << TopLevelRecord->getName();
+            } else if (VD) {
+              Diags->Report(clang::FullSourceLoc(VD->getLocation(), *SM),
+                            Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                                 "vectors of non-primitive "
+                                                 "types cannot be exported: "
+                                                 "'%0'"))
+                   << VD->getName();
+            } else {
+              assert(false && "Variables should be validated before exporting");
+            }
+          }
+          return NULL;
+        }
+
+        if (numElements == 3 && CAT->getSize() != 1) {
+          if (Diags && SM) {
+            if (TopLevelRecord) {
+              Diags->Report(clang::FullSourceLoc(TopLevelRecord->getLocation(),
+                                *SM),
+                            Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                                   "arrays of width 3 vector "
+                                                   "types cannot be exported: "
+                                                   "'%0'"))
+                   << TopLevelRecord->getName();
+            } else if (VD) {
+              Diags->Report(clang::FullSourceLoc(VD->getLocation(), *SM),
+                            Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                                   "arrays of width 3 vector "
+                                                   "types cannot be exported: "
+                                                   "'%0'"))
+                   << VD->getName();
+            } else {
+              assert(false && "Variables should be validated before exporting");
+            }
+          }
+          return NULL;
+        }
       }
-      if (TypeExportableHelper(ElementType, SPS, Diags, SM,
+
+      if (TypeExportableHelper(ElementType, SPS, Diags, SM, VD,
                                TopLevelRecord) == NULL)
         return NULL;
       else
@@ -212,11 +271,12 @@ const clang::Type *TypeExportableHelper(
 // types that cannot be exported (mostly pointers within a struct).
 static const clang::Type *TypeExportable(const clang::Type *T,
                                          clang::Diagnostic *Diags,
-                                         clang::SourceManager *SM) {
+                                         clang::SourceManager *SM,
+                                         const clang::VarDecl *VD) {
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  return TypeExportableHelper(T, SPS, Diags, SM, NULL);
+  return TypeExportableHelper(T, SPS, Diags, SM, VD, NULL);
 }
 
 }  // namespace
@@ -225,8 +285,9 @@ static const clang::Type *TypeExportable(const clang::Type *T,
 bool RSExportType::NormalizeType(const clang::Type *&T,
                                  llvm::StringRef &TypeName,
                                  clang::Diagnostic *Diags,
-                                 clang::SourceManager *SM) {
-  if ((T = TypeExportable(T, Diags, SM)) == NULL) {
+                                 clang::SourceManager *SM,
+                                 const clang::VarDecl *VD) {
+  if ((T = TypeExportable(T, Diags, SM, VD)) == NULL) {
     return false;
   }
   // Get type name
@@ -286,8 +347,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
       clang::RecordDecl *RD;
       if (T->isStructureType()) {
         RD = T->getAsStructureType()->getDecl();
-      }
-      else {
+      } else {
         break;
       }
 
@@ -315,7 +375,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
       // "*" plus pointee name
       const clang::Type *PT = GET_POINTEE_TYPE(T);
       llvm::StringRef PointeeName;
-      if (NormalizeType(PT, PointeeName, NULL, NULL)) {
+      if (NormalizeType(PT, PointeeName, NULL, NULL, NULL)) {
         char *Name = new char[ 1 /* * */ + PointeeName.size() + 1 ];
         Name[0] = '*';
         memcpy(Name + 1, PointeeName.data(), PointeeName.size());
@@ -437,7 +497,7 @@ RSExportType *RSExportType::Create(RSContext *Context,
 
 RSExportType *RSExportType::Create(RSContext *Context, const clang::Type *T) {
   llvm::StringRef TypeName;
-  if (NormalizeType(T, TypeName, NULL, NULL))
+  if (NormalizeType(T, TypeName, NULL, NULL, NULL))
     return Create(Context, T, TypeName);
   else
     return NULL;
@@ -619,7 +679,7 @@ RSExportPrimitiveType *RSExportPrimitiveType::Create(RSContext *Context,
                                                      const clang::Type *T,
                                                      DataKind DK) {
   llvm::StringRef TypeName;
-  if (RSExportType::NormalizeType(T, TypeName, NULL, NULL) &&
+  if (RSExportType::NormalizeType(T, TypeName, NULL, NULL, NULL) &&
       IsPrimitiveType(T)) {
     return Create(Context, T, TypeName, DK);
   } else {

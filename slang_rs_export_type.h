@@ -126,7 +126,8 @@ class RSExportType : public RSExportable {
   static bool NormalizeType(const clang::Type *&T,
                             llvm::StringRef &TypeName,
                             clang::Diagnostic *Diags,
-                            clang::SourceManager *SM);
+                            clang::SourceManager *SM,
+                            const clang::VarDecl *VD);
   // @T may not be normalized
   static RSExportType *Create(RSContext *Context, const clang::Type *T);
   static RSExportType *CreateFromDecl(RSContext *Context,
@@ -224,12 +225,6 @@ class RSExportPrimitiveType : public RSExportType {
                                        bool Normalized = false);
 
  protected:
-  // T is normalized by calling RSExportType::NormalizeType() before
-  // calling this
-  static bool IsPrimitiveType(const clang::Type *T);
-
-  static DataType GetDataType(const clang::Type *T);
-
   RSExportPrimitiveType(RSContext *Context,
                         // for derived class to set their type class
                         ExportClass Class,
@@ -247,6 +242,12 @@ class RSExportPrimitiveType : public RSExportType {
   virtual const llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
  public:
+  // T is normalized by calling RSExportType::NormalizeType() before
+  // calling this
+  static bool IsPrimitiveType(const clang::Type *T);
+
+  static DataType GetDataType(const clang::Type *T);
+
   // @T may not be normalized
   static RSExportPrimitiveType *Create(RSContext *Context,
                                        const clang::Type *T,

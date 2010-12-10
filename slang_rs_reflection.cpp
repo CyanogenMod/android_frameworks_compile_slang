@@ -1489,7 +1489,8 @@ void RSReflection::genTypeClassCopyAll(Context &C,
   C.indent() << "for (int ct = 0; ct < "RS_TYPE_ITEM_BUFFER_NAME".length; ct++)"
                   " copyToArray("RS_TYPE_ITEM_BUFFER_NAME"[ct], ct);"
              << std::endl;
-  C.indent() << "mAllocation.copyFrom("RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());"
+  C.indent() << "mAllocation.copyFrom("RS_TYPE_ITEM_BUFFER_PACKER_NAME
+                  ".getData());"
              << std::endl;
 
   C.endFunction();

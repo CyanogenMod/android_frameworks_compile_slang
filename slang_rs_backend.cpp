@@ -110,7 +110,7 @@ bool ValidateVar(clang::VarDecl *VD, clang::Diagnostic *Diags,
     clang::SourceManager *SM) {
   llvm::StringRef TypeName;
   const clang::Type *T = VD->getType().getTypePtr();
-  if (!RSExportType::NormalizeType(T, TypeName, Diags, SM)) {
+  if (!RSExportType::NormalizeType(T, TypeName, Diags, SM, VD)) {
     return false;
   }
   return true;

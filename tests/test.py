@@ -25,8 +25,19 @@ class Options(object):
 
 
 def CompareFiles(filename):
+  """Compares filename and filename.expect for equality."""
   actual = filename
   expect = filename + '.expect'
+
+  if not os.path.isfile(actual):
+    if Options.verbose:
+      print 'Could not find %s' % actual
+    return False
+  if not os.path.isfile(expect):
+    if Options.verbose:
+      print 'Could not find %s' % expect
+    return False
+
   return filecmp.cmp(actual, expect, False)
 
 
@@ -38,8 +49,8 @@ def ExecTest(dirname):
     print 'Testing %s' % dirname
 
   os.chdir(dirname)
-  stdout_file = open('stdout.txt', 'w')
-  stderr_file = open('stderr.txt', 'w')
+  stdout_file = open('stdout.txt', 'w+')
+  stderr_file = open('stderr.txt', 'w+')
 
   cmd_string = ('../../../../../out/host/linux-x86/bin/llvm-rs-cc '
                 '-o tmp/ -p tmp/ '
@@ -60,6 +71,20 @@ def ExecTest(dirname):
   # start with 'F_'. Other tests that are expected to PASS have
   # directory names that start with 'P_'.
   ret = subprocess.call(args, stdout=stdout_file, stderr=stderr_file)
+  stdout_file.flush()
+  stderr_file.flush()
+
+  if Options.verbose > 1:
+    stdout_file.seek(0)
+    stderr_file.seek(0)
+    for line in stdout_file:
+      print 'STDOUT>', line,
+    for line in stderr_file:
+      print 'STDERR>', line,
+
+  stdout_file.close()
+  stderr_file.close()
+
   if dirname[0:2] == 'F_':
     if ret == 0:
       passed = False
@@ -74,11 +99,6 @@ def ExecTest(dirname):
     passed = (ret == 0)
     if Options.verbose:
       print 'Test Directory name should start with an F or a P'
-
-  stdout_file.flush()
-  stderr_file.flush()
-  stdout_file.close()
-  stderr_file.close()
 
   if not CompareFiles('stdout.txt'):
     passed = False
