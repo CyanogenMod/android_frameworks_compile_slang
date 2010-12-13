@@ -41,7 +41,81 @@ namespace slang {
 
 namespace {
 
-const clang::Type *TypeExportableHelper(
+static const clang::Type *TypeExportableHelper(
+    const clang::Type *T,
+    llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
+    clang::Diagnostic *Diags,
+    clang::SourceManager *SM,
+    const clang::VarDecl *VD,
+    const clang::RecordDecl *TopLevelRecord);
+
+static void ReportTypeError(clang::Diagnostic *Diags,
+                            clang::SourceManager *SM,
+                            const clang::VarDecl *VD,
+                            const clang::RecordDecl *TopLevelRecord,
+                            const char *Message) {
+  if (!Diags || !SM) {
+    return;
+  }
+
+  // Attempt to use the type declaration first (if we have one).
+  // Fall back to the variable definition, if we are looking at something
+  // like an array declaration that can't be exported.
+  if (TopLevelRecord) {
+    Diags->Report(clang::FullSourceLoc(TopLevelRecord->getLocation(), *SM),
+                  Diags->getCustomDiagID(clang::Diagnostic::Error, Message))
+         << TopLevelRecord->getName();
+  } else if (VD) {
+    Diags->Report(clang::FullSourceLoc(VD->getLocation(), *SM),
+                  Diags->getCustomDiagID(clang::Diagnostic::Error, Message))
+         << VD->getName();
+  } else {
+    assert(false && "Variables should be validated before exporting");
+  }
+
+  return;
+}
+
+static const clang::Type *ConstantArrayTypeExportableHelper(
+    const clang::ConstantArrayType *CAT,
+    llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
+    clang::Diagnostic *Diags,
+    clang::SourceManager *SM,
+    const clang::VarDecl *VD,
+    const clang::RecordDecl *TopLevelRecord) {
+  // Check element type
+  const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
+  if (ElementType->isArrayType()) {
+    ReportTypeError(Diags, SM, VD, TopLevelRecord,
+        "multidimensional arrays cannot be exported: '%0'");
+    return NULL;
+  } else if (ElementType->isExtVectorType()) {
+    const clang::ExtVectorType *EVT =
+        static_cast<const clang::ExtVectorType*>(ElementType);
+    unsigned numElements = EVT->getNumElements();
+
+    const clang::Type *BaseElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
+    if (!RSExportPrimitiveType::IsPrimitiveType(BaseElementType)) {
+      ReportTypeError(Diags, SM, VD, TopLevelRecord,
+          "vectors of non-primitive types cannot be exported: '%0'");
+      return NULL;
+    }
+
+    if (numElements == 3 && CAT->getSize() != 1) {
+      ReportTypeError(Diags, SM, VD, TopLevelRecord,
+          "arrays of width 3 vector types cannot be exported: '%0'");
+      return NULL;
+    }
+  }
+
+  if (TypeExportableHelper(ElementType, SPS, Diags, SM, VD,
+                           TopLevelRecord) == NULL)
+    return NULL;
+  else
+    return CAT;
+}
+
+static const clang::Type *TypeExportableHelper(
     const clang::Type *T,
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
     clang::Diagnostic *Diags,
@@ -75,23 +149,16 @@ const clang::Type *TypeExportableHelper(
         return T;  // RS object type, no further checks are needed
 
       // Check internal struct
-      clang::RecordDecl *RD = NULL;
       if (T->isUnionType()) {
-        RD = T->getAsUnionType()->getDecl();
-        if (Diags && SM) {
-          Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
-                        Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                               "unions cannot "
-                                               "be exported: '%0'"))
-              << RD->getName();
-        }
+        ReportTypeError(Diags, SM, NULL, T->getAsUnionType()->getDecl(),
+            "unions cannot be exported: '%0'");
         return NULL;
       } else if (!T->isStructureType()) {
         assert(false && "Unknown type cannot be exported");
         return NULL;
       }
 
-      RD = T->getAsStructureType()->getDecl();
+      clang::RecordDecl *RD = T->getAsStructureType()->getDecl();
       if (RD != NULL)
         RD = RD->getDefinition();
 
@@ -99,12 +166,8 @@ const clang::Type *TypeExportableHelper(
         TopLevelRecord = RD;
       }
       if (RD->getName().empty()) {
-        if (Diags && SM) {
-          Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
-                        Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                               "anonymous structures cannot "
-                                               "be exported"));
-        }
+        ReportTypeError(Diags, SM, NULL, RD,
+            "anonymous structures cannot be exported");
         return NULL;
       }
 
@@ -133,16 +196,11 @@ const clang::Type *TypeExportableHelper(
     }
     case clang::Type::Pointer: {
       if (TopLevelRecord) {
-        if (Diags && SM) {
-          Diags->Report(clang::FullSourceLoc(TopLevelRecord->getLocation(),
-                            *SM),
-                        Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                               "structures containing pointers "
-                                               "cannot be exported: '%0'"))
-              << TopLevelRecord->getName();
-        }
+        ReportTypeError(Diags, SM, NULL, TopLevelRecord,
+            "structures containing pointers cannot be exported: '%0'");
         return NULL;
       }
+
       const clang::PointerType *PT = UNSAFE_CAST_TYPE(clang::PointerType, T);
       const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
 
@@ -178,83 +236,8 @@ const clang::Type *TypeExportableHelper(
       const clang::ConstantArrayType *CAT =
           UNSAFE_CAST_TYPE(clang::ConstantArrayType, T);
 
-      // Check size
-      if (CAT->getSize().getActiveBits() > 32) {
-        fprintf(stderr, "RSExportConstantArrayType::Create : array with too "
-                        "large size (> 2^32).\n");
-        return NULL;
-      }
-      // Check element type
-      const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
-      if (ElementType->isArrayType()) {
-        fprintf(stderr, "RSExportType::TypeExportableHelper : constant array "
-                        "with 2 or higher dimension of constant is not "
-                        "supported.\n");
-        return NULL;
-      } else if (ElementType->isExtVectorType()) {
-        const clang::ExtVectorType *EVT =
-            static_cast<const clang::ExtVectorType*>(ElementType);
-        unsigned numElements = EVT->getNumElements();
-
-        const clang::Type *BaseElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
-        if (!RSExportPrimitiveType::IsPrimitiveType(BaseElementType)) {
-          if (Diags && SM) {
-            Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                                 "vectors of non-primitive "
-                                                 "types cannot be exported"));
-
-            if (TopLevelRecord) {
-              Diags->Report(clang::FullSourceLoc(TopLevelRecord->getLocation(),
-                                *SM),
-                            Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                                 "vectors of non-primitive "
-                                                 "types cannot be exported: "
-                                                 "'%0'"))
-                   << TopLevelRecord->getName();
-            } else if (VD) {
-              Diags->Report(clang::FullSourceLoc(VD->getLocation(), *SM),
-                            Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                                 "vectors of non-primitive "
-                                                 "types cannot be exported: "
-                                                 "'%0'"))
-                   << VD->getName();
-            } else {
-              assert(false && "Variables should be validated before exporting");
-            }
-          }
-          return NULL;
-        }
-
-        if (numElements == 3 && CAT->getSize() != 1) {
-          if (Diags && SM) {
-            if (TopLevelRecord) {
-              Diags->Report(clang::FullSourceLoc(TopLevelRecord->getLocation(),
-                                *SM),
-                            Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                                   "arrays of width 3 vector "
-                                                   "types cannot be exported: "
-                                                   "'%0'"))
-                   << TopLevelRecord->getName();
-            } else if (VD) {
-              Diags->Report(clang::FullSourceLoc(VD->getLocation(), *SM),
-                            Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                                   "arrays of width 3 vector "
-                                                   "types cannot be exported: "
-                                                   "'%0'"))
-                   << VD->getName();
-            } else {
-              assert(false && "Variables should be validated before exporting");
-            }
-          }
-          return NULL;
-        }
-      }
-
-      if (TypeExportableHelper(ElementType, SPS, Diags, SM, VD,
-                               TopLevelRecord) == NULL)
-        return NULL;
-      else
-        return T;
+      return ConstantArrayTypeExportableHelper(CAT, SPS, Diags, SM, VD,
+                                               TopLevelRecord);
     }
     default: {
       return NULL;
@@ -294,9 +277,16 @@ bool RSExportType::NormalizeType(const clang::Type *&T,
   TypeName = RSExportType::GetTypeName(T);
   if (TypeName.empty()) {
     if (Diags && SM) {
-      Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                           "anonymous types cannot "
-                                           "be exported"));
+      if (VD) {
+        Diags->Report(clang::FullSourceLoc(VD->getLocation(), *SM),
+                      Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                             "anonymous types cannot "
+                                             "be exported"));
+      } else {
+        Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                             "anonymous types cannot "
+                                             "be exported"));
+      }
     }
     return false;
   }
