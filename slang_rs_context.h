@@ -93,6 +93,9 @@ class RSContext {
   inline const clang::SourceManager *getSourceManager() const {
     return &mPP.getSourceManager();
   }
+  inline clang::Diagnostic *getDiagnostics() const {
+    return &mPP.getDiagnostics();
+  }
 
   inline void setLicenseNote(const std::string &S) {
     mLicenseNote = new std::string(S);

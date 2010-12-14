@@ -241,12 +241,13 @@ class RSExportPrimitiveType : public RSExportType {
 
   virtual const llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
+
+  static DataType GetDataType(RSContext *Context, const clang::Type *T);
+
  public:
   // T is normalized by calling RSExportType::NormalizeType() before
   // calling this
   static bool IsPrimitiveType(const clang::Type *T);
-
-  static DataType GetDataType(const clang::Type *T);
 
   // @T may not be normalized
   static RSExportPrimitiveType *Create(RSContext *Context,
@@ -294,8 +295,6 @@ class RSExportPointerType : public RSExportType {
   virtual const llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
  public:
-  static const clang::Type *IntegerType;
-
   virtual bool keep();
 
   inline const RSExportType *getPointeeType() const { return mPointeeType; }

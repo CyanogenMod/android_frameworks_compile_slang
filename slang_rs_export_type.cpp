@@ -50,7 +50,7 @@ static const clang::Type *TypeExportableHelper(
     const clang::RecordDecl *TopLevelRecord);
 
 static void ReportTypeError(clang::Diagnostic *Diags,
-                            clang::SourceManager *SM,
+                            const clang::SourceManager *SM,
                             const clang::VarDecl *VD,
                             const clang::RecordDecl *TopLevelRecord,
                             const char *Message) {
@@ -159,8 +159,14 @@ static const clang::Type *TypeExportableHelper(
       }
 
       clang::RecordDecl *RD = T->getAsStructureType()->getDecl();
-      if (RD != NULL)
+      if (RD != NULL) {
         RD = RD->getDefinition();
+        if (RD == NULL) {
+          ReportTypeError(Diags, SM, NULL, T->getAsStructureType()->getDecl(),
+              "struct is not defined in this module");
+          return NULL;
+        }
+      }
 
       if (!TopLevelRecord) {
         TopLevelRecord = RD;
@@ -188,6 +194,20 @@ static const clang::Type *TypeExportableHelper(
         FT = GET_CANONICAL_TYPE(FT);
 
         if (!TypeExportableHelper(FT, SPS, Diags, SM, VD, TopLevelRecord)) {
+          return NULL;
+        }
+
+        // We don't support bit fields yet
+        //
+        // TODO(zonr/srhines): allow bit fields of size 8, 16, 32
+        if (FD->isBitField()) {
+          if (Diags && SM) {
+            Diags->Report(clang::FullSourceLoc(FD->getLocation(), *SM),
+                          Diags->getCustomDiagID(clang::Diagnostic::Error,
+                          "bit fields are not able to be exported: '%0.%1'"))
+                << RD->getName()
+                << FD->getName();
+          }
           return NULL;
         }
       }
@@ -474,10 +494,10 @@ RSExportType *RSExportType::Create(RSContext *Context,
       break;
     }
     default: {
-      // TODO(zonr): warn that type is not exportable.
-      fprintf(stderr,
-              "RSExportType::Create : type '%s' is not exportable\n",
-              T->getTypeClassName());
+      clang::Diagnostic *Diags = Context->getDiagnostics();
+      Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
+                        "unknown type cannot be exported: '%0'"))
+          << T->getTypeClassName();
       break;
     }
   }
@@ -613,7 +633,7 @@ size_t RSExportPrimitiveType::GetSizeInBits(const RSExportPrimitiveType *EPT) {
 }
 
 RSExportPrimitiveType::DataType
-RSExportPrimitiveType::GetDataType(const clang::Type *T) {
+RSExportPrimitiveType::GetDataType(RSContext *Context, const clang::Type *T) {
   if (T == NULL)
     return DataTypeUnknown;
 
@@ -629,8 +649,10 @@ RSExportPrimitiveType::GetDataType(const clang::Type *T) {
         // The size of type WChar depend on platform so we abandon the support
         // to them.
         default: {
-          fprintf(stderr, "RSExportPrimitiveType::GetDataType : unsupported "
-                          "built-in type '%s'\n.", T->getTypeClassName());
+          clang::Diagnostic *Diags = Context->getDiagnostics();
+          Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
+                            "built-in type cannot be exported: '%0'"))
+              << T->getTypeClassName();
           break;
         }
       }
@@ -641,8 +663,10 @@ RSExportPrimitiveType::GetDataType(const clang::Type *T) {
       return RSExportPrimitiveType::GetRSSpecificType(T);
     }
     default: {
-      fprintf(stderr, "RSExportPrimitiveType::GetDataType : type '%s' is not "
-                      "supported primitive type\n", T->getTypeClassName());
+      clang::Diagnostic *Diags = Context->getDiagnostics();
+      Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
+                        "primitive type cannot be exported: '%0'"))
+          << T->getTypeClassName();
       break;
     }
   }
@@ -656,7 +680,7 @@ RSExportPrimitiveType
                                const llvm::StringRef &TypeName,
                                DataKind DK,
                                bool Normalized) {
-  DataType DT = GetDataType(T);
+  DataType DT = GetDataType(Context, T);
 
   if ((DT == DataTypeUnknown) || TypeName.empty())
     return NULL;
@@ -757,8 +781,6 @@ bool RSExportPrimitiveType::equals(const RSExportable *E) const {
 
 /**************************** RSExportPointerType ****************************/
 
-const clang::Type *RSExportPointerType::IntegerType = NULL;
-
 RSExportPointerType
 *RSExportPointerType::Create(RSContext *Context,
                              const clang::PointerType *PT,
@@ -770,12 +792,12 @@ RSExportPointerType
     PointeeET = RSExportType::Create(Context, PointeeType);
   } else {
     // Double or higher dimension of pointer, export as int*
-    assert(IntegerType != NULL && "Built-in integer type is not set");
-    PointeeET = RSExportPrimitiveType::Create(Context, IntegerType);
+    PointeeET = RSExportPrimitiveType::Create(Context,
+                    Context->getASTContext().IntTy.getTypePtr());
   }
 
   if (PointeeET == NULL) {
-    fprintf(stderr, "Failed to create type for pointee");
+    // Error diagnostic is emitted for corresponding pointee type
     return NULL;
   }
 
@@ -851,7 +873,7 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
 
   const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
   RSExportPrimitiveType::DataType DT =
-      RSExportPrimitiveType::GetDataType(ElementType);
+      RSExportPrimitiveType::GetDataType(Context, ElementType);
 
   if (DT != RSExportPrimitiveType::DataTypeUnknown)
     return new RSExportVectorType(Context,
@@ -861,9 +883,7 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
                                   Normalized,
                                   EVT->getNumElements());
   else
-    fprintf(stderr, "RSExportVectorType::Create : unsupported base element "
-                    "type\n");
-  return NULL;
+    return NULL;
 }
 
 const llvm::Type *RSExportVectorType::convertToLLVMType() const {
@@ -900,10 +920,15 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
   const clang::RecordDecl* RD = RT->getDecl();
   RD = RD->getDefinition();
   if (RD != NULL) {
+    clang::Diagnostic *Diags = Context->getDiagnostics();
+    const clang::SourceManager *SM = Context->getSourceManager();
     // Find definition, perform further examination
     if (RD->field_empty()) {
-      fprintf(stderr, "RSExportMatrixType::Create : invalid %s struct: "
-                      "must have 1 field for saving values", TypeName.data());
+      Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
+                    Diags->getCustomDiagID(clang::Diagnostic::Error,
+                        "invalid matrix struct: must have 1 field for saving "
+                        "values: '%0'"))
+           << RD->getName();
       return NULL;
     }
 
@@ -911,9 +936,11 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
     const clang::FieldDecl *FD = *FIT;
     const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
     if ((FT == NULL) || (FT->getTypeClass() != clang::Type::ConstantArray)) {
-      fprintf(stderr, "RSExportMatrixType::Create : invalid %s struct: "
-                      "first field should be an array with constant size",
-              TypeName.data());
+      Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
+                    Diags->getCustomDiagID(clang::Diagnostic::Error,
+                        "invalid matrix struct: first field should be an "
+                        "array with constant size: '%0'"))
+           << RD->getName();
       return NULL;
     }
     const clang::ConstantArrayType *CAT =
@@ -923,22 +950,31 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
         (ElementType->getTypeClass() != clang::Type::Builtin) ||
         (static_cast<const clang::BuiltinType *>(ElementType)->getKind()
           != clang::BuiltinType::Float)) {
-      fprintf(stderr, "RSExportMatrixType::Create : invalid %s struct: "
-                      "first field should be a float array", TypeName.data());
+      Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
+                    Diags->getCustomDiagID(clang::Diagnostic::Error,
+                        "invalid matrix struct: first field should be a "
+                        "float array: '%0'"))
+           << RD->getName();
       return NULL;
     }
 
     if (CAT->getSize() != Dim * Dim) {
-      fprintf(stderr, "RSExportMatrixType::Create : invalid %s struct: "
-                      "first field should be an array with size %d",
-              TypeName.data(), Dim * Dim);
+      Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
+                    Diags->getCustomDiagID(clang::Diagnostic::Error,
+                        "invalid matrix struct: first field should be an "
+                        "array with size %0: '%1'"))
+           << Dim * Dim
+           << RD->getName();
       return NULL;
     }
 
     FIT++;
     if (FIT != RD->field_end()) {
-      fprintf(stderr, "RSExportMatrixType::Create : invalid %s struct: "
-                      "must have exactly 1 field", TypeName.data());
+      Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
+                    Diags->getCustomDiagID(clang::Diagnostic::Error,
+                        "invalid matrix struct: must have exactly 1 field: "
+                        "'%0'"))
+           << RD->getName();
       return NULL;
     }
   }
@@ -990,8 +1026,6 @@ RSExportConstantArrayType
   RSExportType *ElementET = RSExportType::Create(Context, ElementType);
 
   if (ElementET == NULL) {
-    fprintf(stderr, "RSExportConstantArrayType::Create : failed to create "
-                    "RSExportType for array element.\n");
     return NULL;
   }
 
@@ -1045,10 +1079,7 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
 
   RD = RD->getDefinition();
   if (RD == NULL) {
-    // TODO(zonr): warn that actual struct definition isn't declared in this
-    //             moudle.
-    fprintf(stderr, "RSExportRecordType::Create : this struct is not defined "
-                    "in this module.");
+    assert(false && "struct is not defined in this module");
     return NULL;
   }
 
@@ -1070,35 +1101,34 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
            FE = RD->field_end();
        FI != FE;
        FI++, Index++) {
-#define FAILED_CREATE_FIELD(err)    do {         \
-      if (*err)                                                          \
-        fprintf(stderr, \
-                "RSExportRecordType::Create : failed to create field (%s)\n", \
-                err);                                                   \
-      delete ERT;                                                       \
-      return NULL;                                                      \
-    } while (false)
+    clang::Diagnostic *Diags = Context->getDiagnostics();
+    const clang::SourceManager *SM = Context->getSourceManager();
 
     // FIXME: All fields should be primitive type
     assert((*FI)->getKind() == clang::Decl::Field);
     clang::FieldDecl *FD = *FI;
 
-    // We don't support bit field
-    //
-    // TODO(zonr): allow bitfield with size 8, 16, 32
-    if (FD->isBitField())
-      FAILED_CREATE_FIELD("bit field is not supported");
+    if (FD->isBitField()) {
+      delete ERT;
+      return NULL;
+    }
 
     // Type
     RSExportType *ET = RSExportElement::CreateFromDecl(Context, FD);
 
-    if (ET != NULL)
+    if (ET != NULL) {
       ERT->mFields.push_back(
           new Field(ET, FD->getName(), ERT,
                     static_cast<size_t>(RL->getFieldOffset(Index) >> 3)));
-    else
-      FAILED_CREATE_FIELD(FD->getName().str().c_str());
-#undef FAILED_CREATE_FIELD
+    } else {
+      Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
+                    Diags->getCustomDiagID(clang::Diagnostic::Error,
+                    "field type cannot be exported: '%0.%1'"))
+          << RD->getName()
+          << FD->getName();
+      delete ERT;
+      return NULL;
+    }
   }
 
   return ERT;

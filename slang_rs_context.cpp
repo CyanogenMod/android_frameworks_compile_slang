@@ -136,8 +136,6 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
   clang::DeclContext::lookup_const_result R = TUDecl->lookup(II);
   RSExportType *ET = NULL;
 
-  RSExportPointerType::IntegerType = mCtx.IntTy.getTypePtr();
-
   for (clang::DeclContext::lookup_const_iterator I = R.first, E = R.second;
        I != E;
        I++) {
@@ -163,8 +161,6 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
     if (T != NULL)
       ET = RSExportType::Create(this, T);
   }
-
-  RSExportPointerType::IntegerType = NULL;
 
   return (ET != NULL);
 }
