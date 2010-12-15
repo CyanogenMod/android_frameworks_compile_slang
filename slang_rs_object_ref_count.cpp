@@ -98,10 +98,9 @@ static void AppendToCompoundStatement(clang::ASTContext& C,
   // TODO(srhines): This should also handle the case of goto/break/continue.
 
   clang::CompoundStmt::body_iterator bI = CS->body_begin();
-  clang::CompoundStmt::body_iterator bE = CS->body_end();
 
   unsigned OldStmtCount = 0;
-  for (bI = CS->body_begin(); bI != bE; bI++) {
+  for (bI = CS->body_begin(); bI != CS->body_end(); bI++) {
     OldStmtCount++;
   }
 
@@ -112,7 +111,7 @@ static void AppendToCompoundStatement(clang::ASTContext& C,
 
   unsigned UpdatedStmtCount = 0;
   bool FoundReturn = false;
-  for (bI = CS->body_begin(); bI != bE; bI++) {
+  for (bI = CS->body_begin(); bI != CS->body_end(); bI++) {
     if ((*bI)->getStmtClass() == clang::Stmt::ReturnStmtClass) {
       FoundReturn = true;
       break;
@@ -123,17 +122,16 @@ static void AppendToCompoundStatement(clang::ASTContext& C,
   // Always insert before a return that we found, or if we are told
   // to insert at the end of the block
   if (FoundReturn || InsertAtEndOfBlock) {
-    std::list<clang::Stmt*>::const_iterator E = StmtList.end();
-    for (std::list<clang::Stmt*>::const_iterator I = StmtList.begin(),
-            E = StmtList.end();
-         I != E;
+    std::list<clang::Stmt*>::const_iterator I = StmtList.begin();
+    for (std::list<clang::Stmt*>::const_iterator I = StmtList.begin();
+         I != StmtList.end();
          I++) {
       UpdatedStmtList[UpdatedStmtCount++] = *I;
     }
   }
 
   // Pick up anything left over after a return statement
-  for ( ; bI != bE; bI++) {
+  for ( ; bI != CS->body_end(); bI++) {
     UpdatedStmtList[UpdatedStmtCount++] = *bI;
   }
 
@@ -190,6 +188,192 @@ void DestructorVisitor::VisitStmt(clang::Stmt *S) {
   return;
 }
 
+static int ArrayDim(clang::VarDecl *VD) {
+  const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
+
+  if (!T || !T->isArrayType()) {
+    return 0;
+  }
+
+  const clang::ConstantArrayType *CAT =
+    static_cast<const clang::ConstantArrayType *>(T);
+  return (int)CAT->getSize().getSExtValue();
+}
+
+static clang::Stmt *ClearArrayRSObject(clang::VarDecl *VD,
+    const clang::Type *T,
+    clang::FunctionDecl *ClearObjectFD) {
+  clang::ASTContext &C = VD->getASTContext();
+  clang::SourceRange Range = VD->getQualifierRange();
+  clang::SourceLocation Loc = Range.getEnd();
+
+  clang::Stmt *StmtArray[2] = {NULL};
+  int StmtCtr = 0;
+
+  int NumArrayElements = ArrayDim(VD);
+  if (NumArrayElements <= 0) {
+    return NULL;
+  }
+
+  // Example destructor loop for "rs_font fontArr[10];"
+  //
+  // (CompoundStmt
+  //   (DeclStmt "int rsIntIter")
+  //   (ForStmt
+  //     (BinaryOperator 'int' '='
+  //       (DeclRefExpr 'int' Var='rsIntIter')
+  //       (IntegerLiteral 'int' 0))
+  //     (BinaryOperator 'int' '<'
+  //       (DeclRefExpr 'int' Var='rsIntIter')
+  //       (IntegerLiteral 'int' 10)
+  //     NULL << CondVar >>
+  //     (UnaryOperator 'int' postfix '++'
+  //       (DeclRefExpr 'int' Var='rsIntIter'))
+  //     (CallExpr 'void'
+  //       (ImplicitCastExpr 'void (*)(rs_font *)' <FunctionToPointerDecay>
+  //         (DeclRefExpr 'void (rs_font *)' FunctionDecl='rsClearObject'))
+  //       (UnaryOperator 'rs_font *' prefix '&'
+  //         (ArraySubscriptExpr 'rs_font':'rs_font'
+  //           (ImplicitCastExpr 'rs_font *' <ArrayToPointerDecay>
+  //             (DeclRefExpr 'rs_font [10]' Var='fontArr'))
+  //           (DeclRefExpr 'int' Var='rsIntIter')))))))
+
+  // Create helper variable for iterating through elements
+  clang::IdentifierInfo& II = C.Idents.get("rsIntIter");
+  clang::VarDecl *IIVD =
+      clang::VarDecl::Create(C,
+                             VD->getDeclContext(),
+                             Loc,
+                             &II,
+                             C.IntTy,
+                             C.getTrivialTypeSourceInfo(C.IntTy),
+                             clang::SC_None,
+                             clang::SC_None);
+  clang::Decl *IID = (clang::Decl *)IIVD;
+
+  clang::DeclGroupRef DGR = clang::DeclGroupRef::Create(C, &IID, 1);
+  StmtArray[StmtCtr++] = new(C) clang::DeclStmt(DGR, Loc, Loc);
+
+  // Form the actual destructor loop
+  // for (Init; Cond; Inc)
+  //   RSClearObjectCall;
+
+  // Init -> "rsIntIter = 0"
+  clang::DeclRefExpr *RefrsIntIter =
+      clang::DeclRefExpr::Create(C,
+                                 NULL,
+                                 Range,
+                                 IIVD,
+                                 Loc,
+                                 C.IntTy);
+
+  clang::Expr *Int0 = clang::IntegerLiteral::Create(C,
+      llvm::APInt(C.getTypeSize(C.IntTy), 0), C.IntTy, Loc);
+
+  clang::BinaryOperator *Init =
+      new(C) clang::BinaryOperator(RefrsIntIter,
+                                   Int0,
+                                   clang::BO_Assign,
+                                   C.IntTy,
+                                   Loc);
+
+  // Cond -> "rsIntIter < NumArrayElements"
+  clang::Expr *NumArrayElementsExpr = clang::IntegerLiteral::Create(C,
+      llvm::APInt(C.getTypeSize(C.IntTy), NumArrayElements), C.IntTy, Loc);
+
+  clang::BinaryOperator *Cond =
+      new(C) clang::BinaryOperator(RefrsIntIter,
+                                   NumArrayElementsExpr,
+                                   clang::BO_LT,
+                                   C.IntTy,
+                                   Loc);
+
+  // Inc -> "rsIntIter++"
+  clang::UnaryOperator *Inc =
+      new(C) clang::UnaryOperator(RefrsIntIter,
+                                  clang::UO_PostInc,
+                                  C.IntTy,
+                                  Loc);
+
+  // Body -> "rsClearObject(&VD[rsIntIter]);"
+  // Destructor loop operates on individual array elements
+  clang::QualType ClearObjectFDType = ClearObjectFD->getType();
+  clang::QualType ClearObjectFDArgType =
+      ClearObjectFD->getParamDecl(0)->getOriginalType();
+
+  const clang::Type *VT = RSExportType::GetTypeOfDecl(VD);
+  clang::DeclRefExpr *RefRSVar =
+      clang::DeclRefExpr::Create(C,
+                                 NULL,
+                                 Range,
+                                 VD,
+                                 Loc,
+                                 VT->getCanonicalTypeInternal());
+
+  clang::Expr *RefRSVarPtr =
+      clang::ImplicitCastExpr::Create(C,
+          C.getPointerType(T->getCanonicalTypeInternal()),
+          clang::CK_ArrayToPointerDecay,
+          RefRSVar,
+          NULL,
+          clang::VK_RValue);
+
+  clang::Expr *RefRSVarPtrSubscript =
+      new(C) clang::ArraySubscriptExpr(RefRSVarPtr,
+                                       RefrsIntIter,
+                                       T->getCanonicalTypeInternal(),
+                                       VD->getLocation());
+
+  clang::Expr *AddrRefRSVarPtrSubscript =
+      new(C) clang::UnaryOperator(RefRSVarPtrSubscript,
+                                  clang::UO_AddrOf,
+                                  ClearObjectFDArgType,
+                                  VD->getLocation());
+
+  clang::Expr *RefRSClearObjectFD =
+      clang::DeclRefExpr::Create(C,
+                                 NULL,
+                                 Range,
+                                 ClearObjectFD,
+                                 Loc,
+                                 ClearObjectFDType);
+
+  clang::Expr *RSClearObjectFP =
+      clang::ImplicitCastExpr::Create(C,
+                                      C.getPointerType(ClearObjectFDType),
+                                      clang::CK_FunctionToPointerDecay,
+                                      RefRSClearObjectFD,
+                                      NULL,
+                                      clang::VK_RValue);
+
+  clang::CallExpr *RSClearObjectCall =
+      new(C) clang::CallExpr(C,
+                             RSClearObjectFP,
+                             &AddrRefRSVarPtrSubscript,
+                             1,
+                             ClearObjectFD->getCallResultType(),
+                             Loc);
+
+  clang::ForStmt *DestructorLoop =
+      new(C) clang::ForStmt(C,
+                            Init,
+                            Cond,
+                            NULL,  // no condVar
+                            Inc,
+                            RSClearObjectCall,
+                            Loc,
+                            Loc,
+                            Loc);
+
+  StmtArray[StmtCtr++] = DestructorLoop;
+  assert(StmtCtr == 2);
+
+  clang::CompoundStmt *CS =
+      new(C) clang::CompoundStmt(C, StmtArray, StmtCtr, Loc, Loc);
+
+  return CS;
+}
+
 }  // namespace
 
 void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
@@ -211,9 +395,17 @@ void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
 }
 
 clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
+  bool IsArrayType = false;
   clang::ASTContext &C = VD->getASTContext();
   clang::SourceLocation Loc = VD->getLocation();
   const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
+
+  // Loop through array types to get to base type
+  while (T && T->isArrayType()) {
+    T = T->getArrayElementTypeNoTypeQual();
+    IsArrayType = true;
+  }
+
   RSExportPrimitiveType::DataType DT =
       RSExportPrimitiveType::GetRSSpecificType(T);
 
@@ -226,16 +418,21 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
   assert((ClearObjectFD != NULL) &&
       "rsClearObject doesn't cover all RS object types");
 
+  if (IsArrayType) {
+    return ClearArrayRSObject(VD, T, ClearObjectFD);
+  }
+
   clang::QualType ClearObjectFDType = ClearObjectFD->getType();
   clang::QualType ClearObjectFDArgType =
       ClearObjectFD->getParamDecl(0)->getOriginalType();
 
-  // We generate a call to rsClearObject passing &VD as the parameter
+  // Example destructor for "rs_font localFont;"
+  //
   // (CallExpr 'void'
   //   (ImplicitCastExpr 'void (*)(rs_font *)' <FunctionToPointerDecay>
   //     (DeclRefExpr 'void (rs_font *)' FunctionDecl='rsClearObject'))
   //   (UnaryOperator 'rs_font *' prefix '&'
-  //     (DeclRefExpr 'rs_font':'rs_font' Var='[var name]')))
+  //     (DeclRefExpr 'rs_font':'rs_font' Var='localFont')))
 
   // Reference expr to target RS object variable
   clang::DeclRefExpr *RefRSVar =
@@ -244,8 +441,7 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
                                  VD->getQualifierRange(),
                                  VD,
                                  Loc,
-                                 T->getCanonicalTypeInternal(),
-                                 NULL);
+                                 T->getCanonicalTypeInternal());
 
   // Get address of RSObject in VD
   clang::Expr *AddrRefRSVar =
@@ -260,8 +456,7 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
                                  ClearObjectFD->getQualifierRange(),
                                  ClearObjectFD,
                                  ClearObjectFD->getLocation(),
-                                 ClearObjectFDType,
-                                 NULL);
+                                 ClearObjectFDType);
 
   clang::Expr *RSClearObjectFP =
       clang::ImplicitCastExpr::Create(C,
@@ -314,9 +509,7 @@ bool RSObjectRefCount::InitializeRSObject(clang::VarDecl *VD) {
     }
   }
 
-  // TODO(srhines): Skip returning true in the case of array objects because
-  // we don't have looping destructor support yet.
-  return !IsArrayType && RSExportPrimitiveType::IsRSObjectType(DT);
+  return RSExportPrimitiveType::IsRSObjectType(DT);
 }
 
 clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
