@@ -26,6 +26,7 @@
 
 namespace clang {
   class Expr;
+  class Stmt;
 }
 
 namespace slang {
@@ -57,7 +58,7 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
 
     void InsertLocalVarDestructors();
 
-    static clang::Expr *ClearRSObject(clang::VarDecl *VD);
+    static clang::Stmt *ClearRSObject(clang::VarDecl *VD);
   };
 
   std::stack<Scope*> mScopeStack;

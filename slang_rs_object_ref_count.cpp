@@ -90,7 +90,7 @@ namespace {
 
 static void AppendToCompoundStatement(clang::ASTContext& C,
                                       clang::CompoundStmt *CS,
-                                      std::list<clang::Expr*> &ExprList,
+                                      std::list<clang::Stmt*> &StmtList,
                                       bool InsertAtEndOfBlock) {
   // Destructor code will be inserted before any return statement.
   // Any subsequent statements in the compound statement are then placed
@@ -105,10 +105,10 @@ static void AppendToCompoundStatement(clang::ASTContext& C,
     OldStmtCount++;
   }
 
-  unsigned NewExprCount = ExprList.size();
+  unsigned NewStmtCount = StmtList.size();
 
-  clang::Stmt **StmtList;
-  StmtList = new clang::Stmt*[OldStmtCount+NewExprCount];
+  clang::Stmt **UpdatedStmtList;
+  UpdatedStmtList = new clang::Stmt*[OldStmtCount+NewStmtCount];
 
   unsigned UpdatedStmtCount = 0;
   bool FoundReturn = false;
@@ -117,34 +117,34 @@ static void AppendToCompoundStatement(clang::ASTContext& C,
       FoundReturn = true;
       break;
     }
-    StmtList[UpdatedStmtCount++] = *bI;
+    UpdatedStmtList[UpdatedStmtCount++] = *bI;
   }
 
   // Always insert before a return that we found, or if we are told
   // to insert at the end of the block
   if (FoundReturn || InsertAtEndOfBlock) {
-    std::list<clang::Expr*>::const_iterator E = ExprList.end();
-    for (std::list<clang::Expr*>::const_iterator I = ExprList.begin(),
-            E = ExprList.end();
+    std::list<clang::Stmt*>::const_iterator E = StmtList.end();
+    for (std::list<clang::Stmt*>::const_iterator I = StmtList.begin(),
+            E = StmtList.end();
          I != E;
          I++) {
-      StmtList[UpdatedStmtCount++] = *I;
+      UpdatedStmtList[UpdatedStmtCount++] = *I;
     }
   }
 
   // Pick up anything left over after a return statement
   for ( ; bI != bE; bI++) {
-    StmtList[UpdatedStmtCount++] = *bI;
+    UpdatedStmtList[UpdatedStmtCount++] = *bI;
   }
 
-  CS->setStmts(C, StmtList, UpdatedStmtCount);
+  CS->setStmts(C, UpdatedStmtList, UpdatedStmtCount);
 
-  delete [] StmtList;
+  delete [] UpdatedStmtList;
 
   return;
 }
 
-// This class visits a compound statement and inserts the ExprList containing
+// This class visits a compound statement and inserts the StmtList containing
 // destructors in proper locations. This includes inserting them before any
 // return statement in any sub-block, at the end of the logical enclosing
 // scope (compound statement), and/or before any break/continue statement that
@@ -154,25 +154,25 @@ static void AppendToCompoundStatement(clang::ASTContext& C,
 class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
  private:
   clang::ASTContext &mC;
-  std::list<clang::Expr*> &mExprList;
+  std::list<clang::Stmt*> &mStmtList;
   bool mTopLevel;
  public:
-  DestructorVisitor(clang::ASTContext &C, std::list<clang::Expr*> &ExprList);
+  DestructorVisitor(clang::ASTContext &C, std::list<clang::Stmt*> &StmtList);
   void VisitStmt(clang::Stmt *S);
   void VisitCompoundStmt(clang::CompoundStmt *CS);
 };
 
 DestructorVisitor::DestructorVisitor(clang::ASTContext &C,
-                                     std::list<clang::Expr*> &ExprList)
+                                     std::list<clang::Stmt*> &StmtList)
   : mC(C),
-    mExprList(ExprList),
+    mStmtList(StmtList),
     mTopLevel(true) {
   return;
 }
 
 void DestructorVisitor::VisitCompoundStmt(clang::CompoundStmt *CS) {
   if (!CS->body_empty()) {
-    AppendToCompoundStatement(mC, CS, mExprList, mTopLevel);
+    AppendToCompoundStatement(mC, CS, mStmtList, mTopLevel);
     mTopLevel = false;
     VisitStmt(CS);
   }
@@ -193,12 +193,12 @@ void DestructorVisitor::VisitStmt(clang::Stmt *S) {
 }  // namespace
 
 void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
-  std::list<clang::Expr*> RSClearObjectCalls;
+  std::list<clang::Stmt*> RSClearObjectCalls;
   for (std::list<clang::VarDecl*>::const_iterator I = mRSO.begin(),
           E = mRSO.end();
         I != E;
         I++) {
-    clang::Expr *E = ClearRSObject(*I);
+    clang::Stmt *E = ClearRSObject(*I);
     if (E) {
       RSClearObjectCalls.push_back(E);
     }
@@ -210,7 +210,7 @@ void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
   return;
 }
 
-clang::Expr *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
+clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
   clang::ASTContext &C = VD->getASTContext();
   clang::SourceLocation Loc = VD->getLocation();
   const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
