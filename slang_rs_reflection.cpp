@@ -1517,6 +1517,12 @@ void RSReflection::genTypeClassResize(Context &C) {
   C.endBlock();
   C.indent() << "mAllocation.resize(newSize);" << std::endl;
 
+  C.indent() << "if (" RS_TYPE_ITEM_BUFFER_PACKER_NAME " != null) "
+                  RS_TYPE_ITEM_BUFFER_PACKER_NAME " = "
+                    "new FieldPacker(" RS_TYPE_ITEM_CLASS_NAME
+                      ".sizeof * getType().getX()/* count */"
+                        ");" << std::endl;
+
   C.endFunction();
   return;
 }
