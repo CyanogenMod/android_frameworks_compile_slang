@@ -214,9 +214,9 @@ static const char *GetPackerAPIName(const RSExportPrimitiveType *EPT) {
     "addU16",   // RSExportPrimitiveType::DataTypeUnsigned5551
     "addU16",   // RSExportPrimitiveType::DataTypeUnsigned4444
 
-    "addObj",   // RSExportPrimitiveType::DataTypeRSMatrix2x2
-    "addObj",   // RSExportPrimitiveType::DataTypeRSMatrix3x3
-    "addObj",   // RSExportPrimitiveType::DataTypeRSMatrix4x4
+    "addMatrix",   // RSExportPrimitiveType::DataTypeRSMatrix2x2
+    "addMatrix",   // RSExportPrimitiveType::DataTypeRSMatrix3x3
+    "addMatrix",   // RSExportPrimitiveType::DataTypeRSMatrix4x4
 
     "addObj",   // RSExportPrimitiveType::DataTypeRSElement
     "addObj",   // RSExportPrimitiveType::DataTypeRSType
@@ -1057,7 +1057,7 @@ void RSReflection::genPackVarOfType(Context &C,
       break;
     }
     case RSExportType::ExportClassMatrix: {
-      C.indent() << FieldPackerName << ".addObj(" << VarName << ");"
+      C.indent() << FieldPackerName << ".addMatrix(" << VarName << ");"
                  << std::endl;
       break;
     }
