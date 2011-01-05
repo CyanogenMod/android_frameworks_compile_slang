@@ -197,7 +197,7 @@ static int ArrayDim(clang::VarDecl *VD) {
 
   const clang::ConstantArrayType *CAT =
     static_cast<const clang::ConstantArrayType *>(T);
-  return (int)CAT->getSize().getSExtValue();
+  return static_cast<int>(CAT->getSize().getSExtValue());
 }
 
 static clang::Stmt *ClearArrayRSObject(clang::VarDecl *VD,

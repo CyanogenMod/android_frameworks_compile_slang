@@ -123,7 +123,7 @@ class RSReflectLicensePragmaHandler : public RSPragmaHandler {
       : RSPragmaHandler(Name, Context) { return; }
 
   void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
-    this->handleOptionalStringLiateralParamPragma(PP, FirstToken);
+    this->handleOptionalStringLiteralParamPragma(PP, FirstToken);
   }
 };
 
@@ -187,7 +187,7 @@ void RSPragmaHandler::handleNonParamPragma(clang::Preprocessor &PP,
   return;
 }
 
-void RSPragmaHandler::handleOptionalStringLiateralParamPragma(
+void RSPragmaHandler::handleOptionalStringLiteralParamPragma(
     clang::Preprocessor &PP, clang::Token &FirstToken) {
   clang::Token &PragmaToken = FirstToken;
 
@@ -204,7 +204,7 @@ void RSPragmaHandler::handleOptionalStringLiateralParamPragma(
     // Eat the whole string literal
     clang::StringLiteralParser StringLiteral(&PragmaToken, 1, PP);
     if (StringLiteral.hadError)
-      fprintf(stderr, "RSPragmaHandler::handleOptionalStringLiateralParamPragma"
+      fprintf(stderr, "RSPragmaHandler::handleOptionalStringLiteralParamPragma"
                       ": illegal string literal\n");
     else
       this->handleItem(std::string(StringLiteral.GetString()));
@@ -212,7 +212,7 @@ void RSPragmaHandler::handleOptionalStringLiateralParamPragma(
     // The current token should be clang::tok::r_para
     PP.LexUnexpandedToken(PragmaToken);
     if (PragmaToken.isNot(clang::tok::r_paren))
-      fprintf(stderr, "RSPragmaHandler::handleOptionalStringLiateralParamPragma"
+      fprintf(stderr, "RSPragmaHandler::handleOptionalStringLiteralParamPragma"
                       ": expected a ')'\n");
   } else {
     // If no argument, remove the license

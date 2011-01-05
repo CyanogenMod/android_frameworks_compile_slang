@@ -55,7 +55,7 @@ class RSPragmaHandler : public clang::PragmaHandler {
                             clang::Token &FirstToken);
 
   // Handle pragma like #pragma rs [name] ("string literal")
-  void handleOptionalStringLiateralParamPragma(clang::Preprocessor &PP,
+  void handleOptionalStringLiteralParamPragma(clang::Preprocessor &PP,
                                                clang::Token &FirstToken);
 
  public:
