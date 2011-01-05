@@ -45,6 +45,7 @@ class RSPragmaHandler : public clang::PragmaHandler {
   }
 
   virtual void handleItem(const std::string &Item) { return; }
+  virtual void handleInt(const int v) { return; }
 
   // Handle pragma like #pragma rs [name] ([item #1],[item #2],...,[item #i])
   void handleItemListPragma(clang::Preprocessor &PP,
@@ -56,13 +57,18 @@ class RSPragmaHandler : public clang::PragmaHandler {
 
   // Handle pragma like #pragma rs [name] ("string literal")
   void handleOptionalStringLiteralParamPragma(clang::Preprocessor &PP,
-                                               clang::Token &FirstToken);
+                                              clang::Token &FirstToken);
+
+  // Handle pragma like #pragma version (integer)
+  void handleIntegerParamPragma(clang::Preprocessor &PP,
+                                clang::Token &FirstToken);
 
  public:
   static RSPragmaHandler *CreatePragmaExportTypeHandler(RSContext *Context);
   static RSPragmaHandler *CreatePragmaJavaPackageNameHandler(
       RSContext *Context);
   static RSPragmaHandler *CreatePragmaReflectLicenseHandler(RSContext *Context);
+  static RSPragmaHandler *CreatePragmaVersionHandler(RSContext *Context);
 
   virtual void HandlePragma(clang::Preprocessor &PP,
                             clang::Token &FirstToken) = 0;

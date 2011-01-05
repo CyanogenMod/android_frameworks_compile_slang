@@ -73,6 +73,8 @@ class RSContext {
   std::string mReflectJavaPackageName;
   std::string mReflectJavaPathName;
 
+  int version;
+
   bool processExportVar(const clang::VarDecl *VD);
   bool processExportFunc(const clang::FunctionDecl *FD);
   bool processExportType(const llvm::StringRef &Name);
@@ -174,6 +176,12 @@ class RSContext {
                      const std::string &InputFileName,
                      const std::string &OutputBCFileName,
                      std::string *RealPackageName);
+
+  int getVersion() const { return version; }
+  void setVersion(int v) {
+    version = v;
+    return;
+  }
 
   ~RSContext();
 };

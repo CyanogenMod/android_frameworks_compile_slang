@@ -50,7 +50,8 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mTarget(Target),
       mTargetData(NULL),
       mLLVMContext(llvm::getGlobalContext()),
-      mLicenseNote(NULL) {
+      mLicenseNote(NULL),
+      version(0) {
   // For #pragma rs export_type
   PP.AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaExportTypeHandler(this));
@@ -62,6 +63,9 @@ RSContext::RSContext(clang::Preprocessor &PP,
   // For #pragma rs set_reflect_license
   PP.AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaReflectLicenseHandler(this));
+
+  // For #pragma version
+  PP.AddPragmaHandler(RSPragmaHandler::CreatePragmaVersionHandler(this));
 
   // Prepare target data
   mTargetData = new llvm::TargetData(Target.getTargetDescription());

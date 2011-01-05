@@ -96,7 +96,7 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
       if (PragmaToken.is(clang::tok::eom) || PragmaToken.is(clang::tok::eof)) {
         break;
       } else {
-        // Next token is ')' (end of paragma)
+        // Next token is ')' (end of pragma)
         const clang::Token &NextTok = PP.LookAhead(0);
         if (NextTok.is(clang::tok::r_paren)) {
           mContext->setReflectJavaPackageName(PackageName);
@@ -127,6 +127,21 @@ class RSReflectLicensePragmaHandler : public RSPragmaHandler {
   }
 };
 
+class RSVersionPragmaHandler : public RSPragmaHandler {
+ private:
+  void handleInt(const int v) {
+    mContext->setVersion(v);
+  }
+
+ public:
+  RSVersionPragmaHandler(llvm::StringRef Name, RSContext *Context)
+      : RSPragmaHandler(Name, Context) { return; }
+
+  void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
+    this->handleIntegerParamPragma(PP, FirstToken);
+  }
+};
+
 }  // namespace
 
 RSPragmaHandler *
@@ -142,6 +157,11 @@ RSPragmaHandler::CreatePragmaJavaPackageNameHandler(RSContext *Context) {
 RSPragmaHandler *
 RSPragmaHandler::CreatePragmaReflectLicenseHandler(RSContext *Context) {
   return new RSJavaPackageNamePragmaHandler("set_reflect_license", Context);
+}
+
+RSPragmaHandler *
+RSPragmaHandler::CreatePragmaVersionHandler(RSContext *Context) {
+  return new RSVersionPragmaHandler("version", Context);
 }
 
 void RSPragmaHandler::handleItemListPragma(clang::Preprocessor &PP,
@@ -218,6 +238,46 @@ void RSPragmaHandler::handleOptionalStringLiteralParamPragma(
     // If no argument, remove the license
     this->handleItem("");
   }
+}
+
+void RSPragmaHandler::handleIntegerParamPragma(
+    clang::Preprocessor &PP, clang::Token &FirstToken) {
+  clang::Token &PragmaToken = FirstToken;
+
+  // Skip first token, like "version"
+  PP.LexUnexpandedToken(PragmaToken);
+
+  // Now, the current token must be clang::tok::lpara
+  if (PragmaToken.isNot(clang::tok::l_paren))
+    return;
+  PP.LexUnexpandedToken(PragmaToken);
+
+  if (PragmaToken.is(clang::tok::numeric_constant)) {
+    clang::NumericLiteralParser NumericLiteral(PragmaToken.getLiteralData(),
+        PragmaToken.getLiteralData() + PragmaToken.getLength(),
+        PragmaToken.getLocation(), PP);
+    if (NumericLiteral.hadError) {
+      fprintf(stderr, "RSPragmaHandler::handleIntegerParamPragma"
+                      ": illegal numeric literal\n");
+    } else {
+      llvm::APInt Val(32, 0);
+      NumericLiteral.GetIntegerValue(Val);
+      this->handleInt(static_cast<int>(Val.getSExtValue()));
+    }
+    PP.LexUnexpandedToken(PragmaToken);
+  } else {
+    // If no argument, set the version to 0
+    this->handleInt(0);
+  }
+
+  if (PragmaToken.isNot(clang::tok::r_paren)) {
+    fprintf(stderr, "RSPragmaHandler::handleIntegerParamPragma"
+                    ": expected a ')'\n");
+  }
+
+  do {
+    PP.LexUnexpandedToken(PragmaToken);
+  } while (PragmaToken.isNot(clang::tok::eom));
 }
 
 }  // namespace slang

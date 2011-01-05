@@ -145,6 +145,16 @@ void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
     return;
   }
 
+  int version = mContext->getVersion();
+  if (version == 0) {
+    // Not setting a version is an error
+    mDiags.Report(mDiags.getCustomDiagID(clang::Diagnostic::Error,
+                      "Missing pragma for version in source file"));
+  } else if (version > 1) {
+    mDiags.Report(mDiags.getCustomDiagID(clang::Diagnostic::Error,
+                      "Pragma for version in source file must be set to 1"));
+  }
+
   // Process any static function declarations
   for (clang::DeclContext::decl_iterator I = TUDecl->decls_begin(),
           E = TUDecl->decls_end(); I != E; I++) {
