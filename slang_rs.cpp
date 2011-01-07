@@ -41,7 +41,8 @@ namespace slang {
   RS_HEADER_ENTRY(rs_types,     1) \
   RS_HEADER_ENTRY(rs_cl,        1) \
   RS_HEADER_ENTRY(rs_core,      1) \
-  RS_HEADER_ENTRY(rs_math,      1)  \
+  RS_HEADER_ENTRY(rs_math,      1) \
+  RS_HEADER_ENTRY(rs_time,      1) \
   RS_HEADER_ENTRY(rs_graphics,  0)
 
 bool SlangRS::reflectToJava(const std::string &OutputPathBase,
