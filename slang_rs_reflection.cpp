@@ -1385,8 +1385,8 @@ void RSReflection::genTypeClassItemSetter(Context &C,
   C.startBlock();
 
   C.indent() << "copyToArray(i, index);" << std::endl;
-  C.indent() << "mAllocation.subData1D(index, 1, "
-                  RS_TYPE_ITEM_BUFFER_PACKER_NAME".getData());" << std::endl;
+  C.indent() << "mAllocation.setOneElement(index, "
+                  RS_TYPE_ITEM_BUFFER_PACKER_NAME");" << std::endl;
 
   // End of if (copyNow)
   C.endBlock();
@@ -1449,7 +1449,7 @@ void RSReflection::genTypeClassComponentSetter(Context &C,
     C.indent() << "FieldPacker fp = new FieldPacker(" << FieldStoreSize << ");"
                << std::endl;
     genPackVarOfType(C, F->getType(), "v", "fp");
-    C.indent() << "mAllocation.subElementData(index, " << FieldIndex << ", fp);"
+    C.indent() << "mAllocation.setOneComponent(index, " << FieldIndex << ", fp);"
                << std::endl;
 
     // End of if (copyNow)
