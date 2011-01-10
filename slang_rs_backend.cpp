@@ -97,7 +97,10 @@ void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
 
   // Process any non-static function declarations
   for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; I++) {
-    AnnotateFunction(dyn_cast<clang::FunctionDecl>(*I));
+    clang::FunctionDecl *FD = dyn_cast<clang::FunctionDecl>(*I);
+    if (FD && FD->isGlobal()) {
+      AnnotateFunction(FD);
+    }
   }
 
   Backend::HandleTopLevelDecl(D);
@@ -160,7 +163,10 @@ void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
           E = TUDecl->decls_end(); I != E; I++) {
     if ((I->getKind() >= clang::Decl::firstFunction) &&
         (I->getKind() <= clang::Decl::lastFunction)) {
-      AnnotateFunction(static_cast<clang::FunctionDecl*>(*I));
+      clang::FunctionDecl *FD = dyn_cast<clang::FunctionDecl>(*I);
+      if (FD && !FD->isGlobal()) {
+        AnnotateFunction(FD);
+      }
     }
   }
 
