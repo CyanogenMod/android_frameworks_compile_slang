@@ -1449,7 +1449,8 @@ void RSReflection::genTypeClassComponentSetter(Context &C,
     C.indent() << "FieldPacker fp = new FieldPacker(" << FieldStoreSize << ");"
                << std::endl;
     genPackVarOfType(C, F->getType(), "v", "fp");
-    C.indent() << "mAllocation.setOneComponent(index, " << FieldIndex << ", fp);"
+    C.indent() << "mAllocation.setOneComponent(index, " << FieldIndex
+               << ", fp);"
                << std::endl;
 
     // End of if (copyNow)
