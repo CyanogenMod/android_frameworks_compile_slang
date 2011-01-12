@@ -15,7 +15,7 @@
 #
 LOCAL_PATH := $(call my-dir)
 
-# Shared library libslang for host
+# Static library libslang for host
 # ========================================================
 include $(CLEAR_VARS)
 include $(CLEAR_TBLGEN_VARS)
@@ -27,8 +27,6 @@ include $(CLANG_ROOT_PATH)/clang.mk
 
 LOCAL_MODULE := libslang
 LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 
 LOCAL_CFLAGS += -Wno-sign-promo
 
@@ -48,7 +46,7 @@ LOCAL_SRC_FILES :=	\
 	slang_pragma_recorder.cpp	\
 	slang_diagnostic_buffer.cpp
 
-LOCAL_STATIC_LIBRARIES :=	\
+LOCAL_WHOLE_STATIC_LIBRARIES :=	\
 	libLLVMLinker   \
 	libLLVMipo	\
 	libLLVMBitWriter	\
@@ -88,7 +86,7 @@ LOCAL_LDLIBS := -ldl -lpthread
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
 include $(LLVM_GEN_INTRINSICS_MK)
-include $(BUILD_HOST_SHARED_LIBRARY)
+include $(BUILD_HOST_STATIC_LIBRARY)
 
 # Host static library containing rslib.bc
 # ========================================================
@@ -119,11 +117,8 @@ LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES :=	\
 	llvm-rs-link.cpp
 
-LOCAL_SHARED_LIBRARIES :=	\
-	libslang
-
 LOCAL_STATIC_LIBRARIES :=	\
-	librslib
+	librslib libslang
 
 LOCAL_LDLIBS := -ldl -lpthread
 
@@ -193,11 +188,10 @@ LOCAL_SRC_FILES :=	\
 	slang_rs_reflect_utils.cpp  \
 	slang_rs_metadata_spec_encoder.cpp
 
-LOCAL_SHARED_LIBRARIES :=      \
-	libslang
-
 LOCAL_STATIC_LIBRARIES :=	\
-	libclangDriver
+	libclangDriver libslang
+
+LOCAL_LDLIBS := -ldl -lpthread
 
 # For build RSCCOptions.inc from RSCCOptions.td
 intermediates := $(call local-intermediates-dir)
