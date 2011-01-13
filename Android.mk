@@ -100,7 +100,20 @@ LOCAL_MODULE := librslib
 LOCAL_MODULE_TAGS := optional
 
 include $(LOCAL_PATH)/SlangData.mk
-include $(BUILD_HOST_STATIC_LIBRARY)
+include $(BUILD_HOST_SHARED_LIBRARY)
+
+# Executable slang-data for host
+# ========================================================
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := slang-data
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_MODULE_CLASS := EXECUTABLES
+
+LOCAL_SRC_FILES := slang-data.c
+
+include $(BUILD_HOST_EXECUTABLE)
 
 # Executable llvm-rs-link for host
 # ========================================================

@@ -25,8 +25,6 @@
 #
 SLANG_DATA := frameworks/compile/slang/slangdata.py
 
-LOCAL_MODULE_CLASS := STATIC_LIBRARIES
-
 intermediates := $(call local-intermediates-dir)
 
 asm_file := $(intermediates)/$(slangdata_output_var_name).S
