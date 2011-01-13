@@ -191,7 +191,11 @@ LOCAL_SRC_FILES :=	\
 LOCAL_STATIC_LIBRARIES :=	\
 	libclangDriver libslang
 
-LOCAL_LDLIBS := -ldl -lpthread
+ifeq ($(HOST_OS),windows)
+  LOCAL_LDLIBS := -limagehlp -lpsapi
+else
+  LOCAL_LDLIBS := -ldl -lpthread
+endif
 
 # For build RSCCOptions.inc from RSCCOptions.td
 intermediates := $(call local-intermediates-dir)
