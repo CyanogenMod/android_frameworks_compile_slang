@@ -99,10 +99,10 @@ LOCAL_IS_HOST_MODULE := true
 LOCAL_MODULE := librslib
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_CLASS := STATIC_LIBRARIES
 
 include $(LOCAL_PATH)/SlangData.mk
-include $(BUILD_HOST_SHARED_LIBRARY)
+include $(BUILD_HOST_STATIC_LIBRARY)
 
 # Executable slang-data for host
 # ========================================================
