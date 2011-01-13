@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 LOCAL_PATH := $(call my-dir)
-RS_SPEC_GEN := $(HOST_OUT_EXECUTABLES)/rs-spec-gen$(HOST_EXECUTABLE_SUFFIX)
+RS_SPEC_GEN := $(BUILD_OUT_EXECUTABLES)/rs-spec-gen$(BUILD_EXECUTABLE_SUFFIX)
 
 define generate-rs-spec-inc
 @mkdir -p $(dir $@)
