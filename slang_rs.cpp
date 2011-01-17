@@ -73,11 +73,11 @@ bool SlangRS::checkODR(const char *CurInputFile) {
           E = mRSContext->exportable_end();
        I != E;
        I++) {
-    RSExportable *E = *I;
-    if (E->getKind() != RSExportable::EX_TYPE)
+    RSExportable *RSE = *I;
+    if (RSE->getKind() != RSExportable::EX_TYPE)
       continue;
 
-    RSExportType *ET = static_cast<RSExportType *>(E);
+    RSExportType *ET = static_cast<RSExportType *>(RSE);
     if (ET->getClass() != RSExportType::ExportClassRecord)
       continue;
 

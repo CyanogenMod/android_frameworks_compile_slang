@@ -382,9 +382,9 @@ void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
           E = mRSO.end();
         I != E;
         I++) {
-    clang::Stmt *E = ClearRSObject(*I);
-    if (E) {
-      RSClearObjectCalls.push_back(E);
+    clang::Stmt *S = ClearRSObject(*I);
+    if (S) {
+      RSClearObjectCalls.push_back(S);
     }
   }
   if (RSClearObjectCalls.size() > 0) {
