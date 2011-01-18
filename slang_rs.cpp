@@ -194,7 +194,8 @@ void SlangRS::initPreprocessor() {
 void SlangRS::initASTContext() {
   mRSContext = new RSContext(getPreprocessor(),
                              getASTContext(),
-                             getTargetInfo());
+                             getTargetInfo(),
+                             &mPragmas);
   return;
 }
 
@@ -206,7 +207,7 @@ clang::ASTConsumer
                          &getDiagnostics(),
                          CodeGenOpts,
                          getTargetOptions(),
-                         mPragmas,
+                         &mPragmas,
                          OS,
                          OT,
                          getSourceManager(),

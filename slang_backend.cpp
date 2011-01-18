@@ -180,7 +180,7 @@ bool Backend::CreateCodeGenPasses() {
 Backend::Backend(clang::Diagnostic *Diags,
                  const clang::CodeGenOptions &CodeGenOpts,
                  const clang::TargetOptions &TargetOpts,
-                 const PragmaList &Pragmas,
+                 PragmaList *Pragmas,
                  llvm::raw_ostream *OS,
                  Slang::OutputType OT)
     : ASTConsumer(),
@@ -238,10 +238,10 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
   assert(mpModule == M && "Unexpected module change during LLVM IR generation");
 
   // Insert #pragma information into metadata section of module
-  if (!mPragmas.empty()) {
+  if (!mPragmas->empty()) {
     llvm::NamedMDNode *PragmaMetadata =
         mpModule->getOrInsertNamedMetadata(Slang::PragmaMetadataName);
-    for (PragmaList::const_iterator I = mPragmas.begin(), E = mPragmas.end();
+    for (PragmaList::const_iterator I = mPragmas->begin(), E = mPragmas->end();
          I != E;
          I++) {
       llvm::SmallVector<llvm::Value*, 2> Pragma;

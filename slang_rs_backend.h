@@ -29,7 +29,6 @@ namespace clang {
   class ASTConsumer;
   class Diagnostic;
   class TargetOptions;
-  class PragmaList;
   class CodeGenerator;
   class ASTContext;
   class DeclGroupRef;
@@ -69,7 +68,7 @@ class RSBackend : public Backend {
             clang::Diagnostic *Diags,
             const clang::CodeGenOptions &CodeGenOpts,
             const clang::TargetOptions &TargetOpts,
-            const PragmaList &Pragmas,
+            PragmaList *Pragmas,
             llvm::raw_ostream *OS,
             Slang::OutputType OT,
             clang::SourceManager &SourceMgr,

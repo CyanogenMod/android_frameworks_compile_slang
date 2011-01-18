@@ -215,9 +215,9 @@ void Slang::createPreprocessor() {
                                     *HS,
                                     NULL,
                                     /* OwnsHeaderSearch = */true));
-  // Initialize the prepocessor
+  // Initialize the preprocessor
   mPragmas.clear();
-  mPP->AddPragmaHandler(new PragmaRecorder(mPragmas));
+  mPP->AddPragmaHandler(new PragmaRecorder(&mPragmas));
 
   std::vector<clang::DirectoryLookup> SearchList;
   for (unsigned i = 0, e = mIncludePaths.size(); i != e; i++) {
@@ -255,7 +255,7 @@ clang::ASTConsumer
   return new Backend(mDiagnostics.getPtr(),
                      CodeGenOpts,
                      mTargetOpts,
-                     mPragmas,
+                     &mPragmas,
                      OS,
                      OT);
 }

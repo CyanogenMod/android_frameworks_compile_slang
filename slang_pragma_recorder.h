@@ -34,7 +34,7 @@ typedef std::list< std::pair<std::string, std::string> > PragmaList;
 
 class PragmaRecorder : public clang::PragmaHandler {
  private:
-  PragmaList &mPragmas;
+  PragmaList *mPragmas;
 
   static bool GetPragmaNameFromToken(const clang::Token &Token,
                                      std::string &PragmaName);
@@ -43,7 +43,7 @@ class PragmaRecorder : public clang::PragmaHandler {
                                       std::string &PragmaValue);
 
  public:
-  explicit PragmaRecorder(PragmaList &Pragmas);
+  explicit PragmaRecorder(PragmaList *Pragmas);
 
   virtual void HandlePragma(clang::Preprocessor &PP,
                             clang::Token &FirstToken);

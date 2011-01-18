@@ -27,6 +27,8 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/StringMap.h"
 
+#include "slang_pragma_recorder.h"
+
 namespace llvm {
   class LLVMContext;
   class TargetData;
@@ -61,6 +63,7 @@ class RSContext {
   clang::Preprocessor &mPP;
   clang::ASTContext &mCtx;
   const clang::TargetInfo &mTarget;
+  PragmaList *mPragmas;
 
   llvm::TargetData *mTargetData;
   llvm::LLVMContext &mLLVMContext;
@@ -86,7 +89,8 @@ class RSContext {
  public:
   RSContext(clang::Preprocessor &PP,
             clang::ASTContext &Ctx,
-            const clang::TargetInfo &Target);
+            const clang::TargetInfo &Target,
+            PragmaList *Pragmas);
 
   inline clang::Preprocessor &getPreprocessor() const { return mPP; }
   inline clang::ASTContext &getASTContext() const { return mCtx; }
@@ -181,6 +185,10 @@ class RSContext {
   void setVersion(int v) {
     version = v;
     return;
+  }
+
+  void addPragma(const std::string &T, const std::string &V) {
+    mPragmas->push_back(make_pair(T, V));
   }
 
   ~RSContext();

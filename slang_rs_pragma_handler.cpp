@@ -16,6 +16,7 @@
 
 #include "slang_rs_pragma_handler.h"
 
+#include <sstream>
 #include <string>
 
 #include "clang/Basic/TokenKinds.h"
@@ -33,6 +34,7 @@ namespace {  // Anonymous namespace
 class RSExportTypePragmaHandler : public RSPragmaHandler {
  private:
   void handleItem(const std::string &Item) {
+    mContext->addPragma(this->getName(), Item);
     mContext->addExportType(Item);
   }
 
@@ -99,6 +101,7 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
         // Next token is ')' (end of pragma)
         const clang::Token &NextTok = PP.LookAhead(0);
         if (NextTok.is(clang::tok::r_paren)) {
+          mContext->addPragma(this->getName(), PackageName);
           mContext->setReflectJavaPackageName(PackageName);
           // Lex until meets clang::tok::eom
           do {
@@ -115,6 +118,7 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
 class RSReflectLicensePragmaHandler : public RSPragmaHandler {
  private:
   void handleItem(const std::string &Item) {
+    mContext->addPragma(this->getName(), Item);
     mContext->setLicenseNote(Item);
   }
 
@@ -130,6 +134,9 @@ class RSReflectLicensePragmaHandler : public RSPragmaHandler {
 class RSVersionPragmaHandler : public RSPragmaHandler {
  private:
   void handleInt(const int v) {
+    std::stringstream ss;
+    ss << v;
+    mContext->addPragma(this->getName(), ss.str());
     mContext->setVersion(v);
   }
 

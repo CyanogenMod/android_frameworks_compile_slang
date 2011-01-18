@@ -79,7 +79,7 @@ class Backend : public clang::ASTConsumer {
   llvm::LLVMContext &mLLVMContext;
   clang::Diagnostic &mDiags;
 
-  const PragmaList &mPragmas;
+  PragmaList *mPragmas;
 
   // This handler will be invoked before Clang translates @Ctx to LLVM IR. This
   // give you an opportunity to modified the IR in AST level (scope information,
@@ -98,7 +98,7 @@ class Backend : public clang::ASTConsumer {
   Backend(clang::Diagnostic *Diags,
           const clang::CodeGenOptions &CodeGenOpts,
           const clang::TargetOptions &TargetOpts,
-          const PragmaList &Pragmas,
+          PragmaList *Pragmas,
           llvm::raw_ostream *OS,
           Slang::OutputType OT);
 

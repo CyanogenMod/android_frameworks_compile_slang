@@ -44,10 +44,12 @@ namespace slang {
 
 RSContext::RSContext(clang::Preprocessor &PP,
                      clang::ASTContext &Ctx,
-                     const clang::TargetInfo &Target)
+                     const clang::TargetInfo &Target,
+                     PragmaList *Pragmas)
     : mPP(PP),
       mCtx(Ctx),
       mTarget(Target),
+      mPragmas(Pragmas),
       mTargetData(NULL),
       mLLVMContext(llvm::getGlobalContext()),
       mLicenseNote(NULL),

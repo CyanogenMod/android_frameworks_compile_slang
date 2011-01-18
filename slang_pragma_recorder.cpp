@@ -47,7 +47,7 @@ bool PragmaRecorder::GetPragmaValueFromToken(const clang::Token &Token,
   return true;
 }
 
-PragmaRecorder::PragmaRecorder(PragmaList &Pragmas)
+PragmaRecorder::PragmaRecorder(PragmaList *Pragmas)
     : PragmaHandler(),
       mPragmas(Pragmas) {
   return;
@@ -83,11 +83,11 @@ void PragmaRecorder::HandlePragma(clang::Preprocessor &PP,
     }
 
     // Until now, we ensure that we have a pragma name/value pair
-    mPragmas.push_back(make_pair(PragmaName, PragmaValue));
+    mPragmas->push_back(make_pair(PragmaName, PragmaValue));
   }
 
  end_parsing_pragma_value:
-  // Infor lex to eat the token
+  // Inform lex to eat the token
   PP.LexUnexpandedToken(CurrentToken);
 
   return;
