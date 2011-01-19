@@ -150,7 +150,7 @@ void Slang::GlobalInitialization() {
     // the options.
     LangOpts.RTTI = 0;  // Turn off the RTTI information support
     LangOpts.NeXTRuntime = 0;   // Turn off the NeXT runtime uses
-    LangOpts.Bool = 1;  // Turn on 'bool', 'true', 'false' keywords
+    LangOpts.C99 = 1;
 
     CodeGenOpts.OptimizationLevel = 3;  /* -O3 */
 
