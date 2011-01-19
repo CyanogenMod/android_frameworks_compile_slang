@@ -54,7 +54,8 @@ def ExecTest(dirname):
 
   cmd_string = ('../../../../../out/host/linux-x86/bin/llvm-rs-cc '
                 '-o tmp/ -p tmp/ '
-                '-I ../../../../../frameworks/base/libs/rs/scriptc/')
+                '-I ../../../../../frameworks/base/libs/rs/scriptc/ '
+                '-I ../../../../../external/clang/lib/Headers/')
   base_args = cmd_string.split()
   rs_files = glob.glob('*.rs')
   rs_files.sort()

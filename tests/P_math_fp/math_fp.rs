@@ -35,6 +35,12 @@ float4 f4;
     f3 = fnc(f3, &f3);      \
     f4 = fnc(f4, &f4);
 
+#define TEST_FUNC_2PI(fnc)  \
+    f = fnc(f, &i);         \
+    f2 = fnc(f2, &i2);      \
+    f3 = fnc(f3, &i3);      \
+    f4 = fnc(f4, &i4);
+
 #define TEST_FUNC_2F(fnc)   \
     f = fnc(f, f);          \
     f2 = fnc(f2, f2);       \
@@ -99,7 +105,7 @@ int compile_all_math_fp_ops() {
     TEST_FUNC_2F(fmin);
     TEST_FUNC_2(fmod);
     TEST_FUNC_2P(fract);
-    TEST_FUNC_2P(frexp);
+    TEST_FUNC_2PI(frexp);
     TEST_FUNC_2(hypot);
     TEST_FUNC_1_RI(ilogb);
     TEST_FUNC_2IN(ldexp);
