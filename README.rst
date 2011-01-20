@@ -54,6 +54,9 @@ Usage
 
   Note that *-MD* will tell llvm-rs-cc to output dependences.
 
+* *-a*
+
+  Specifies additional dependence target.
 
 Example Command
 ---------------
