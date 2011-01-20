@@ -111,7 +111,7 @@ int compile_all_math_fp_ops() {
     TEST_FUNC_2IN(ldexp);
     TEST_FUNC_2I(ldexp);
     TEST_FUNC_1(lgamma);
-    TEST_FUNC_2P(lgamma);
+    TEST_FUNC_2PI(lgamma);
     TEST_FUNC_1(log);
     TEST_FUNC_1(log2);
     TEST_FUNC_1(log10);
