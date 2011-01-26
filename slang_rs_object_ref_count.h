@@ -56,6 +56,8 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
     // Initialize RSSetObjectFD and RSClearObjectFD.
     static void GetRSRefCountingFunctions(clang::ASTContext &C);
 
+    void ReplaceRSObjectAssignment(clang::BinaryOperator *AS);
+
     void InsertLocalVarDestructors();
 
     static clang::Stmt *ClearRSObject(clang::VarDecl *VD);
