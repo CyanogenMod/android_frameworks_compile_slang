@@ -27,4 +27,6 @@
 
 #define RS_EXPORT_TYPE_MN "#rs_export_type"
 
+#define RS_OBJECT_SLOTS_MN "#rs_object_slots"
+
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_METADATA_H_  NOLINT

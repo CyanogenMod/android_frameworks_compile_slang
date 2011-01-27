@@ -60,7 +60,8 @@ RSBackend::RSBackend(RSContext *Context,
       mAllowRSPrefix(AllowRSPrefix),
       mExportVarMetadata(NULL),
       mExportFuncMetadata(NULL),
-      mExportTypeMetadata(NULL) {
+      mExportTypeMetadata(NULL),
+      mRSObjectSlotsMetadata(NULL) {
   return;
 }
 
@@ -183,10 +184,15 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
 
   // Dump export variable info
   if (mContext->hasExportVar()) {
+    int slotCount = 0;
     if (mExportVarMetadata == NULL)
       mExportVarMetadata = M->getOrInsertNamedMetadata(RS_EXPORT_VAR_MN);
 
     llvm::SmallVector<llvm::Value*, 2> ExportVarInfo;
+    llvm::SmallVector<llvm::Value*, 1> SlotVarInfo;
+
+    // We emit slot information (#rs_object_slots) for any reference counted
+    // RS type or pointer (which can also be bound).
 
     for (RSContext::const_export_var_iterator I = mContext->export_vars_begin(),
             E = mContext->export_vars_end();
@@ -194,6 +200,7 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
          I++) {
       const RSExportVar *EV = *I;
       const RSExportType *ET = EV->getType();
+      bool countsAsRSObject = false;
 
       // Variable name
       ExportVarInfo.push_back(
@@ -202,10 +209,14 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
       // Type name
       switch (ET->getClass()) {
         case RSExportType::ExportClassPrimitive: {
+          const RSExportPrimitiveType *PT =
+              static_cast<const RSExportPrimitiveType*>(ET);
           ExportVarInfo.push_back(
               llvm::MDString::get(
-                mLLVMContext, llvm::utostr_32(
-                  static_cast<const RSExportPrimitiveType*>(ET)->getType())));
+                mLLVMContext, llvm::utostr_32(PT->getType())));
+          if (PT->isRSObjectType()) {
+            countsAsRSObject = true;
+          }
           break;
         }
         case RSExportType::ExportClassPointer: {
@@ -239,6 +250,24 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
                             ExportVarInfo.size()) );
 
       ExportVarInfo.clear();
+
+      if (mRSObjectSlotsMetadata == NULL) {
+        mRSObjectSlotsMetadata =
+            M->getOrInsertNamedMetadata(RS_OBJECT_SLOTS_MN);
+      }
+
+      if (countsAsRSObject) {
+        SlotVarInfo.push_back(
+            llvm::MDString::get(mLLVMContext, llvm::utostr_32(slotCount)));
+
+        mRSObjectSlotsMetadata->addOperand(
+            llvm::MDNode::get(mLLVMContext,
+                              SlotVarInfo.data(),
+                              SlotVarInfo.size()));
+      }
+
+      slotCount++;
+      SlotVarInfo.clear();
     }
   }
 

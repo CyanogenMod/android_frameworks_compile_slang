@@ -51,6 +51,7 @@ class RSBackend : public Backend {
   llvm::NamedMDNode *mExportFuncMetadata;
   llvm::NamedMDNode *mExportTypeMetadata;
   llvm::NamedMDNode *mExportElementMetadata;
+  llvm::NamedMDNode *mRSObjectSlotsMetadata;
 
   RSObjectRefCount mRefCount;
 
