@@ -15,38 +15,7 @@
 #
 LOCAL_PATH := $(call my-dir)
 
-# Static library libslang for host
-# ========================================================
-include $(CLEAR_VARS)
-include $(CLEAR_TBLGEN_VARS)
-
-LLVM_ROOT_PATH := external/llvm
-CLANG_ROOT_PATH := external/clang
-
-include $(CLANG_ROOT_PATH)/clang.mk
-
-LOCAL_MODULE := libslang
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_CFLAGS += -Wno-sign-promo
-
-TBLGEN_TABLES :=    \
-	AttrList.inc	\
-	Attrs.inc	\
-	DeclNodes.inc	\
-	DiagnosticCommonKinds.inc	\
-	DiagnosticFrontendKinds.inc	\
-	DiagnosticSemaKinds.inc	\
-	StmtNodes.inc
-
-LOCAL_SRC_FILES :=	\
-	slang.cpp	\
-	slang_utils.cpp	\
-	slang_backend.cpp	\
-	slang_pragma_recorder.cpp	\
-	slang_diagnostic_buffer.cpp
-
-LOCAL_WHOLE_STATIC_LIBRARIES :=	\
+static_libraries_needed_by_slang := \
 	libLLVMLinker   \
 	libLLVMipo	\
 	libLLVMBitWriter	\
@@ -80,6 +49,37 @@ LOCAL_WHOLE_STATIC_LIBRARIES :=	\
 	libclangBasic	\
 	libLLVMSupport	\
 	libLLVMSystem
+
+# Static library libslang for host
+# ========================================================
+include $(CLEAR_VARS)
+include $(CLEAR_TBLGEN_VARS)
+
+LLVM_ROOT_PATH := external/llvm
+CLANG_ROOT_PATH := external/clang
+
+include $(CLANG_ROOT_PATH)/clang.mk
+
+LOCAL_MODULE := libslang
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_CFLAGS += -Wno-sign-promo
+
+TBLGEN_TABLES :=    \
+	AttrList.inc	\
+	Attrs.inc	\
+	DeclNodes.inc	\
+	DiagnosticCommonKinds.inc	\
+	DiagnosticFrontendKinds.inc	\
+	DiagnosticSemaKinds.inc	\
+	StmtNodes.inc
+
+LOCAL_SRC_FILES :=	\
+	slang.cpp	\
+	slang_utils.cpp	\
+	slang_backend.cpp	\
+	slang_pragma_recorder.cpp	\
+	slang_diagnostic_buffer.cpp
 
 LOCAL_LDLIBS := -ldl -lpthread
 
@@ -133,7 +133,8 @@ LOCAL_SRC_FILES :=	\
 	llvm-rs-link.cpp
 
 LOCAL_STATIC_LIBRARIES :=	\
-	librslib libslang
+	librslib libslang \
+	$(static_libraries_needed_by_slang)
 
 LOCAL_LDLIBS := -ldl -lpthread
 
@@ -204,7 +205,8 @@ LOCAL_SRC_FILES :=	\
 	slang_rs_metadata_spec_encoder.cpp
 
 LOCAL_STATIC_LIBRARIES :=	\
-	libclangDriver libslang
+	libclangDriver libslang \
+	$(static_libraries_needed_by_slang)
 
 ifeq ($(HOST_OS),windows)
   LOCAL_LDLIBS := -limagehlp -lpsapi
