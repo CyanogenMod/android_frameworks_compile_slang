@@ -45,15 +45,19 @@ namespace slang {
 RSContext::RSContext(clang::Preprocessor &PP,
                      clang::ASTContext &Ctx,
                      const clang::TargetInfo &Target,
-                     PragmaList *Pragmas)
+                     PragmaList *Pragmas,
+                     std::vector<std::string> *GeneratedFileNames)
     : mPP(PP),
       mCtx(Ctx),
       mTarget(Target),
       mPragmas(Pragmas),
+      mGeneratedFileNames(GeneratedFileNames),
       mTargetData(NULL),
       mLLVMContext(llvm::getGlobalContext()),
       mLicenseNote(NULL),
       version(0) {
+  assert(mGeneratedFileNames && "Must supply GeneratedFileNames");
+
   // For #pragma rs export_type
   PP.AddPragmaHandler(
       "rs", RSPragmaHandler::CreatePragmaExportTypeHandler(this));
@@ -252,7 +256,7 @@ bool RSContext::reflectToJava(const std::string &OutputPathBase,
   // Copy back the really applied package name
   RealPackageName->assign(PackageName);
 
-  RSReflection *R = new RSReflection(this);
+  RSReflection *R = new RSReflection(this, mGeneratedFileNames);
   bool ret = R->reflect(OutputPathBase, PackageName,
                         InputFileName, OutputBCFileName);
   if (!ret)

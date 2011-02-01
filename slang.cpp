@@ -382,6 +382,13 @@ int Slang::generateDepFile() {
   DepOpts.OutputFile = mDepOutputFileName;
   DepOpts.Targets = mAdditionalDepTargets;
   DepOpts.Targets.push_back(mDepTargetBCFileName);
+  for (std::vector<std::string>::const_iterator
+           I = mGeneratedFileNames.begin(), E = mGeneratedFileNames.end();
+       I != E;
+       I++) {
+    DepOpts.Targets.push_back(*I);
+  }
+  mGeneratedFileNames.clear();
 
   // Per-compilation needed initialization
   createPreprocessor();
