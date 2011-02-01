@@ -153,9 +153,6 @@ static void ReplaceinCompoundStmt(clang::ASTContext& C,
     StmtCount++;
   }
 
-  //OldStmt->dump();
-  //NewStmt->dump();
-
   clang::Stmt **UpdatedStmtList = new clang::Stmt*[StmtCount];
 
   unsigned UpdatedStmtCount = 0;

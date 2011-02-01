@@ -64,6 +64,7 @@ class RSContext {
   clang::ASTContext &mCtx;
   const clang::TargetInfo &mTarget;
   PragmaList *mPragmas;
+  std::vector<std::string> *mGeneratedFileNames;
 
   llvm::TargetData *mTargetData;
   llvm::LLVMContext &mLLVMContext;
@@ -90,7 +91,8 @@ class RSContext {
   RSContext(clang::Preprocessor &PP,
             clang::ASTContext &Ctx,
             const clang::TargetInfo &Target,
-            PragmaList *Pragmas);
+            PragmaList *Pragmas,
+            std::vector<std::string> *GeneratedFileNames);
 
   inline clang::Preprocessor &getPreprocessor() const { return mPP; }
   inline clang::ASTContext &getASTContext() const { return mCtx; }
@@ -116,6 +118,9 @@ class RSContext {
   inline void setReflectJavaPackageName(const std::string &S) {
     mReflectJavaPackageName = S;
     return;
+  }
+  inline const std::string &getReflectJavaPackageName() {
+    return mReflectJavaPackageName;
   }
 
   bool processExport();

@@ -1233,6 +1233,8 @@ bool RSReflection::genTypeClass(Context &C,
                     ErrorMsg))
     return false;
 
+  mGeneratedFileNames->push_back(ClassName);
+
   genTypeItemClass(C, ERT);
 
   // Declare item buffer and item buffer packer
@@ -1783,6 +1785,8 @@ bool RSReflection::reflect(const std::string &OutputPathBase,
                 << ErrorMsg << ")" << std::endl;
       return false;
     }
+
+    mGeneratedFileNames->push_back(ScriptClassName);
 
     // class ScriptField_<TypeName>
     for (RSContext::const_export_type_iterator TI =

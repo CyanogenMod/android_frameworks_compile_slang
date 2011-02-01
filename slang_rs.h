@@ -47,6 +47,9 @@ class SlangRS : public Slang {
   unsigned mDiagErrorInvalidOutputDepParameter;
   unsigned mDiagErrorODR;
 
+  // Collect generated filenames (without the .java) for dependency generation
+  std::vector<std::string> mGeneratedFileNames;
+
   // FIXME: Should be std::list<RSExportable *> here. But currently we only
   //        check ODR on record type.
   //

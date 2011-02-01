@@ -114,6 +114,7 @@ class Slang {
   std::string mDepOutputFileName;
   std::string mDepTargetBCFileName;
   std::vector<std::string> mAdditionalDepTargets;
+  std::vector<std::string> mGeneratedFileNames;
 
   OutputType mOT;
 
@@ -181,6 +182,10 @@ class Slang {
   inline void setAdditionalDepTargets(
       const std::vector<std::string> &AdditionalDepTargets) {
     mAdditionalDepTargets = AdditionalDepTargets;
+  }
+  inline void appendGeneratedFileName(
+      const std::string &GeneratedFileName) {
+    mGeneratedFileNames.push_back(GeneratedFileName);
   }
 
   int generateDepFile();

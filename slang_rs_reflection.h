@@ -39,6 +39,8 @@ class RSReflection {
   const RSContext *mRSContext;
 
   std::string mLastError;
+  std::vector<std::string> *mGeneratedFileNames;
+
   inline void setError(const std::string &Error) { mLastError = Error; }
 
   class Context {
@@ -275,9 +277,12 @@ class RSReflection {
   void genNewItemBufferPackerIfNull(Context &C);
 
  public:
-  explicit RSReflection(const RSContext *Context)
+  explicit RSReflection(const RSContext *Context,
+      std::vector<std::string> *GeneratedFileNames)
       : mRSContext(Context),
-        mLastError("") {
+        mLastError(""),
+        mGeneratedFileNames(GeneratedFileNames) {
+    assert(mGeneratedFileNames && "Must supply GeneratedFileNames");
     return;
   }
 

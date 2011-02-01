@@ -195,7 +195,8 @@ void SlangRS::initASTContext() {
   mRSContext = new RSContext(getPreprocessor(),
                              getASTContext(),
                              getTargetInfo(),
-                             &mPragmas);
+                             &mPragmas,
+                             &mGeneratedFileNames);
   return;
 }
 
@@ -261,8 +262,9 @@ bool SlangRS::compile(
 
   setIncludePaths(IncludePaths);
   setOutputType(OutputType);
-  if (OutputDep)
+  if (OutputDep) {
     setAdditionalDepTargets(AdditionalDepTargets);
+  }
 
   mAllowRSPrefix = AllowRSPrefix;
 
@@ -277,6 +279,32 @@ bool SlangRS::compile(
 
     if (!setOutput(OutputFile))
       return false;
+
+    if (Slang::compile() > 0)
+      return false;
+
+    if (OutputType != Slang::OT_Dependency) {
+      if (!reflectToJava(JavaReflectionPathBase,
+                         JavaReflectionPackageName,
+                         &RealPackageName))
+        return false;
+
+      for (std::vector<std::string>::const_iterator
+               I = mGeneratedFileNames.begin(), E = mGeneratedFileNames.end();
+           I != E;
+           I++) {
+        std::string ReflectedName = RSSlangReflectUtils::ComputePackagedPath(
+            JavaReflectionPathBase.c_str(),
+            (RealPackageName + "/" + *I).c_str());
+        appendGeneratedFileName(ReflectedName + ".java");
+      }
+
+      if ((OutputType == Slang::OT_Bitcode) &&
+          (BitcodeStorage == BCST_JAVA_CODE) &&
+          !generateBitcodeAccessor(JavaReflectionPathBase,
+                                     RealPackageName.c_str()))
+          return false;
+    }
 
     if (OutputDep) {
       BCOutputFile = DepFileIter->first;
@@ -293,22 +321,6 @@ bool SlangRS::compile(
       DepFileIter++;
     }
 
-    if (Slang::compile() > 0)
-      return false;
-
-    if (OutputType != Slang::OT_Dependency) {
-      if (!reflectToJava(JavaReflectionPathBase,
-                         JavaReflectionPackageName,
-                         &RealPackageName))
-        return false;
-
-      if ((OutputType == Slang::OT_Bitcode) &&
-          (BitcodeStorage == BCST_JAVA_CODE) &&
-          !generateBitcodeAccessor(JavaReflectionPathBase,
-                                     RealPackageName.c_str()))
-          return false;
-    }
-
     if (!checkODR(InputFile))
       return false;
 
@@ -321,6 +333,7 @@ bool SlangRS::compile(
 void SlangRS::reset() {
   delete mRSContext;
   mRSContext = NULL;
+  mGeneratedFileNames.clear();
   Slang::reset();
   return;
 }
