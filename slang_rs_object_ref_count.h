@@ -58,6 +58,11 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
 
     void ReplaceRSObjectAssignment(clang::BinaryOperator *AS);
 
+    void AppendRSObjectInit(clang::VarDecl *VD,
+                            clang::DeclStmt *DS,
+                            RSExportPrimitiveType::DataType DT,
+                            clang::Expr *InitExpr);
+
     void InsertLocalVarDestructors();
 
     static clang::Stmt *ClearRSObject(clang::VarDecl *VD);
@@ -75,7 +80,9 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
 
   // Return false if the type of variable declared in VD is not an RS object
   // type.
-  static bool InitializeRSObject(clang::VarDecl *VD);
+  static bool InitializeRSObject(clang::VarDecl *VD,
+                                 RSExportPrimitiveType::DataType *DT,
+                                 clang::Expr **InitExpr);
 
   // Return a zero-initializer expr of the type DT. This processes both
   // RS matrix type and RS object type.
