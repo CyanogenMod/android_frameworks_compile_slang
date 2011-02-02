@@ -1838,7 +1838,7 @@ const char *const RSReflection::Context::Import[] = {
   // Import R
   "android.content.res.Resources",
   // Import for debugging
-  "android.util.Log",
+  // "android.util.Log",
 };
 
 bool RSReflection::Context::openClassFile(const std::string &ClassName,
