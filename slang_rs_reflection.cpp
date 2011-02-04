@@ -1815,7 +1815,7 @@ bool RSReflection::reflect(const std::string &OutputPathBase,
 /************************** RSReflection::Context **************************/
 const char *const RSReflection::Context::ApacheLicenseNote =
     "/*\n"
-    " * Copyright (C) 2010 The Android Open Source Project\n"
+    " * Copyright (C) 2011 The Android Open Source Project\n"
     " *\n"
     " * Licensed under the Apache License, Version 2.0 (the \"License\");\n"
     " * you may not use this file except in compliance with the License.\n"

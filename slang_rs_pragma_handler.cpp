@@ -163,7 +163,7 @@ RSPragmaHandler::CreatePragmaJavaPackageNameHandler(RSContext *Context) {
 
 RSPragmaHandler *
 RSPragmaHandler::CreatePragmaReflectLicenseHandler(RSContext *Context) {
-  return new RSJavaPackageNamePragmaHandler("set_reflect_license", Context);
+  return new RSReflectLicensePragmaHandler("set_reflect_license", Context);
 }
 
 RSPragmaHandler *
