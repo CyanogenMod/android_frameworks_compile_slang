@@ -675,7 +675,11 @@ bool RSObjectRefCount::InitializeRSObject(clang::VarDecl *VD,
   *DT = RSExportPrimitiveType::GetRSSpecificType(T);
 
   if (*DT == RSExportPrimitiveType::DataTypeUnknown) {
-    return false;
+    if (RSExportPrimitiveType::IsStructureTypeWithRSObject(T)) {
+      *DT = RSExportPrimitiveType::DataTypeIsStruct;
+    } else {
+      return false;
+    }
   }
 
   bool DataTypeIsRSObject = RSExportPrimitiveType::IsRSObjectType(*DT);
@@ -705,6 +709,7 @@ clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
     const clang::SourceLocation &Loc) {
   clang::Expr *Res = NULL;
   switch (DT) {
+    case RSExportPrimitiveType::DataTypeIsStruct:
     case RSExportPrimitiveType::DataTypeRSElement:
     case RSExportPrimitiveType::DataTypeRSType:
     case RSExportPrimitiveType::DataTypeRSAllocation:
