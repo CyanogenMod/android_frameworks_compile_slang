@@ -618,6 +618,60 @@ bool RSExportPrimitiveType::IsRSObjectType(DataType DT) {
   return ((DT >= FirstRSObjectType) && (DT <= LastRSObjectType));
 }
 
+bool RSExportPrimitiveType::IsStructureTypeWithRSObject(const clang::Type *T) {
+  bool RSObjectTypeSeen = false;
+  while (T && T->isArrayType()) {
+    T = T->getArrayElementTypeNoTypeQual();
+  }
+
+  const clang::RecordType *RT = T->getAsStructureType();
+  if (!RT) {
+    return false;
+  }
+  const clang::RecordDecl *RD = RT->getDecl();
+  RD = RD->getDefinition();
+  for (clang::RecordDecl::field_iterator FI = RD->field_begin(),
+         FE = RD->field_end();
+       FI != FE;
+       FI++) {
+    // We just look through all field declarations to see if we find a
+    // declaration for an RS object type (or an array of one).
+    const clang::FieldDecl *FD = *FI;
+    const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
+    while (FT && FT->isArrayType()) {
+      FT = FT->getArrayElementTypeNoTypeQual();
+    }
+
+    RSExportPrimitiveType::DataType DT = GetRSSpecificType(FT);
+    if (IsRSObjectType(DT)) {
+      // RS object types definitely need to be zero-initialized
+      RSObjectTypeSeen = true;
+    } else {
+      switch (DT) {
+        case RSExportPrimitiveType::DataTypeRSMatrix2x2:
+        case RSExportPrimitiveType::DataTypeRSMatrix3x3:
+        case RSExportPrimitiveType::DataTypeRSMatrix4x4:
+          // Matrix types should get zero-initialized as well
+          RSObjectTypeSeen = true;
+          break;
+        default:
+          // Ignore all other primitive types
+          break;
+      }
+      while (FT && FT->isArrayType()) {
+        FT = FT->getArrayElementTypeNoTypeQual();
+      }
+      if (FT->isStructureType()) {
+        // Recursively handle structs of structs (even though these can't
+        // be exported, it is possible for a user to have them internally).
+        RSObjectTypeSeen |= IsStructureTypeWithRSObject(FT);
+      }
+    }
+  }
+
+  return RSObjectTypeSeen;
+}
+
 const size_t RSExportPrimitiveType::SizeOfDataTypeInBits[] = {
 #define ENUM_RS_DATA_TYPE(type, cname, bits)  \
   bits,

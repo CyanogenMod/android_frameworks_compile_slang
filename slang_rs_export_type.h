@@ -168,6 +168,7 @@ class RSExportPrimitiveType : public RSExportType {
  public:
   // From graphics/java/android/renderscript/Element.java: Element.DataType
   typedef enum {
+    DataTypeIsStruct = -2,
     DataTypeUnknown = -1,
 
 #define ENUM_PRIMITIVE_DATA_TYPE_RANGE(begin_type, end_type)  \
@@ -259,6 +260,10 @@ class RSExportPrimitiveType : public RSExportType {
 
   static bool IsRSMatrixType(DataType DT);
   static bool IsRSObjectType(DataType DT);
+
+  // Determines whether T is [an array of] struct that contains at least one
+  // RS object type within it.
+  static bool IsStructureTypeWithRSObject(const clang::Type *T);
 
   static size_t GetSizeInBits(const RSExportPrimitiveType *EPT);
 
