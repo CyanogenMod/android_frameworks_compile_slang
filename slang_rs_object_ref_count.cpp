@@ -142,7 +142,38 @@ static void AppendToCompoundStatement(clang::ASTContext& C,
   return;
 }
 
-static void ReplaceinCompoundStmt(clang::ASTContext& C,
+static void AppendAfterStmt(clang::ASTContext& C,
+                            clang::CompoundStmt *CS,
+                            clang::Stmt *OldStmt,
+                            clang::Stmt *NewStmt) {
+  assert(CS && OldStmt && NewStmt);
+  clang::CompoundStmt::body_iterator bI = CS->body_begin();
+  unsigned StmtCount = 1;  // Take into account new statement
+  for (bI = CS->body_begin(); bI != CS->body_end(); bI++) {
+    StmtCount++;
+  }
+
+  clang::Stmt **UpdatedStmtList = new clang::Stmt*[StmtCount];
+
+  unsigned UpdatedStmtCount = 0;
+  unsigned Once = 0;
+  for (bI = CS->body_begin(); bI != CS->body_end(); bI++) {
+    UpdatedStmtList[UpdatedStmtCount++] = *bI;
+    if (*bI == OldStmt) {
+      Once++;
+      assert(Once == 1);
+      UpdatedStmtList[UpdatedStmtCount++] = NewStmt;
+    }
+  }
+
+  CS->setStmts(C, UpdatedStmtList, UpdatedStmtCount);
+
+  delete [] UpdatedStmtList;
+
+  return;
+}
+
+static void ReplaceInCompoundStmt(clang::ASTContext& C,
                                   clang::CompoundStmt *CS,
                                   clang::Stmt* OldStmt,
                                   clang::Stmt* NewStmt) {
@@ -456,7 +487,75 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
                              SetObjectFD->getCallResultType(),
                              Loc);
 
-  ReplaceinCompoundStmt(C, mCS, AS, RSSetObjectCall);
+  ReplaceInCompoundStmt(C, mCS, AS, RSSetObjectCall);
+
+  return;
+}
+
+void RSObjectRefCount::Scope::AppendRSObjectInit(
+    clang::VarDecl *VD,
+    clang::DeclStmt *DS,
+    RSExportPrimitiveType::DataType DT,
+    clang::Expr *InitExpr) {
+  assert(VD);
+
+  if (!InitExpr) {
+    return;
+  }
+
+  clang::FunctionDecl *SetObjectFD =
+      RSSetObjectFD[(DT - RSExportPrimitiveType::FirstRSObjectType)];
+  assert((SetObjectFD != NULL) &&
+      "rsSetObject doesn't cover all RS object types");
+  clang::ASTContext &C = SetObjectFD->getASTContext();
+
+  clang::QualType SetObjectFDType = SetObjectFD->getType();
+  clang::QualType SetObjectFDArgType[2];
+  SetObjectFDArgType[0] = SetObjectFD->getParamDecl(0)->getOriginalType();
+  SetObjectFDArgType[1] = SetObjectFD->getParamDecl(1)->getOriginalType();
+
+  clang::SourceLocation Loc = SetObjectFD->getLocation();
+  clang::Expr *RefRSSetObjectFD =
+      clang::DeclRefExpr::Create(C,
+                                 NULL,
+                                 SetObjectFD->getQualifierRange(),
+                                 SetObjectFD,
+                                 Loc,
+                                 SetObjectFDType);
+
+  clang::Expr *RSSetObjectFP =
+      clang::ImplicitCastExpr::Create(C,
+                                      C.getPointerType(SetObjectFDType),
+                                      clang::CK_FunctionToPointerDecay,
+                                      RefRSSetObjectFD,
+                                      NULL,
+                                      clang::VK_RValue);
+
+  const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
+  clang::DeclRefExpr *RefRSVar =
+      clang::DeclRefExpr::Create(C,
+                                 NULL,
+                                 VD->getQualifierRange(),
+                                 VD,
+                                 Loc,
+                                 T->getCanonicalTypeInternal());
+
+  clang::Expr *ArgList[2];
+  ArgList[0] = new(C) clang::UnaryOperator(RefRSVar,
+                                           clang::UO_AddrOf,
+                                           SetObjectFDArgType[0],
+                                           Loc);
+  ArgList[1] = InitExpr;
+
+  clang::CallExpr *RSSetObjectCall =
+      new(C) clang::CallExpr(C,
+                             RSSetObjectFP,
+                             ArgList,
+                             2,
+                             SetObjectFD->getCallResultType(),
+                             Loc);
+
+  AppendAfterStmt(C, mCS, DS, RSSetObjectCall);
 
   return;
 }
@@ -562,39 +661,42 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
   return RSClearObjectCall;
 }
 
-bool RSObjectRefCount::InitializeRSObject(clang::VarDecl *VD) {
-  bool IsArrayType = false;
+bool RSObjectRefCount::InitializeRSObject(clang::VarDecl *VD,
+                                          RSExportPrimitiveType::DataType *DT,
+                                          clang::Expr **InitExpr) {
+  assert(VD && DT && InitExpr);
   const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
 
   // Loop through array types to get to base type
   while (T && T->isArrayType()) {
     T = T->getArrayElementTypeNoTypeQual();
-    IsArrayType = true;
   }
 
-  RSExportPrimitiveType::DataType DT =
-      RSExportPrimitiveType::GetRSSpecificType(T);
+  *DT = RSExportPrimitiveType::GetRSSpecificType(T);
 
-  if (DT == RSExportPrimitiveType::DataTypeUnknown) {
+  if (*DT == RSExportPrimitiveType::DataTypeUnknown) {
     return false;
   }
 
-  if (VD->hasInit()) {
-    // TODO(srhines): Update the reference count of RS object in initializer.
-    // This can potentially be done as part of the assignment pass.
-  } else {
-    clang::Expr *ZeroInitializer =
-        CreateZeroInitializerForRSSpecificType(DT,
-                                               VD->getASTContext(),
-                                               VD->getLocation());
+  bool DataTypeIsRSObject = RSExportPrimitiveType::IsRSObjectType(*DT);
+  *InitExpr = VD->getInit();
 
-    if (ZeroInitializer) {
-      ZeroInitializer->setType(T->getCanonicalTypeInternal());
-      VD->setInit(ZeroInitializer);
-    }
+  if (!DataTypeIsRSObject && *InitExpr) {
+    // If we already have an initializer for a matrix type, we are done.
+    return DataTypeIsRSObject;
   }
 
-  return RSExportPrimitiveType::IsRSObjectType(DT);
+  clang::Expr *ZeroInitializer =
+      CreateZeroInitializerForRSSpecificType(*DT,
+                                             VD->getASTContext(),
+                                             VD->getLocation());
+
+  if (ZeroInitializer) {
+    ZeroInitializer->setType(T->getCanonicalTypeInternal());
+    VD->setInit(ZeroInitializer);
+  }
+
+  return DataTypeIsRSObject;
 }
 
 clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
@@ -703,8 +805,13 @@ void RSObjectRefCount::VisitDeclStmt(clang::DeclStmt *DS) {
     clang::Decl *D = *I;
     if (D->getKind() == clang::Decl::Var) {
       clang::VarDecl *VD = static_cast<clang::VarDecl*>(D);
-      if (InitializeRSObject(VD))
+      RSExportPrimitiveType::DataType DT =
+          RSExportPrimitiveType::DataTypeUnknown;
+      clang::Expr *InitExpr = NULL;
+      if (InitializeRSObject(VD, &DT, &InitExpr)) {
         getCurrentScope()->addRSObject(VD);
+        getCurrentScope()->AppendRSObjectInit(VD, DS, DT, InitExpr);
+      }
     }
   }
   return;
