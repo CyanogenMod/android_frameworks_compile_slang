@@ -64,6 +64,9 @@ LOCAL_MODULE := libslang
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_CFLAGS += -Wno-sign-promo
+ifneq ($(TARGET_BUILD_VARIANT),eng)
+LOCAL_CFLAGS += -D__DISABLE_ASSERTS
+endif
 
 TBLGEN_TABLES :=    \
 	AttrList.inc	\
@@ -168,6 +171,9 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := EXECUTABLES
 
 LOCAL_CFLAGS += -Wno-sign-promo
+ifneq ($(TARGET_BUILD_VARIANT),eng)
+LOCAL_CFLAGS += -D__DISABLE_ASSERTS
+endif
 
 TBLGEN_TABLES :=    \
 	AttrList.inc    \

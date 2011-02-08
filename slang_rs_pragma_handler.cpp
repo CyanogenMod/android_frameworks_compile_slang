@@ -25,6 +25,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Token.h"
 
+#include "slang_assert.h"
 #include "slang_rs_context.h"
 
 namespace slang {
@@ -190,7 +191,7 @@ void RSPragmaHandler::handleItemListPragma(clang::Preprocessor &PP,
     else
       break;
 
-    assert(PragmaToken.isNot(clang::tok::eom));
+    slangAssert(PragmaToken.isNot(clang::tok::eom));
 
     PP.LexUnexpandedToken(PragmaToken);
 

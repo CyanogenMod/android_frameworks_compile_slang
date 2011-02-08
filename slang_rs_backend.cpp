@@ -31,6 +31,7 @@
 
 #include "llvm/Support/IRBuilder.h"
 
+#include "slang_assert.h"
 #include "slang_rs.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_func.h"
@@ -295,7 +296,7 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
         llvm::Function *HelperFunction;
         const std::string HelperFunctionName(".helper_" + EF->getName());
 
-        assert(F && "Function marked as exported disappeared in Bitcode");
+        slangAssert(F && "Function marked as exported disappeared in Bitcode");
 
         // Create helper function
         {
@@ -443,8 +444,8 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
             M->getOrInsertNamedMetadata(StructInfoMetadataName);
         llvm::SmallVector<llvm::Value*, 3> FieldInfo;
 
-        assert(StructInfoMetadata->getNumOperands() == 0 &&
-               "Metadata with same name was created before");
+        slangAssert(StructInfoMetadata->getNumOperands() == 0 &&
+                    "Metadata with same name was created before");
         for (RSExportRecordType::const_field_iterator FI = ERT->fields_begin(),
                 FE = ERT->fields_end();
              FI != FE;

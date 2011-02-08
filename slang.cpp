@@ -60,6 +60,7 @@
 
 #include "llvm/Target/TargetSelect.h"
 
+#include "slang_assert.h"
 #include "slang_backend.h"
 #include "slang_utils.h"
 
@@ -113,8 +114,8 @@ static inline llvm::tool_output_file *OpenOutputFile(const char *OutputFile,
                                                      unsigned Flags,
                                                      std::string* Error,
                                                      clang::Diagnostic* Diag) {
-  assert((OutputFile != NULL) && (Error != NULL) && (Diag != NULL) &&
-         "Invalid parameter!");
+  slangAssert((OutputFile != NULL) && (Error != NULL) && (Diag != NULL) &&
+              "Invalid parameter!");
 
   llvm::sys::Path OutputFilePath(OutputFile);
 

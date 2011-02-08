@@ -24,6 +24,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
 
+#include "slang_assert.h"
 #include "slang_rs_context.h"
 
 namespace slang {
@@ -33,7 +34,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
   llvm::StringRef Name = FD->getName();
   RSExportFunc *F;
 
-  assert(!Name.empty() && "Function must have a name");
+  slangAssert(!Name.empty() && "Function must have a name");
 
   F = new RSExportFunc(Context, Name);
 
@@ -77,7 +78,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
     RD->completeDefinition();
 
     clang::QualType T = Ctx.getTagDeclType(RD);
-    assert(!T.isNull());
+    slangAssert(!T.isNull());
 
     RSExportType *ET =
       RSExportType::Create(Context, T.getTypePtr());
@@ -90,7 +91,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
       return NULL;
     }
 
-    assert((ET->getClass() == RSExportType::ExportClassRecord) &&
+    slangAssert((ET->getClass() == RSExportType::ExportClassRecord) &&
            "Parameter packet must be a record");
 
     F->mParamPacketType = static_cast<RSExportRecordType *>(ET);
@@ -106,7 +107,7 @@ RSExportFunc::checkParameterPacketType(const llvm::StructType *ParamTy) const {
   else if (!hasParam())
     return false;
 
-  assert(mParamPacketType != NULL);
+  slangAssert(mParamPacketType != NULL);
 
   const RSExportRecordType *ERT = mParamPacketType;
   // must have same number of elements

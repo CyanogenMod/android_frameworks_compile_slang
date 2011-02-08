@@ -22,6 +22,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/IdentifierTable.h"
 
+#include "slang_assert.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
 
@@ -67,7 +68,7 @@ RSExportType *RSExportElement::Create(RSContext *Context,
   if (!Initialized)
     Init();
 
-  assert(EI != NULL && "Element info not found");
+  slangAssert(EI != NULL && "Element info not found");
 
   if (!RSExportType::NormalizeType(T, TypeName, NULL, NULL, NULL))
     return NULL;
@@ -75,8 +76,8 @@ RSExportType *RSExportElement::Create(RSContext *Context,
   switch (T->getTypeClass()) {
     case clang::Type::Builtin:
     case clang::Type::Pointer: {
-      assert(EI->vsize == 1 && "Element not a primitive class (please check "
-                               "your macro)");
+      slangAssert(EI->vsize == 1 && "Element not a primitive class (please "
+                                    "check your macro)");
       RSExportPrimitiveType *EPT =
           RSExportPrimitiveType::Create(Context,
                                         T,
@@ -84,13 +85,13 @@ RSExportType *RSExportElement::Create(RSContext *Context,
                                         EI->kind,
                                         EI->normalized);
       // Verify
-      assert(EI->type == EPT->getType() && "Element has unexpected type");
+      slangAssert(EI->type == EPT->getType() && "Element has unexpected type");
       ET = EPT;
       break;
     }
     case clang::Type::ExtVector: {
-      assert(EI->vsize > 1 && "Element not a vector class (please check your "
-                              "macro)");
+      slangAssert(EI->vsize > 1 && "Element not a vector class (please check "
+                                   "your macro)");
       RSExportVectorType *EVT =
           RSExportVectorType::Create(Context,
                                      static_cast<clang::ExtVectorType*>(
@@ -100,9 +101,9 @@ RSExportType *RSExportElement::Create(RSContext *Context,
                                      EI->kind,
                                      EI->normalized);
       // Verify
-      assert(EI->type == EVT->getType() && "Element has unexpected type");
-      assert(EI->vsize == EVT->getNumElement() && "Element has unexpected size "
-                                                  "of vector");
+      slangAssert(EI->type == EVT->getType() && "Element has unexpected type");
+      slangAssert(EI->vsize == EVT->getNumElement() && "Element has unexpected "
+                                                       "size of vector");
       ET = EVT;
       break;
     }

@@ -17,7 +17,6 @@
 #ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_H_  // NOLINT
 #define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_H_
 
-#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -26,6 +25,7 @@
 
 #include "llvm/ADT/StringExtras.h"
 
+#include "slang_assert.h"
 #include "slang_rs_export_type.h"
 
 namespace slang {
@@ -133,7 +133,7 @@ class RSReflection {
     }
 
     inline void decIndentLevel() {
-      assert(getIndentLevel() > 0 && "No indent");
+      slangAssert(getIndentLevel() > 0 && "No indent");
       mIndent.erase(0, 4);
       return;
     }
@@ -190,15 +190,15 @@ class RSReflection {
     inline void resetFieldIndex() { mFieldIndex = 0; }
 
     inline void addFieldIndexMapping(const RSExportRecordType::Field *F) {
-      assert((mFieldIndexMap.find(F) == mFieldIndexMap.end()) &&
-             "Nested structure never occurs in C language.");
+      slangAssert((mFieldIndexMap.find(F) == mFieldIndexMap.end()) &&
+                  "Nested structure never occurs in C language.");
       mFieldIndexMap.insert(std::make_pair(F, mFieldIndex));
     }
 
     inline unsigned getFieldIndex(const RSExportRecordType::Field *F) const {
       FieldIndexMapTy::const_iterator I = mFieldIndexMap.find(F);
-      assert((I != mFieldIndexMap.end()) &&
-             "Requesting field is out of scope.");
+      slangAssert((I != mFieldIndexMap.end()) &&
+                  "Requesting field is out of scope.");
       return I->second;
     }
 
@@ -282,7 +282,7 @@ class RSReflection {
       : mRSContext(Context),
         mLastError(""),
         mGeneratedFileNames(GeneratedFileNames) {
-    assert(mGeneratedFileNames && "Must supply GeneratedFileNames");
+    slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
     return;
   }
 

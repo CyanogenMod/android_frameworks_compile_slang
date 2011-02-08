@@ -44,7 +44,7 @@ class RSExportElement {
     RSExportPrimitiveType::DataKind kind;
     RSExportPrimitiveType::DataType type;
     bool normalized;
-    int vsize;
+    unsigned vsize;
   } ElementInfo;
 
   typedef llvm::StringMap<const ElementInfo*> ElementInfoMapTy;

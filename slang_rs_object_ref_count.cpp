@@ -24,6 +24,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/StmtVisitor.h"
 
+#include "slang_assert.h"
 #include "slang_rs.h"
 #include "slang_rs_export_type.h"
 
@@ -57,12 +58,12 @@ void RSObjectRefCount::Scope::GetRSRefCountingFunctions(
       clang::FunctionDecl **RSObjectFD;
 
       if (FD->getName() == "rsSetObject") {
-        assert((FD->getNumParams() == 2) &&
-               "Invalid rsSetObject function prototype (# params)");
+        slangAssert((FD->getNumParams() == 2) &&
+                    "Invalid rsSetObject function prototype (# params)");
         RSObjectFD = RSSetObjectFD;
       } else if (FD->getName() == "rsClearObject") {
-        assert((FD->getNumParams() == 1) &&
-               "Invalid rsClearObject function prototype (# params)");
+        slangAssert((FD->getNumParams() == 1) &&
+                    "Invalid rsClearObject function prototype (# params)");
         RSObjectFD = RSClearObjectFD;
       } else {
         continue;
@@ -71,14 +72,14 @@ void RSObjectRefCount::Scope::GetRSRefCountingFunctions(
       const clang::ParmVarDecl *PVD = FD->getParamDecl(0);
       clang::QualType PVT = PVD->getOriginalType();
       // The first parameter must be a pointer like rs_allocation*
-      assert(PVT->isPointerType() &&
-             "Invalid rs{Set,Clear}Object function prototype (pointer param)");
+      slangAssert(PVT->isPointerType() &&
+          "Invalid rs{Set,Clear}Object function prototype (pointer param)");
 
       // The rs object type passed to the FD
       clang::QualType RST = PVT->getPointeeType();
       RSExportPrimitiveType::DataType DT =
           RSExportPrimitiveType::GetRSSpecificType(RST.getTypePtr());
-      assert(RSExportPrimitiveType::IsRSObjectType(DT)
+      slangAssert(RSExportPrimitiveType::IsRSObjectType(DT)
              && "must be RS object type");
 
       RSObjectFD[(DT - RSExportPrimitiveType::FirstRSObjectType)] = FD;
@@ -146,7 +147,7 @@ static void AppendAfterStmt(clang::ASTContext& C,
                             clang::CompoundStmt *CS,
                             clang::Stmt *OldStmt,
                             clang::Stmt *NewStmt) {
-  assert(CS && OldStmt && NewStmt);
+  slangAssert(CS && OldStmt && NewStmt);
   clang::CompoundStmt::body_iterator bI = CS->body_begin();
   unsigned StmtCount = 1;  // Take into account new statement
   for (bI = CS->body_begin(); bI != CS->body_end(); bI++) {
@@ -161,7 +162,7 @@ static void AppendAfterStmt(clang::ASTContext& C,
     UpdatedStmtList[UpdatedStmtCount++] = *bI;
     if (*bI == OldStmt) {
       Once++;
-      assert(Once == 1);
+      slangAssert(Once == 1);
       UpdatedStmtList[UpdatedStmtCount++] = NewStmt;
     }
   }
@@ -427,7 +428,7 @@ static clang::Stmt *ClearArrayRSObject(clang::VarDecl *VD,
                             Loc);
 
   StmtArray[StmtCtr++] = DestructorLoop;
-  assert(StmtCtr == 2);
+  slangAssert(StmtCtr == 2);
 
   clang::CompoundStmt *CS =
       new(C) clang::CompoundStmt(C, StmtArray, StmtCtr, Loc, Loc);
@@ -446,8 +447,8 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
 
   clang::FunctionDecl *SetObjectFD =
       RSSetObjectFD[(DT - RSExportPrimitiveType::FirstRSObjectType)];
-  assert((SetObjectFD != NULL) &&
-      "rsSetObject doesn't cover all RS object types");
+  slangAssert((SetObjectFD != NULL) &&
+              "rsSetObject doesn't cover all RS object types");
   clang::ASTContext &C = SetObjectFD->getASTContext();
 
   clang::QualType SetObjectFDType = SetObjectFD->getType();
@@ -497,7 +498,7 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
     clang::DeclStmt *DS,
     RSExportPrimitiveType::DataType DT,
     clang::Expr *InitExpr) {
-  assert(VD);
+  slangAssert(VD);
 
   if (!InitExpr) {
     return;
@@ -505,8 +506,8 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
 
   clang::FunctionDecl *SetObjectFD =
       RSSetObjectFD[(DT - RSExportPrimitiveType::FirstRSObjectType)];
-  assert((SetObjectFD != NULL) &&
-      "rsSetObject doesn't cover all RS object types");
+  slangAssert((SetObjectFD != NULL) &&
+              "rsSetObject doesn't cover all RS object types");
   clang::ASTContext &C = SetObjectFD->getASTContext();
 
   clang::QualType SetObjectFDType = SetObjectFD->getType();
@@ -593,14 +594,14 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
   RSExportPrimitiveType::DataType DT =
       RSExportPrimitiveType::GetRSSpecificType(T);
 
-  assert((RSExportPrimitiveType::IsRSObjectType(DT)) &&
-      "Should be RS object");
+  slangAssert((RSExportPrimitiveType::IsRSObjectType(DT)) &&
+              "Should be RS object");
 
   // Find the rsClearObject() for VD of RS object type DT
   clang::FunctionDecl *ClearObjectFD =
       RSClearObjectFD[(DT - RSExportPrimitiveType::FirstRSObjectType)];
-  assert((ClearObjectFD != NULL) &&
-      "rsClearObject doesn't cover all RS object types");
+  slangAssert((ClearObjectFD != NULL) &&
+              "rsClearObject doesn't cover all RS object types");
 
   if (IsArrayType) {
     return ClearArrayRSObject(VD, T, ClearObjectFD);
@@ -664,7 +665,7 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
 bool RSObjectRefCount::InitializeRSObject(clang::VarDecl *VD,
                                           RSExportPrimitiveType::DataType *DT,
                                           clang::Expr **InitExpr) {
-  assert(VD && DT && InitExpr);
+  slangAssert(VD && DT && InitExpr);
   const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
 
   // Loop through array types to get to base type
@@ -795,7 +796,7 @@ clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
     case RSExportPrimitiveType::DataTypeUnsigned5551:
     case RSExportPrimitiveType::DataTypeUnsigned4444:
     case RSExportPrimitiveType::DataTypeMax: {
-      assert(false && "Not RS object type!");
+      slangAssert(false && "Not RS object type!");
     }
     // No default case will enable compiler detecting the missing cases
   }
@@ -831,7 +832,7 @@ void RSObjectRefCount::VisitCompoundStmt(clang::CompoundStmt *CS) {
     VisitStmt(CS);
 
     // Destroy the scope
-    assert((getCurrentScope() == S) && "Corrupted scope stack!");
+    slangAssert((getCurrentScope() == S) && "Corrupted scope stack!");
     S->InsertLocalVarDestructors();
     mScopeStack.pop();
     delete S;

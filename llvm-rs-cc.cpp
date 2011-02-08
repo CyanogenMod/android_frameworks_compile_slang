@@ -39,6 +39,7 @@
 #include "llvm/System/Path.h"
 
 #include "slang.h"
+#include "slang_assert.h"
 #include "slang_rs.h"
 #include "slang_rs_reflect_utils.h"
 
@@ -192,7 +193,7 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
           break;
         }
         default: {
-          assert(false && "Invalid option in M group!");
+          slangAssert(false && "Invalid option in M group!");
         }
       }
     }
@@ -216,7 +217,7 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
           break;
         }
         default: {
-          assert(false && "Invalid option in output type group!");
+          slangAssert(false && "Invalid option in output type group!");
         }
       }
     }
@@ -309,7 +310,7 @@ static const char *DetermineOutputFile(const std::string &OutputDir,
     }
     case slang::Slang::OT_Nothing:
     default: {
-      assert(false && "Invalid output type!");
+      slangAssert(false && "Invalid output type!");
     }
   }
 

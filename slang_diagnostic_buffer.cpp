@@ -21,6 +21,8 @@
 
 #include "llvm/ADT/SmallString.h"
 
+#include "slang_assert.h"
+
 namespace slang {
 
 DiagnosticBuffer::DiagnosticBuffer() : mSOS(NULL) {
@@ -57,7 +59,7 @@ void DiagnosticBuffer::HandleDiagnostic(clang::Diagnostic::Level DiagLevel,
       break;
     }
     default: {
-      assert(0 && "Diagnostic not handled during diagnostic buffering!");
+      slangAssert(0 && "Diagnostic not handled during diagnostic buffering!");
     }
   }
 

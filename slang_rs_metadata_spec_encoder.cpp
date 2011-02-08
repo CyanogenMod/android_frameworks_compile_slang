@@ -27,6 +27,7 @@
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
 
+#include "slang_assert.h"
 #include "slang_rs_type_spec.h"
 
 #define RS_METADATA_STRTAB_MN   "#rs_metadata_strtab"
@@ -253,8 +254,8 @@ unsigned RSMetadataEncoderInternal::encodeRecordType(const union RSType *T) {
   llvm::NamedMDNode *RecordInfoMetadata =
       mModule->getOrInsertNamedMetadata(RecordInfoMetadataName);
 
-  assert((RecordInfoMetadata->getNumOperands() == 0) &&
-         "Record created before!");
+  slangAssert((RecordInfoMetadata->getNumOperands() == 0) &&
+              "Record created before!");
 
   // Encode field info into this named MDNode
   llvm::SmallVector<llvm::Value*, 3> FieldInfo;
@@ -360,8 +361,8 @@ int RSMetadataEncoderInternal::encodeRSFunc(const RSFunction *F) {
 
 // Write string table and string index table
 int RSMetadataEncoderInternal::flushStringTable() {
-  assert((mCurStringIndex == mEncodedStrings.size()));
-  assert((mCurStringIndex == mStrings.size()));
+  slangAssert((mCurStringIndex == mEncodedStrings.size()));
+  slangAssert((mCurStringIndex == mStrings.size()));
 
   if (mCurStringIndex == 0)
     return 0;

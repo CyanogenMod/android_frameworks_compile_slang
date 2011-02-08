@@ -33,6 +33,7 @@
 #include "llvm/Target/TargetData.h"
 
 #include "slang.h"
+#include "slang_assert.h"
 #include "slang_rs_export_func.h"
 #include "slang_rs_export_type.h"
 #include "slang_rs_export_var.h"
@@ -56,7 +57,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mLLVMContext(llvm::getGlobalContext()),
       mLicenseNote(NULL),
       version(0) {
-  assert(mGeneratedFileNames && "Must supply GeneratedFileNames");
+  slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
 
   // For #pragma rs export_type
   PP.AddPragmaHandler(
@@ -80,7 +81,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
 }
 
 bool RSContext::processExportVar(const clang::VarDecl *VD) {
-  assert(!VD->getName().empty() && "Variable name should not be empty");
+  slangAssert(!VD->getName().empty() && "Variable name should not be empty");
 
   // TODO(zonr): some check on variable
 
@@ -104,7 +105,7 @@ static bool isSpecialRSFunc(const llvm::StringRef& Name) {
 }
 
 bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
-  assert(!FD->getName().empty() && "Function name should not be empty");
+  slangAssert(!FD->getName().empty() && "Function name should not be empty");
 
   if (!FD->isThisDeclarationADefinition()) {
     return true;
@@ -134,8 +135,8 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
 bool RSContext::processExportType(const llvm::StringRef &Name) {
   clang::TranslationUnitDecl *TUDecl = mCtx.getTranslationUnitDecl();
 
-  assert(TUDecl != NULL && "Translation unit declaration (top-level "
-                           "declaration) is null object");
+  slangAssert(TUDecl != NULL && "Translation unit declaration (top-level "
+                                "declaration) is null object");
 
   const clang::IdentifierInfo *II = mPP.getIdentifierInfo(Name);
   if (II == NULL)
