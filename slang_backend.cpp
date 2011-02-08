@@ -50,6 +50,7 @@
 #include "llvm/Target/SubtargetFeature.h"
 
 #include "slang.h"
+#include "slang_assert.h"
 
 namespace slang {
 
@@ -235,7 +236,8 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
     return;
   }
 
-  assert(mpModule == M && "Unexpected module change during LLVM IR generation");
+  slangAssert(mpModule == M &&
+              "Unexpected module change during LLVM IR generation");
 
   // Insert #pragma information into metadata section of module
   if (!mPragmas->empty()) {
@@ -311,7 +313,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
       return;
     }
     default: {
-      assert(false && "Unknown output type");
+      slangAssert(false && "Unknown output type");
     }
   }
 

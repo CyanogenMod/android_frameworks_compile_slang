@@ -29,6 +29,7 @@
 
 #include "llvm/Type.h"
 
+#include "slang_assert.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_element.h"
 #include "slang_rs_type_spec.h"
@@ -70,7 +71,7 @@ static void ReportTypeError(clang::Diagnostic *Diags,
                   Diags->getCustomDiagID(clang::Diagnostic::Error, Message))
          << VD->getName();
   } else {
-    assert(false && "Variables should be validated before exporting");
+    slangAssert(false && "Variables should be validated before exporting");
   }
 
   return;
@@ -154,7 +155,7 @@ static const clang::Type *TypeExportableHelper(
             "unions cannot be exported: '%0'");
         return NULL;
       } else if (!T->isStructureType()) {
-        assert(false && "Unknown type cannot be exported");
+        slangAssert(false && "Unknown type cannot be exported");
         return NULL;
       }
 
@@ -347,7 +348,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
         break;
 #include "RSClangBuiltinEnums.inc"
         default: {
-          assert(false && "Unknown data type of the builtin");
+          slangAssert(false && "Unknown data type of the builtin");
           break;
         }
       }
@@ -372,7 +373,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
                      RE = RD->redecls_end();
                  RI != RE;
                  RI++) {
-              assert(*RI != NULL && "cannot be NULL object");
+              slangAssert(*RI != NULL && "cannot be NULL object");
 
               Name = (*RI)->getName();
               if (!Name.empty())
@@ -680,9 +681,9 @@ const size_t RSExportPrimitiveType::SizeOfDataTypeInBits[] = {
 };
 
 size_t RSExportPrimitiveType::GetSizeInBits(const RSExportPrimitiveType *EPT) {
-  assert(((EPT->getType() > DataTypeUnknown) &&
-          (EPT->getType() < DataTypeMax)) &&
-         "RSExportPrimitiveType::GetSizeInBits : unknown data type");
+  slangAssert(((EPT->getType() > DataTypeUnknown) &&
+               (EPT->getType() < DataTypeMax)) &&
+              "RSExportPrimitiveType::GetSizeInBits : unknown data type");
   return SizeOfDataTypeInBits[ static_cast<int>(EPT->getType()) ];
 }
 
@@ -812,7 +813,7 @@ const llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
       break;
     }
     default: {
-      assert(false && "Unknown data type");
+      slangAssert(false && "Unknown data type");
     }
   }
 
@@ -923,7 +924,7 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
                                                const llvm::StringRef &TypeName,
                                                DataKind DK,
                                                bool Normalized) {
-  assert(EVT != NULL && EVT->getTypeClass() == clang::Type::ExtVector);
+  slangAssert(EVT != NULL && EVT->getTypeClass() == clang::Type::ExtVector);
 
   const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
   RSExportPrimitiveType::DataType DT =
@@ -966,8 +967,8 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
                                                const clang::RecordType *RT,
                                                const llvm::StringRef &TypeName,
                                                unsigned Dim) {
-  assert((RT != NULL) && (RT->getTypeClass() == clang::Type::Record));
-  assert((Dim > 1) && "Invalid dimension of matrix");
+  slangAssert((RT != NULL) && (RT->getTypeClass() == clang::Type::Record));
+  slangAssert((Dim > 1) && "Invalid dimension of matrix");
 
   // Check whether the struct rs_matrix is in our expected form (but assume it's
   // correct if we're not sure whether it's correct or not)
@@ -1055,7 +1056,7 @@ union RSType *RSExportMatrixType::convertToSpecType() const {
     case 2: RS_MATRIX_TYPE_SET_DATA_TYPE(ST, RS_DT_RSMatrix2x2); break;
     case 3: RS_MATRIX_TYPE_SET_DATA_TYPE(ST, RS_DT_RSMatrix3x3); break;
     case 4: RS_MATRIX_TYPE_SET_DATA_TYPE(ST, RS_DT_RSMatrix4x4); break;
-    default: assert(false && "Matrix type with unsupported dimension.");
+    default: slangAssert(false && "Matrix type with unsupported dimension.");
   }
   return ST.take();
 }
@@ -1069,12 +1070,12 @@ bool RSExportMatrixType::equals(const RSExportable *E) const {
 RSExportConstantArrayType
 *RSExportConstantArrayType::Create(RSContext *Context,
                                    const clang::ConstantArrayType *CAT) {
-  assert(CAT != NULL && CAT->getTypeClass() == clang::Type::ConstantArray);
+  slangAssert(CAT != NULL && CAT->getTypeClass() == clang::Type::ConstantArray);
 
-  assert((CAT->getSize().getActiveBits() < 32) && "array too large");
+  slangAssert((CAT->getSize().getActiveBits() < 32) && "array too large");
 
   unsigned Size = static_cast<unsigned>(CAT->getSize().getZExtValue());
-  assert((Size > 0) && "Constant array should have size greater than 0");
+  slangAssert((Size > 0) && "Constant array should have size greater than 0");
 
   const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
   RSExportType *ElementET = RSExportType::Create(Context, ElementType);
@@ -1126,14 +1127,14 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
                                                const clang::RecordType *RT,
                                                const llvm::StringRef &TypeName,
                                                bool mIsArtificial) {
-  assert(RT != NULL && RT->getTypeClass() == clang::Type::Record);
+  slangAssert(RT != NULL && RT->getTypeClass() == clang::Type::Record);
 
   const clang::RecordDecl *RD = RT->getDecl();
-  assert(RD->isStruct());
+  slangAssert(RD->isStruct());
 
   RD = RD->getDefinition();
   if (RD == NULL) {
-    assert(false && "struct is not defined in this module");
+    slangAssert(false && "struct is not defined in this module");
     return NULL;
   }
 
@@ -1141,7 +1142,7 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
   // alloc size of a struct and offset of every field in that struct.
   const clang::ASTRecordLayout *RL =
       &Context->getASTContext().getASTRecordLayout(RD);
-  assert((RL != NULL) && "Failed to retrieve the struct layout from Clang.");
+  slangAssert((RL != NULL) && "Failed to retrieve the struct layout from Clang.");
 
   RSExportRecordType *ERT =
       new RSExportRecordType(Context,
@@ -1159,7 +1160,7 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
     const clang::SourceManager *SM = Context->getSourceManager();
 
     // FIXME: All fields should be primitive type
-    assert((*FI)->getKind() == clang::Decl::Field);
+    slangAssert((*FI)->getKind() == clang::Decl::Field);
     clang::FieldDecl *FD = *FI;
 
     if (FD->isBitField()) {

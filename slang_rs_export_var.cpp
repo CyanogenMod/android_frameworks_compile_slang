@@ -20,6 +20,7 @@
 
 #include "llvm/ADT/APSInt.h"
 
+#include "slang_assert.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
 
@@ -61,7 +62,7 @@ RSExportVar::RSExportVar(RSContext *Context,
         break;
       }
       default: {
-        assert(false && "Unknown class of type");
+        slangAssert(false && "Unknown class of type");
       }
     }
   }

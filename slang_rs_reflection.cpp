@@ -110,7 +110,7 @@ static const char *GetPrimitiveTypeName(const RSExportPrimitiveType *EPT) {
     return PrimitiveTypeJavaNameMap[ EPT->getType() ];
   }
 
-  assert(false && "GetPrimitiveTypeName : Unknown primitive data type");
+  slangAssert(false && "GetPrimitiveTypeName : Unknown primitive data type");
   return NULL;
 }
 
@@ -152,15 +152,15 @@ static const char *GetVectorTypeName(const RSExportVectorType *EVT) {
       break;
     }
     default: {
-      assert(false && "RSReflection::genElementTypeName : Unsupported vector "
-                      "element data type");
+      slangAssert(false && "RSReflection::genElementTypeName : Unsupported "
+                           "vector element data type");
       break;
     }
   }
 
-  assert((EVT->getNumElement() > 1) &&
-         (EVT->getNumElement() <= 4) &&
-         "Number of element in vector type is invalid");
+  slangAssert((EVT->getNumElement() > 1) &&
+              (EVT->getNumElement() <= 4) &&
+              "Number of element in vector type is invalid");
 
   return BaseElement[EVT->getNumElement() - 2];
 }
@@ -176,11 +176,11 @@ static const char *GetMatrixTypeName(const RSExportMatrixType *EMT) {
   if ((Dim - 2) < (sizeof(MatrixTypeJavaNameMap) / sizeof(const char*)))
     return MatrixTypeJavaNameMap[ EMT->getDim() - 2 ];
 
-  assert(false && "GetMatrixTypeName : Unsupported matrix dimension");
+  slangAssert(false && "GetMatrixTypeName : Unsupported matrix dimension");
   return NULL;
 }
 
-static const char *GetVectorAccessor(int Index) {
+static const char *GetVectorAccessor(unsigned Index) {
   static const char *VectorAccessorMap[] = {
     /* 0 */ "x",
     /* 1 */ "y",
@@ -188,9 +188,8 @@ static const char *GetVectorAccessor(int Index) {
     /* 3 */ "w",
   };
 
-  assert((Index >= 0) &&
-         (Index < (sizeof(VectorAccessorMap) / sizeof(const char*))) &&
-         "Out-of-bound index to access vector member");
+  slangAssert((Index < (sizeof(VectorAccessorMap) / sizeof(const char*))) &&
+              "Out-of-bound index to access vector member");
 
   return VectorAccessorMap[Index];
 }
@@ -235,7 +234,7 @@ static const char *GetPackerAPIName(const RSExportPrimitiveType *EPT) {
   if (TypeId < (sizeof(PrimitiveTypePackerAPINameMap) / sizeof(const char*)))
     return PrimitiveTypePackerAPINameMap[ EPT->getType() ];
 
-  assert(false && "GetPackerAPIName : Unknown primitive data type");
+  slangAssert(false && "GetPackerAPIName : Unknown primitive data type");
   return NULL;
 }
 
@@ -272,7 +271,7 @@ static std::string GetTypeName(const RSExportType *ET) {
                  "."RS_TYPE_ITEM_CLASS_NAME;
     }
     default: {
-      assert(false && "Unknown class of type");
+      slangAssert(false && "Unknown class of type");
     }
   }
 
@@ -301,7 +300,7 @@ static const char *GetTypeNullValue(const RSExportType *ET) {
       break;
     }
     default: {
-      assert(false && "Unknown class of type");
+      slangAssert(false && "Unknown class of type");
     }
   }
   return "";
@@ -393,7 +392,7 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
       case 2: return "Element.MATRIX_2X2";
       case 3: return "Element.MATRIX_3X3";
       case 4: return "Element.MATRIX_4X4";
-      default: assert(false && "Unsupported dimension of matrix");
+      default: slangAssert(false && "Unsupported dimension of matrix");
     }
   } else if (ET->getClass() == RSExportType::ExportClassPointer) {
     // Treat pointer type variable as unsigned int
@@ -545,11 +544,11 @@ void RSReflection::genScriptClassConstructor(Context &C) {
 void RSReflection::genInitBoolExportVariable(Context &C,
                                              const std::string &VarName,
                                              const clang::APValue &Val) {
-  assert(!Val.isUninit() && "Not a valid initializer");
+  slangAssert(!Val.isUninit() && "Not a valid initializer");
 
   C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
-  assert((Val.getKind() == clang::APValue::Int) &&
-         "Bool type has wrong initial APValue");
+  slangAssert((Val.getKind() == clang::APValue::Int) &&
+              "Bool type has wrong initial APValue");
 
   C.out() << ((Val.getInt().getSExtValue() == 0) ? "false" : "true")
           << ";" << std::endl;
@@ -561,7 +560,7 @@ void RSReflection::genInitPrimitiveExportVariable(
       Context &C,
       const std::string &VarName,
       const clang::APValue &Val) {
-  assert(!Val.isUninit() && "Not a valid initializer");
+  slangAssert(!Val.isUninit() && "Not a valid initializer");
 
   C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
   switch (Val.getKind()) {
@@ -587,11 +586,12 @@ void RSReflection::genInitPrimitiveExportVariable(
     case clang::APValue::ComplexFloat:
     case clang::APValue::LValue:
     case clang::APValue::Vector: {
-      assert(false && "Primitive type cannot have such kind of initializer");
+      slangAssert(false &&
+                  "Primitive type cannot have such kind of initializer");
       break;
     }
     default: {
-      assert(false && "Unknown kind of initializer");
+      slangAssert(false && "Unknown kind of initializer");
     }
   }
   C.out() << ";" << std::endl;
@@ -603,7 +603,7 @@ void RSReflection::genInitExportVariable(Context &C,
                                          const RSExportType *ET,
                                          const std::string &VarName,
                                          const clang::APValue &Val) {
-  assert(!Val.isUninit() && "Not a valid initializer");
+  slangAssert(!Val.isUninit() && "Not a valid initializer");
 
   switch (ET->getClass()) {
     case RSExportType::ExportClassPrimitive: {
@@ -652,7 +652,7 @@ void RSReflection::genInitExportVariable(Context &C,
         case clang::APValue::ComplexInt:
         case clang::APValue::ComplexFloat:
         case clang::APValue::LValue: {
-          assert(false && "Unexpected type of value of initializer.");
+          slangAssert(false && "Unexpected type of value of initializer.");
         }
       }
       break;
@@ -668,8 +668,8 @@ void RSReflection::genInitExportVariable(Context &C,
       const RSExportRecordType *ERT =
           static_cast<const RSExportRecordType*>(ET);
 
-      assert((Val.getKind() == clang::APValue::Vector) && "Unexpected type of "
-             "initializer for record type variable");
+      slangAssert((Val.getKind() == clang::APValue::Vector) &&
+          "Unexpected type of initializer for record type variable");
 
       C.indent() << RS_EXPORT_VAR_PREFIX << VarName
                  << " = new "RS_TYPE_CLASS_NAME_PREFIX << ERT->getName()
@@ -690,12 +690,12 @@ void RSReflection::genInitExportVariable(Context &C,
                                        Val.getVectorElt(InitIndex++));
       }
 #endif
-      assert(false && "Unsupported initializer for record/matrix/constant "
-                      "array type variable currently");
+      slangAssert(false && "Unsupported initializer for record/matrix/constant "
+                           "array type variable currently");
       break;
     }
     default: {
-      assert(false && "Unknown class of type");
+      slangAssert(false && "Unknown class of type");
     }
   }
   return;
@@ -734,7 +734,7 @@ void RSReflection::genExportVariable(Context &C, const RSExportVar *EV) {
       break;
     }
     default: {
-      assert(false && "Unknown class of type");
+      slangAssert(false && "Unknown class of type");
     }
   }
 
@@ -786,8 +786,8 @@ void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
 void RSReflection::genPrimitiveTypeExportVariable(
     Context &C,
     const RSExportVar *EV) {
-  assert((EV->getType()->getClass() == RSExportType::ExportClassPrimitive) &&
-         "Variable should be type of primitive here");
+  slangAssert((EV->getType()->getClass() == RSExportType::ExportClassPrimitive)
+              && "Variable should be type of primitive here");
 
   const RSExportPrimitiveType *EPT =
       static_cast<const RSExportPrimitiveType*>(EV->getType());
@@ -823,8 +823,8 @@ void RSReflection::genPointerTypeExportVariable(Context &C,
   const RSExportType *PointeeType;
   std::string TypeName;
 
-  assert((ET->getClass() == RSExportType::ExportClassPointer) &&
-         "Variable should be type of pointer here");
+  slangAssert((ET->getClass() == RSExportType::ExportClassPointer) &&
+              "Variable should be type of pointer here");
 
   PointeeType = static_cast<const RSExportPointerType*>(ET)->getPointeeType();
   TypeName = GetTypeName(ET);
@@ -861,8 +861,8 @@ void RSReflection::genPointerTypeExportVariable(Context &C,
 
 void RSReflection::genVectorTypeExportVariable(Context &C,
                                                const RSExportVar *EV) {
-  assert((EV->getType()->getClass() == RSExportType::ExportClassVector) &&
-         "Variable should be type of vector here");
+  slangAssert((EV->getType()->getClass() == RSExportType::ExportClassVector) &&
+              "Variable should be type of vector here");
 
   const RSExportVectorType *EVT =
       static_cast<const RSExportVectorType*>(EV->getType());
@@ -896,8 +896,8 @@ void RSReflection::genVectorTypeExportVariable(Context &C,
 
 void RSReflection::genMatrixTypeExportVariable(Context &C,
                                                const RSExportVar *EV) {
-  assert((EV->getType()->getClass() == RSExportType::ExportClassMatrix) &&
-         "Variable should be type of matrix here");
+  slangAssert((EV->getType()->getClass() == RSExportType::ExportClassMatrix) &&
+              "Variable should be type of matrix here");
 
   const RSExportMatrixType *EMT =
       static_cast<const RSExportMatrixType*>(EV->getType());
@@ -932,8 +932,9 @@ void RSReflection::genMatrixTypeExportVariable(Context &C,
 void RSReflection::genConstantArrayTypeExportVariable(
     Context &C,
     const RSExportVar *EV) {
-  assert((EV->getType()->getClass() == RSExportType::ExportClassConstantArray)&&
-         "Variable should be type of constant array here");
+  slangAssert((EV->getType()->getClass() ==
+               RSExportType::ExportClassConstantArray) &&
+              "Variable should be type of constant array here");
 
   const RSExportConstantArrayType *ECAT =
       static_cast<const RSExportConstantArrayType*>(EV->getType());
@@ -967,8 +968,8 @@ void RSReflection::genConstantArrayTypeExportVariable(
 
 void RSReflection::genRecordTypeExportVariable(Context &C,
                                                const RSExportVar *EV) {
-  assert((EV->getType()->getClass() == RSExportType::ExportClassRecord) &&
-         "Variable should be type of struct here");
+  slangAssert((EV->getType()->getClass() == RSExportType::ExportClassRecord) &&
+              "Variable should be type of struct here");
 
   const RSExportRecordType *ERT =
       static_cast<const RSExportRecordType*>(EV->getType());
@@ -1137,7 +1138,7 @@ void RSReflection::genPackVarOfType(Context &C,
       break;
     }
     default: {
-      assert(false && "Unknown class of type");
+      slangAssert(false && "Unknown class of type");
     }
   }
 
@@ -1603,8 +1604,8 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
             EB_ADD("Element.createUser(" << RenderScriptVar << ", "
                                          << DataTypeName << ")");
           } else {
-            assert((ET->getClass() == RSExportType::ExportClassVector) &&
-                   "Unexpected type.");
+            slangAssert((ET->getClass() == RSExportType::ExportClassVector) &&
+                        "Unexpected type.");
             EB_ADD("Element.createVector(" << RenderScriptVar << ", "
                                            << DataTypeName << ", "
                                            << Size << ")");
@@ -1616,11 +1617,11 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
     } else if (ET->getClass() == RSExportType::ExportClassPointer) {
       // Pointer type variable should be resolved in
       // GetBuiltinElementConstruct()
-      assert(false && "??");
+      slangAssert(false && "??");
     } else if (ET->getClass() == RSExportType::ExportClassMatrix) {
       // Matrix type variable should be resolved
       // in GetBuiltinElementConstruct()
-      assert(false && "??");
+      slangAssert(false && "??");
 #endif
     } else if (ET->getClass() == RSExportType::ExportClassConstantArray) {
       const RSExportConstantArrayType *ECAT =
@@ -1716,7 +1717,7 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
                                    ElementBuilderName,
                                    RenderScriptVar);
     } else {
-      assert(false && "Unknown class of type");
+      slangAssert(false && "Unknown class of type");
     }
   }
 }

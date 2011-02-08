@@ -22,6 +22,7 @@
 
 #include "llvm/ADT/StringRef.h"
 
+#include "slang_assert.h"
 #include "slang_rs_export_type.h"
 #include "slang_rs_exportable.h"
 
@@ -58,13 +59,13 @@ class RSExportFunc : public RSExportable {
   typedef RSExportRecordType::const_field_iterator const_param_iterator;
 
   inline const_param_iterator params_begin() const {
-    assert((mParamPacketType != NULL) &&
-           "Get parameter from export function having no parameter!");
+    slangAssert((mParamPacketType != NULL) &&
+                "Get parameter from export function having no parameter!");
     return mParamPacketType->fields_begin();
   }
   inline const_param_iterator params_end() const {
-    assert((mParamPacketType != NULL) &&
-           "Get parameter from export function having no parameter!");
+    slangAssert((mParamPacketType != NULL) &&
+                "Get parameter from export function having no parameter!");
     return mParamPacketType->fields_end();
   }
 
