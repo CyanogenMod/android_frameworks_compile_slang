@@ -22,6 +22,7 @@
 
 #include "llvm/ADT/StringRef.h"
 
+#include "os_sep.h"
 #include "slang_utils.h"
 
 namespace slang {
@@ -32,7 +33,7 @@ string RSSlangReflectUtils::GetFileNameStem(const char* fileName) {
     const char *dot = fileName + strlen(fileName);
     const char *slash = dot - 1;
     while (slash >= fileName) {
-        if (*slash == '/') {
+        if (*slash == OS_PATH_SEPARATOR) {
             break;
         }
         if ((*slash == '.') && (*dot == 0)) {
@@ -48,14 +49,14 @@ string RSSlangReflectUtils::ComputePackagedPath(
     const char *prefixPath, const char *packageName) {
     string packaged_path(prefixPath);
     if (!packaged_path.empty() &&
-        (packaged_path[packaged_path.length() - 1] != '/')) {
-        packaged_path += "/";
+        (packaged_path[packaged_path.length() - 1] != OS_PATH_SEPARATOR)) {
+        packaged_path += OS_PATH_SEPARATOR_STR;
     }
     size_t s = packaged_path.length();
     packaged_path += packageName;
     while (s < packaged_path.length()) {
         if (packaged_path[s] == '.') {
-            packaged_path[s] = '/';
+            packaged_path[s] = OS_PATH_SEPARATOR;
         }
         ++s;
     }
@@ -66,7 +67,7 @@ static string InternalFileNameConvert(const char *rsFileName, bool toLower) {
     const char *dot = rsFileName + strlen(rsFileName);
     const char *slash = dot - 1;
     while (slash >= rsFileName) {
-        if (*slash == '/') {
+        if (*slash == OS_PATH_SEPARATOR) {
             break;
         }
         if ((*slash == '.') && (*dot == 0)) {
@@ -250,7 +251,7 @@ bool RSSlangReflectUtils::GenerateBitCodeAccessor(
     filename += ".java";
 
     string output_filename(output_path);
-    output_filename += "/";
+    output_filename += OS_PATH_SEPARATOR_STR;
     output_filename += filename;
     printf("Generating %s ...\n", filename.c_str());
     FILE *pfout = fopen(output_filename.c_str(), "w");

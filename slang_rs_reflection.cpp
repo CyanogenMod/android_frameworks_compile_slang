@@ -28,6 +28,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringExtras.h"
 
+#include "os_sep.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_var.h"
 #include "slang_rs_export_func.h"
@@ -1853,7 +1854,7 @@ bool RSReflection::Context::openClassFile(const std::string &ClassName,
     if (!SlangUtils::CreateDirectoryWithParents(Path, &ErrorMsg))
       return false;
 
-    std::string ClassFile = Path + "/" + ClassName + ".java";
+    std::string ClassFile = Path + OS_PATH_SEPARATOR_STR + ClassName + ".java";
 
     mOF.open(ClassFile.c_str());
     if (!mOF.good()) {

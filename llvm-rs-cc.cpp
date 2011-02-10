@@ -275,8 +275,8 @@ static const char *DetermineOutputFile(const std::string &OutputDir,
 
   // Append '/' to Opts.mOutputDir if not presents
   if (!OutputFile.empty() &&
-      (OutputFile[OutputFile.size() - 1]) != '/')
-    OutputFile.append(1, '/');
+      (OutputFile[OutputFile.size() - 1]) != OS_PATH_SEPARATOR)
+    OutputFile.append(1, OS_PATH_SEPARATOR);
 
   if (OutputType == slang::Slang::OT_Dependency) {
     // The build system wants the .d file name stem to be exactly the same as

@@ -28,6 +28,7 @@
 
 #include "llvm/System/Path.h"
 
+#include "os_sep.h"
 #include "slang_rs_backend.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
@@ -295,7 +296,7 @@ bool SlangRS::compile(
            I++) {
         std::string ReflectedName = RSSlangReflectUtils::ComputePackagedPath(
             JavaReflectionPathBase.c_str(),
-            (RealPackageName + "/" + *I).c_str());
+            (RealPackageName + OS_PATH_SEPARATOR_STR + *I).c_str());
         appendGeneratedFileName(ReflectedName + ".java");
       }
 
