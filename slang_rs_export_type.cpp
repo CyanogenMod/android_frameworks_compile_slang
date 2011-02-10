@@ -1142,7 +1142,8 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
   // alloc size of a struct and offset of every field in that struct.
   const clang::ASTRecordLayout *RL =
       &Context->getASTContext().getASTRecordLayout(RD);
-  slangAssert((RL != NULL) && "Failed to retrieve the struct layout from Clang.");
+  slangAssert((RL != NULL) &&
+      "Failed to retrieve the struct layout from Clang.");
 
   RSExportRecordType *ERT =
       new RSExportRecordType(Context,

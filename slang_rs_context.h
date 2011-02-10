@@ -98,7 +98,9 @@ class RSContext {
 
   inline clang::Preprocessor &getPreprocessor() const { return mPP; }
   inline clang::ASTContext &getASTContext() const { return mCtx; }
-  inline clang::CodeGen::MangleContext &getMangleContext() const { return mMangleCtx; }
+  inline clang::CodeGen::MangleContext &getMangleContext() const {
+    return mMangleCtx;
+  }
   inline const llvm::TargetData *getTargetData() const { return mTargetData; }
   inline llvm::LLVMContext &getLLVMContext() const { return mLLVMContext; }
   inline const clang::SourceManager *getSourceManager() const {

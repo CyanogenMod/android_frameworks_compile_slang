@@ -84,7 +84,7 @@ class RSExportFunc : public RSExportable {
     return mParamPacketType->fields_end();
   }
 
-  inline const std::string &getName(bool mangle=true) const {
+  inline const std::string &getName(bool mangle = true) const {
     return (mShouldMangle && mangle) ? mMangledName : mName;
   }
 

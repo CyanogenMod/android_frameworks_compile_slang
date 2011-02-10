@@ -21,18 +21,18 @@
 #include <cstdio>
 
 #ifdef __DISABLE_ASSERTS
-#define slangAssert(v) while(0)
+#define slangAssert(v) while (0)
 #else
-#define __EXIT_ON_FAILURES  1
-#define slangAssert(v)                                      \
-  do {                                                      \
-    if (!(v)) {                                             \
-      fprintf(stderr, "slangAssert failed at %s:%d - '%s'", \
-          __FILE__, __LINE__, #v);                          \
-      if (__EXIT_ON_FAILURES) {                             \
-        exit(1);                                            \
-      }                                                     \
-    }                                                       \
+#define __ABORT_ON_FAILURES 1
+#define slangAssert(v)                                        \
+  do {                                                        \
+    if (!(v)) {                                               \
+      fprintf(stderr, "slangAssert failed at %s:%d - '%s'\n", \
+          __FILE__, __LINE__, #v);                            \
+      if (__ABORT_ON_FAILURES) {                              \
+        abort();                                              \
+      }                                                       \
+    }                                                         \
   } while (0)
 #endif  // __DISABLE_ASSERTS
 

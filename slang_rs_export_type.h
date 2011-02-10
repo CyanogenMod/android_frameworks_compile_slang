@@ -260,6 +260,9 @@ class RSExportPrimitiveType : public RSExportType {
 
   static bool IsRSMatrixType(DataType DT);
   static bool IsRSObjectType(DataType DT);
+  static bool IsRSObjectType(const clang::Type *T) {
+    return IsRSObjectType(GetRSSpecificType(T));
+  }
 
   // Determines whether T is [an array of] struct that contains at least one
   // RS object type within it.
