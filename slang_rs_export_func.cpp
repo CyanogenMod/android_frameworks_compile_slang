@@ -36,7 +36,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
 
   slangAssert(!Name.empty() && "Function must have a name");
 
-  F = new RSExportFunc(Context, Name);
+  F = new RSExportFunc(Context, Name, FD);
 
   // Initialize mParamPacketType
   if (FD->getNumParams() <= 0) {

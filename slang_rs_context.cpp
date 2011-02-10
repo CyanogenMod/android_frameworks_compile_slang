@@ -56,7 +56,8 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mTargetData(NULL),
       mLLVMContext(llvm::getGlobalContext()),
       mLicenseNote(NULL),
-      version(0) {
+      version(0),
+      mMangleCtx(*(new clang::CodeGen::MangleContext(Ctx, *(&PP.getDiagnostics())))) {
   slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
 
   // For #pragma rs export_type

@@ -763,7 +763,9 @@ void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
   C.startFunction(Context::AM_Public,
                   false,
                   "void",
-                  "invoke_" + EF->getName(),
+                  "invoke_" + EF->getName(/*Mangle=*/ false),
+                      // We are using un-mangled name since Java
+                      // supports method overloading.
                   Args);
 
   if (!EF->hasParam()) {
