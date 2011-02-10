@@ -43,12 +43,27 @@ class RSExportFunc : public RSExportable {
 
  private:
   std::string mName;
+  std::string mMangledName;
+  bool mShouldMangle;
   RSExportRecordType *mParamPacketType;
 
-  RSExportFunc(RSContext *Context, const llvm::StringRef &Name)
+  RSExportFunc(RSContext *Context, const llvm::StringRef &Name,
+               const clang::FunctionDecl *FD)
     : RSExportable(Context, RSExportable::EX_FUNC),
       mName(Name.data(), Name.size()),
+      mMangledName(),
+      mShouldMangle(false),
       mParamPacketType(NULL) {
+
+    mShouldMangle = Context->getMangleContext().shouldMangleDeclName(FD);
+
+    if (mShouldMangle) {
+      llvm::SmallString<256> Buffer;
+      Context->getMangleContext().mangleName(FD, Buffer);
+
+      mMangledName = Buffer.str();
+    }
+
     return;
   }
 
@@ -69,7 +84,9 @@ class RSExportFunc : public RSExportable {
     return mParamPacketType->fields_end();
   }
 
-  inline const std::string &getName() const { return mName; }
+  inline const std::string &getName(bool mangle=true) const {
+    return (mShouldMangle && mangle) ? mMangledName : mName;
+  }
 
   inline bool hasParam() const
     { return (mParamPacketType && !mParamPacketType->getFields().empty()); }
