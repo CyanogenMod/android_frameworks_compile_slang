@@ -22,6 +22,7 @@
 
 #include "clang/AST/StmtVisitor.h"
 
+#include "slang_assert.h"
 #include "slang_rs_export_type.h"
 
 namespace clang {
@@ -38,11 +39,6 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
     clang::CompoundStmt *mCS;      // Associated compound statement ({ ... })
     std::list<clang::VarDecl*> mRSO;  // Declared RS objects in this scope
 
-    // RSSetObjectFD and RSClearObjectFD holds FunctionDecl of rsSetObject()
-    // and rsClearObject() in the current ASTContext.
-    static clang::FunctionDecl *RSSetObjectFD[];
-    static clang::FunctionDecl *RSClearObjectFD[];
-
    public:
     explicit Scope(clang::CompoundStmt *CS) : mCS(CS) {
       return;
@@ -52,9 +48,6 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
       mRSO.push_back(VD);
       return;
     }
-
-    // Initialize RSSetObjectFD and RSClearObjectFD.
-    static void GetRSRefCountingFunctions(clang::ASTContext &C);
 
     void ReplaceRSObjectAssignment(clang::BinaryOperator *AS);
 
@@ -71,15 +64,23 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
   std::stack<Scope*> mScopeStack;
   bool RSInitFD;
 
+  // RSSetObjectFD and RSClearObjectFD holds FunctionDecl of rsSetObject()
+  // and rsClearObject() in the current ASTContext.
+  static clang::FunctionDecl *RSSetObjectFD[];
+  static clang::FunctionDecl *RSClearObjectFD[];
+
   inline Scope *getCurrentScope() {
     return mScopeStack.top();
   }
 
+  // Initialize RSSetObjectFD and RSClearObjectFD.
+  static void GetRSRefCountingFunctions(clang::ASTContext &C);
+
   // TODO(srhines): Composite types and arrays based on RS object types need
   // to be handled for both zero-initialization + clearing.
 
-  // Return false if the type of variable declared in VD is not an RS object
-  // type.
+  // Return false if the type of variable declared in VD does not contain
+  // an RS object type.
   static bool InitializeRSObject(clang::VarDecl *VD,
                                  RSExportPrimitiveType::DataType *DT,
                                  clang::Expr **InitExpr);
@@ -99,10 +100,30 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
 
   void Init(clang::ASTContext &C) {
     if (!RSInitFD) {
-      Scope::GetRSRefCountingFunctions(C);
+      GetRSRefCountingFunctions(C);
       RSInitFD = true;
     }
     return;
+  }
+
+  static clang::FunctionDecl *GetRSSetObjectFD(
+      RSExportPrimitiveType::DataType DT) {
+    slangAssert(RSExportPrimitiveType::IsRSObjectType(DT));
+    return RSSetObjectFD[(DT - RSExportPrimitiveType::FirstRSObjectType)];
+  }
+
+  static clang::FunctionDecl *GetRSSetObjectFD(const clang::Type *T) {
+    return GetRSSetObjectFD(RSExportPrimitiveType::GetRSSpecificType(T));
+  }
+
+  static clang::FunctionDecl *GetRSClearObjectFD(
+      RSExportPrimitiveType::DataType DT) {
+    slangAssert(RSExportPrimitiveType::IsRSObjectType(DT));
+    return RSClearObjectFD[(DT - RSExportPrimitiveType::FirstRSObjectType)];
+  }
+
+  static clang::FunctionDecl *GetRSClearObjectFD(const clang::Type *T) {
+    return GetRSClearObjectFD(RSExportPrimitiveType::GetRSSpecificType(T));
   }
 
   void VisitStmt(clang::Stmt *S);
