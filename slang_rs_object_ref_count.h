@@ -52,7 +52,8 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
     void ReplaceRSObjectAssignment(clang::BinaryOperator *AS,
                                    clang::Diagnostic *Diags);
 
-    void AppendRSObjectInit(clang::VarDecl *VD,
+    void AppendRSObjectInit(clang::Diagnostic *Diags,
+                            clang::VarDecl *VD,
                             clang::DeclStmt *DS,
                             RSExportPrimitiveType::DataType DT,
                             clang::Expr *InitExpr);
