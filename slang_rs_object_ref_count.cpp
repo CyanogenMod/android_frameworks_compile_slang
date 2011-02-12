@@ -954,6 +954,7 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
 }
 
 void RSObjectRefCount::Scope::AppendRSObjectInit(
+    clang::Diagnostic *Diags,
     clang::VarDecl *VD,
     clang::DeclStmt *DS,
     RSExportPrimitiveType::DataType DT,
@@ -964,22 +965,38 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
     return;
   }
 
+  clang::ASTContext &C = RSObjectRefCount::GetRSSetObjectFD(
+      RSExportPrimitiveType::DataTypeRSFont)->getASTContext();
+  clang::SourceLocation Loc = RSObjectRefCount::GetRSSetObjectFD(
+      RSExportPrimitiveType::DataTypeRSFont)->getLocation();
+
   if (DT == RSExportPrimitiveType::DataTypeIsStruct) {
     // TODO(srhines): Skip struct initialization right now
+    const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
+    clang::DeclRefExpr *RefRSVar =
+        clang::DeclRefExpr::Create(C,
+                                   NULL,
+                                   VD->getQualifierRange(),
+                                   VD,
+                                   Loc,
+                                   T->getCanonicalTypeInternal());
+
+    clang::Stmt *RSSetObjectOps =
+        CreateStructRSSetObject(C, Diags, RefRSVar, InitExpr, Loc);
+
+    AppendAfterStmt(C, mCS, DS, RSSetObjectOps);
     return;
   }
 
   clang::FunctionDecl *SetObjectFD = RSObjectRefCount::GetRSSetObjectFD(DT);
   slangAssert((SetObjectFD != NULL) &&
               "rsSetObject doesn't cover all RS object types");
-  clang::ASTContext &C = SetObjectFD->getASTContext();
 
   clang::QualType SetObjectFDType = SetObjectFD->getType();
   clang::QualType SetObjectFDArgType[2];
   SetObjectFDArgType[0] = SetObjectFD->getParamDecl(0)->getOriginalType();
   SetObjectFDArgType[1] = SetObjectFD->getParamDecl(1)->getOriginalType();
 
-  clang::SourceLocation Loc = SetObjectFD->getLocation();
   clang::Expr *RefRSSetObjectFD =
       clang::DeclRefExpr::Create(C,
                                  NULL,
@@ -1239,7 +1256,7 @@ void RSObjectRefCount::VisitDeclStmt(clang::DeclStmt *DS) {
       clang::Expr *InitExpr = NULL;
       if (InitializeRSObject(VD, &DT, &InitExpr)) {
         getCurrentScope()->addRSObject(VD);
-        getCurrentScope()->AppendRSObjectInit(VD, DS, DT, InitExpr);
+        getCurrentScope()->AppendRSObjectInit(mDiags, VD, DS, DT, InitExpr);
       }
     }
   }
