@@ -34,6 +34,7 @@
 #include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/system_error.h"
 
 #include "llvm/Target/TargetData.h"
 
@@ -102,13 +103,13 @@ static bool GetExportSymbols(Module *M, std::vector<const char *> &Names) {
 }
 
 static inline MemoryBuffer *LoadFileIntoMemory(const std::string &F) {
-  std::string Err;
-  MemoryBuffer *MB = MemoryBuffer::getFile(F, &Err);
+  llvm::OwningPtr<MemoryBuffer> MB;
 
-  if (MB == NULL)
-    errs() << "Failed to load `" << F << "' (" << Err << ")\n";
+  if (llvm::error_code EC = MemoryBuffer::getFile(F, MB)) {
+    errs() << "Failed to load `" << F << "' (" + EC.message() + ")\n";
+  }
 
-  return MB;
+  return MB.take();
 }
 
 static inline Module *ParseBitcodeFromMemoryBuffer(MemoryBuffer *MB,

@@ -76,6 +76,8 @@ class Slang {
 
   // The diagnostics engine instance (for status reporting during compilation)
   llvm::IntrusiveRefCntPtr<clang::Diagnostic> mDiagnostics;
+  // The diagnostics id
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> mDiagIDs;
   // The clients of diagnostics engine. The ownership is taken by the
   // mDiagnostics after creation.
   DiagnosticBuffer *mDiagClient;

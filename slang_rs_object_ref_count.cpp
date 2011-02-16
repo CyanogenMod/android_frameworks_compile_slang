@@ -20,6 +20,7 @@
 
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/OperationKinds.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/StmtVisitor.h"
@@ -278,15 +279,18 @@ clang::Expr *ClearSingleRSObject(clang::ASTContext &C,
       new(C) clang::UnaryOperator(RefRSVar,
                                   clang::UO_AddrOf,
                                   ClearObjectFDArgType,
+                                  clang::VK_RValue,
+                                  clang::OK_Ordinary,
                                   Loc);
 
   clang::Expr *RefRSClearObjectFD =
       clang::DeclRefExpr::Create(C,
-                                 NULL,
-                                 ClearObjectFD->getQualifierRange(),
+                                 clang::NestedNameSpecifierLoc(),
                                  ClearObjectFD,
                                  ClearObjectFD->getLocation(),
-                                 ClearObjectFDType);
+                                 ClearObjectFDType,
+                                 clang::VK_RValue,
+                                 NULL);
 
   clang::Expr *RSClearObjectFP =
       clang::ImplicitCastExpr::Create(C,
@@ -302,6 +306,7 @@ clang::Expr *ClearSingleRSObject(clang::ASTContext &C,
                              &AddrRefRSVar,
                              1,
                              ClearObjectFD->getCallResultType(),
+                             clang::VK_RValue,
                              Loc);
 
   return RSClearObjectCall;
@@ -321,14 +326,12 @@ static clang::Stmt *ClearStructRSObject(
     clang::ASTContext &C,
     clang::DeclContext *DC,
     clang::Expr *RefRSStruct,
-    clang::SourceRange Range,
     clang::SourceLocation Loc);
 
 static clang::Stmt *ClearArrayRSObject(
     clang::ASTContext &C,
     clang::DeclContext *DC,
     clang::Expr *RefRSArr,
-    clang::SourceRange Range,
     clang::SourceLocation Loc) {
   const clang::Type *BaseType = RefRSArr->getType().getTypePtr();
   slangAssert(BaseType->isArrayType());
@@ -390,11 +393,12 @@ static clang::Stmt *ClearArrayRSObject(
   // Init -> "rsIntIter = 0"
   clang::DeclRefExpr *RefrsIntIter =
       clang::DeclRefExpr::Create(C,
-                                 NULL,
-                                 Range,
+                                 clang::NestedNameSpecifierLoc(),
                                  IIVD,
                                  Loc,
-                                 C.IntTy);
+                                 C.IntTy,
+                                 clang::VK_RValue,
+                                 NULL);
 
   clang::Expr *Int0 = clang::IntegerLiteral::Create(C,
       llvm::APInt(C.getTypeSize(C.IntTy), 0), C.IntTy, Loc);
@@ -404,6 +408,8 @@ static clang::Stmt *ClearArrayRSObject(
                                    Int0,
                                    clang::BO_Assign,
                                    C.IntTy,
+                                   clang::VK_RValue,
+                                   clang::OK_Ordinary,
                                    Loc);
 
   // Cond -> "rsIntIter < NumArrayElements"
@@ -415,6 +421,8 @@ static clang::Stmt *ClearArrayRSObject(
                                    NumArrayElementsExpr,
                                    clang::BO_LT,
                                    C.IntTy,
+                                   clang::VK_RValue,
+                                   clang::OK_Ordinary,
                                    Loc);
 
   // Inc -> "rsIntIter++"
@@ -422,6 +430,8 @@ static clang::Stmt *ClearArrayRSObject(
       new(C) clang::UnaryOperator(RefrsIntIter,
                                   clang::UO_PostInc,
                                   C.IntTy,
+                                  clang::VK_RValue,
+                                  clang::OK_Ordinary,
                                   Loc);
 
   // Body -> "rsClearObject(&VD[rsIntIter]);"
@@ -439,6 +449,8 @@ static clang::Stmt *ClearArrayRSObject(
       new(C) clang::ArraySubscriptExpr(RefRSArrPtr,
                                        RefrsIntIter,
                                        BaseType->getCanonicalTypeInternal(),
+                                       clang::VK_RValue,
+                                       clang::OK_Ordinary,
                                        Loc);
 
   RSExportPrimitiveType::DataType DT =
@@ -447,10 +459,10 @@ static clang::Stmt *ClearArrayRSObject(
   clang::Stmt *RSClearObjectCall = NULL;
   if (BaseType->isArrayType()) {
     RSClearObjectCall =
-        ClearArrayRSObject(C, DC, RefRSArrPtrSubscript, Range, Loc);
+        ClearArrayRSObject(C, DC, RefRSArrPtrSubscript, Loc);
   } else if (DT == RSExportPrimitiveType::DataTypeUnknown) {
     RSClearObjectCall =
-        ClearStructRSObject(C, DC, RefRSArrPtrSubscript, Range, Loc);
+        ClearStructRSObject(C, DC, RefRSArrPtrSubscript, Loc);
   } else {
     RSClearObjectCall = ClearSingleRSObject(C, RefRSArrPtrSubscript, Loc);
   }
@@ -514,7 +526,6 @@ static clang::Stmt *ClearStructRSObject(
     clang::ASTContext &C,
     clang::DeclContext *DC,
     clang::Expr *RefRSStruct,
-    clang::SourceRange Range,
     clang::SourceLocation Loc) {
   const clang::Type *BaseType = RefRSStruct->getType().getTypePtr();
 
@@ -559,13 +570,14 @@ static clang::Stmt *ClearStructRSObject(
           clang::MemberExpr::Create(C,
                                     RefRSStruct,
                                     false,
-                                    NULL,
-                                    Range,
+                                    clang::NestedNameSpecifierLoc(),
                                     FD,
                                     FoundDecl,
                                     clang::DeclarationNameInfo(),
                                     NULL,
-                                    OrigType->getCanonicalTypeInternal());
+                                    OrigType->getCanonicalTypeInternal(),
+                                    clang::VK_RValue,
+                                    clang::OK_Ordinary);
 
       slangAssert(StmtCount < FieldsToDestroy);
 
@@ -573,7 +585,6 @@ static clang::Stmt *ClearStructRSObject(
         StmtArray[StmtCount++] = ClearArrayRSObject(C,
                                                     DC,
                                                     RSObjectMember,
-                                                    Range,
                                                     Loc);
       } else {
         StmtArray[StmtCount++] = ClearSingleRSObject(C,
@@ -590,25 +601,24 @@ static clang::Stmt *ClearStructRSObject(
           clang::MemberExpr::Create(C,
                                     RefRSStruct,
                                     false,
-                                    NULL,
-                                    Range,
+                                    clang::NestedNameSpecifierLoc(),
                                     FD,
                                     FoundDecl,
                                     clang::DeclarationNameInfo(),
                                     NULL,
-                                    OrigType->getCanonicalTypeInternal());
+                                    OrigType->getCanonicalTypeInternal(),
+                                    clang::VK_RValue,
+                                    clang::OK_Ordinary);
 
       if (IsArrayType) {
         StmtArray[StmtCount++] = ClearArrayRSObject(C,
                                                     DC,
                                                     RSObjectMember,
-                                                    Range,
                                                     Loc);
       } else {
         StmtArray[StmtCount++] = ClearStructRSObject(C,
                                                      DC,
                                                      RSObjectMember,
-                                                     Range,
                                                      Loc);
       }
     }
@@ -640,11 +650,12 @@ static clang::Stmt *CreateSingleRSSetObject(clang::ASTContext &C,
 
   clang::Expr *RefRSSetObjectFD =
       clang::DeclRefExpr::Create(C,
-                                 NULL,
-                                 SetObjectFD->getQualifierRange(),
+                                 clang::NestedNameSpecifierLoc(),
                                  SetObjectFD,
                                  Loc,
-                                 SetObjectFDType);
+                                 SetObjectFDType,
+                                 clang::VK_RValue,
+                                 NULL);
 
   clang::Expr *RSSetObjectFP =
       clang::ImplicitCastExpr::Create(C,
@@ -658,6 +669,8 @@ static clang::Stmt *CreateSingleRSSetObject(clang::ASTContext &C,
   ArgList[0] = new(C) clang::UnaryOperator(DstExpr,
                                            clang::UO_AddrOf,
                                            SetObjectFDArgType[0],
+                                           clang::VK_RValue,
+                                           clang::OK_Ordinary,
                                            Loc);
   ArgList[1] = SrcExpr;
 
@@ -667,6 +680,7 @@ static clang::Stmt *CreateSingleRSSetObject(clang::ASTContext &C,
                              ArgList,
                              2,
                              SetObjectFD->getCallResultType(),
+                             clang::VK_RValue,
                              Loc);
 
   return RSSetObjectCall;
@@ -684,7 +698,6 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
                                            clang::Expr *SrcArr,
                                            clang::SourceLocation Loc) {
   clang::DeclContext *DC = NULL;
-  clang::SourceRange Range;
   const clang::Type *BaseType = DstArr->getType().getTypePtr();
   slangAssert(BaseType->isArrayType());
 
@@ -722,11 +735,12 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
   // Init -> "rsIntIter = 0"
   clang::DeclRefExpr *RefrsIntIter =
       clang::DeclRefExpr::Create(C,
-                                 NULL,
-                                 Range,
+                                 clang::NestedNameSpecifierLoc(),
                                  IIVD,
                                  Loc,
-                                 C.IntTy);
+                                 C.IntTy,
+                                 clang::VK_RValue,
+                                 NULL);
 
   clang::Expr *Int0 = clang::IntegerLiteral::Create(C,
       llvm::APInt(C.getTypeSize(C.IntTy), 0), C.IntTy, Loc);
@@ -736,6 +750,8 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
                                    Int0,
                                    clang::BO_Assign,
                                    C.IntTy,
+                                   clang::VK_RValue,
+                                   clang::OK_Ordinary,
                                    Loc);
 
   // Cond -> "rsIntIter < NumArrayElements"
@@ -747,6 +763,8 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
                                    NumArrayElementsExpr,
                                    clang::BO_LT,
                                    C.IntTy,
+                                   clang::VK_RValue,
+                                   clang::OK_Ordinary,
                                    Loc);
 
   // Inc -> "rsIntIter++"
@@ -754,6 +772,8 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
       new(C) clang::UnaryOperator(RefrsIntIter,
                                   clang::UO_PostInc,
                                   C.IntTy,
+                                  clang::VK_RValue,
+                                  clang::OK_Ordinary,
                                   Loc);
 
   // Body -> "rsSetObject(&Dst[rsIntIter], Src[rsIntIter]);"
@@ -771,6 +791,8 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
       new(C) clang::ArraySubscriptExpr(DstArrPtr,
                                        RefrsIntIter,
                                        BaseType->getCanonicalTypeInternal(),
+                                       clang::VK_RValue,
+                                       clang::OK_Ordinary,
                                        Loc);
 
   clang::Expr *SrcArrPtr =
@@ -785,6 +807,8 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
       new(C) clang::ArraySubscriptExpr(SrcArrPtr,
                                        RefrsIntIter,
                                        BaseType->getCanonicalTypeInternal(),
+                                       clang::VK_RValue,
+                                       clang::OK_Ordinary,
                                        Loc);
 
   RSExportPrimitiveType::DataType DT =
@@ -827,7 +851,6 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
                                             clang::Expr *LHS,
                                             clang::Expr *RHS,
                                             clang::SourceLocation Loc) {
-  clang::SourceRange Range;
   clang::QualType QT = LHS->getType();
   const clang::Type *T = QT.getTypePtr();
   slangAssert(T->isStructureType());
@@ -864,25 +887,27 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
         clang::MemberExpr::Create(C,
                                   LHS,
                                   false,
-                                  NULL,
-                                  Range,
+                                  clang::NestedNameSpecifierLoc(),
                                   FD,
                                   FoundDecl,
                                   clang::DeclarationNameInfo(),
                                   NULL,
-                                  OrigType->getCanonicalTypeInternal());
+                                  OrigType->getCanonicalTypeInternal(),
+                                  clang::VK_RValue,
+                                  clang::OK_Ordinary);
 
     clang::MemberExpr *SrcMember =
         clang::MemberExpr::Create(C,
                                   RHS,
                                   false,
-                                  NULL,
-                                  Range,
+                                  clang::NestedNameSpecifierLoc(),
                                   FD,
                                   FoundDecl,
                                   clang::DeclarationNameInfo(),
                                   NULL,
-                                  OrigType->getCanonicalTypeInternal());
+                                  OrigType->getCanonicalTypeInternal(),
+                                  clang::VK_RValue,
+                                  clang::OK_Ordinary);
 
     if (FT->isArrayType()) {
       FT = FT->getArrayElementTypeNoTypeQual();
@@ -916,7 +941,8 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
   // we just do a straight-up assignment (which will still preserve all
   // the proper RS object reference counts).
   clang::BinaryOperator *CopyStruct =
-      new(C) clang::BinaryOperator(LHS, RHS, clang::BO_Assign, QT, Loc);
+      new(C) clang::BinaryOperator(LHS, RHS, clang::BO_Assign, QT,
+                                   clang::VK_RValue, clang::OK_Ordinary, Loc);
   StmtArray[StmtCount++] = CopyStruct;
 
   clang::CompoundStmt *CS =
@@ -976,11 +1002,12 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
     const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
     clang::DeclRefExpr *RefRSVar =
         clang::DeclRefExpr::Create(C,
-                                   NULL,
-                                   VD->getQualifierRange(),
+                                   clang::NestedNameSpecifierLoc(),
                                    VD,
                                    Loc,
-                                   T->getCanonicalTypeInternal());
+                                   T->getCanonicalTypeInternal(),
+                                   clang::VK_RValue,
+                                   NULL);
 
     clang::Stmt *RSSetObjectOps =
         CreateStructRSSetObject(C, Diags, RefRSVar, InitExpr, Loc);
@@ -1000,11 +1027,12 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
 
   clang::Expr *RefRSSetObjectFD =
       clang::DeclRefExpr::Create(C,
-                                 NULL,
-                                 SetObjectFD->getQualifierRange(),
+                                 clang::NestedNameSpecifierLoc(),
                                  SetObjectFD,
                                  Loc,
-                                 SetObjectFDType);
+                                 SetObjectFDType,
+                                 clang::VK_RValue,
+                                 NULL);
 
   clang::Expr *RSSetObjectFP =
       clang::ImplicitCastExpr::Create(C,
@@ -1017,16 +1045,19 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
   const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
   clang::DeclRefExpr *RefRSVar =
       clang::DeclRefExpr::Create(C,
-                                 NULL,
-                                 VD->getQualifierRange(),
+                                 clang::NestedNameSpecifierLoc(),
                                  VD,
                                  Loc,
-                                 T->getCanonicalTypeInternal());
+                                 T->getCanonicalTypeInternal(),
+                                 clang::VK_RValue,
+                                 NULL);
 
   clang::Expr *ArgList[2];
   ArgList[0] = new(C) clang::UnaryOperator(RefRSVar,
                                            clang::UO_AddrOf,
                                            SetObjectFDArgType[0],
+                                           clang::VK_RValue,
+                                           clang::OK_Ordinary,
                                            Loc);
   ArgList[1] = InitExpr;
 
@@ -1036,6 +1067,7 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
                              ArgList,
                              2,
                              SetObjectFD->getCallResultType(),
+                             clang::VK_RValue,
                              Loc);
 
   AppendAfterStmt(C, mCS, DS, RSSetObjectCall);
@@ -1065,21 +1097,21 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
   slangAssert(VD);
   clang::ASTContext &C = VD->getASTContext();
   clang::DeclContext *DC = VD->getDeclContext();
-  clang::SourceRange Range = VD->getQualifierRange();
   clang::SourceLocation Loc = VD->getLocation();
   const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
 
   // Reference expr to target RS object variable
   clang::DeclRefExpr *RefRSVar =
       clang::DeclRefExpr::Create(C,
-                                 NULL,
-                                 Range,
+                                 clang::NestedNameSpecifierLoc(),
                                  VD,
                                  Loc,
-                                 T->getCanonicalTypeInternal());
+                                 T->getCanonicalTypeInternal(),
+                                 clang::VK_RValue,
+                                 NULL);
 
   if (T->isArrayType()) {
-    return ClearArrayRSObject(C, DC, RefRSVar, Range, Loc);
+    return ClearArrayRSObject(C, DC, RefRSVar, Loc);
   }
 
   RSExportPrimitiveType::DataType DT =
@@ -1087,7 +1119,7 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
 
   if (DT == RSExportPrimitiveType::DataTypeUnknown ||
       DT == RSExportPrimitiveType::DataTypeIsStruct) {
-    return ClearStructRSObject(C, DC, RefRSVar, Range, Loc);
+    return ClearStructRSObject(C, DC, RefRSVar, Loc);
   }
 
   slangAssert((RSExportPrimitiveType::IsRSObjectType(DT)) &&

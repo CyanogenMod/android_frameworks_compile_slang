@@ -23,8 +23,9 @@
 #include <string>
 
 #include "clang/Lex/Preprocessor.h"
-#include "Mangle.h"
+#include "clang/AST/Mangle.h"
 
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/StringMap.h"
 
@@ -79,7 +80,7 @@ class RSContext {
   std::string mReflectJavaPathName;
 
   int version;
-  clang::CodeGen::MangleContext &mMangleCtx;
+  llvm::OwningPtr<clang::MangleContext> mMangleCtx;
 
   bool processExportVar(const clang::VarDecl *VD);
   bool processExportFunc(const clang::FunctionDecl *FD);
@@ -98,8 +99,8 @@ class RSContext {
 
   inline clang::Preprocessor &getPreprocessor() const { return mPP; }
   inline clang::ASTContext &getASTContext() const { return mCtx; }
-  inline clang::CodeGen::MangleContext &getMangleContext() const {
-    return mMangleCtx;
+  inline clang::MangleContext &getMangleContext() const {
+    return *mMangleCtx;
   }
   inline const llvm::TargetData *getTargetData() const { return mTargetData; }
   inline llvm::LLVMContext &getLLVMContext() const { return mLLVMContext; }

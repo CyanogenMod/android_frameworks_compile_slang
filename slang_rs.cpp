@@ -22,11 +22,13 @@
 #include <utility>
 #include <vector>
 
+#include "clang/Basic/SourceLocation.h"
+
 #include "clang/Frontend/FrontendDiagnostic.h"
 
 #include "clang/Sema/SemaDiagnostic.h"
 
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 
 #include "os_sep.h"
 #include "slang_rs_backend.h"
@@ -164,7 +166,8 @@ void SlangRS::initDiagnostic() {
 
   Diag.setDiagnosticMapping(
       clang::diag::ext_typecheck_convert_discards_qualifiers,
-      clang::diag::MAP_ERROR);
+      clang::diag::MAP_ERROR,
+      clang::SourceLocation());
 
   mDiagErrorInvalidOutputDepParameter =
       Diag.getCustomDiagID(clang::Diagnostic::Error,

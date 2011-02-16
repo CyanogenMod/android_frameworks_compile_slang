@@ -20,15 +20,14 @@ static_libraries_needed_by_slang := \
 	libLLVMipo	\
 	libLLVMBitWriter	\
 	libLLVMBitReader	\
-	libLLVMARMAsmPrinter	\
-	libLLVMX86AsmPrinter	\
-        libLLVMX86InstPrinter   \
-	libLLVMAsmPrinter	\
-	libLLVMMCParser	\
 	libLLVMARMCodeGen	\
+	libLLVMARMAsmPrinter	\
 	libLLVMARMInfo	\
 	libLLVMX86CodeGen	\
+	libLLVMX86AsmPrinter	\
 	libLLVMX86Info	\
+	libLLVMX86Utils	\
+	libLLVMAsmPrinter	\
 	libLLVMSelectionDAG	\
 	libLLVMCodeGen	\
 	libLLVMScalarOpts	\
@@ -39,6 +38,7 @@ static_libraries_needed_by_slang := \
 	libLLVMAnalysis	\
 	libLLVMTarget	\
 	libLLVMMC	\
+	libLLVMMCParser	\
 	libLLVMCore	\
 	libclangParse	\
 	libclangSema	\
@@ -48,8 +48,7 @@ static_libraries_needed_by_slang := \
 	libclangFrontend	\
 	libclangCodeGen	\
 	libclangBasic	\
-	libLLVMSupport	\
-	libLLVMSystem
+	libLLVMSupport
 
 # Static library libslang for host
 # ========================================================

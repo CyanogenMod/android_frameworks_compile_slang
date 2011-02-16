@@ -24,6 +24,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 
+#include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/LangOptions.h"
@@ -43,6 +44,8 @@
 
 #include "clang/Parse/ParseAST.h"
 
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+
 #include "llvm/Bitcode/ReaderWriter.h"
 
 // More force linking
@@ -57,8 +60,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/ToolOutputFile.h"
-
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
 
 #include "llvm/Target/TargetSelect.h"
 
@@ -170,11 +172,9 @@ void Slang::LLVMErrorHandler(void *UserData, const std::string &Message) {
 }
 
 void Slang::createDiagnostic() {
-  mDiagnostics =
-      llvm::IntrusiveRefCntPtr<clang::Diagnostic>(new clang::Diagnostic());
   mDiagClient = new DiagnosticBuffer();
-  // This takes the ownership of mDiagClient.
-  mDiagnostics->setClient(mDiagClient);
+  mDiagIDs = new clang::DiagnosticIDs();
+  mDiagnostics = new clang::Diagnostic(mDiagIDs, mDiagClient, true);
   initDiagnostic();
   return;
 }
@@ -199,20 +199,18 @@ void Slang::createTarget(const std::string &Triple, const std::string &CPU,
 }
 
 void Slang::createFileManager() {
-  mFileMgr.reset(new clang::FileManager());
   mFileSysOpt.reset(new clang::FileSystemOptions());
+  mFileMgr.reset(new clang::FileManager(*mFileSysOpt));
 }
 
 void Slang::createSourceManager() {
-  mSourceMgr.reset(new clang::SourceManager(*mDiagnostics,
-                                            *mFileMgr,
-                                            *mFileSysOpt));
+  mSourceMgr.reset(new clang::SourceManager(*mDiagnostics, *mFileMgr));
   return;
 }
 
 void Slang::createPreprocessor() {
   // Default only search header file in current dir
-  clang::HeaderSearch *HS = new clang::HeaderSearch(*mFileMgr, *mFileSysOpt);
+  clang::HeaderSearch *HS = new clang::HeaderSearch(*mFileMgr);
 
   mPP.reset(new clang::Preprocessor(*mDiagnostics,
                                     LangOpts,
@@ -228,7 +226,7 @@ void Slang::createPreprocessor() {
   std::vector<clang::DirectoryLookup> SearchList;
   for (unsigned i = 0, e = mIncludePaths.size(); i != e; i++) {
     if (const clang::DirectoryEntry *DE =
-            mFileMgr->getDirectory(mIncludePaths[i], *mFileSysOpt)) {
+            mFileMgr->getDirectory(mIncludePaths[i])) {
       SearchList.push_back(clang::DirectoryLookup(DE,
                                                   clang::SrcMgr::C_System,
                                                   false,
@@ -313,7 +311,7 @@ bool Slang::setInputSource(llvm::StringRef InputFile) {
 
   mSourceMgr->clearIDTables();
 
-  const clang::FileEntry *File = mFileMgr->getFile(InputFile, *mFileSysOpt);
+  const clang::FileEntry *File = mFileMgr->getFile(InputFile);
   if (File)
     mSourceMgr->createMainFileID(File);
 
@@ -377,8 +375,8 @@ bool Slang::setDepOutput(const char *OutputFile) {
 }
 
 int Slang::generateDepFile() {
-  if (mDiagnostics->getNumErrors() > 0)
-    return mDiagnostics->getNumErrors();
+  if (mDiagnostics->hasErrorOccurred())
+    return 1;
   if (mDOS.get() == NULL)
     return 1;
 
@@ -413,19 +411,19 @@ int Slang::generateDepFile() {
   mPP->EndSourceFile();
 
   // Declare success if no error
-  if (mDiagnostics->getNumErrors() == 0)
+  if (!mDiagnostics->hasErrorOccurred())
     mDOS->keep();
 
   // Clean up after compilation
   mPP.reset();
   mDOS.reset();
 
-  return mDiagnostics->getNumErrors();
+  return mDiagnostics->hasErrorOccurred() ? 1 : 0;
 }
 
 int Slang::compile() {
-  if (mDiagnostics->getNumErrors() > 0)
-    return mDiagnostics->getNumErrors();
+  if (mDiagnostics->hasErrorOccurred())
+    return 1;
   if (mOS.get() == NULL)
     return 1;
 
@@ -445,7 +443,7 @@ int Slang::compile() {
   mDiagClient->EndSourceFile();
 
   // Declare success if no error
-  if (mDiagnostics->getNumErrors() == 0)
+  if (!mDiagnostics->hasErrorOccurred())
     mOS->keep();
 
   // The compilation ended, clear
@@ -454,7 +452,7 @@ int Slang::compile() {
   mPP.reset();
   mOS.reset();
 
-  return mDiagnostics->getNumErrors();
+  return mDiagnostics->hasErrorOccurred() ? 1 : 0;
 }
 
 void Slang::reset() {

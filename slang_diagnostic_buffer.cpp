@@ -32,12 +32,12 @@ DiagnosticBuffer::DiagnosticBuffer() : mSOS(NULL) {
 
 void DiagnosticBuffer::HandleDiagnostic(clang::Diagnostic::Level DiagLevel,
                                         const clang::DiagnosticInfo &Info) {
-  const clang::FullSourceLoc &FSLoc = Info.getLocation();
+  const clang::SourceLocation &SrcLoc = Info.getLocation();
   // 100 is enough for storing general diagnosis message
   llvm::SmallString<100> Buf;
 
-  if (FSLoc.isValid()) {
-    FSLoc.print(*mSOS, FSLoc.getManager());
+  if (SrcLoc.isValid()) {
+    SrcLoc.print(*mSOS, Info.getSourceManager());
     (*mSOS) << ": ";
   }
 

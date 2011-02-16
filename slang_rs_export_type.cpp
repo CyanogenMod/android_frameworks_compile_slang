@@ -132,7 +132,8 @@ static const clang::Type *TypeExportableHelper(
 
   switch (T->getTypeClass()) {
     case clang::Type::Builtin: {
-      const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(clang::BuiltinType, T);
+      const clang::BuiltinType *BT =
+        UNSAFE_CAST_TYPE(const clang::BuiltinType, T);
 
       switch (BT->getKind()) {
 #define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
@@ -222,7 +223,8 @@ static const clang::Type *TypeExportableHelper(
         return NULL;
       }
 
-      const clang::PointerType *PT = UNSAFE_CAST_TYPE(clang::PointerType, T);
+      const clang::PointerType *PT =
+        UNSAFE_CAST_TYPE(const clang::PointerType, T);
       const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
 
       if (PointeeType->getTypeClass() == clang::Type::Pointer)
@@ -238,7 +240,7 @@ static const clang::Type *TypeExportableHelper(
     }
     case clang::Type::ExtVector: {
       const clang::ExtVectorType *EVT =
-          UNSAFE_CAST_TYPE(clang::ExtVectorType, T);
+          UNSAFE_CAST_TYPE(const clang::ExtVectorType, T);
       // Only vector with size 2, 3 and 4 are supported.
       if (EVT->getNumElements() < 2 || EVT->getNumElements() > 4)
         return NULL;
@@ -255,7 +257,7 @@ static const clang::Type *TypeExportableHelper(
     }
     case clang::Type::ConstantArray: {
       const clang::ConstantArrayType *CAT =
-          UNSAFE_CAST_TYPE(clang::ConstantArrayType, T);
+          UNSAFE_CAST_TYPE(const clang::ConstantArrayType, T);
 
       return ConstantArrayTypeExportableHelper(CAT, SPS, Diags, SM, VD,
                                                TopLevelRecord);
@@ -339,7 +341,8 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
 
   switch (T->getTypeClass()) {
     case clang::Type::Builtin: {
-      const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(clang::BuiltinType, T);
+      const clang::BuiltinType *BT =
+        UNSAFE_CAST_TYPE(const clang::BuiltinType, T);
 
       switch (BT->getKind()) {
 #define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
@@ -397,7 +400,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
     }
     case clang::Type::ExtVector: {
       const clang::ExtVectorType *EVT =
-          UNSAFE_CAST_TYPE(clang::ExtVectorType, T);
+          UNSAFE_CAST_TYPE(const clang::ExtVectorType, T);
       return RSExportVectorType::GetTypeName(EVT);
       break;
     }
@@ -476,7 +479,7 @@ RSExportType *RSExportType::Create(RSContext *Context,
     }
     case clang::Type::Pointer: {
       ET = RSExportPointerType::Create(Context,
-                                       UNSAFE_CAST_TYPE(clang::PointerType, T),
+                                       UNSAFE_CAST_TYPE(const clang::PointerType, T),
                                        TypeName);
       // FIXME: free the name (allocated in RSExportType::GetTypeName)
       delete [] TypeName.data();
@@ -484,14 +487,14 @@ RSExportType *RSExportType::Create(RSContext *Context,
     }
     case clang::Type::ExtVector: {
       ET = RSExportVectorType::Create(Context,
-                                      UNSAFE_CAST_TYPE(clang::ExtVectorType, T),
+                                      UNSAFE_CAST_TYPE(const clang::ExtVectorType, T),
                                       TypeName);
       break;
     }
     case clang::Type::ConstantArray: {
       ET = RSExportConstantArrayType::Create(
               Context,
-              UNSAFE_CAST_TYPE(clang::ConstantArrayType, T));
+              UNSAFE_CAST_TYPE(const clang::ConstantArrayType, T));
       break;
     }
     default: {
@@ -694,7 +697,8 @@ RSExportPrimitiveType::GetDataType(RSContext *Context, const clang::Type *T) {
 
   switch (T->getTypeClass()) {
     case clang::Type::Builtin: {
-      const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(clang::BuiltinType, T);
+      const clang::BuiltinType *BT =
+        UNSAFE_CAST_TYPE(const clang::BuiltinType, T);
       switch (BT->getKind()) {
 #define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
         case builtin_type: {                                  \
@@ -897,7 +901,7 @@ RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT) {
   if ((ElementType->getTypeClass() != clang::Type::Builtin))
     return llvm::StringRef();
 
-  const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(clang::BuiltinType,
+  const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(const clang::BuiltinType,
                                                   ElementType);
   if ((EVT->getNumElements() < 1) ||
       (EVT->getNumElements() > 4))
@@ -1150,7 +1154,7 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
                              TypeName,
                              RD->hasAttr<clang::PackedAttr>(),
                              mIsArtificial,
-                             (RL->getSize() >> 3));
+                             (RL->getSize() / 8).getQuantity());
   unsigned int Index = 0;
 
   for (clang::RecordDecl::field_iterator FI = RD->field_begin(),

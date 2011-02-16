@@ -94,7 +94,7 @@ RSExportType *RSExportElement::Create(RSContext *Context,
                                    "your macro)");
       RSExportVectorType *EVT =
           RSExportVectorType::Create(Context,
-                                     static_cast<clang::ExtVectorType*>(
+                                     static_cast<const clang::ExtVectorType*>(
                                          T->getCanonicalTypeInternal()
                                              .getTypePtr()),
                                      TypeName,

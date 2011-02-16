@@ -90,7 +90,7 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
     if (PragmaToken.isNot(clang::tok::l_paren))
       return;
 
-    while (PragmaToken.isNot(clang::tok::eom)) {
+    while (PragmaToken.isNot(clang::tok::eod)) {
       // Lex package name
       PP.LexUnexpandedToken(PragmaToken);
 
@@ -100,7 +100,7 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
         PackageName.append(Spelling);
 
       // Pre-mature end (syntax error will be triggered by preprocessor later)
-      if (PragmaToken.is(clang::tok::eom) || PragmaToken.is(clang::tok::eof)) {
+      if (PragmaToken.is(clang::tok::eod) || PragmaToken.is(clang::tok::eof)) {
         break;
       } else {
         // Next token is ')' (end of pragma)
@@ -108,10 +108,10 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
         if (NextTok.is(clang::tok::r_paren)) {
           mContext->addPragma(this->getName(), PackageName);
           mContext->setReflectJavaPackageName(PackageName);
-          // Lex until meets clang::tok::eom
+          // Lex until meets clang::tok::eod
           do {
             PP.LexUnexpandedToken(PragmaToken);
-          } while (PragmaToken.isNot(clang::tok::eom));
+          } while (PragmaToken.isNot(clang::tok::eod));
           break;
         }
       }
@@ -191,7 +191,7 @@ void RSPragmaHandler::handleItemListPragma(clang::Preprocessor &PP,
   if (PragmaToken.isNot(clang::tok::l_paren))
     return;
 
-  while (PragmaToken.isNot(clang::tok::eom)) {
+  while (PragmaToken.isNot(clang::tok::eod)) {
     // Lex variable name
     PP.LexUnexpandedToken(PragmaToken);
     if (PragmaToken.is(clang::tok::identifier))
@@ -199,7 +199,7 @@ void RSPragmaHandler::handleItemListPragma(clang::Preprocessor &PP,
     else
       break;
 
-    slangAssert(PragmaToken.isNot(clang::tok::eom));
+    slangAssert(PragmaToken.isNot(clang::tok::eod));
 
     PP.LexUnexpandedToken(PragmaToken);
 
@@ -217,9 +217,9 @@ void RSPragmaHandler::handleNonParamPragma(clang::Preprocessor &PP,
   PP.LexUnexpandedToken(PragmaToken);
 
   // Should be end immediately
-  if (PragmaToken.isNot(clang::tok::eom))
+  if (PragmaToken.isNot(clang::tok::eod))
     fprintf(stderr, "RSPragmaHandler::handleNonParamPragma: "
-                    "expected a clang::tok::eom\n");
+                    "expected a clang::tok::eod\n");
   return;
 }
 
@@ -293,7 +293,7 @@ void RSPragmaHandler::handleIntegerParamPragma(
 
   do {
     PP.LexUnexpandedToken(PragmaToken);
-  } while (PragmaToken.isNot(clang::tok::eom));
+  } while (PragmaToken.isNot(clang::tok::eod));
 }
 
 }  // namespace slang

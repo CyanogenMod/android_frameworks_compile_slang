@@ -21,6 +21,9 @@
 #include <string>
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_ostream.h"
+
+#include "clang/AST/Decl.h"
 
 #include "slang_assert.h"
 #include "slang_rs_export_type.h"
@@ -58,10 +61,9 @@ class RSExportFunc : public RSExportable {
     mShouldMangle = Context->getMangleContext().shouldMangleDeclName(FD);
 
     if (mShouldMangle) {
-      llvm::SmallString<256> Buffer;
-      Context->getMangleContext().mangleName(FD, Buffer);
-
-      mMangledName = Buffer.str();
+      llvm::raw_string_ostream BufStm(mMangledName);
+      Context->getMangleContext().mangleName(FD, BufStm);
+      BufStm.flush();
     }
 
     return;

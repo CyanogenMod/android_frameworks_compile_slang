@@ -21,6 +21,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/Mangle.h"
 #include "clang/AST/Type.h"
 
 #include "clang/Basic/Linkage.h"
@@ -57,8 +58,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mLLVMContext(llvm::getGlobalContext()),
       mLicenseNote(NULL),
       version(0),
-      mMangleCtx(*(new clang::CodeGen::MangleContext(Ctx,
-          *(&PP.getDiagnostics())))) {
+      mMangleCtx(Ctx.createMangleContext()) {
   slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
 
   // For #pragma rs export_type

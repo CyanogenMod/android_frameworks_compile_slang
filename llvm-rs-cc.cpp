@@ -31,12 +31,14 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/OwningPtr.h"
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
-
-#include "llvm/System/Path.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/system_error.h"
 
 #include "slang.h"
 #include "slang_assert.h"
@@ -336,14 +338,18 @@ int main(int argc, const char **argv) {
   clang::TextDiagnosticPrinter *DiagClient =
     new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
   DiagClient->setPrefix(Argv0);
-  clang::Diagnostic Diags(DiagClient);
+
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagIDs(
+    new clang::DiagnosticIDs());
+
+  clang::Diagnostic Diags(DiagIDs, DiagClient, true);
 
   slang::Slang::GlobalInitialization();
 
   ParseArguments(ArgVector, Inputs, Opts, Diags);
 
   // Exits when there's any error occurred during parsing the arguments
-  if (Diags.getNumErrors() > 0)
+  if (Diags.hasErrorOccurred())
     return 1;
 
   if (Opts.mShowHelp) {
@@ -426,8 +432,9 @@ static void ExpandArgsFromBuf(const char *Arg,
                               llvm::SmallVectorImpl<const char*> &ArgVector,
                               std::set<std::string> &SavedStrings) {
   const char *FName = Arg + 1;
-  llvm::MemoryBuffer *MemBuf = llvm::MemoryBuffer::getFile(FName);
-  if (!MemBuf) {
+  llvm::OwningPtr<llvm::MemoryBuffer> MemBuf;
+  if (llvm::MemoryBuffer::getFile(FName, MemBuf)) {
+    // Unable to open the file
     ArgVector.push_back(SaveStringInSet(SavedStrings, Arg));
     return;
   }
@@ -477,7 +484,6 @@ static void ExpandArgsFromBuf(const char *Arg,
     }
     CurArg.push_back(*P);
   }
-  delete MemBuf;
 }
 
 // ExpandArgsFromBuf -
