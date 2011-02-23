@@ -404,21 +404,19 @@ int main(int argc, const char **argv) {
   }
 
   // Let's rock!
-  if (!Compiler->compile(IOFiles,
-                         DepFiles,
-                         Opts.mIncludePaths,
-                         Opts.mAdditionalDepTargets,
-                         Opts.mOutputType,
-                         Opts.mBitcodeStorage,
-                         Opts.mAllowRSPrefix,
-                         Opts.mOutputDep,
-                         Opts.mJavaReflectionPathBase,
-                         Opts.mJavaReflectionPackageName)) {
-    llvm::errs() << Compiler->getErrorMessage();
-    return 1;
-  }
+  int CompileFailed = !Compiler->compile(IOFiles,
+                                         DepFiles,
+                                         Opts.mIncludePaths,
+                                         Opts.mAdditionalDepTargets,
+                                         Opts.mOutputType,
+                                         Opts.mBitcodeStorage,
+                                         Opts.mAllowRSPrefix,
+                                         Opts.mOutputDep,
+                                         Opts.mJavaReflectionPathBase,
+                                         Opts.mJavaReflectionPackageName);
+  llvm::errs() << Compiler->getErrorMessage();
 
-  return 0;
+  return CompileFailed;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
