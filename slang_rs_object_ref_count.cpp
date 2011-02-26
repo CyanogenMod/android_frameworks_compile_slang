@@ -893,8 +893,9 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
         RSExportPrimitiveType::GetRSSpecificType(FT);
 
     if (IsArrayType) {
-      Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
-           "Arrays of RS object types within structures cannot be copied"));
+      Diags->Report(clang::FullSourceLoc(Loc, C.getSourceManager()),
+          Diags->getCustomDiagID(clang::Diagnostic::Error,
+            "Arrays of RS object types within structures cannot be copied"));
       // TODO(srhines): Support setting arrays of RS objects
       // StmtArray[StmtCount++] =
       //    CreateArrayRSSetObject(C, Diags, DstMember, SrcMember, Loc);
@@ -937,7 +938,7 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
   clang::ASTContext &C = RSObjectRefCount::GetRSSetObjectFD(
       RSExportPrimitiveType::DataTypeRSFont)->getASTContext();
 
-  clang::SourceLocation Loc = AS->getLocEnd();
+  clang::SourceLocation Loc = AS->getExprLoc();
   clang::Stmt *UpdatedStmt = NULL;
 
   if (!RSExportPrimitiveType::IsRSObjectType(QT.getTypePtr())) {
