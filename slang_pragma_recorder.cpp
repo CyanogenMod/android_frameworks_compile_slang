@@ -54,6 +54,7 @@ PragmaRecorder::PragmaRecorder(PragmaList *Pragmas)
 }
 
 void PragmaRecorder::HandlePragma(clang::Preprocessor &PP,
+                                  clang::PragmaIntroducerKind Introducer,
                                   clang::Token &FirstToken) {
   clang::Token &CurrentToken = FirstToken;
   std::string PragmaName, PragmaValue = "";

@@ -33,6 +33,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ToolOutputFile.h"
 
 #include "llvm/Target/TargetData.h"
 
@@ -284,7 +285,7 @@ int main(int argc, char **argv) {
       break;
     }
 
-    WriteBitcodeToFile(Linked.get(), Out);
+    WriteBitcodeToFile(Linked.get(), Out.os());
 
     Out.keep();
     Linked.reset();

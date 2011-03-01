@@ -71,6 +71,7 @@ class RSPragmaHandler : public clang::PragmaHandler {
   static RSPragmaHandler *CreatePragmaVersionHandler(RSContext *Context);
 
   virtual void HandlePragma(clang::Preprocessor &PP,
+                            clang::PragmaIntroducerKind Introducer,
                             clang::Token &FirstToken) = 0;
 };
 

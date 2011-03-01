@@ -22,6 +22,7 @@ static_libraries_needed_by_slang := \
 	libLLVMBitReader	\
 	libLLVMARMAsmPrinter	\
 	libLLVMX86AsmPrinter	\
+        libLLVMX86InstPrinter   \
 	libLLVMAsmPrinter	\
 	libLLVMMCParser	\
 	libLLVMARMCodeGen	\

@@ -37,6 +37,7 @@ namespace llvm {
 namespace clang {
   class Diagnostic;
   class FileManager;
+  class FileSystemOptions;
   class SourceManager;
   class LangOptions;
   class Preprocessor;
@@ -90,6 +91,7 @@ class Slang {
 
   // The file manager (for prepocessor doing the job such as header file search)
   llvm::OwningPtr<clang::FileManager> mFileMgr;
+  llvm::OwningPtr<clang::FileSystemOptions> mFileSysOpt;
   void createFileManager();
 
   // The source manager (responsible for the source code handling)

@@ -46,6 +46,7 @@ class PragmaRecorder : public clang::PragmaHandler {
   explicit PragmaRecorder(PragmaList *Pragmas);
 
   virtual void HandlePragma(clang::Preprocessor &PP,
+                            clang::PragmaIntroducerKind Introducer,
                             clang::Token &FirstToken);
 };
 }

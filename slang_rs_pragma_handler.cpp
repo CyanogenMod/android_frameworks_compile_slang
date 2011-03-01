@@ -43,7 +43,9 @@ class RSExportTypePragmaHandler : public RSPragmaHandler {
   RSExportTypePragmaHandler(llvm::StringRef Name, RSContext *Context)
       : RSPragmaHandler(Name, Context) { return; }
 
-  void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
+  void HandlePragma(clang::Preprocessor &PP,
+                    clang::PragmaIntroducerKind Introducer,
+                    clang::Token &FirstToken) {
     this->handleItemListPragma(PP, FirstToken);
   }
 };
@@ -53,7 +55,9 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
   RSJavaPackageNamePragmaHandler(llvm::StringRef Name, RSContext *Context)
       : RSPragmaHandler(Name, Context) { return; }
 
-  void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
+  void HandlePragma(clang::Preprocessor &PP,
+                    clang::PragmaIntroducerKind Introducer,
+                    clang::Token &FirstToken) {
     // FIXME: Need to validate the extracted package name from pragma.
     // Currently "all chars" specified in pragma will be treated as package
     // name.
@@ -127,7 +131,9 @@ class RSReflectLicensePragmaHandler : public RSPragmaHandler {
   RSReflectLicensePragmaHandler(llvm::StringRef Name, RSContext *Context)
       : RSPragmaHandler(Name, Context) { return; }
 
-  void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
+  void HandlePragma(clang::Preprocessor &PP,
+                    clang::PragmaIntroducerKind Introducer,
+                    clang::Token &FirstToken) {
     this->handleOptionalStringLiteralParamPragma(PP, FirstToken);
   }
 };
@@ -145,7 +151,9 @@ class RSVersionPragmaHandler : public RSPragmaHandler {
   RSVersionPragmaHandler(llvm::StringRef Name, RSContext *Context)
       : RSPragmaHandler(Name, Context) { return; }
 
-  void HandlePragma(clang::Preprocessor &PP, clang::Token &FirstToken) {
+  void HandlePragma(clang::Preprocessor &PP,
+                    clang::PragmaIntroducerKind Introducer,
+                    clang::Token &FirstToken) {
     this->handleIntegerParamPragma(PP, FirstToken);
   }
 };

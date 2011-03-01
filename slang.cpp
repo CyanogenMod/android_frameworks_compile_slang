@@ -25,6 +25,7 @@
 #include "clang/AST/ASTContext.h"
 
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -55,6 +56,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/ToolOutputFile.h"
 
 #include "llvm/System/Path.h"
 
@@ -198,16 +200,19 @@ void Slang::createTarget(const std::string &Triple, const std::string &CPU,
 
 void Slang::createFileManager() {
   mFileMgr.reset(new clang::FileManager());
+  mFileSysOpt.reset(new clang::FileSystemOptions());
 }
 
 void Slang::createSourceManager() {
-  mSourceMgr.reset(new clang::SourceManager(*mDiagnostics));
+  mSourceMgr.reset(new clang::SourceManager(*mDiagnostics,
+                                            *mFileMgr,
+                                            *mFileSysOpt));
   return;
 }
 
 void Slang::createPreprocessor() {
   // Default only search header file in current dir
-  clang::HeaderSearch *HS = new clang::HeaderSearch(*mFileMgr);
+  clang::HeaderSearch *HS = new clang::HeaderSearch(*mFileMgr, *mFileSysOpt);
 
   mPP.reset(new clang::Preprocessor(*mDiagnostics,
                                     LangOpts,
@@ -223,7 +228,7 @@ void Slang::createPreprocessor() {
   std::vector<clang::DirectoryLookup> SearchList;
   for (unsigned i = 0, e = mIncludePaths.size(); i != e; i++) {
     if (const clang::DirectoryEntry *DE =
-            mFileMgr->getDirectory(mIncludePaths[i])) {
+            mFileMgr->getDirectory(mIncludePaths[i], *mFileSysOpt)) {
       SearchList.push_back(clang::DirectoryLookup(DE,
                                                   clang::SrcMgr::C_System,
                                                   false,
@@ -308,7 +313,7 @@ bool Slang::setInputSource(llvm::StringRef InputFile) {
 
   mSourceMgr->clearIDTables();
 
-  const clang::FileEntry *File = mFileMgr->getFile(InputFile);
+  const clang::FileEntry *File = mFileMgr->getFile(InputFile, *mFileSysOpt);
   if (File)
     mSourceMgr->createMainFileID(File);
 
@@ -428,7 +433,7 @@ int Slang::compile() {
   createPreprocessor();
   createASTContext();
 
-  mBackend.reset(createBackend(CodeGenOpts, mOS.get(), mOT));
+  mBackend.reset(createBackend(CodeGenOpts, &mOS->os(), mOT));
 
   // Inform the diagnostic client we are processing a source file
   mDiagClient->BeginSourceFile(LangOpts, mPP.get());
