@@ -232,9 +232,8 @@ bool SlangRS::IsFunctionInRSHeaderFile(const clang::FunctionDecl *FD,
                                        const clang::SourceManager &SourceMgr) {
   clang::FullSourceLoc FSL(FD->getLocStart(), SourceMgr);
   clang::PresumedLoc PLoc = SourceMgr.getPresumedLoc(FSL);
-  llvm::sys::Path HeaderFilename(PLoc.getFilename());
 
-  return IsRSHeaderFile(HeaderFilename.getLast().data());
+  return IsRSHeaderFile(llvm::sys::path::filename(PLoc.getFilename()).data());
 }
 
 SlangRS::SlangRS() : Slang(), mRSContext(NULL), mAllowRSPrefix(false) {

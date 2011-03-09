@@ -121,10 +121,8 @@ static inline llvm::tool_output_file *OpenOutputFile(const char *OutputFile,
   slangAssert((OutputFile != NULL) && (Error != NULL) && (Diag != NULL) &&
               "Invalid parameter!");
 
-  llvm::sys::Path OutputFilePath(OutputFile);
-
-  if (SlangUtils::CreateDirectoryWithParents(OutputFilePath.getDirname(),
-                                             Error)) {
+  if (SlangUtils::CreateDirectoryWithParents(
+                        llvm::sys::path::parent_path(OutputFile), Error)) {
     llvm::tool_output_file *F =
           new llvm::tool_output_file(OutputFile, *Error, Flags);
     if (F != NULL)

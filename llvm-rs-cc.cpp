@@ -331,8 +331,7 @@ int main(int argc, const char **argv) {
   ExpandArgv(argc, argv, ArgVector, SavedStrings);
 
   // Argv0
-  llvm::sys::Path Path = llvm::sys::Path(ArgVector[0]);
-  Argv0 = Path.getBasename();
+  Argv0 = llvm::sys::path::stem(ArgVector[0]);
 
   // Setup diagnostic engine
   clang::TextDiagnosticPrinter *DiagClient =
