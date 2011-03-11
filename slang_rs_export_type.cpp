@@ -1154,7 +1154,7 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
                              TypeName,
                              RD->hasAttr<clang::PackedAttr>(),
                              mIsArtificial,
-                             (RL->getSize() / 8).getQuantity());
+                             RL->getSize().getQuantity());
   unsigned int Index = 0;
 
   for (clang::RecordDecl::field_iterator FI = RD->field_begin(),
