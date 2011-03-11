@@ -15,6 +15,11 @@
 #
 LOCAL_PATH := $(call my-dir)
 
+local_cflags_for_slang := -Wno-sign-promo -Wall -Werror
+ifneq ($(TARGET_BUILD_VARIANT),eng)
+local_cflags_for_slang += -D__DISABLE_ASSERTS
+endif
+
 static_libraries_needed_by_slang := \
 	libLLVMLinker   \
 	libLLVMipo	\
@@ -63,10 +68,7 @@ include $(CLANG_ROOT_PATH)/clang.mk
 LOCAL_MODULE := libslang
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_CFLAGS += -Wno-sign-promo
-ifneq ($(TARGET_BUILD_VARIANT),eng)
-LOCAL_CFLAGS += -D__DISABLE_ASSERTS
-endif
+LOCAL_CFLAGS += $(local_cflags_for_slang)
 
 TBLGEN_TABLES :=    \
 	AttrList.inc	\
@@ -170,10 +172,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE_CLASS := EXECUTABLES
 
-LOCAL_CFLAGS += -Wno-sign-promo
-ifneq ($(TARGET_BUILD_VARIANT),eng)
-LOCAL_CFLAGS += -D__DISABLE_ASSERTS
-endif
+LOCAL_CFLAGS += $(local_cflags_for_slang)
 
 TBLGEN_TABLES :=    \
 	AttrList.inc    \
