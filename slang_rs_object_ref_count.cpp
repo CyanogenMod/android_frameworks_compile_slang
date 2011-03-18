@@ -531,11 +531,9 @@ static clang::Stmt *ClearStructRSObject(
 
   slangAssert(!BaseType->isArrayType());
 
-  RSExportPrimitiveType::DataType DT =
-      RSExportPrimitiveType::GetRSSpecificType(BaseType);
-
   // Structs should show up as unknown primitive types
-  slangAssert(DT == RSExportPrimitiveType::DataTypeUnknown);
+  slangAssert(RSExportPrimitiveType::GetRSSpecificType(BaseType) ==
+              RSExportPrimitiveType::DataTypeUnknown);
 
   unsigned FieldsToDestroy = CountRSObjectTypes(BaseType);
 

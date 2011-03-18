@@ -21,7 +21,7 @@
 #include <cstdio>
 
 #ifdef __DISABLE_ASSERTS
-#define slangAssert(v) while (0)
+#define slangAssert(v) do {} while (0)
 #else
 #define __ABORT_ON_FAILURES 1
 #define slangAssert(v)                                        \
