@@ -26,6 +26,7 @@
 
 #include "slang_assert.h"
 #include "slang_rs.h"
+#include "slang_rs_ast_replace.h"
 #include "slang_rs_export_type.h"
 
 namespace slang {
@@ -88,120 +89,84 @@ void RSObjectRefCount::GetRSRefCountingFunctions(clang::ASTContext &C) {
 
 namespace {
 
-static void AppendToCompoundStatement(clang::ASTContext& C,
-                                      clang::CompoundStmt *CS,
-                                      std::list<clang::Stmt*> &StmtList,
-                                      bool InsertAtEndOfBlock) {
-  // Destructor code will be inserted before any return statement.
-  // Any subsequent statements in the compound statement are then placed
-  // after our new code.
-  // TODO(srhines): This should also handle the case of goto/break/continue.
-
-  clang::CompoundStmt::body_iterator bI = CS->body_begin();
-
-  unsigned OldStmtCount = 0;
-  for (bI = CS->body_begin(); bI != CS->body_end(); bI++) {
-    OldStmtCount++;
-  }
-
+// This function constructs a new CompoundStmt from the input StmtList.
+static clang::CompoundStmt* BuildCompoundStmt(clang::ASTContext &C,
+      std::list<clang::Stmt*> &StmtList, clang::SourceLocation Loc) {
   unsigned NewStmtCount = StmtList.size();
+  unsigned CompoundStmtCount = 0;
 
-  clang::Stmt **UpdatedStmtList;
-  UpdatedStmtList = new clang::Stmt*[OldStmtCount+NewStmtCount];
+  clang::Stmt **CompoundStmtList;
+  CompoundStmtList = new clang::Stmt*[NewStmtCount];
+
+  std::list<clang::Stmt*>::const_iterator I = StmtList.begin();
+  std::list<clang::Stmt*>::const_iterator E = StmtList.end();
+  for ( ; I != E; I++) {
+    CompoundStmtList[CompoundStmtCount++] = *I;
+  }
+  slangAssert(CompoundStmtCount == NewStmtCount);
+
+  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(C,
+                                                       CompoundStmtList,
+                                                       CompoundStmtCount,
+                                                       Loc,
+                                                       Loc);
+
+  delete [] CompoundStmtList;
+
+  return CS;
+}
+
+static void AppendAfterStmt(clang::ASTContext &C,
+                            clang::CompoundStmt *CS,
+                            clang::Stmt *S,
+                            std::list<clang::Stmt*> &StmtList) {
+  slangAssert(CS);
+  clang::CompoundStmt::body_iterator bI = CS->body_begin();
+  clang::CompoundStmt::body_iterator bE = CS->body_end();
+  clang::Stmt **UpdatedStmtList =
+      new clang::Stmt*[CS->size() + StmtList.size()];
 
   unsigned UpdatedStmtCount = 0;
-  bool FoundReturn = false;
-  for (bI = CS->body_begin(); bI != CS->body_end(); bI++) {
-    if ((*bI)->getStmtClass() == clang::Stmt::ReturnStmtClass) {
-      FoundReturn = true;
-      break;
-    }
-    UpdatedStmtList[UpdatedStmtCount++] = *bI;
-  }
+  unsigned Once = 0;
+  for ( ; bI != bE; bI++) {
+    if (!S && ((*bI)->getStmtClass() == clang::Stmt::ReturnStmtClass)) {
+      // If we come across a return here, we don't have anything we can
+      // reasonably replace. We should have already inserted our destructor
+      // code in the proper spot, so we just clean up and return.
+      delete [] UpdatedStmtList;
 
-  // Always insert before a return that we found, or if we are told
-  // to insert at the end of the block
-  if (FoundReturn || InsertAtEndOfBlock) {
+      return;
+    }
+
+    UpdatedStmtList[UpdatedStmtCount++] = *bI;
+
+    if ((*bI == S) && !Once) {
+      Once++;
+      std::list<clang::Stmt*>::const_iterator I = StmtList.begin();
+      std::list<clang::Stmt*>::const_iterator E = StmtList.end();
+      for ( ; I != E; I++) {
+        UpdatedStmtList[UpdatedStmtCount++] = *I;
+      }
+    }
+  }
+  slangAssert(Once <= 1);
+
+  // When S is NULL, we are appending to the end of the CompoundStmt.
+  if (!S) {
+    slangAssert(Once == 0);
     std::list<clang::Stmt*>::const_iterator I = StmtList.begin();
-    for (std::list<clang::Stmt*>::const_iterator I = StmtList.begin();
-         I != StmtList.end();
-         I++) {
+    std::list<clang::Stmt*>::const_iterator E = StmtList.end();
+    for ( ; I != E; I++) {
       UpdatedStmtList[UpdatedStmtCount++] = *I;
     }
   }
 
-  // Pick up anything left over after a return statement
-  for ( ; bI != CS->body_end(); bI++) {
-    UpdatedStmtList[UpdatedStmtCount++] = *bI;
-  }
-
   CS->setStmts(C, UpdatedStmtList, UpdatedStmtCount);
 
   delete [] UpdatedStmtList;
 
   return;
 }
-
-static void AppendAfterStmt(clang::ASTContext& C,
-                            clang::CompoundStmt *CS,
-                            clang::Stmt *OldStmt,
-                            clang::Stmt *NewStmt) {
-  slangAssert(CS && OldStmt && NewStmt);
-  clang::CompoundStmt::body_iterator bI = CS->body_begin();
-  unsigned StmtCount = 1;  // Take into account new statement
-  for (bI = CS->body_begin(); bI != CS->body_end(); bI++) {
-    StmtCount++;
-  }
-
-  clang::Stmt **UpdatedStmtList = new clang::Stmt*[StmtCount];
-
-  unsigned UpdatedStmtCount = 0;
-  unsigned Once = 0;
-  for (bI = CS->body_begin(); bI != CS->body_end(); bI++) {
-    UpdatedStmtList[UpdatedStmtCount++] = *bI;
-    if (*bI == OldStmt) {
-      Once++;
-      slangAssert(Once == 1);
-      UpdatedStmtList[UpdatedStmtCount++] = NewStmt;
-    }
-  }
-
-  CS->setStmts(C, UpdatedStmtList, UpdatedStmtCount);
-
-  delete [] UpdatedStmtList;
-
-  return;
-}
-
-static void ReplaceInCompoundStmt(clang::ASTContext& C,
-                                  clang::CompoundStmt *CS,
-                                  clang::Stmt* OldStmt,
-                                  clang::Stmt* NewStmt) {
-  clang::CompoundStmt::body_iterator bI = CS->body_begin();
-
-  unsigned StmtCount = 0;
-  for (bI = CS->body_begin(); bI != CS->body_end(); bI++) {
-    StmtCount++;
-  }
-
-  clang::Stmt **UpdatedStmtList = new clang::Stmt*[StmtCount];
-
-  unsigned UpdatedStmtCount = 0;
-  for (bI = CS->body_begin(); bI != CS->body_end(); bI++) {
-    if (*bI == OldStmt) {
-      UpdatedStmtList[UpdatedStmtCount++] = NewStmt;
-    } else {
-      UpdatedStmtList[UpdatedStmtCount++] = *bI;
-    }
-  }
-
-  CS->setStmts(C, UpdatedStmtList, UpdatedStmtCount);
-
-  delete [] UpdatedStmtList;
-
-  return;
-}
-
 
 // This class visits a compound statement and inserts the StmtList containing
 // destructors in proper locations. This includes inserting them before any
@@ -209,32 +174,89 @@ static void ReplaceInCompoundStmt(clang::ASTContext& C,
 // scope (compound statement), and/or before any break/continue statement that
 // would resume outside the declared scope. We will not handle the case for
 // goto statements that leave a local scope.
-// TODO(srhines): Make this work properly for break/continue.
+//
+// To accomplish these goals, it collects a list of sub-Stmt's that
+// correspond to scope exit points. It then uses an RSASTReplace visitor to
+// transform the AST, inserting appropriate destructors before each of those
+// sub-Stmt's (and also before the exit of the outermost containing Stmt for
+// the scope).
 class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
  private:
   clang::ASTContext &mC;
+
+  // The loop depth of the currently visited node.
+  int mLoopDepth;
+
+  // The switch statement depth of the currently visited node.
+  // Note that this is tracked separately from the loop depth because
+  // SwitchStmt-contained ContinueStmt's should have destructors for the
+  // corresponding loop scope.
+  int mSwitchDepth;
+
+  // The outermost statement block that we are currently visiting.
+  // This should always be a CompoundStmt.
+  clang::Stmt *mOuterStmt;
+
+  // The list of destructors to execute for this scope.
   std::list<clang::Stmt*> &mStmtList;
-  bool mTopLevel;
+
+  // The stack of statements which should be replaced by a compound statement
+  // containing the new destructor calls followed by the original Stmt.
+  std::stack<clang::Stmt*> mReplaceStmtStack;
+
  public:
-  DestructorVisitor(clang::ASTContext &C, std::list<clang::Stmt*> &StmtList);
+  DestructorVisitor(clang::ASTContext &C,
+                    clang::Stmt* OuterStmt,
+                    std::list<clang::Stmt*> &StmtList);
+
+  // This code walks the collected list of Stmts to replace and actually does
+  // the replacement. It also finishes up by appending appropriate destructors
+  // to the current outermost CompoundStmt.
+  void InsertDestructors() {
+    clang::Stmt *S = NULL;
+    while (!mReplaceStmtStack.empty()) {
+      S = mReplaceStmtStack.top();
+      mReplaceStmtStack.pop();
+
+      mStmtList.push_back(S);
+      clang::CompoundStmt *CS =
+          BuildCompoundStmt(mC, mStmtList, S->getLocEnd());
+      mStmtList.pop_back();
+
+      RSASTReplace R(mC);
+      R.ReplaceStmt(mOuterStmt, S, CS);
+    }
+    clang::CompoundStmt *CS = dyn_cast<clang::CompoundStmt>(mOuterStmt);
+    slangAssert(CS);
+    if (CS) {
+      AppendAfterStmt(mC, CS, NULL, mStmtList);
+    }
+  }
+
   void VisitStmt(clang::Stmt *S);
   void VisitCompoundStmt(clang::CompoundStmt *CS);
+
+  void VisitBreakStmt(clang::BreakStmt *BS);
+  void VisitCaseStmt(clang::CaseStmt *CS);
+  void VisitContinueStmt(clang::ContinueStmt *CS);
+  void VisitDefaultStmt(clang::DefaultStmt *DS);
+  void VisitDoStmt(clang::DoStmt *DS);
+  void VisitForStmt(clang::ForStmt *FS);
+  void VisitIfStmt(clang::IfStmt *IS);
+  void VisitReturnStmt(clang::ReturnStmt *RS);
+  void VisitSwitchCase(clang::SwitchCase *SC);
+  void VisitSwitchStmt(clang::SwitchStmt *SS);
+  void VisitWhileStmt(clang::WhileStmt *WS);
 };
 
 DestructorVisitor::DestructorVisitor(clang::ASTContext &C,
-                                     std::list<clang::Stmt*> &StmtList)
+                         clang::Stmt *OuterStmt,
+                         std::list<clang::Stmt*> &StmtList)
   : mC(C),
-    mStmtList(StmtList),
-    mTopLevel(true) {
-  return;
-}
-
-void DestructorVisitor::VisitCompoundStmt(clang::CompoundStmt *CS) {
-  if (!CS->body_empty()) {
-    AppendToCompoundStatement(mC, CS, mStmtList, mTopLevel);
-    mTopLevel = false;
-    VisitStmt(CS);
-  }
+    mLoopDepth(0),
+    mSwitchDepth(0),
+    mOuterStmt(OuterStmt),
+    mStmtList(StmtList) {
   return;
 }
 
@@ -246,6 +268,82 @@ void DestructorVisitor::VisitStmt(clang::Stmt *S) {
       Visit(Child);
     }
   }
+  return;
+}
+
+void DestructorVisitor::VisitCompoundStmt(clang::CompoundStmt *CS) {
+  VisitStmt(CS);
+  return;
+}
+
+void DestructorVisitor::VisitBreakStmt(clang::BreakStmt *BS) {
+  VisitStmt(BS);
+  if ((mLoopDepth == 0) && (mSwitchDepth == 0)) {
+    mReplaceStmtStack.push(BS);
+  }
+  return;
+}
+
+void DestructorVisitor::VisitCaseStmt(clang::CaseStmt *CS) {
+  VisitStmt(CS);
+  return;
+}
+
+void DestructorVisitor::VisitContinueStmt(clang::ContinueStmt *CS) {
+  VisitStmt(CS);
+  if (mLoopDepth == 0) {
+    // Switch statements can have nested continues.
+    mReplaceStmtStack.push(CS);
+  }
+  return;
+}
+
+void DestructorVisitor::VisitDefaultStmt(clang::DefaultStmt *DS) {
+  VisitStmt(DS);
+  return;
+}
+
+void DestructorVisitor::VisitDoStmt(clang::DoStmt *DS) {
+  mLoopDepth++;
+  VisitStmt(DS);
+  mLoopDepth--;
+  return;
+}
+
+void DestructorVisitor::VisitForStmt(clang::ForStmt *FS) {
+  mLoopDepth++;
+  VisitStmt(FS);
+  mLoopDepth--;
+  return;
+}
+
+void DestructorVisitor::VisitIfStmt(clang::IfStmt *IS) {
+  VisitStmt(IS);
+  return;
+}
+
+void DestructorVisitor::VisitReturnStmt(clang::ReturnStmt *RS) {
+  mReplaceStmtStack.push(RS);
+  return;
+}
+
+void DestructorVisitor::VisitSwitchCase(clang::SwitchCase *SC) {
+  slangAssert(false && "Both case and default have specialized handlers");
+  VisitStmt(SC);
+  return;
+}
+
+void DestructorVisitor::VisitSwitchStmt(clang::SwitchStmt *SS) {
+  mSwitchDepth++;
+  VisitStmt(SS);
+  mSwitchDepth--;
+  return;
+}
+
+void DestructorVisitor::VisitWhileStmt(clang::WhileStmt *WS) {
+  mLoopDepth++;
+  VisitStmt(WS);
+  mLoopDepth--;
   return;
 }
 
@@ -950,7 +1048,8 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
         CreateSingleRSSetObject(C, Diags, AS->getLHS(), AS->getRHS(), Loc);
   }
 
-  ReplaceInCompoundStmt(C, mCS, AS, UpdatedStmt);
+  RSASTReplace R(C);
+  R.ReplaceStmt(mCS, AS, UpdatedStmt);
   return;
 }
 
@@ -972,7 +1071,6 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
       RSExportPrimitiveType::DataTypeRSFont)->getLocation();
 
   if (DT == RSExportPrimitiveType::DataTypeIsStruct) {
-    // TODO(srhines): Skip struct initialization right now
     const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
     clang::DeclRefExpr *RefRSVar =
         clang::DeclRefExpr::Create(C,
@@ -985,7 +1083,9 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
     clang::Stmt *RSSetObjectOps =
         CreateStructRSSetObject(C, Diags, RefRSVar, InitExpr, Loc);
 
-    AppendAfterStmt(C, mCS, DS, RSSetObjectOps);
+    std::list<clang::Stmt*> StmtList;
+    StmtList.push_back(RSSetObjectOps);
+    AppendAfterStmt(C, mCS, DS, StmtList);
     return;
   }
 
@@ -1038,7 +1138,9 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
                              SetObjectFD->getCallResultType(),
                              Loc);
 
-  AppendAfterStmt(C, mCS, DS, RSSetObjectCall);
+  std::list<clang::Stmt*> StmtList;
+  StmtList.push_back(RSSetObjectCall);
+  AppendAfterStmt(C, mCS, DS, StmtList);
 
   return;
 }
@@ -1055,8 +1157,11 @@ void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
     }
   }
   if (RSClearObjectCalls.size() > 0) {
-    DestructorVisitor DV((*mRSO.begin())->getASTContext(), RSClearObjectCalls);
+    DestructorVisitor DV((*mRSO.begin())->getASTContext(),
+                         mCS,
+                         RSClearObjectCalls);
     DV.Visit(mCS);
+    DV.InsertDestructors();
   }
   return;
 }

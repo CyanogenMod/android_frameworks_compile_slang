@@ -32,6 +32,16 @@ namespace clang {
 
 namespace slang {
 
+// This class provides the overall reference counting mechanism for handling
+// local variables of RS object types (rs_font, rs_allocation, ...). This
+// class ensures that appropriate functions (rsSetObject, rsClearObject) are
+// called at proper points in the object's lifetime.
+// 1) Each local object of appropriate type must be zero-initialized (to
+// prevent corruption) during subsequent rsSetObject()/rsClearObject() calls.
+// 2) Assignments using these types must also be converted into the
+// appropriate (possibly a series of) rsSetObject() calls.
+// 3) Finally, each local object must call rsClearObject() when it goes out
+// of scope.
 class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
  private:
   class Scope {
@@ -78,9 +88,6 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
 
   // Initialize RSSetObjectFD and RSClearObjectFD.
   static void GetRSRefCountingFunctions(clang::ASTContext &C);
-
-  // TODO(srhines): Composite types and arrays based on RS object types need
-  // to be handled for both zero-initialization + clearing.
 
   // Return false if the type of variable declared in VD does not contain
   // an RS object type.
