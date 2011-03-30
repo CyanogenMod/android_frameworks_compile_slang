@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# The prebuilt tools should be used when we are doing app-only build.
+ifeq ($(TARGET_BUILD_APPS),)
+
 LOCAL_PATH := $(call my-dir)
 
 local_cflags_for_slang := -Wno-sign-promo -Wall -Wno-unused-parameter -Werror
@@ -231,3 +235,5 @@ include frameworks/compile/slang/RSSpec.mk
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
 include $(BUILD_HOST_EXECUTABLE)
+
+endif  # TARGET_BUILD_APPS
