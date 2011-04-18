@@ -59,11 +59,9 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
       return;
     }
 
-    void ReplaceRSObjectAssignment(clang::BinaryOperator *AS,
-                                   clang::Diagnostic *Diags);
+    void ReplaceRSObjectAssignment(clang::BinaryOperator *AS);
 
-    void AppendRSObjectInit(clang::Diagnostic *Diags,
-                            clang::VarDecl *VD,
+    void AppendRSObjectInit(clang::VarDecl *VD,
                             clang::DeclStmt *DS,
                             RSExportPrimitiveType::DataType DT,
                             clang::Expr *InitExpr);
@@ -73,9 +71,9 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
     static clang::Stmt *ClearRSObject(clang::VarDecl *VD);
   };
 
+  clang::ASTContext &mCtx;
   std::stack<Scope*> mScopeStack;
   bool RSInitFD;
-  clang::Diagnostic *mDiags;
 
   // RSSetObjectFD and RSClearObjectFD holds FunctionDecl of rsSetObject()
   // and rsClearObject() in the current ASTContext.
@@ -103,15 +101,15 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
       const clang::SourceLocation &Loc);
 
  public:
-  RSObjectRefCount()
-      : RSInitFD(false) {
+  explicit RSObjectRefCount(clang::ASTContext &C)
+      : mCtx(C),
+        RSInitFD(false) {
     return;
   }
 
-  void Init(clang::ASTContext &C, clang::Diagnostic *Diags) {
+  void Init() {
     if (!RSInitFD) {
-      GetRSRefCountingFunctions(C);
-      mDiags = Diags;
+      GetRSRefCountingFunctions(mCtx);
       RSInitFD = true;
     }
     return;

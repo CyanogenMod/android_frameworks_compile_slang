@@ -183,7 +183,7 @@ static void AppendAfterStmt(clang::ASTContext &C,
 // the scope).
 class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
  private:
-  clang::ASTContext &mC;
+  clang::ASTContext &mCtx;
 
   // The loop depth of the currently visited node.
   int mLoopDepth;
@@ -221,16 +221,16 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
 
       mStmtList.push_back(S);
       clang::CompoundStmt *CS =
-          BuildCompoundStmt(mC, mStmtList, S->getLocEnd());
+          BuildCompoundStmt(mCtx, mStmtList, S->getLocEnd());
       mStmtList.pop_back();
 
-      RSASTReplace R(mC);
+      RSASTReplace R(mCtx);
       R.ReplaceStmt(mOuterStmt, S, CS);
     }
     clang::CompoundStmt *CS = dyn_cast<clang::CompoundStmt>(mOuterStmt);
     slangAssert(CS);
     if (CS) {
-      AppendAfterStmt(mC, CS, NULL, mStmtList);
+      AppendAfterStmt(mCtx, CS, NULL, mStmtList);
     }
   }
 
@@ -253,7 +253,7 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
 DestructorVisitor::DestructorVisitor(clang::ASTContext &C,
                          clang::Stmt *OuterStmt,
                          std::list<clang::Stmt*> &StmtList)
-  : mC(C),
+  : mCtx(C),
     mLoopDepth(0),
     mSwitchDepth(0),
     mOuterStmt(OuterStmt),
@@ -424,7 +424,7 @@ static clang::Stmt *ClearStructRSObject(
     clang::ASTContext &C,
     clang::DeclContext *DC,
     clang::Expr *RefRSStruct,
-    clang::SourceLocation SourceLoc,
+    clang::SourceLocation StartLoc,
     clang::SourceLocation Loc);
 
 static clang::Stmt *ClearArrayRSObject(
@@ -588,18 +588,40 @@ static clang::Stmt *ClearArrayRSObject(
   return CS;
 }
 
-static unsigned CountRSObjectTypes(const clang::Type *T) {
+static unsigned CountRSObjectTypes(clang::ASTContext &C,
+                                   const clang::Type *T,
+                                   clang::SourceLocation Loc) {
   slangAssert(T);
   unsigned RSObjectCount = 0;
 
   if (T->isArrayType()) {
-    return CountRSObjectTypes(T->getArrayElementTypeNoTypeQual());
+    return CountRSObjectTypes(C, T->getArrayElementTypeNoTypeQual(), Loc);
   }
 
   RSExportPrimitiveType::DataType DT =
       RSExportPrimitiveType::GetRSSpecificType(T);
   if (DT != RSExportPrimitiveType::DataTypeUnknown) {
     return (RSExportPrimitiveType::IsRSObjectType(DT) ? 1 : 0);
+  }
+
+  if (T->isUnionType()) {
+    clang::RecordDecl *RD = T->getAsUnionType()->getDecl();
+    RD = RD->getDefinition();
+    for (clang::RecordDecl::field_iterator FI = RD->field_begin(),
+           FE = RD->field_end();
+         FI != FE;
+         FI++) {
+      const clang::FieldDecl *FD = *FI;
+      const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
+      if (CountRSObjectTypes(C, FT, Loc)) {
+        clang::Diagnostic &Diags = C.getDiagnostics();
+        // RS objects within unions are forbidden.
+        Diags.Report(clang::FullSourceLoc(Loc, C.getSourceManager()),
+            Diags.getCustomDiagID(clang::Diagnostic::Error,
+              "unions containing RS object types cannot be copied"));
+        return 0;
+      }
+    }
   }
 
   if (!T->isStructureType()) {
@@ -614,7 +636,7 @@ static unsigned CountRSObjectTypes(const clang::Type *T) {
        FI++) {
     const clang::FieldDecl *FD = *FI;
     const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
-    if (CountRSObjectTypes(FT)) {
+    if (CountRSObjectTypes(C, FT, Loc)) {
       // Sub-structs should only count once (as should arrays, etc.)
       RSObjectCount++;
     }
@@ -637,7 +659,7 @@ static clang::Stmt *ClearStructRSObject(
   slangAssert(RSExportPrimitiveType::GetRSSpecificType(BaseType) ==
               RSExportPrimitiveType::DataTypeUnknown);
 
-  unsigned FieldsToDestroy = CountRSObjectTypes(BaseType);
+  unsigned FieldsToDestroy = CountRSObjectTypes(C, BaseType, Loc);
 
   unsigned StmtCount = 0;
   clang::Stmt **StmtArray = new clang::Stmt*[FieldsToDestroy];
@@ -692,7 +714,7 @@ static clang::Stmt *ClearStructRSObject(
                                                      RSObjectMember,
                                                      Loc);
       }
-    } else if (FT->isStructureType() && CountRSObjectTypes(FT)) {
+    } else if (FT->isStructureType() && CountRSObjectTypes(C, FT, Loc)) {
       // In this case, we have a nested struct. We may not end up filling all
       // of the spaces in StmtArray (sub-structs should handle themselves
       // with separate compound statements).
@@ -737,7 +759,6 @@ static clang::Stmt *ClearStructRSObject(
 }
 
 static clang::Stmt *CreateSingleRSSetObject(clang::ASTContext &C,
-                                            clang::Diagnostic *Diags,
                                             clang::Expr *DstExpr,
                                             clang::Expr *SrcExpr,
                                             clang::SourceLocation StartLoc,
@@ -791,14 +812,12 @@ static clang::Stmt *CreateSingleRSSetObject(clang::ASTContext &C,
 }
 
 static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
-                                            clang::Diagnostic *Diags,
                                             clang::Expr *LHS,
                                             clang::Expr *RHS,
                                             clang::SourceLocation StartLoc,
                                             clang::SourceLocation Loc);
 
 static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
-                                           clang::Diagnostic *Diags,
                                            clang::Expr *DstArr,
                                            clang::Expr *SrcArr,
                                            clang::SourceLocation StartLoc,
@@ -923,15 +942,15 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
 
   clang::Stmt *RSSetObjectCall = NULL;
   if (BaseType->isArrayType()) {
-    RSSetObjectCall = CreateArrayRSSetObject(C, Diags, DstArrPtrSubscript,
+    RSSetObjectCall = CreateArrayRSSetObject(C, DstArrPtrSubscript,
                                              SrcArrPtrSubscript,
                                              StartLoc, Loc);
   } else if (DT == RSExportPrimitiveType::DataTypeUnknown) {
-    RSSetObjectCall = CreateStructRSSetObject(C, Diags, DstArrPtrSubscript,
+    RSSetObjectCall = CreateStructRSSetObject(C, DstArrPtrSubscript,
                                               SrcArrPtrSubscript,
                                               StartLoc, Loc);
   } else {
-    RSSetObjectCall = CreateSingleRSSetObject(C, Diags, DstArrPtrSubscript,
+    RSSetObjectCall = CreateSingleRSSetObject(C, DstArrPtrSubscript,
                                               SrcArrPtrSubscript,
                                               StartLoc, Loc);
   }
@@ -957,7 +976,6 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
 }
 
 static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
-                                            clang::Diagnostic *Diags,
                                             clang::Expr *LHS,
                                             clang::Expr *RHS,
                                             clang::SourceLocation StartLoc,
@@ -968,7 +986,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
   slangAssert(!RSExportPrimitiveType::IsRSObjectType(T));
 
   // Keep an extra slot for the original copy (memcpy)
-  unsigned FieldsToSet = CountRSObjectTypes(T) + 1;
+  unsigned FieldsToSet = CountRSObjectTypes(C, T, Loc) + 1;
 
   unsigned StmtCount = 0;
   clang::Stmt **StmtArray = new clang::Stmt*[FieldsToSet];
@@ -987,7 +1005,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
     const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
     const clang::Type *OrigType = FT;
 
-    if (!CountRSObjectTypes(FT)) {
+    if (!CountRSObjectTypes(C, FT, Loc)) {
       // Skip to next if we don't have any viable RS object types
       continue;
     }
@@ -1029,20 +1047,19 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
         RSExportPrimitiveType::GetRSSpecificType(FT);
 
     if (IsArrayType) {
-      Diags->Report(clang::FullSourceLoc(Loc, C.getSourceManager()),
-          Diags->getCustomDiagID(clang::Diagnostic::Error,
+      clang::Diagnostic &Diags = C.getDiagnostics();
+      Diags.Report(clang::FullSourceLoc(Loc, C.getSourceManager()),
+          Diags.getCustomDiagID(clang::Diagnostic::Error,
             "Arrays of RS object types within structures cannot be copied"));
       // TODO(srhines): Support setting arrays of RS objects
       // StmtArray[StmtCount++] =
-      //    CreateArrayRSSetObject(C, Diags, DstMember, SrcMember, StartLoc, Loc);
+      //    CreateArrayRSSetObject(C, DstMember, SrcMember, StartLoc, Loc);
     } else if (DT == RSExportPrimitiveType::DataTypeUnknown) {
       StmtArray[StmtCount++] =
-          CreateStructRSSetObject(C, Diags, DstMember, SrcMember,
-                                  StartLoc, Loc);
+          CreateStructRSSetObject(C, DstMember, SrcMember, StartLoc, Loc);
     } else if (RSExportPrimitiveType::IsRSObjectType(DT)) {
       StmtArray[StmtCount++] =
-          CreateSingleRSSetObject(C, Diags, DstMember, SrcMember,
-                                  StartLoc, Loc);
+          CreateSingleRSSetObject(C, DstMember, SrcMember, StartLoc, Loc);
     } else {
       slangAssert(false);
     }
@@ -1069,8 +1086,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
 }  // namespace
 
 void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
-    clang::BinaryOperator *AS,
-    clang::Diagnostic *Diags) {
+    clang::BinaryOperator *AS) {
 
   clang::QualType QT = AS->getType();
 
@@ -1084,12 +1100,10 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
   if (!RSExportPrimitiveType::IsRSObjectType(QT.getTypePtr())) {
     // By definition, this is a struct assignment if we get here
     UpdatedStmt =
-        CreateStructRSSetObject(C, Diags, AS->getLHS(), AS->getRHS(),
-                                StartLoc, Loc);
+        CreateStructRSSetObject(C, AS->getLHS(), AS->getRHS(), StartLoc, Loc);
   } else {
     UpdatedStmt =
-        CreateSingleRSSetObject(C, Diags, AS->getLHS(), AS->getRHS(),
-                                StartLoc, Loc);
+        CreateSingleRSSetObject(C, AS->getLHS(), AS->getRHS(), StartLoc, Loc);
   }
 
   RSASTReplace R(C);
@@ -1098,7 +1112,6 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
 }
 
 void RSObjectRefCount::Scope::AppendRSObjectInit(
-    clang::Diagnostic *Diags,
     clang::VarDecl *VD,
     clang::DeclStmt *DS,
     RSExportPrimitiveType::DataType DT,
@@ -1128,7 +1141,7 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
                                    NULL);
 
     clang::Stmt *RSSetObjectOps =
-        CreateStructRSSetObject(C, Diags, RefRSVar, InitExpr, StartLoc, Loc);
+        CreateStructRSSetObject(C, RefRSVar, InitExpr, StartLoc, Loc);
 
     std::list<clang::Stmt*> StmtList;
     StmtList.push_back(RSSetObjectOps);
@@ -1415,7 +1428,7 @@ void RSObjectRefCount::VisitDeclStmt(clang::DeclStmt *DS) {
       clang::Expr *InitExpr = NULL;
       if (InitializeRSObject(VD, &DT, &InitExpr)) {
         getCurrentScope()->addRSObject(VD);
-        getCurrentScope()->AppendRSObjectInit(mDiags, VD, DS, DT, InitExpr);
+        getCurrentScope()->AppendRSObjectInit(VD, DS, DT, InitExpr);
       }
     }
   }
@@ -1442,8 +1455,8 @@ void RSObjectRefCount::VisitCompoundStmt(clang::CompoundStmt *CS) {
 void RSObjectRefCount::VisitBinAssign(clang::BinaryOperator *AS) {
   clang::QualType QT = AS->getType();
 
-  if (CountRSObjectTypes(QT.getTypePtr())) {
-    getCurrentScope()->ReplaceRSObjectAssignment(AS, mDiags);
+  if (CountRSObjectTypes(mCtx, QT.getTypePtr(), AS->getExprLoc())) {
+    getCurrentScope()->ReplaceRSObjectAssignment(AS);
   }
 
   return;

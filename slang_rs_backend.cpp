@@ -62,7 +62,8 @@ RSBackend::RSBackend(RSContext *Context,
       mExportVarMetadata(NULL),
       mExportFuncMetadata(NULL),
       mExportTypeMetadata(NULL),
-      mRSObjectSlotsMetadata(NULL) {
+      mRSObjectSlotsMetadata(NULL),
+      mRefCount(mContext->getASTContext()) {
   return;
 }
 
@@ -71,7 +72,7 @@ void RSBackend::AnnotateFunction(clang::FunctionDecl *FD) {
   if (FD &&
       FD->hasBody() &&
       !SlangRS::IsFunctionInRSHeaderFile(FD, mSourceMgr)) {
-    mRefCount.Init(mContext->getASTContext(), &mDiags);
+    mRefCount.Init();
     mRefCount.Visit(FD->getBody());
   }
   return;
