@@ -424,12 +424,14 @@ static clang::Stmt *ClearStructRSObject(
     clang::ASTContext &C,
     clang::DeclContext *DC,
     clang::Expr *RefRSStruct,
+    clang::SourceLocation SourceLoc,
     clang::SourceLocation Loc);
 
 static clang::Stmt *ClearArrayRSObject(
     clang::ASTContext &C,
     clang::DeclContext *DC,
     clang::Expr *RefRSArr,
+    clang::SourceLocation StartLoc,
     clang::SourceLocation Loc) {
   const clang::Type *BaseType = RefRSArr->getType().getTypePtr();
   slangAssert(BaseType->isArrayType());
@@ -473,6 +475,7 @@ static clang::Stmt *ClearArrayRSObject(
   clang::VarDecl *IIVD =
       clang::VarDecl::Create(C,
                              DC,
+                             StartLoc,
                              Loc,
                              &II,
                              C.IntTy,
@@ -557,10 +560,10 @@ static clang::Stmt *ClearArrayRSObject(
   clang::Stmt *RSClearObjectCall = NULL;
   if (BaseType->isArrayType()) {
     RSClearObjectCall =
-        ClearArrayRSObject(C, DC, RefRSArrPtrSubscript, Loc);
+        ClearArrayRSObject(C, DC, RefRSArrPtrSubscript, StartLoc, Loc);
   } else if (DT == RSExportPrimitiveType::DataTypeUnknown) {
     RSClearObjectCall =
-        ClearStructRSObject(C, DC, RefRSArrPtrSubscript, Loc);
+        ClearStructRSObject(C, DC, RefRSArrPtrSubscript, StartLoc, Loc);
   } else {
     RSClearObjectCall = ClearSingleRSObject(C, RefRSArrPtrSubscript, Loc);
   }
@@ -624,6 +627,7 @@ static clang::Stmt *ClearStructRSObject(
     clang::ASTContext &C,
     clang::DeclContext *DC,
     clang::Expr *RefRSStruct,
+    clang::SourceLocation StartLoc,
     clang::SourceLocation Loc) {
   const clang::Type *BaseType = RefRSStruct->getType().getTypePtr();
 
@@ -681,6 +685,7 @@ static clang::Stmt *ClearStructRSObject(
         StmtArray[StmtCount++] = ClearArrayRSObject(C,
                                                     DC,
                                                     RSObjectMember,
+                                                    StartLoc,
                                                     Loc);
       } else {
         StmtArray[StmtCount++] = ClearSingleRSObject(C,
@@ -710,11 +715,13 @@ static clang::Stmt *ClearStructRSObject(
         StmtArray[StmtCount++] = ClearArrayRSObject(C,
                                                     DC,
                                                     RSObjectMember,
+                                                    StartLoc,
                                                     Loc);
       } else {
         StmtArray[StmtCount++] = ClearStructRSObject(C,
                                                      DC,
                                                      RSObjectMember,
+                                                     StartLoc,
                                                      Loc);
       }
     }
@@ -733,6 +740,7 @@ static clang::Stmt *CreateSingleRSSetObject(clang::ASTContext &C,
                                             clang::Diagnostic *Diags,
                                             clang::Expr *DstExpr,
                                             clang::Expr *SrcExpr,
+                                            clang::SourceLocation StartLoc,
                                             clang::SourceLocation Loc) {
   const clang::Type *T = DstExpr->getType().getTypePtr();
   clang::FunctionDecl *SetObjectFD = RSObjectRefCount::GetRSSetObjectFD(T);
@@ -786,12 +794,14 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
                                             clang::Diagnostic *Diags,
                                             clang::Expr *LHS,
                                             clang::Expr *RHS,
+                                            clang::SourceLocation StartLoc,
                                             clang::SourceLocation Loc);
 
 static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
                                            clang::Diagnostic *Diags,
                                            clang::Expr *DstArr,
                                            clang::Expr *SrcArr,
+                                           clang::SourceLocation StartLoc,
                                            clang::SourceLocation Loc) {
   clang::DeclContext *DC = NULL;
   const clang::Type *BaseType = DstArr->getType().getTypePtr();
@@ -813,6 +823,7 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
   clang::VarDecl *IIVD =
       clang::VarDecl::Create(C,
                              DC,
+                             StartLoc,
                              Loc,
                              &II,
                              C.IntTy,
@@ -913,13 +924,16 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
   clang::Stmt *RSSetObjectCall = NULL;
   if (BaseType->isArrayType()) {
     RSSetObjectCall = CreateArrayRSSetObject(C, Diags, DstArrPtrSubscript,
-                                             SrcArrPtrSubscript, Loc);
+                                             SrcArrPtrSubscript,
+                                             StartLoc, Loc);
   } else if (DT == RSExportPrimitiveType::DataTypeUnknown) {
     RSSetObjectCall = CreateStructRSSetObject(C, Diags, DstArrPtrSubscript,
-                                              SrcArrPtrSubscript, Loc);
+                                              SrcArrPtrSubscript,
+                                              StartLoc, Loc);
   } else {
     RSSetObjectCall = CreateSingleRSSetObject(C, Diags, DstArrPtrSubscript,
-                                              SrcArrPtrSubscript, Loc);
+                                              SrcArrPtrSubscript,
+                                              StartLoc, Loc);
   }
 
   clang::ForStmt *DestructorLoop =
@@ -946,6 +960,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
                                             clang::Diagnostic *Diags,
                                             clang::Expr *LHS,
                                             clang::Expr *RHS,
+                                            clang::SourceLocation StartLoc,
                                             clang::SourceLocation Loc) {
   clang::QualType QT = LHS->getType();
   const clang::Type *T = QT.getTypePtr();
@@ -1019,13 +1034,15 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
             "Arrays of RS object types within structures cannot be copied"));
       // TODO(srhines): Support setting arrays of RS objects
       // StmtArray[StmtCount++] =
-      //    CreateArrayRSSetObject(C, Diags, DstMember, SrcMember, Loc);
+      //    CreateArrayRSSetObject(C, Diags, DstMember, SrcMember, StartLoc, Loc);
     } else if (DT == RSExportPrimitiveType::DataTypeUnknown) {
       StmtArray[StmtCount++] =
-          CreateStructRSSetObject(C, Diags, DstMember, SrcMember, Loc);
+          CreateStructRSSetObject(C, Diags, DstMember, SrcMember,
+                                  StartLoc, Loc);
     } else if (RSExportPrimitiveType::IsRSObjectType(DT)) {
       StmtArray[StmtCount++] =
-          CreateSingleRSSetObject(C, Diags, DstMember, SrcMember, Loc);
+          CreateSingleRSSetObject(C, Diags, DstMember, SrcMember,
+                                  StartLoc, Loc);
     } else {
       slangAssert(false);
     }
@@ -1061,15 +1078,18 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
       RSExportPrimitiveType::DataTypeRSFont)->getASTContext();
 
   clang::SourceLocation Loc = AS->getExprLoc();
+  clang::SourceLocation StartLoc = AS->getExprLoc();
   clang::Stmt *UpdatedStmt = NULL;
 
   if (!RSExportPrimitiveType::IsRSObjectType(QT.getTypePtr())) {
     // By definition, this is a struct assignment if we get here
     UpdatedStmt =
-        CreateStructRSSetObject(C, Diags, AS->getLHS(), AS->getRHS(), Loc);
+        CreateStructRSSetObject(C, Diags, AS->getLHS(), AS->getRHS(),
+                                StartLoc, Loc);
   } else {
     UpdatedStmt =
-        CreateSingleRSSetObject(C, Diags, AS->getLHS(), AS->getRHS(), Loc);
+        CreateSingleRSSetObject(C, Diags, AS->getLHS(), AS->getRHS(),
+                                StartLoc, Loc);
   }
 
   RSASTReplace R(C);
@@ -1093,6 +1113,8 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
       RSExportPrimitiveType::DataTypeRSFont)->getASTContext();
   clang::SourceLocation Loc = RSObjectRefCount::GetRSSetObjectFD(
       RSExportPrimitiveType::DataTypeRSFont)->getLocation();
+  clang::SourceLocation StartLoc = RSObjectRefCount::GetRSSetObjectFD(
+      RSExportPrimitiveType::DataTypeRSFont)->getInnerLocStart();
 
   if (DT == RSExportPrimitiveType::DataTypeIsStruct) {
     const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
@@ -1106,7 +1128,7 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
                                    NULL);
 
     clang::Stmt *RSSetObjectOps =
-        CreateStructRSSetObject(C, Diags, RefRSVar, InitExpr, Loc);
+        CreateStructRSSetObject(C, Diags, RefRSVar, InitExpr, StartLoc, Loc);
 
     std::list<clang::Stmt*> StmtList;
     StmtList.push_back(RSSetObjectOps);
@@ -1201,6 +1223,7 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
   clang::ASTContext &C = VD->getASTContext();
   clang::DeclContext *DC = VD->getDeclContext();
   clang::SourceLocation Loc = VD->getLocation();
+  clang::SourceLocation StartLoc = VD->getInnerLocStart();
   const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
 
   // Reference expr to target RS object variable
@@ -1214,7 +1237,7 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
                                  NULL);
 
   if (T->isArrayType()) {
-    return ClearArrayRSObject(C, DC, RefRSVar, Loc);
+    return ClearArrayRSObject(C, DC, RefRSVar, StartLoc, Loc);
   }
 
   RSExportPrimitiveType::DataType DT =
@@ -1222,7 +1245,7 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
 
   if (DT == RSExportPrimitiveType::DataTypeUnknown ||
       DT == RSExportPrimitiveType::DataTypeIsStruct) {
-    return ClearStructRSObject(C, DC, RefRSVar, Loc);
+    return ClearStructRSObject(C, DC, RefRSVar, StartLoc, Loc);
   }
 
   slangAssert((RSExportPrimitiveType::IsRSObjectType(DT)) &&

@@ -51,6 +51,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
         clang::RecordDecl::Create(Ctx, clang::TTK_Struct,
                                   Ctx.getTranslationUnitDecl(),
                                   clang::SourceLocation(),
+                                  clang::SourceLocation(),
                                   &Ctx.Idents.get(Id));
 
     for (unsigned i = 0; i < FD->getNumParams(); i++) {
@@ -66,6 +67,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
       clang::FieldDecl *FD =
           clang::FieldDecl::Create(Ctx,
                                    RD,
+                                   clang::SourceLocation(),
                                    clang::SourceLocation(),
                                    PVD->getIdentifier(),
                                    PVD->getOriginalType(),
