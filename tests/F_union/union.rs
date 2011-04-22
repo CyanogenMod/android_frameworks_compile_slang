@@ -6,7 +6,8 @@ union u {
     float f;
 } myUnion;
 
-int root(int num) {
-    return 10;
-}
+static union u2 {
+    int i;
+    rs_font f;
+} myUnion2;
 

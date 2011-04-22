@@ -112,30 +112,36 @@ void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
 
 namespace {
 
-bool ValidateVar(clang::VarDecl *VD, clang::Diagnostic *Diags,
-    clang::SourceManager *SM) {
-  llvm::StringRef TypeName;
-  const clang::Type *T = VD->getType().getTypePtr();
-  if (!RSExportType::NormalizeType(T, TypeName, Diags, SM, VD)) {
-    return false;
+static bool ValidateVarDecl(clang::VarDecl *VD) {
+  if (!VD) {
+    return true;
   }
-  return true;
+
+  clang::ASTContext &C = VD->getASTContext();
+  const clang::Type *T = VD->getType().getTypePtr();
+  bool valid = true;
+
+  if (VD->getLinkage() == clang::ExternalLinkage) {
+    llvm::StringRef TypeName;
+    if (!RSExportType::NormalizeType(T, TypeName, &C.getDiagnostics(), VD)) {
+      valid = false;
+    }
+  }
+  valid &= RSExportType::ValidateVarDecl(VD);
+
+  return valid;
 }
 
-bool ValidateASTContext(clang::ASTContext &C, clang::Diagnostic &Diags) {
+static bool ValidateASTContext(clang::ASTContext &C) {
   bool valid = true;
   clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
   for (clang::DeclContext::decl_iterator DI = TUDecl->decls_begin(),
           DE = TUDecl->decls_end();
        DI != DE;
        DI++) {
-    if (DI->getKind() == clang::Decl::Var) {
-      clang::VarDecl *VD = (clang::VarDecl*) (*DI);
-      if (VD->getLinkage() == clang::ExternalLinkage) {
-        if (!ValidateVar(VD, &Diags, &C.getSourceManager())) {
-          valid = false;
-        }
-      }
+    clang::VarDecl *VD = dyn_cast<clang::VarDecl>(*DI);
+    if (VD && !ValidateVarDecl(VD)) {
+      valid = false;
     }
   }
 
@@ -147,7 +153,7 @@ bool ValidateASTContext(clang::ASTContext &C, clang::Diagnostic &Diags) {
 void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
   clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
 
-  if (!ValidateASTContext(C, mDiags)) {
+  if (!ValidateASTContext(C)) {
     return;
   }
 

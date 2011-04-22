@@ -126,8 +126,12 @@ class RSExportType : public RSExportable {
   static bool NormalizeType(const clang::Type *&T,
                             llvm::StringRef &TypeName,
                             clang::Diagnostic *Diags,
-                            clang::SourceManager *SM,
                             const clang::VarDecl *VD);
+
+  // This function ensures that the VarDecl can be properly handled by RS.
+  // If it cannot, this function returns false. Otherwise it returns true.
+  static bool ValidateVarDecl(clang::VarDecl *VD);
+
   // @T may not be normalized
   static RSExportType *Create(RSContext *Context, const clang::Type *T);
   static RSExportType *CreateFromDecl(RSContext *Context,

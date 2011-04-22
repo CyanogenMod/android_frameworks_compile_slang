@@ -1,1 +1,0 @@
-union_rs_copy.rs:17:5: error: unions containing RS object types cannot be copied

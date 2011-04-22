@@ -614,11 +614,7 @@ static unsigned CountRSObjectTypes(clang::ASTContext &C,
       const clang::FieldDecl *FD = *FI;
       const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
       if (CountRSObjectTypes(C, FT, Loc)) {
-        clang::Diagnostic &Diags = C.getDiagnostics();
-        // RS objects within unions are forbidden.
-        Diags.Report(clang::FullSourceLoc(Loc, C.getSourceManager()),
-            Diags.getCustomDiagID(clang::Diagnostic::Error,
-              "unions containing RS object types cannot be copied"));
+        slangAssert(false && "can't have unions with RS object types!");
         return 0;
       }
     }
