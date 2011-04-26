@@ -9,7 +9,3 @@ struct s {
     float3 f1[1];
 } myStruct;
 
-int root(int num) {
-    return 10;
-}
-

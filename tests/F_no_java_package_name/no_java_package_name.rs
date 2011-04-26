@@ -1,6 +1,6 @@
 #pragma version(1)
 
-int root(int num) {
+int root(void) {
     return 10;
 }
 

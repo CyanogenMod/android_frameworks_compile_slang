@@ -3,7 +3,3 @@
 
 int** myPtr;
 
-int root(int num) {
-    return 10;
-}
-

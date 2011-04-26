@@ -185,8 +185,6 @@ void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
 ///////////////////////////////////////////////////////////////////////////////
 void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
   if (!mContext->processExport()) {
-    mDiags.Report(mDiags.getCustomDiagID(clang::Diagnostic::Error,
-                                         "elements cannot be exported"));
     return;
   }
 

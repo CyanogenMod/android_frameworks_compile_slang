@@ -4,7 +4,3 @@
 
 float f;
 
-int root(int num) {
-    return 10;
-}
-

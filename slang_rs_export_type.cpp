@@ -589,16 +589,14 @@ RSExportType *RSExportType::Create(RSContext *Context,
     }
     case clang::Type::Pointer: {
       ET = RSExportPointerType::Create(Context,
-                                       UNSAFE_CAST_TYPE(const clang::PointerType, T),
-                                       TypeName);
+               UNSAFE_CAST_TYPE(const clang::PointerType, T), TypeName);
       // FIXME: free the name (allocated in RSExportType::GetTypeName)
       delete [] TypeName.data();
       break;
     }
     case clang::Type::ExtVector: {
       ET = RSExportVectorType::Create(Context,
-                                      UNSAFE_CAST_TYPE(const clang::ExtVectorType, T),
-                                      TypeName);
+               UNSAFE_CAST_TYPE(const clang::ExtVectorType, T), TypeName);
       break;
     }
     case clang::Type::ConstantArray: {

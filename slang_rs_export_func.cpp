@@ -29,12 +29,36 @@
 
 namespace slang {
 
+namespace {
+
+// Ensure that the exported function is actually valid
+static bool ValidateFuncDecl(clang::Diagnostic *Diags,
+                             const clang::FunctionDecl *FD) {
+  slangAssert(Diags && FD);
+  const clang::ASTContext &C = FD->getASTContext();
+  if (FD->getResultType().getCanonicalType() != C.VoidTy) {
+    Diags->Report(
+        clang::FullSourceLoc(FD->getLocation(), Diags->getSourceManager()),
+        Diags->getCustomDiagID(clang::Diagnostic::Error,
+                               "invokable non-static functions are required "
+                               "to return void"));
+    return false;
+  }
+  return true;
+}
+
+}  // namespace
+
 RSExportFunc *RSExportFunc::Create(RSContext *Context,
                                    const clang::FunctionDecl *FD) {
   llvm::StringRef Name = FD->getName();
   RSExportFunc *F;
 
   slangAssert(!Name.empty() && "Function must have a name");
+
+  if (!ValidateFuncDecl(Context->getDiagnostics(), FD)) {
+    return NULL;
+  }
 
   F = new RSExportFunc(Context, Name, FD);
 
@@ -86,9 +110,9 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
       RSExportType::Create(Context, T.getTypePtr());
 
     if (ET == NULL) {
-      fprintf(stderr, "Failed to export the function %s. There's at least one  "
+      fprintf(stderr, "Failed to export the function %s. There's at least one "
                       "parameter whose type is not supported by the "
-                      "reflection", F->getName().c_str());
+                      "reflection\n", F->getName().c_str());
       delete F;
       return NULL;
     }

@@ -41,6 +41,7 @@
 #include "slang_rs_exportable.h"
 #include "slang_rs_pragma_handler.h"
 #include "slang_rs_reflection.h"
+#include "slang_rs_root.h"
 
 namespace slang {
 
@@ -100,12 +101,6 @@ bool RSContext::processExportVar(const clang::VarDecl *VD) {
   return true;
 }
 
-static bool isSpecialRSFunc(const llvm::StringRef& Name) {
-  static llvm::StringRef FuncInit("init");
-  static llvm::StringRef FuncRoot("root");
-  return Name.equals(FuncInit) || Name.equals(FuncRoot);
-}
-
 bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
   slangAssert(!FD->getName().empty() && "Function name should not be empty");
 
@@ -120,7 +115,10 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
   }
 
   // Do not reflect specialized RS functions like init/root.
-  if (isSpecialRSFunc(FD->getName())) {
+  if (RSRoot::isSpecialRSFunc(FD)) {
+    if (!RSRoot::validateSpecialFuncDecl(getDiagnostics(), FD)) {
+      return false;
+    }
     return true;
   }
 
@@ -189,8 +187,6 @@ bool RSContext::processExport() {
       clang::VarDecl *VD = (clang::VarDecl*) (*DI);
       if (VD->getLinkage() == clang::ExternalLinkage) {
         if (!processExportVar(VD)) {
-          fprintf(stderr, "RSContext::processExport : failed to export var "
-                          "'%s'\n", VD->getNameAsString().c_str());
           return false;
         }
       }
@@ -199,8 +195,6 @@ bool RSContext::processExport() {
       clang::FunctionDecl *FD = (clang::FunctionDecl*) (*DI);
       if (FD->getLinkage() == clang::ExternalLinkage) {
         if (!processExportFunc(FD)) {
-          fprintf(stderr, "RSContext::processExport : failed to export func "
-                          "'%s'\n", FD->getNameAsString().c_str());
           return false;
         }
       }
@@ -213,8 +207,6 @@ bool RSContext::processExport() {
        EI != EE;
        EI++) {
     if (!processExportType(EI->getKey())) {
-      fprintf(stderr, "RSContext::processExport : failed to export type "
-              "'%s'\n", EI->getKey().str().c_str());
       return false;
     }
   }

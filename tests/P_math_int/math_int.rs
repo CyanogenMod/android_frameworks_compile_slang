@@ -76,7 +76,7 @@ float4 f4;
     TEST4_2(f, fnc);        \
 
 
-int compile_all_math_int_ops() {
+void compile_all_math_int_ops() {
     TEST_UIFUNC_1(abs);
     TEST_IFUNC_1(clz);
     TEST_IFUNC_2(min);
@@ -84,10 +84,6 @@ int compile_all_math_int_ops() {
     TEST4_2S(f, min);
     TEST4_2S(f, max);
 
-    return 0;
-}
-
-int root(int num) {
-    return 10;
+    return;
 }
 

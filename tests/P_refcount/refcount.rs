@@ -20,7 +20,7 @@ void singleStmt() {
     globalAlloc = globalAlloc2;
 }
 
-int root(int num) {
+int root(void) {
     foo();
     return 10;
 }

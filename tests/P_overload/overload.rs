@@ -7,7 +7,3 @@ void __attribute__((overloadable)) foo(int i) {
 void __attribute__((overloadable)) foo(float f) {
 }
 
-int root(int num) {
-    return 10;
-}
-

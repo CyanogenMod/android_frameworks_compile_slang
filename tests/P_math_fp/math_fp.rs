@@ -71,7 +71,7 @@ float4 f4;
     f3 = fnc(f3, f3, &i3);  \
     f4 = fnc(f4, f4, &i4);
 
-int compile_all_math_fp_ops() {
+void compile_all_math_fp_ops() {
     TEST_FUNC_1(acos);
     TEST_FUNC_1(acosh);
     TEST_FUNC_1(acospi);
@@ -141,10 +141,6 @@ int compile_all_math_fp_ops() {
     TEST_FUNC_1(tgamma);
     TEST_FUNC_1(trunc);
 
-    return 0;
-}
-
-int root(int num) {
-    return 10;
+    return;
 }
 
