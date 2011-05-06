@@ -50,7 +50,8 @@ bool RSRoot::validateSpecialFuncDecl(clang::Diagnostic *Diags,
   const clang::ASTContext &C = FD->getASTContext();
 
   if (isRootRSFunc(FD)) {
-    if (FD->getNumParams() == 0) {
+    unsigned int numParams = FD->getNumParams();
+    if (numParams == 0) {
       // Graphics root function, so verify that it returns an int
       if (FD->getResultType().getCanonicalType() != C.IntTy) {
         Diags->Report(
@@ -72,10 +73,71 @@ bool RSRoot::validateSpecialFuncDecl(clang::Diagnostic *Diags,
       }
 
       // Validate remaining parameter types
-      // TODO(srhines)
+      const clang::ParmVarDecl *tooManyParams = NULL;
+      for (unsigned int i = 0; i < numParams; i++) {
+        const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
+        clang::QualType QT = PVD->getType().getCanonicalType();
+        switch (i) {
+          case 0:     // const T1 *ain
+          case 2: {   // const T3 *usrData
+            if (!QT->isPointerType() ||
+                !QT->getPointeeType().isConstQualified()) {
+              Diags->Report(
+                  clang::FullSourceLoc(PVD->getLocation(),
+                                       Diags->getSourceManager()),
+                  Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                         "compute root() parameter must be a "
+                                         "const pointer type"));
+              valid = false;
+            }
+            break;
+          }
+          case 1: {   // T2 *aout
+            if (!QT->isPointerType()) {
+              Diags->Report(
+                  clang::FullSourceLoc(PVD->getLocation(),
+                                       Diags->getSourceManager()),
+                  Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                         "compute root() parameter must be a "
+                                         "pointer type"));
+              valid = false;
+            }
+            break;
+          }
+          case 3:     // unsigned int x
+          case 4:     // unsigned int y
+          case 5:     // unsigned int z
+          case 6: {   // unsigned int ar
+            if (QT.getUnqualifiedType() != C.UnsignedIntTy) {
+              Diags->Report(
+                  clang::FullSourceLoc(PVD->getLocation(),
+                                       Diags->getSourceManager()),
+                  Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                         "compute root() parameter must be a "
+                                         "uint32_t type"));
+              valid = false;
+            }
+            break;
+          }
+          default: {
+            if (!tooManyParams) {
+              tooManyParams = PVD;
+            }
+            break;
+          }
+        }
+      }
+      if (tooManyParams) {
+        Diags->Report(
+            clang::FullSourceLoc(tooManyParams->getLocation(),
+                                 Diags->getSourceManager()),
+            Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                   "too many compute root() parameters "
+                                   "specified"));
+        valid = false;
+      }
     }
-  }
-  else if (isInitRSFunc(FD)) {
+  } else if (isInitRSFunc(FD)) {
     if (FD->getNumParams() != 0) {
       Diags->Report(
           clang::FullSourceLoc(FD->getLocation(), Diags->getSourceManager()),
@@ -93,8 +155,7 @@ bool RSRoot::validateSpecialFuncDecl(clang::Diagnostic *Diags,
                                  "return type"));
       valid = false;
     }
-  }
-  else {
+  } else {
     slangAssert(false && "must be called on init or root function!");
   }
 

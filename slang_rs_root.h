@@ -24,8 +24,6 @@
 
 #include "slang_assert.h"
 #include "slang_rs_context.h"
-//#include "slang_rs_export_type.h"
-//#include "slang_rs_exportable.h"
 
 namespace clang {
   class FunctionDecl;
@@ -36,8 +34,6 @@ namespace slang {
 // Base class for handling root() functions (including reflection of
 // control-side code for issuing rsForEach).
 class RSRoot {
-  //friend class RSContext;
-
  private:
   std::string mName;
   std::string mMangledName;
@@ -90,9 +86,7 @@ class RSRoot {
 
   static bool validateSpecialFuncDecl(clang::Diagnostic *Diags,
                                       const clang::FunctionDecl *FD);
-
 };  // RSRoot
-
 
 }  // namespace slang
 
