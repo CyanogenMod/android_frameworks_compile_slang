@@ -177,6 +177,7 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
 }
 
 bool RSContext::processExport() {
+  bool valid = true;
   // Export variable
   clang::TranslationUnitDecl *TUDecl = mCtx.getTranslationUnitDecl();
   for (clang::DeclContext::decl_iterator DI = TUDecl->decls_begin(),
@@ -187,7 +188,7 @@ bool RSContext::processExport() {
       clang::VarDecl *VD = (clang::VarDecl*) (*DI);
       if (VD->getLinkage() == clang::ExternalLinkage) {
         if (!processExportVar(VD)) {
-          return false;
+          valid = false;
         }
       }
     } else if (DI->getKind() == clang::Decl::Function) {
@@ -195,7 +196,7 @@ bool RSContext::processExport() {
       clang::FunctionDecl *FD = (clang::FunctionDecl*) (*DI);
       if (FD->getLinkage() == clang::ExternalLinkage) {
         if (!processExportFunc(FD)) {
-          return false;
+          valid = false;
         }
       }
     }
@@ -207,11 +208,11 @@ bool RSContext::processExport() {
        EI != EE;
        EI++) {
     if (!processExportType(EI->getKey())) {
-      return false;
+      valid = false;
     }
   }
 
-  return true;
+  return valid;
 }
 
 bool RSContext::insertExportType(const llvm::StringRef &TypeName,
