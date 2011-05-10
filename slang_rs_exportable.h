@@ -26,7 +26,8 @@ class RSExportable {
   enum Kind {
     EX_FUNC,
     EX_TYPE,
-    EX_VAR
+    EX_VAR,
+    EX_FOREACH
   };
 
  private:

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "slang_rs_root.h"
+#include "slang_rs_export_foreach.h"
 
 #include <string>
 
@@ -26,22 +26,109 @@
 
 #include "slang_assert.h"
 #include "slang_rs_context.h"
+#include "slang_rs_export_type.h"
 
 namespace slang {
 
-RSRoot *RSRoot::Create(RSContext *Context, const clang::FunctionDecl *FD) {
+RSExportForEach *RSExportForEach::Create(RSContext *Context,
+                                         const clang::FunctionDecl *FD) {
   llvm::StringRef Name = FD->getName();
-  RSRoot *F;
+  RSExportForEach *F;
 
   slangAssert(!Name.empty() && "Function must have a name");
 
-  F = new RSRoot(Context, Name, FD);
+  F = new RSExportForEach(Context, Name, FD);
+
+  F->numParams = FD->getNumParams();
+
+  if (F->numParams == 0) {
+    slangAssert(false && "Should have at least one parameter for root");
+  }
+
+  clang::ASTContext &Ctx = Context->getASTContext();
+
+  std::string Id(DUMMY_RS_TYPE_NAME_PREFIX"helper_foreach_param:");
+  Id.append(F->getName()).append(DUMMY_RS_TYPE_NAME_POSTFIX);
+
+  clang::RecordDecl *RD =
+      clang::RecordDecl::Create(Ctx, clang::TTK_Struct,
+                                Ctx.getTranslationUnitDecl(),
+                                clang::SourceLocation(),
+                                clang::SourceLocation(),
+                                &Ctx.Idents.get(Id));
+
+  // Extract the usrData parameter (if we have one)
+  if (F->numParams >= 3) {
+    const clang::ParmVarDecl *PVD = FD->getParamDecl(2);
+    clang::QualType QT = PVD->getType().getCanonicalType();
+    slangAssert(QT->isPointerType() &&
+                QT->getPointeeType().isConstQualified());
+
+    const clang::ASTContext &C = Context->getASTContext();
+    if (QT->getPointeeType().getCanonicalType().getUnqualifiedType() ==
+        C.VoidTy) {
+      // In the case of using const void*, we can't reflect an appopriate
+      // Java type, so we fall back to just reflecting the ain/aout parameters
+      F->numParams = 2;
+    } else {
+      llvm::StringRef ParamName = PVD->getName();
+      clang::FieldDecl *FD =
+          clang::FieldDecl::Create(Ctx,
+                                   RD,
+                                   clang::SourceLocation(),
+                                   clang::SourceLocation(),
+                                   PVD->getIdentifier(),
+                                   QT->getPointeeType(),
+                                   NULL,
+                                   /* BitWidth = */NULL,
+                                   /* Mutable = */false);
+      RD->addDecl(FD);
+    }
+  }
+  RD->completeDefinition();
+
+  if (F->numParams >= 3) {
+    // Create an export type iff we have a valid usrData type
+    clang::QualType T = Ctx.getTagDeclType(RD);
+    slangAssert(!T.isNull());
+
+    RSExportType *ET =
+      RSExportType::Create(Context, T.getTypePtr());
+
+    if (ET == NULL) {
+      fprintf(stderr, "Failed to export the function %s. There's at least one "
+                      "parameter whose type is not supported by the "
+                      "reflection\n", F->getName().c_str());
+      delete F;
+      return NULL;
+    }
+
+    slangAssert((ET->getClass() == RSExportType::ExportClassRecord) &&
+           "Parameter packet must be a record");
+
+    F->mParamPacketType = static_cast<RSExportRecordType *>(ET);
+  }
 
   return F;
 }
 
-bool RSRoot::validateSpecialFuncDecl(clang::Diagnostic *Diags,
-                                     const clang::FunctionDecl *FD) {
+bool RSExportForEach::isRSForEachFunc(const clang::FunctionDecl *FD) {
+  // We currently support only compute root() being exported via forEach
+  if (!isRootRSFunc(FD)) {
+    return false;
+  }
+
+  const clang::ASTContext &C = FD->getASTContext();
+  if (FD->getNumParams() == 0 &&
+      FD->getResultType().getCanonicalType() == C.IntTy) {
+    // Graphics compute function
+    return false;
+  }
+  return true;
+}
+
+bool RSExportForEach::validateSpecialFuncDecl(clang::Diagnostic *Diags,
+                                              const clang::FunctionDecl *FD) {
   if (!FD) {
     return false;
   }

@@ -35,13 +35,13 @@
 
 #include "slang.h"
 #include "slang_assert.h"
+#include "slang_rs_export_foreach.h"
 #include "slang_rs_export_func.h"
 #include "slang_rs_export_type.h"
 #include "slang_rs_export_var.h"
 #include "slang_rs_exportable.h"
 #include "slang_rs_pragma_handler.h"
 #include "slang_rs_reflection.h"
-#include "slang_rs_root.h"
 
 namespace slang {
 
@@ -114,9 +114,19 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     return false;
   }
 
-  // Do not reflect specialized RS functions like init/root.
-  if (RSRoot::isSpecialRSFunc(FD)) {
-    if (!RSRoot::validateSpecialFuncDecl(getDiagnostics(), FD)) {
+  if (RSExportForEach::isRSForEachFunc(FD)) {
+    if (!RSExportForEach::validateSpecialFuncDecl(getDiagnostics(), FD)) {
+      return false;
+    }
+    RSExportForEach *EFE = RSExportForEach::Create(this, FD);
+    if (EFE == NULL)
+      return false;
+    else
+      mExportForEach.push_back(EFE);
+    return true;
+  } else if (RSExportForEach::isSpecialRSFunc(FD)) {
+    // Do not reflect specialized RS functions like init/root.
+    if (!RSExportForEach::validateSpecialFuncDecl(getDiagnostics(), FD)) {
       return false;
     }
     return true;
@@ -178,6 +188,11 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
 
 bool RSContext::processExport() {
   bool valid = true;
+
+  if (getDiagnostics()->hasErrorOccurred()) {
+    return false;
+  }
+
   // Export variable
   clang::TranslationUnitDecl *TUDecl = mCtx.getTranslationUnitDecl();
   for (clang::DeclContext::decl_iterator DI = TUDecl->decls_begin(),

@@ -48,6 +48,7 @@ namespace slang {
   class RSExportable;
   class RSExportVar;
   class RSExportFunc;
+  class RSExportForEach;
   class RSExportType;
 
 class RSContext {
@@ -59,6 +60,7 @@ class RSContext {
   typedef std::list<RSExportable*> ExportableList;
   typedef std::list<RSExportVar*> ExportVarList;
   typedef std::list<RSExportFunc*> ExportFuncList;
+  typedef std::list<RSExportForEach*> ExportForEachList;
   typedef llvm::StringMap<RSExportType*> ExportTypeMap;
 
  private:
@@ -88,6 +90,7 @@ class RSContext {
 
   ExportVarList mExportVars;
   ExportFuncList mExportFuncs;
+  ExportForEachList mExportForEach;
   ExportTypeMap mExportTypes;
 
  public:
@@ -161,6 +164,15 @@ class RSContext {
     return mExportFuncs.end();
   }
   inline bool hasExportFunc() const { return !mExportFuncs.empty(); }
+
+  typedef ExportForEachList::const_iterator const_export_foreach_iterator;
+  const_export_foreach_iterator export_foreach_begin() const {
+    return mExportForEach.begin();
+  }
+  const_export_foreach_iterator export_foreach_end() const {
+    return mExportForEach.end();
+  }
+  inline bool hasExportForEach() const { return !mExportForEach.empty(); }
 
   typedef ExportTypeMap::iterator export_type_iterator;
   typedef ExportTypeMap::const_iterator const_export_type_iterator;

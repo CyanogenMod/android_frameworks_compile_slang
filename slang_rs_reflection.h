@@ -33,6 +33,7 @@ namespace slang {
   class RSContext;
   class RSExportVar;
   class RSExportFunc;
+  class RSExportForEach;
 
 class RSReflection {
  private:
@@ -68,6 +69,7 @@ class RSReflection {
 
     int mNextExportVarSlot;
     int mNextExportFuncSlot;
+    int mNextExportForEachSlot;
 
     // A mapping from a field in a record type to its index in the rsType
     // instance. Only used when generates TypeClass (ScriptField_*).
@@ -83,6 +85,7 @@ class RSReflection {
       mPaddingFieldIndex = 1;
       mNextExportVarSlot = 0;
       mNextExportFuncSlot = 0;
+      mNextExportForEachSlot = 0;
       return;
     }
 
@@ -143,6 +146,7 @@ class RSReflection {
     inline int getNextExportVarSlot() { return mNextExportVarSlot++; }
 
     inline int getNextExportFuncSlot() { return mNextExportFuncSlot++; }
+    inline int getNextExportForEachSlot() { return mNextExportForEachSlot++; }
 
     // Will remove later due to field name information is not necessary for
     // C-reflect-to-Java
@@ -233,6 +237,9 @@ class RSReflection {
 
   void genExportFunction(Context &C,
                          const RSExportFunc *EF);
+
+  void genExportForEach(Context &C,
+                        const RSExportForEach *EF);
 
   bool genTypeClass(Context &C,
                     const RSExportRecordType *ERT,

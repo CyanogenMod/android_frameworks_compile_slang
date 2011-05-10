@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_ROOT_H_  // NOLINT
-#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_ROOT_H_
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_FOREACH_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_FOREACH_H_
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
@@ -24,6 +24,8 @@
 
 #include "slang_assert.h"
 #include "slang_rs_context.h"
+#include "slang_rs_exportable.h"
+#include "slang_rs_export_type.h"
 
 namespace clang {
   class FunctionDecl;
@@ -31,35 +33,49 @@ namespace clang {
 
 namespace slang {
 
-// Base class for handling root() functions (including reflection of
-// control-side code for issuing rsForEach).
-class RSRoot {
+// Base class for reflecting control-side forEach (currently for root()
+// functions that fit appropriate criteria)
+class RSExportForEach : public RSExportable {
  private:
   std::string mName;
-  std::string mMangledName;
-  bool mShouldMangle;
+  RSExportRecordType *mParamPacketType;
+  size_t numParams;
 
-  RSRoot(RSContext *Context, const llvm::StringRef &Name,
+  RSExportForEach(RSContext *Context, const llvm::StringRef &Name,
          const clang::FunctionDecl *FD)
-    : mName(Name.data(), Name.size()),
-      mMangledName(),
-      mShouldMangle(false) {
-    mShouldMangle = Context->getMangleContext().shouldMangleDeclName(FD);
-
-    if (mShouldMangle) {
-      llvm::raw_string_ostream BufStm(mMangledName);
-      Context->getMangleContext().mangleName(FD, BufStm);
-      BufStm.flush();
-    }
-
+    : RSExportable(Context, RSExportable::EX_FOREACH),
+      mName(Name.data(), Name.size()),
+      mParamPacketType(NULL),
+      numParams(0) {
     return;
   }
 
  public:
-  static RSRoot *Create(RSContext *Context, const clang::FunctionDecl *FD);
+  static RSExportForEach *Create(RSContext *Context,
+                                 const clang::FunctionDecl *FD);
 
-  inline const std::string &getName(bool mangle = true) const {
-    return (mShouldMangle && mangle) ? mMangledName : mName;
+  inline const std::string &getName() const {
+    return mName;
+  }
+
+  inline size_t getNumParameters() const {
+    return numParams;
+  }
+
+  inline const RSExportRecordType *getParamPacketType() const
+    { return mParamPacketType; }
+
+  typedef RSExportRecordType::const_field_iterator const_param_iterator;
+
+  inline const_param_iterator params_begin() const {
+    slangAssert((mParamPacketType != NULL) &&
+                "Get parameter from export foreach having no parameter!");
+    return mParamPacketType->fields_begin();
+  }
+  inline const_param_iterator params_end() const {
+    slangAssert((mParamPacketType != NULL) &&
+                "Get parameter from export foreach having no parameter!");
+    return mParamPacketType->fields_end();
   }
 
   inline static bool isInitRSFunc(const clang::FunctionDecl *FD) {
@@ -80,14 +96,16 @@ class RSRoot {
     return Name.equals(FuncRoot);
   }
 
+  static bool isRSForEachFunc(const clang::FunctionDecl *FD);
+
   inline static bool isSpecialRSFunc(const clang::FunctionDecl *FD) {
     return isRootRSFunc(FD) || isInitRSFunc(FD);
   }
 
   static bool validateSpecialFuncDecl(clang::Diagnostic *Diags,
                                       const clang::FunctionDecl *FD);
-};  // RSRoot
+};  // RSExportForEach
 
 }  // namespace slang
 
-#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_ROOT_H_  NOLINT
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_FOREACH_H_  NOLINT

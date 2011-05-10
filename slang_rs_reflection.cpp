@@ -31,6 +31,7 @@
 #include "os_sep.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_var.h"
+#include "slang_rs_export_foreach.h"
 #include "slang_rs_export_func.h"
 #include "slang_rs_reflect_utils.h"
 #include "slang_utils.h"
@@ -50,6 +51,7 @@
 #define RS_EXPORT_VAR_PREFIX             "mExportVar_"
 
 #define RS_EXPORT_FUNC_INDEX_PREFIX      "mExportFuncIdx_"
+#define RS_EXPORT_FOREACH_INDEX_PREFIX   "mExportForEachIdx_"
 
 #define RS_EXPORT_VAR_ALLOCATION_PREFIX  "mAlloction_"
 #define RS_EXPORT_VAR_DATA_STORAGE_PREFIX "mData_"
@@ -501,6 +503,13 @@ bool RSReflection::genScriptClass(Context &C,
        I++)
     genExportVariable(C, *I);
 
+  // Reflect export for each functions
+  for (RSContext::const_export_foreach_iterator
+           I = mRSContext->export_foreach_begin(),
+           E = mRSContext->export_foreach_end();
+       I != E; I++)
+    genExportForEach(C, *I);
+
   // Reflect export function
   for (RSContext::const_export_func_iterator
            I = mRSContext->export_funcs_begin(),
@@ -780,6 +789,65 @@ void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
 
     C.indent() << "invoke("RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName() << ", "
                << FieldPackerName << ");" << std::endl;
+  }
+
+  C.endFunction();
+  return;
+}
+
+void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
+  C.indent() << "private final static int "RS_EXPORT_FOREACH_INDEX_PREFIX
+             << EF->getName() << " = " << C.getNextExportForEachSlot() << ";"
+             << std::endl;
+
+  // for_each_*()
+  Context::ArgTy Args;
+
+  std::string FieldPackerName = EF->getName() + "_fp";
+  size_t numParams = EF->getNumParameters();
+
+  slangAssert(numParams >= 1);
+  Args.push_back(std::make_pair("Allocation", "ain"));
+  //GetTypeName(RSExportPrimitiveType::DataTypeRSAllocation), "ain");
+  if (numParams >= 2) {
+    Args.push_back(std::make_pair("Allocation", "aout"));
+  }
+  if (numParams >= 3) {
+    for (RSExportFunc::const_param_iterator I = EF->params_begin(),
+             E = EF->params_end();
+         I != E;
+         I++) {
+      Args.push_back(std::make_pair(GetTypeName((*I)->getType()),
+                                    (*I)->getName()));
+    }
+  }
+
+  C.startFunction(Context::AM_Public,
+                  false,
+                  "void",
+                  "forEach_" + EF->getName(),
+                  Args);
+
+  if (numParams >= 3) {
+    const RSExportRecordType *ERT = EF->getParamPacketType();
+
+    if (genCreateFieldPacker(C, ERT, FieldPackerName.c_str()))
+      genPackVarOfType(C, ERT, NULL, FieldPackerName.c_str());
+  }
+  C.indent() << "forEach("RS_EXPORT_FOREACH_INDEX_PREFIX << EF->getName()
+             << ", ain";
+
+  switch (numParams) {
+    case 1:
+      C.out() << ", null, null);" << std::endl;
+      break;
+    case 2:
+      C.out() << ", aout, null);" << std::endl;
+      break;
+    case 3:
+    default:
+      C.out() << ", aout, " << FieldPackerName << ");" << std::endl;
+      break;
   }
 
   C.endFunction();
