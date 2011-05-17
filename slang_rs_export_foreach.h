@@ -39,16 +39,30 @@ class RSExportForEach : public RSExportable {
  private:
   std::string mName;
   RSExportRecordType *mParamPacketType;
+  RSExportType *mInType;
+  RSExportType *mOutType;
   size_t numParams;
 
+  const clang::ParmVarDecl *mIn;
+  const clang::ParmVarDecl *mOut;
+  const clang::ParmVarDecl *mUsrData;
+  const clang::ParmVarDecl *mX;
+  const clang::ParmVarDecl *mY;
+  const clang::ParmVarDecl *mZ;
+  const clang::ParmVarDecl *mAr;
+
+  // TODO(all): Add support for LOD/face when we have them
   RSExportForEach(RSContext *Context, const llvm::StringRef &Name,
          const clang::FunctionDecl *FD)
     : RSExportable(Context, RSExportable::EX_FOREACH),
-      mName(Name.data(), Name.size()),
-      mParamPacketType(NULL),
-      numParams(0) {
+      mName(Name.data(), Name.size()), mParamPacketType(NULL), mInType(NULL),
+      mOutType(NULL), numParams(0), mIn(NULL), mOut(NULL), mUsrData(NULL),
+      mX(NULL), mY(NULL), mZ(NULL), mAr(NULL) {
     return;
   }
+
+  bool validateAndConstructParams(RSContext *Context,
+                                  const clang::FunctionDecl *FD);
 
  public:
   static RSExportForEach *Create(RSContext *Context,
@@ -62,8 +76,29 @@ class RSExportForEach : public RSExportable {
     return numParams;
   }
 
-  inline const RSExportRecordType *getParamPacketType() const
-    { return mParamPacketType; }
+  inline bool hasIn() const {
+    return (mIn != NULL);
+  }
+
+  inline bool hasOut() const {
+    return (mOut != NULL);
+  }
+
+  inline bool hasUsrData() const {
+    return (mUsrData != NULL);
+  }
+
+  inline const RSExportType *getInType() const {
+    return mInType;
+  }
+
+  inline const RSExportType *getOutType() const {
+    return mOutType;
+  }
+
+  inline const RSExportRecordType *getParamPacketType() const {
+    return mParamPacketType;
+  }
 
   typedef RSExportRecordType::const_field_iterator const_param_iterator;
 
@@ -72,6 +107,7 @@ class RSExportForEach : public RSExportable {
                 "Get parameter from export foreach having no parameter!");
     return mParamPacketType->fields_begin();
   }
+
   inline const_param_iterator params_end() const {
     slangAssert((mParamPacketType != NULL) &&
                 "Get parameter from export foreach having no parameter!");

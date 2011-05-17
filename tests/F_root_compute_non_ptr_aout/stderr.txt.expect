@@ -1,1 +1,0 @@
-root_compute_non_ptr_aout.rs:4:31: error: compute root() parameter must be a pointer type

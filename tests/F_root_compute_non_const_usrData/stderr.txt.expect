@@ -1,1 +1,1 @@
-root_compute_non_const_usrData.rs:4:44: error: compute root() parameter must be a const pointer type
+root_compute_non_const_usrData.rs:4:44: error: Unexpected root() parameter 'usrData' of type 'void *'

@@ -20,6 +20,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/TypeLoc.h"
 
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
@@ -30,36 +31,212 @@
 
 namespace slang {
 
+namespace {
+
+static void ReportNameError(clang::Diagnostic *Diags,
+                            const clang::ParmVarDecl *PVD) {
+  slangAssert(Diags && PVD);
+  const clang::SourceManager &SM = Diags->getSourceManager();
+
+  Diags->Report(clang::FullSourceLoc(PVD->getLocation(), SM),
+                Diags->getCustomDiagID(clang::Diagnostic::Error,
+                "Duplicate parameter entry (by position/name): '%0'"))
+       << PVD->getName();
+  return;
+}
+
+}  // namespace
+
+// This function takes care of additional validation and construction of
+// parameters related to forEach_* reflection.
+bool RSExportForEach::validateAndConstructParams(
+    RSContext *Context, const clang::FunctionDecl *FD) {
+  slangAssert(Context && FD);
+  bool valid = true;
+  clang::ASTContext &C = Context->getASTContext();
+  clang::Diagnostic *Diags = Context->getDiagnostics();
+
+  if (!isRootRSFunc(FD)) {
+    slangAssert(false && "must be called on compute root function!");
+  }
+
+  numParams = FD->getNumParams();
+  slangAssert(numParams > 0);
+
+  // Compute root functions are required to return a void type for now
+  if (FD->getResultType().getCanonicalType() != C.VoidTy) {
+    Diags->Report(
+        clang::FullSourceLoc(FD->getLocation(), Diags->getSourceManager()),
+        Diags->getCustomDiagID(clang::Diagnostic::Error,
+                               "compute root() is required to return a "
+                               "void type"));
+    valid = false;
+  }
+
+  // Validate remaining parameter types
+  // TODO(all): Add support for LOD/face when we have them
+
+  for (size_t i = 0; i < numParams; i++) {
+    const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
+    clang::QualType QT = PVD->getType().getCanonicalType();
+    llvm::StringRef ParamName = PVD->getName();
+
+    if (QT->isPointerType()) {
+      if (QT->getPointeeType().isConstQualified()) {
+        // const T1 *in
+        // const T3 *usrData
+        if (ParamName.equals("in")) {
+          if (mIn) {
+            ReportNameError(Diags, PVD);
+            valid = false;
+          } else {
+            mIn = PVD;
+          }
+        } else if (ParamName.equals("usrData")) {
+          if (mUsrData) {
+            ReportNameError(Diags, PVD);
+            valid = false;
+          } else {
+            mUsrData = PVD;
+          }
+        } else {
+          // Issue warning about positional parameter usage
+          if (!mIn) {
+            mIn = PVD;
+          } else if (!mUsrData) {
+            mUsrData = PVD;
+          } else {
+            Diags->Report(
+                clang::FullSourceLoc(PVD->getLocation(),
+                                     Diags->getSourceManager()),
+                Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                       "Unexpected root() parameter '%0' "
+                                       "of type '%1'"))
+                << PVD->getName() << PVD->getType().getAsString();
+            valid = false;
+          }
+        }
+      } else {
+        // T2 *out
+        if (ParamName.equals("out")) {
+          if (mOut) {
+            ReportNameError(Diags, PVD);
+            valid = false;
+          } else {
+            mOut = PVD;
+          }
+        } else {
+          if (!mOut) {
+            mOut = PVD;
+          } else {
+            Diags->Report(
+                clang::FullSourceLoc(PVD->getLocation(),
+                                     Diags->getSourceManager()),
+                Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                       "Unexpected root() parameter '%0' "
+                                       "of type '%1'"))
+                << PVD->getName() << PVD->getType().getAsString();
+            valid = false;
+          }
+        }
+      }
+    } else if (QT.getUnqualifiedType() == C.UnsignedIntTy) {
+      if (ParamName.equals("x")) {
+        if (mX) {
+          ReportNameError(Diags, PVD);
+          valid = false;
+        } else {
+          mX = PVD;
+        }
+      } else if (ParamName.equals("y")) {
+        if (mY) {
+          ReportNameError(Diags, PVD);
+          valid = false;
+        } else {
+          mY = PVD;
+        }
+      } else if (ParamName.equals("z")) {
+        if (mZ) {
+          ReportNameError(Diags, PVD);
+          valid = false;
+        } else {
+          mZ = PVD;
+        }
+      } else if (ParamName.equals("ar")) {
+        if (mAr) {
+          ReportNameError(Diags, PVD);
+          valid = false;
+        } else {
+          mAr = PVD;
+        }
+      } else {
+        if (!mX) {
+          mX = PVD;
+        } else if (!mY) {
+          mY = PVD;
+        } else if (!mZ) {
+          mZ = PVD;
+        } else if (!mAr) {
+          mAr = PVD;
+        } else {
+          Diags->Report(
+              clang::FullSourceLoc(PVD->getLocation(),
+                                   Diags->getSourceManager()),
+              Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                     "Unexpected root() parameter '%0' "
+                                     "of type '%1'"))
+              << PVD->getName() << PVD->getType().getAsString();
+          valid = false;
+        }
+      }
+    } else {
+      Diags->Report(
+          clang::FullSourceLoc(
+              PVD->getTypeSourceInfo()->getTypeLoc().getBeginLoc(),
+              Diags->getSourceManager()),
+          Diags->getCustomDiagID(clang::Diagnostic::Error,
+              "Unexpected root() parameter type '%0'"))
+          << PVD->getType().getAsString();
+      valid = false;
+    }
+  }
+
+  if (!mIn && !mOut) {
+    Diags->Report(
+        clang::FullSourceLoc(FD->getLocation(),
+                             Diags->getSourceManager()),
+        Diags->getCustomDiagID(clang::Diagnostic::Error,
+                               "Compute root() must have at least one "
+                               "parameter for in or out"));
+    valid = false;
+  }
+
+  return valid;
+}
+
 RSExportForEach *RSExportForEach::Create(RSContext *Context,
                                          const clang::FunctionDecl *FD) {
+  slangAssert(Context && FD);
   llvm::StringRef Name = FD->getName();
-  RSExportForEach *F;
+  RSExportForEach *FE;
 
   slangAssert(!Name.empty() && "Function must have a name");
 
-  F = new RSExportForEach(Context, Name, FD);
+  FE = new RSExportForEach(Context, Name, FD);
 
-  F->numParams = FD->getNumParams();
-
-  if (F->numParams == 0) {
-    slangAssert(false && "Should have at least one parameter for root");
+  if (!FE->validateAndConstructParams(Context, FD)) {
+    delete FE;
+    return NULL;
   }
 
   clang::ASTContext &Ctx = Context->getASTContext();
 
   std::string Id(DUMMY_RS_TYPE_NAME_PREFIX"helper_foreach_param:");
-  Id.append(F->getName()).append(DUMMY_RS_TYPE_NAME_POSTFIX);
-
-  clang::RecordDecl *RD =
-      clang::RecordDecl::Create(Ctx, clang::TTK_Struct,
-                                Ctx.getTranslationUnitDecl(),
-                                clang::SourceLocation(),
-                                clang::SourceLocation(),
-                                &Ctx.Idents.get(Id));
+  Id.append(FE->getName()).append(DUMMY_RS_TYPE_NAME_POSTFIX);
 
   // Extract the usrData parameter (if we have one)
-  if (F->numParams >= 3) {
-    const clang::ParmVarDecl *PVD = FD->getParamDecl(2);
+  if (FE->mUsrData) {
+    const clang::ParmVarDecl *PVD = FE->mUsrData;
     clang::QualType QT = PVD->getType().getCanonicalType();
     slangAssert(QT->isPointerType() &&
                 QT->getPointeeType().isConstQualified());
@@ -69,8 +246,15 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
         C.VoidTy) {
       // In the case of using const void*, we can't reflect an appopriate
       // Java type, so we fall back to just reflecting the ain/aout parameters
-      F->numParams = 2;
+      FE->mUsrData = NULL;
     } else {
+      clang::RecordDecl *RD =
+          clang::RecordDecl::Create(Ctx, clang::TTK_Struct,
+                                    Ctx.getTranslationUnitDecl(),
+                                    clang::SourceLocation(),
+                                    clang::SourceLocation(),
+                                    &Ctx.Idents.get(Id));
+
       llvm::StringRef ParamName = PVD->getName();
       clang::FieldDecl *FD =
           clang::FieldDecl::Create(Ctx,
@@ -83,33 +267,40 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
                                    /* BitWidth = */NULL,
                                    /* Mutable = */false);
       RD->addDecl(FD);
+      RD->completeDefinition();
+
+      // Create an export type iff we have a valid usrData type
+      clang::QualType T = Ctx.getTagDeclType(RD);
+      slangAssert(!T.isNull());
+
+      RSExportType *ET = RSExportType::Create(Context, T.getTypePtr());
+
+      if (ET == NULL) {
+        fprintf(stderr, "Failed to export the function %s. There's at least "
+                        "one parameter whose type is not supported by the "
+                        "reflection\n", FE->getName().c_str());
+        delete FE;
+        return NULL;
+      }
+
+      slangAssert((ET->getClass() == RSExportType::ExportClassRecord) &&
+                  "Parameter packet must be a record");
+
+      FE->mParamPacketType = static_cast<RSExportRecordType *>(ET);
     }
   }
-  RD->completeDefinition();
 
-  if (F->numParams >= 3) {
-    // Create an export type iff we have a valid usrData type
-    clang::QualType T = Ctx.getTagDeclType(RD);
-    slangAssert(!T.isNull());
-
-    RSExportType *ET =
-      RSExportType::Create(Context, T.getTypePtr());
-
-    if (ET == NULL) {
-      fprintf(stderr, "Failed to export the function %s. There's at least one "
-                      "parameter whose type is not supported by the "
-                      "reflection\n", F->getName().c_str());
-      delete F;
-      return NULL;
-    }
-
-    slangAssert((ET->getClass() == RSExportType::ExportClassRecord) &&
-           "Parameter packet must be a record");
-
-    F->mParamPacketType = static_cast<RSExportRecordType *>(ET);
+  if (FE->mIn) {
+    const clang::Type *T = FE->mIn->getType().getCanonicalType().getTypePtr();
+    FE->mInType = RSExportType::Create(Context, T);
   }
 
-  return F;
+  if (FE->mOut) {
+    const clang::Type *T = FE->mOut->getType().getCanonicalType().getTypePtr();
+    FE->mOutType = RSExportType::Create(Context, T);
+  }
+
+  return FE;
 }
 
 bool RSExportForEach::isRSForEachFunc(const clang::FunctionDecl *FD) {
@@ -118,9 +309,7 @@ bool RSExportForEach::isRSForEachFunc(const clang::FunctionDecl *FD) {
     return false;
   }
 
-  const clang::ASTContext &C = FD->getASTContext();
-  if (FD->getNumParams() == 0 &&
-      FD->getResultType().getCanonicalType() == C.IntTy) {
+  if (FD->getNumParams() == 0) {
     // Graphics compute function
     return false;
   }
@@ -129,10 +318,7 @@ bool RSExportForEach::isRSForEachFunc(const clang::FunctionDecl *FD) {
 
 bool RSExportForEach::validateSpecialFuncDecl(clang::Diagnostic *Diags,
                                               const clang::FunctionDecl *FD) {
-  if (!FD) {
-    return false;
-  }
-
+  slangAssert(Diags && FD);
   bool valid = true;
   const clang::ASTContext &C = FD->getASTContext();
 
@@ -149,80 +335,8 @@ bool RSExportForEach::validateSpecialFuncDecl(clang::Diagnostic *Diags,
         valid = false;
       }
     } else {
-      // Compute root functions are required to return a void type for now
-      if (FD->getResultType().getCanonicalType() != C.VoidTy) {
-        Diags->Report(
-            clang::FullSourceLoc(FD->getLocation(), Diags->getSourceManager()),
-            Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                   "compute root() is required to return a "
-                                   "void type"));
-        valid = false;
-      }
-
-      // Validate remaining parameter types
-      const clang::ParmVarDecl *tooManyParams = NULL;
-      for (unsigned int i = 0; i < numParams; i++) {
-        const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
-        clang::QualType QT = PVD->getType().getCanonicalType();
-        switch (i) {
-          case 0:     // const T1 *ain
-          case 2: {   // const T3 *usrData
-            if (!QT->isPointerType() ||
-                !QT->getPointeeType().isConstQualified()) {
-              Diags->Report(
-                  clang::FullSourceLoc(PVD->getLocation(),
-                                       Diags->getSourceManager()),
-                  Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                         "compute root() parameter must be a "
-                                         "const pointer type"));
-              valid = false;
-            }
-            break;
-          }
-          case 1: {   // T2 *aout
-            if (!QT->isPointerType()) {
-              Diags->Report(
-                  clang::FullSourceLoc(PVD->getLocation(),
-                                       Diags->getSourceManager()),
-                  Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                         "compute root() parameter must be a "
-                                         "pointer type"));
-              valid = false;
-            }
-            break;
-          }
-          case 3:     // unsigned int x
-          case 4:     // unsigned int y
-          case 5:     // unsigned int z
-          case 6: {   // unsigned int ar
-            if (QT.getUnqualifiedType() != C.UnsignedIntTy) {
-              Diags->Report(
-                  clang::FullSourceLoc(PVD->getLocation(),
-                                       Diags->getSourceManager()),
-                  Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                         "compute root() parameter must be a "
-                                         "uint32_t type"));
-              valid = false;
-            }
-            break;
-          }
-          default: {
-            if (!tooManyParams) {
-              tooManyParams = PVD;
-            }
-            break;
-          }
-        }
-      }
-      if (tooManyParams) {
-        Diags->Report(
-            clang::FullSourceLoc(tooManyParams->getLocation(),
-                                 Diags->getSourceManager()),
-            Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                   "too many compute root() parameters "
-                                   "specified"));
-        valid = false;
-      }
+      slangAssert(false &&
+          "Should not call validateSpecialFuncDecl() on compute root()");
     }
   } else if (isInitRSFunc(FD)) {
     if (FD->getNumParams() != 0) {

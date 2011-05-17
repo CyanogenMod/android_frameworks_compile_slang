@@ -241,6 +241,10 @@ class RSReflection {
   void genExportForEach(Context &C,
                         const RSExportForEach *EF);
 
+  void genTypeCheck(Context &C,
+                    const RSExportType *ET,
+                    const char *VarName);
+
   bool genTypeClass(Context &C,
                     const RSExportRecordType *ERT,
                     std::string &ErrorMsg);

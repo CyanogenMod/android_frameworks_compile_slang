@@ -1,1 +1,0 @@
-root_compute_non_const_non_ptr_ain.rs:4:15: error: compute root() parameter must be a const pointer type

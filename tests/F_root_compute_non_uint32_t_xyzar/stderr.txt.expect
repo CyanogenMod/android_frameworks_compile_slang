@@ -1,4 +1,4 @@
-root_compute_non_uint32_t_xyzar.rs:5:15: error: compute root() parameter must be a uint32_t type
-root_compute_non_uint32_t_xyzar.rs:5:24: error: compute root() parameter must be a uint32_t type
-root_compute_non_uint32_t_xyzar.rs:5:34: error: compute root() parameter must be a uint32_t type
-root_compute_non_uint32_t_xyzar.rs:5:43: error: compute root() parameter must be a uint32_t type
+root_compute_non_uint32_t_xyzar.rs:5:11: error: Unexpected root() parameter type 'int'
+root_compute_non_uint32_t_xyzar.rs:5:18: error: Unexpected root() parameter type 'float'
+root_compute_non_uint32_t_xyzar.rs:5:27: error: Unexpected root() parameter type 'double'
+root_compute_non_uint32_t_xyzar.rs:5:37: error: Unexpected root() parameter type 'uchar'

@@ -1,9 +1,9 @@
 root_compute_really_bad.rs:4:5: error: compute root() is required to return a void type
-root_compute_really_bad.rs:4:14: error: compute root() parameter must be a const pointer type
-root_compute_really_bad.rs:4:23: error: compute root() parameter must be a pointer type
-root_compute_really_bad.rs:4:33: error: compute root() parameter must be a const pointer type
-root_compute_really_bad.rs:4:48: error: compute root() parameter must be a uint32_t type
-root_compute_really_bad.rs:4:58: error: compute root() parameter must be a uint32_t type
-root_compute_really_bad.rs:4:67: error: compute root() parameter must be a uint32_t type
-root_compute_really_bad.rs:4:77: error: compute root() parameter must be a uint32_t type
-root_compute_really_bad.rs:5:19: error: too many compute root() parameters specified
+root_compute_really_bad.rs:4:10: error: Unexpected root() parameter type 'int'
+root_compute_really_bad.rs:4:19: error: Unexpected root() parameter type 'int'
+root_compute_really_bad.rs:4:29: error: Unexpected root() parameter type 'int'
+root_compute_really_bad.rs:4:42: error: Unexpected root() parameter type 'float'
+root_compute_really_bad.rs:4:51: error: Unexpected root() parameter type 'double'
+root_compute_really_bad.rs:4:61: error: Unexpected root() parameter type 'uchar'
+root_compute_really_bad.rs:4:70: error: Unexpected root() parameter type 'ushort'
+root_compute_really_bad.rs:4:5: error: Compute root() must have at least one parameter for in or out

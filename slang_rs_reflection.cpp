@@ -800,20 +800,21 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
              << EF->getName() << " = " << C.getNextExportForEachSlot() << ";"
              << std::endl;
 
-  // for_each_*()
+  // forEach_*()
   Context::ArgTy Args;
 
-  std::string FieldPackerName = EF->getName() + "_fp";
-  size_t numParams = EF->getNumParameters();
+  slangAssert(EF->getNumParameters() > 0);
 
-  slangAssert(numParams >= 1);
-  Args.push_back(std::make_pair("Allocation", "ain"));
-  //GetTypeName(RSExportPrimitiveType::DataTypeRSAllocation), "ain");
-  if (numParams >= 2) {
+  if (EF->hasIn())
+    Args.push_back(std::make_pair("Allocation", "ain"));
+    //Args.push_back(std::make_pair(GetTypeName(EF->getInType()), "ain"));
+  if (EF->hasOut())
     Args.push_back(std::make_pair("Allocation", "aout"));
-  }
-  if (numParams >= 3) {
-    for (RSExportFunc::const_param_iterator I = EF->params_begin(),
+    //Args.push_back(std::make_pair(GetTypeName(EF->getOutType()), "aout"));
+
+  const RSExportRecordType *ERT = EF->getParamPacketType();
+  if (ERT) {
+    for (RSExportForEach::const_param_iterator I = EF->params_begin(),
              E = EF->params_end();
          I != E;
          I++) {
@@ -828,31 +829,67 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
                   "forEach_" + EF->getName(),
                   Args);
 
-  if (numParams >= 3) {
-    const RSExportRecordType *ERT = EF->getParamPacketType();
+  const RSExportType *IET = EF->getInType();
+  if (IET) {
+    genTypeCheck(C, IET, "ain");
+  }
 
-    if (genCreateFieldPacker(C, ERT, FieldPackerName.c_str()))
+  const RSExportType *OET = EF->getOutType();
+  if (OET) {
+    genTypeCheck(C, OET, "aout");
+  }
+
+  if (EF->hasIn() && EF->hasOut()) {
+    C.indent() << "// Verify dimensions" << std::endl;
+    C.indent() << "Type tIn = ain.getType();" << std::endl;
+    C.indent() << "Type tOut = aout.getType();" << std::endl;
+    C.indent() << "if ((tIn.getCount() != tOut.getCount()) ||" << std::endl;
+    C.indent() << "    (tIn.getX() != tOut.getX()) ||" << std::endl;
+    C.indent() << "    (tIn.getY() != tOut.getY()) ||" << std::endl;
+    C.indent() << "    (tIn.getZ() != tOut.getZ()) ||" << std::endl;
+    C.indent() << "    (tIn.hasFaces() != tOut.hasFaces()) ||" << std::endl;
+    C.indent() << "    (tIn.hasMipmaps() != tOut.hasMipmaps())) {" << std::endl;
+    C.indent() << "    throw new RSRuntimeException(\"Dimension mismatch\");";
+    C.out()    << std::endl;
+    C.indent() << "}" << std::endl;
+  }
+
+  std::string FieldPackerName = EF->getName() + "_fp";
+  if (ERT) {
+    if (genCreateFieldPacker(C, ERT, FieldPackerName.c_str())) {
       genPackVarOfType(C, ERT, NULL, FieldPackerName.c_str());
+    }
   }
-  C.indent() << "forEach("RS_EXPORT_FOREACH_INDEX_PREFIX << EF->getName()
-             << ", ain";
+  C.indent() << "forEach("RS_EXPORT_FOREACH_INDEX_PREFIX << EF->getName();
 
-  switch (numParams) {
-    case 1:
-      C.out() << ", null, null);" << std::endl;
-      break;
-    case 2:
-      C.out() << ", aout, null);" << std::endl;
-      break;
-    case 3:
-    default:
-      C.out() << ", aout, " << FieldPackerName << ");" << std::endl;
-      break;
-  }
+  if (EF->hasIn())
+    C.out() << ", ain";
+  else
+    C.out() << ", null";
+
+  if (EF->hasOut())
+    C.out() << ", aout";
+  else
+    C.out() << ", null";
+
+  if (EF->hasUsrData())
+    C.out() << ", " << FieldPackerName;
+  else
+    C.out() << ", null";
+
+  C.out() << ");" << std::endl;
 
   C.endFunction();
   return;
 }
+
+void RSReflection::genTypeCheck(Context &C,
+                                const RSExportType *ET,
+                                const char *VarName) {
+  C.indent() << "// check " << VarName << std::endl;
+  return;
+}
+
 
 void RSReflection::genPrimitiveTypeExportVariable(
     Context &C,
