@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2011, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -101,6 +102,8 @@ class RSReflection {
 
     bool mUseStdout;
     mutable std::ofstream mOF;
+
+    std::set<std::string> mTypesToCheck;
 
     static const char *AccessModifierStr(AccessModifier AM);
 
@@ -241,9 +244,12 @@ class RSReflection {
   void genExportForEach(Context &C,
                         const RSExportForEach *EF);
 
-  void genTypeCheck(Context &C,
-                    const RSExportType *ET,
-                    const char *VarName);
+  static void genTypeCheck(Context &C,
+                           const RSExportType *ET,
+                           const char *VarName);
+
+  static void genTypeInstance(Context &C,
+                              const RSExportType *ET);
 
   bool genTypeClass(Context &C,
                     const RSExportRecordType *ERT,
