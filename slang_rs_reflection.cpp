@@ -119,11 +119,12 @@ static const char *GetPrimitiveTypeName(const RSExportPrimitiveType *EPT) {
 
 static const char *GetVectorTypeName(const RSExportVectorType *EVT) {
   static const char *VectorTypeJavaNameMap[][3] = {
-    /* 0 */ { "Byte2",  "Byte3",    "Byte4" },
-    /* 1 */ { "Short2", "Short3",   "Short4" },
-    /* 2 */ { "Int2",   "Int3",     "Int4" },
-    /* 3 */ { "Long2",  "Long3",    "Long4" },
-    /* 4 */ { "Float2", "Float3",   "Float4" },
+    /* 0 */ { "Byte2",    "Byte3",    "Byte4" },
+    /* 1 */ { "Short2",   "Short3",   "Short4" },
+    /* 2 */ { "Int2",     "Int3",     "Int4" },
+    /* 3 */ { "Long2",    "Long3",    "Long4" },
+    /* 4 */ { "Float2",   "Float3",   "Float4" },
+    /* 5 */ { "Double2",  "Double3",  "Double4" }
   };
 
   const char **BaseElement = NULL;
@@ -152,6 +153,10 @@ static const char *GetVectorTypeName(const RSExportVectorType *EVT) {
     }
     case RSExportPrimitiveType::DataTypeFloat32: {
       BaseElement = VectorTypeJavaNameMap[4];
+      break;
+    }
+    case RSExportPrimitiveType::DataTypeFloat64: {
+      BaseElement = VectorTypeJavaNameMap[5];
       break;
     }
     default: {
@@ -319,11 +324,11 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
         "Element.F32",      // RSExportPrimitiveType::DataTypeFloat32
         "Element.F64",      // RSExportPrimitiveType::DataTypeFloat64
         "Element.I8",       // RSExportPrimitiveType::DataTypeSigned8
-        NULL,               // RSExportPrimitiveType::DataTypeSigned16
+        "Element.I16",      // RSExportPrimitiveType::DataTypeSigned16
         "Element.I32",      // RSExportPrimitiveType::DataTypeSigned32
         "Element.I64",      // RSExportPrimitiveType::DataTypeSigned64
         "Element.U8",       // RSExportPrimitiveType::DataTypeUnsigned8
-        NULL,               // RSExportPrimitiveType::DataTypeUnsigned16
+        "Element.U16",      // RSExportPrimitiveType::DataTypeUnsigned16
         "Element.U32",      // RSExportPrimitiveType::DataTypeUnsigned32
         "Element.U64",      // RSExportPrimitiveType::DataTypeUnsigned64
         "Element.BOOLEAN",  // RSExportPrimitiveType::DataTypeBoolean
