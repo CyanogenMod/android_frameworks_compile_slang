@@ -267,8 +267,9 @@ unsigned RSMetadataEncoderInternal::encodeRecordType(const union RSType *T) {
       return 0;
     if (!EncodeInteger(mModule->getContext(),
                        FieldName,
-                       FieldInfo))
+                       FieldInfo)) {
       return 0;
+    }
 
     // 2. field type
     unsigned FieldType = encodeRSType(RS_RECORD_TYPE_GET_FIELD_TYPE(T, i));
@@ -276,18 +277,20 @@ unsigned RSMetadataEncoderInternal::encodeRecordType(const union RSType *T) {
       return 0;
     if (!EncodeInteger(mModule->getContext(),
                        FieldType,
-                       FieldInfo))
+                       FieldInfo)) {
       return 0;
+    }
 
     // 3. field data kind
     if (!EncodeInteger(mModule->getContext(),
                        RS_RECORD_TYPE_GET_FIELD_DATA_KIND(T, i),
-                       FieldInfo))
+                       FieldInfo)) {
       return 0;
+    }
 
+    llvm::ArrayRef<llvm::Value*> FieldInfoArray(FieldInfo);
     RecordInfoMetadata->addOperand(llvm::MDNode::get(mModule->getContext(),
-                                                     FieldInfo.data(),
-                                                     FieldInfo.size()));
+                                                     FieldInfoArray));
     FieldInfo.clear();
   }
 
@@ -312,49 +315,55 @@ int RSMetadataEncoderInternal::encodeRSVar(const RSVar *V) {
 
   // 1. var name
   unsigned VarName = joinString(V->name);
-  if (!checkReturnIndex(&VarName))
+  if (!checkReturnIndex(&VarName)) {
     return -2;
+  }
 
   // 2. type
   unsigned Type = encodeRSType(V->type);
 
   llvm::SmallVector<llvm::Value*, 1> VarInfo;
 
-  if (!EncodeInteger(mModule->getContext(), VarName, VarInfo))
+  if (!EncodeInteger(mModule->getContext(), VarName, VarInfo)) {
     return -3;
-  if (!EncodeInteger(mModule->getContext(), Type, VarInfo))
+  }
+  if (!EncodeInteger(mModule->getContext(), Type, VarInfo)) {
     return -4;
+  }
 
   if (mVarInfoMetadata == NULL)
     mVarInfoMetadata = mModule->getOrInsertNamedMetadata(RS_EXPORT_VAR_MN);
 
+  llvm::ArrayRef<llvm::Value*> VarInfoArray(VarInfo);
   mVarInfoMetadata->addOperand(llvm::MDNode::get(mModule->getContext(),
-                                                 VarInfo.data(),
-                                                 VarInfo.size()));
+                                                 VarInfoArray));
 
   return 0;
 }
 
 int RSMetadataEncoderInternal::encodeRSFunc(const RSFunction *F) {
   // check parameter
-  if ((F == NULL) || (F->name == NULL))
+  if ((F == NULL) || (F->name == NULL)) {
     return -1;
+  }
 
   // 1. var name
   unsigned FuncName = joinString(F->name);
-  if (!checkReturnIndex(&FuncName))
+  if (!checkReturnIndex(&FuncName)) {
     return -2;
+  }
 
   llvm::SmallVector<llvm::Value*, 1> FuncInfo;
-  if (!EncodeInteger(mModule->getContext(), FuncName, FuncInfo))
+  if (!EncodeInteger(mModule->getContext(), FuncName, FuncInfo)) {
     return -3;
+  }
 
   if (mFuncInfoMetadata == NULL)
     mFuncInfoMetadata = mModule->getOrInsertNamedMetadata(RS_EXPORT_FUNC_MN);
 
+  llvm::ArrayRef<llvm::Value*> FuncInfoArray(FuncInfo);
   mFuncInfoMetadata->addOperand(llvm::MDNode::get(mModule->getContext(),
-                                                  FuncInfo.data(),
-                                                  FuncInfo.size()));
+                                                  FuncInfoArray));
 
   return 0;
 }
@@ -431,9 +440,9 @@ int RSMetadataEncoderInternal::flushStringTable() {
   llvm::SmallVector<llvm::Value*, 2> StrTabVal;
   StrTabVal.push_back(StrTabMDS);
   StrTabVal.push_back(StrIdxMDS);
+  llvm::ArrayRef<llvm::Value*> StrTabValArray(StrTabVal);
   RSMetadataStrTab->addOperand(llvm::MDNode::get(mModule->getContext(),
-                                                 StrTabVal.data(),
-                                                 StrTabVal.size()));
+                                                 StrTabValArray));
 
   return 0;
 }
@@ -441,8 +450,9 @@ int RSMetadataEncoderInternal::flushStringTable() {
 // Write RS type stream
 int RSMetadataEncoderInternal::flushTypeInfo() {
   unsigned TypeInfoCount = mEncodedRSTypeInfo.size();
-  if (TypeInfoCount <= 0)
+  if (TypeInfoCount <= 0) {
     return 0;
+  }
 
   llvm::NamedMDNode *RSTypeInfo =
       mModule->getOrInsertNamedMetadata(RS_TYPE_INFO_MN);
@@ -470,8 +480,13 @@ int RSMetadataEncoderInternal::flushTypeInfo() {
     return -1;
   }
 
+  llvm::SmallVector<llvm::Value*, 1> TypeInfo;
+  TypeInfo.push_back(TypeInfoMDS);
+
+  llvm::ArrayRef<llvm::Value*> TypeInfoArray(TypeInfo);
+
   RSTypeInfo->addOperand(llvm::MDNode::get(mModule->getContext(),
-                                           &TypeInfoMDS, 1));
+                                           TypeInfoArray));
   free(TypeInfos);
 
   return 0;

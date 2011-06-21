@@ -477,21 +477,23 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
 
       llvm::StringRef Name = RD->getName();
       if (Name.empty()) {
-          if (RD->getTypedefForAnonDecl() != NULL)
-            Name = RD->getTypedefForAnonDecl()->getName();
+        if (RD->getTypedefNameForAnonDecl() != NULL) {
+          Name = RD->getTypedefNameForAnonDecl()->getName();
+        }
 
-          if (Name.empty())
-            // Try to find a name from redeclaration (i.e. typedef)
-            for (clang::TagDecl::redecl_iterator RI = RD->redecls_begin(),
-                     RE = RD->redecls_end();
-                 RI != RE;
-                 RI++) {
-              slangAssert(*RI != NULL && "cannot be NULL object");
+        if (Name.empty()) {
+          // Try to find a name from redeclaration (i.e. typedef)
+          for (clang::TagDecl::redecl_iterator RI = RD->redecls_begin(),
+                   RE = RD->redecls_end();
+               RI != RE;
+               RI++) {
+            slangAssert(*RI != NULL && "cannot be NULL object");
 
-              Name = (*RI)->getName();
-              if (!Name.empty())
-                break;
-            }
+            Name = (*RI)->getName();
+            if (!Name.empty())
+              break;
+          }
+        }
       }
       return Name;
     }

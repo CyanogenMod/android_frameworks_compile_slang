@@ -139,7 +139,7 @@ RSExportType *RSExportElement::CreateFromDecl(RSContext *Context,
       break;
     } else {
       const clang::TypedefType *TT = static_cast<const clang::TypedefType*>(T);
-      const clang::TypedefDecl *TD = TT->getDecl();
+      const clang::TypedefNameDecl *TD = TT->getDecl();
       EI = GetElementInfo(TD->getName());
       if (EI != NULL)
         break;

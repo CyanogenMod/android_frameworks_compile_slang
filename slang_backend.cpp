@@ -251,9 +251,11 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
       Pragma.push_back(llvm::MDString::get(mLLVMContext, I->first));
       // And then value
       Pragma.push_back(llvm::MDString::get(mLLVMContext, I->second));
+
       // Create MDNode and insert into PragmaMetadata
+      llvm::ArrayRef<llvm::Value*> PragmaArray(Pragma);
       PragmaMetadata->addOperand(
-          llvm::MDNode::get(mLLVMContext, Pragma.data(), Pragma.size()));
+          llvm::MDNode::get(mLLVMContext, PragmaArray));
     }
   }
 
