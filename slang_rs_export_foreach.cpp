@@ -264,8 +264,9 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
                                    PVD->getIdentifier(),
                                    QT->getPointeeType(),
                                    NULL,
-                                   /* BitWidth = */NULL,
-                                   /* Mutable = */false);
+                                   /* BitWidth = */ NULL,
+                                   /* Mutable = */ false,
+                                   /* HasInit = */ false);
       RD->addDecl(FD);
       RD->completeDefinition();
 
