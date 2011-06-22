@@ -96,8 +96,9 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
                                    PVD->getIdentifier(),
                                    PVD->getOriginalType(),
                                    NULL,
-                                   /* BitWidth = */NULL,
-                                   /* Mutable = */false);
+                                   /* BitWidth = */ NULL,
+                                   /* Mutable = */ false,
+                                   /* HasInit = */ false);
       RD->addDecl(FD);
     }
 
