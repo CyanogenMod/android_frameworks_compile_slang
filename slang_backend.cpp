@@ -43,6 +43,8 @@
 #include "llvm/Module.h"
 #include "llvm/Metadata.h"
 
+#include "llvm/Support/PassManagerBuilder.h"
+
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -59,8 +61,9 @@ void Backend::CreateFunctionPasses() {
     mPerFunctionPasses = new llvm::FunctionPassManager(mpModule);
     mPerFunctionPasses->add(new llvm::TargetData(mpModule));
 
-    llvm::createStandardFunctionPasses(mPerFunctionPasses,
-                                       mCodeGenOpts.OptimizationLevel);
+    llvm::PassManagerBuilder PMBuilder;
+    PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
+    PMBuilder.populateFunctionPassManager(*mPerFunctionPasses);
   }
   return;
 }
@@ -70,14 +73,24 @@ void Backend::CreateModulePasses() {
     mPerModulePasses = new llvm::PassManager();
     mPerModulePasses->add(new llvm::TargetData(mpModule));
 
-    llvm::createStandardModulePasses(mPerModulePasses,
-                                     mCodeGenOpts.OptimizationLevel,
-                                     mCodeGenOpts.OptimizeSize,
-                                     mCodeGenOpts.UnitAtATime,
-                                     mCodeGenOpts.UnrollLoops,
-                                     /* SimplifyLibCalls = */true,
-                                     /* HaveExceptions = */false,
-                                     /* InliningPass = */NULL);
+    llvm::PassManagerBuilder PMBuilder;
+    PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
+    PMBuilder.SizeLevel = mCodeGenOpts.OptimizeSize;
+    PMBuilder.SizeLevel = mCodeGenOpts.OptimizeSize;
+    if (mCodeGenOpts.UnitAtATime) {
+      PMBuilder.DisableUnitAtATime = 0;
+    } else {
+      PMBuilder.DisableUnitAtATime = 1;
+    }
+
+    if (mCodeGenOpts.UnrollLoops) {
+      PMBuilder.DisableUnrollLoops = 0;
+    } else {
+      PMBuilder.DisableUnrollLoops = 1;
+    }
+
+    PMBuilder.DisableSimplifyLibCalls = false;
+    PMBuilder.populateModulePassManager(*mPerModulePasses);
   }
   return;
 }

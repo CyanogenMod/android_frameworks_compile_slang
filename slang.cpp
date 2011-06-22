@@ -232,7 +232,10 @@ void Slang::createPreprocessor() {
     }
   }
 
-  HS->SetSearchPaths(SearchList, 1, false);
+  HS->SetSearchPaths(SearchList,
+                     /* angledDirIdx = */1,
+                     /* systemDixIdx = */1,
+                     /* noCurDirSearch = */false);
 
   initPreprocessor();
   return;

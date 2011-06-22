@@ -22,7 +22,6 @@
 #include "llvm/PassManager.h"
 
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/StandardPasses.h"
 
 #include "slang.h"
 #include "slang_pragma_recorder.h"

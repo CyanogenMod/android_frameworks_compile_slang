@@ -31,7 +31,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/StandardPasses.h"
+#include "llvm/Support/PassManagerBuilder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/system_error.h"
@@ -230,11 +230,11 @@ bool OptimizeModule(Module *M) {
 
   Passes.add(llvm::createInternalizePass(ExportList));
 
-  // TODO(zonr): Do we need to run all LTO passes?
-  createStandardLTOPasses(&Passes,
-                          /* Internalize = */false,
-                          /* RunInliner = */true,
-                          /* VerifyEach = */false);
+  // TODO(sliao): Do we need to run all LTO passes?
+  llvm::PassManagerBuilder PMBuilder;
+  PMBuilder.populateLTOPassManager(Passes,
+                                   /* Internalize = */false,
+                                   /* RunInliner = */true);
   Passes.run(*M);
 
   return true;
