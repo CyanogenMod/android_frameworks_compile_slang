@@ -49,7 +49,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/SubtargetFeature.h"
+
+#include "llvm/MC/SubtargetFeature.h"
 
 #include "slang.h"
 #include "slang_assert.h"
@@ -149,8 +150,6 @@ bool Backend::CreateCodeGenPasses() {
   if (mTargetOpts.CPU.size() || mTargetOpts.Features.size()) {
     llvm::SubtargetFeatures Features;
 
-    Features.setCPU(mTargetOpts.CPU);
-
     for (std::vector<std::string>::const_iterator
              I = mTargetOpts.Features.begin(), E = mTargetOpts.Features.end();
          I != E;
@@ -160,7 +159,7 @@ bool Backend::CreateCodeGenPasses() {
     FeaturesStr = Features.getString();
   }
   llvm::TargetMachine *TM =
-      TargetInfo->createTargetMachine(Triple, FeaturesStr);
+      TargetInfo->createTargetMachine(Triple, mTargetOpts.CPU, FeaturesStr);
 
   // Register scheduler
   llvm::RegisterScheduler::setDefault(llvm::createDefaultScheduler);
@@ -173,15 +172,17 @@ bool Backend::CreateCodeGenPasses() {
                                      llvm::createLinearScanRegisterAllocator);
 
   llvm::CodeGenOpt::Level OptLevel = llvm::CodeGenOpt::Default;
-  if (mCodeGenOpts.OptimizationLevel == 0)
+  if (mCodeGenOpts.OptimizationLevel == 0) {
     OptLevel = llvm::CodeGenOpt::None;
-  else if (mCodeGenOpts.OptimizationLevel == 3)
+  } else if (mCodeGenOpts.OptimizationLevel == 3) {
     OptLevel = llvm::CodeGenOpt::Aggressive;
+  }
 
   llvm::TargetMachine::CodeGenFileType CGFT =
       llvm::TargetMachine::CGFT_AssemblyFile;
-  if (mOT == Slang::OT_Object)
+  if (mOT == Slang::OT_Object) {
     CGFT = llvm::TargetMachine::CGFT_ObjectFile;
+  }
   if (TM->addPassesToEmitFile(*mCodeGenPasses, FormattedOutStream,
                               CGFT, OptLevel)) {
     mDiags.Report(clang::diag::err_fe_unable_to_interface_with_target);
