@@ -38,9 +38,3 @@ $(asm_file): $(input_data_file)
 
 LOCAL_CFLAGS  += -D_REENTRANT -DPIC -fPIC
 LOCAL_CFLAGS  += -O3 -nodefaultlibs -nostdlib
-
-# force 32 bit code for sim build
-ifeq ($(TARGET_SIMULATOR),true)
-LOCAL_CFLAGS += -m32
-LOCAL_LDFLAGS += -m32
-endif
