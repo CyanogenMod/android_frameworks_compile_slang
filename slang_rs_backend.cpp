@@ -195,7 +195,6 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
       mExportVarMetadata = M->getOrInsertNamedMetadata(RS_EXPORT_VAR_MN);
 
     llvm::SmallVector<llvm::Value*, 2> ExportVarInfo;
-    llvm::SmallVector<llvm::Value*, 1> SlotVarInfo;
 
     // We emit slot information (#rs_object_slots) for any reference counted
     // RS type or pointer (which can also be bound).
@@ -250,13 +249,8 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
         }
       }
 
-      llvm::ArrayRef<llvm::Value*> ExportVarInfoArray(ExportVarInfo);
-      llvm::ArrayRef<llvm::Value*> SlotVarInfoArray(SlotVarInfo);
-
       mExportVarMetadata->addOperand(
-          llvm::MDNode::get(mLLVMContext,
-                            ExportVarInfoArray));
-
+          llvm::MDNode::get(mLLVMContext, ExportVarInfo));
       ExportVarInfo.clear();
 
       if (mRSObjectSlotsMetadata == NULL) {
@@ -265,16 +259,11 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
       }
 
       if (countsAsRSObject) {
-        SlotVarInfo.push_back(
-            llvm::MDString::get(mLLVMContext, llvm::utostr_32(slotCount)));
-
-        mRSObjectSlotsMetadata->addOperand(
-            llvm::MDNode::get(mLLVMContext,
-                              SlotVarInfoArray));
+        mRSObjectSlotsMetadata->addOperand(llvm::MDNode::get(mLLVMContext,
+            llvm::MDString::get(mLLVMContext, llvm::utostr_32(slotCount))));
       }
 
       slotCount++;
-      SlotVarInfo.clear();
     }
   }
 
@@ -404,11 +393,8 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
             llvm::MDString::get(mLLVMContext, HelperFunctionName.c_str()));
       }
 
-      llvm::ArrayRef<llvm::Value*> ExportFuncInfoArray(ExportFuncInfo);
       mExportFuncMetadata->addOperand(
-          llvm::MDNode::get(mLLVMContext,
-                            ExportFuncInfoArray));
-
+          llvm::MDNode::get(mLLVMContext, ExportFuncInfo));
       ExportFuncInfo.clear();
     }
   }
@@ -438,10 +424,8 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
           mExportTypeMetadata =
               M->getOrInsertNamedMetadata(RS_EXPORT_TYPE_MN);
 
-        llvm::ArrayRef<llvm::Value*> ExportTypeInfoArray(ExportTypeInfo);
         mExportTypeMetadata->addOperand(
-            llvm::MDNode::get(mLLVMContext,
-                              ExportTypeInfoArray));
+            llvm::MDNode::get(mLLVMContext, ExportTypeInfo));
 
         // Now, export struct field information to %[struct name]
         std::string StructInfoMetadataName("%");
@@ -488,10 +472,8 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
             }
           }
 
-          llvm::ArrayRef<llvm::Value*> FieldInfoArray(FieldInfo);
-          StructInfoMetadata->addOperand(llvm::MDNode::get(mLLVMContext,
-                                                           FieldInfoArray));
-
+          StructInfoMetadata->addOperand(
+              llvm::MDNode::get(mLLVMContext, FieldInfo));
           FieldInfo.clear();
         }
       }   // ET->getClass() == RSExportType::ExportClassRecord
