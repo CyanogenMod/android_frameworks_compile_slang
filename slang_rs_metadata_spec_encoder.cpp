@@ -288,9 +288,8 @@ unsigned RSMetadataEncoderInternal::encodeRecordType(const union RSType *T) {
       return 0;
     }
 
-    llvm::ArrayRef<llvm::Value*> FieldInfoArray(FieldInfo);
     RecordInfoMetadata->addOperand(llvm::MDNode::get(mModule->getContext(),
-                                                     FieldInfoArray));
+                                                     FieldInfo));
     FieldInfo.clear();
   }
 
@@ -334,9 +333,8 @@ int RSMetadataEncoderInternal::encodeRSVar(const RSVar *V) {
   if (mVarInfoMetadata == NULL)
     mVarInfoMetadata = mModule->getOrInsertNamedMetadata(RS_EXPORT_VAR_MN);
 
-  llvm::ArrayRef<llvm::Value*> VarInfoArray(VarInfo);
   mVarInfoMetadata->addOperand(llvm::MDNode::get(mModule->getContext(),
-                                                 VarInfoArray));
+                                                 VarInfo));
 
   return 0;
 }
@@ -361,9 +359,8 @@ int RSMetadataEncoderInternal::encodeRSFunc(const RSFunction *F) {
   if (mFuncInfoMetadata == NULL)
     mFuncInfoMetadata = mModule->getOrInsertNamedMetadata(RS_EXPORT_FUNC_MN);
 
-  llvm::ArrayRef<llvm::Value*> FuncInfoArray(FuncInfo);
   mFuncInfoMetadata->addOperand(llvm::MDNode::get(mModule->getContext(),
-                                                  FuncInfoArray));
+                                                  FuncInfo));
 
   return 0;
 }
@@ -440,9 +437,8 @@ int RSMetadataEncoderInternal::flushStringTable() {
   llvm::SmallVector<llvm::Value*, 2> StrTabVal;
   StrTabVal.push_back(StrTabMDS);
   StrTabVal.push_back(StrIdxMDS);
-  llvm::ArrayRef<llvm::Value*> StrTabValArray(StrTabVal);
   RSMetadataStrTab->addOperand(llvm::MDNode::get(mModule->getContext(),
-                                                 StrTabValArray));
+                                                 StrTabVal));
 
   return 0;
 }
@@ -483,10 +479,8 @@ int RSMetadataEncoderInternal::flushTypeInfo() {
   llvm::SmallVector<llvm::Value*, 1> TypeInfo;
   TypeInfo.push_back(TypeInfoMDS);
 
-  llvm::ArrayRef<llvm::Value*> TypeInfoArray(TypeInfo);
-
   RSTypeInfo->addOperand(llvm::MDNode::get(mModule->getContext(),
-                                           TypeInfoArray));
+                                           TypeInfo));
   free(TypeInfos);
 
   return 0;

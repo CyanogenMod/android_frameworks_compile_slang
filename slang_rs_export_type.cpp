@@ -21,7 +21,6 @@
 
 #include "clang/AST/RecordLayout.h"
 
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
 
 #include "llvm/DerivedTypes.h"
@@ -1160,7 +1159,7 @@ const llvm::Type *RSExportMatrixType::convertToLLVMType() const {
   llvm::LLVMContext &C = getRSContext()->getLLVMContext();
   llvm::ArrayType *X = llvm::ArrayType::get(llvm::Type::getFloatTy(C),
                                             mDim * mDim);
-  return llvm::StructType::get(C, llvm::ArrayRef<const llvm::Type*>(X), false);
+  return llvm::StructType::get(C, X, false);
 }
 
 union RSType *RSExportMatrixType::convertToSpecType() const {
