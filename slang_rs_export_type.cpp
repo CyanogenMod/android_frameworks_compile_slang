@@ -869,7 +869,7 @@ RSExportPrimitiveType *RSExportPrimitiveType::Create(RSContext *Context,
   }
 }
 
-const llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
+llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
   llvm::LLVMContext &C = getRSContext()->getLLVMContext();
 
   if (isRSObjectType()) {
@@ -882,9 +882,12 @@ const llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
     // <{ [1 x i32] }> in LLVM
     //
     if (RSObjectLLVMType == NULL) {
-      std::vector<const llvm::Type *> Elements;
+      std::vector<llvm::Type *> Elements;
       Elements.push_back(llvm::ArrayType::get(llvm::Type::getInt32Ty(C), 1));
-      RSObjectLLVMType = llvm::StructType::get(C, Elements, true);
+      RSObjectLLVMType = llvm::StructType::get(C,
+                                               llvm::ArrayRef<llvm::Type*>(
+                                                   Elements),
+                                               true);
     }
     return RSObjectLLVMType;
   }
@@ -972,8 +975,8 @@ RSExportPointerType
   return new RSExportPointerType(Context, TypeName, PointeeET);
 }
 
-const llvm::Type *RSExportPointerType::convertToLLVMType() const {
-  const llvm::Type *PointeeType = mPointeeType->getLLVMType();
+llvm::Type *RSExportPointerType::convertToLLVMType() const {
+  llvm::Type *PointeeType = mPointeeType->getLLVMType();
   return llvm::PointerType::getUnqual(PointeeType);
 }
 
@@ -1054,8 +1057,8 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
     return NULL;
 }
 
-const llvm::Type *RSExportVectorType::convertToLLVMType() const {
-  const llvm::Type *ElementType = RSExportPrimitiveType::convertToLLVMType();
+llvm::Type *RSExportVectorType::convertToLLVMType() const {
+  llvm::Type *ElementType = RSExportPrimitiveType::convertToLLVMType();
   return llvm::VectorType::get(ElementType, getNumElement());
 }
 
@@ -1150,7 +1153,7 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
   return new RSExportMatrixType(Context, TypeName, Dim);
 }
 
-const llvm::Type *RSExportMatrixType::convertToLLVMType() const {
+llvm::Type *RSExportMatrixType::convertToLLVMType() const {
   // Construct LLVM type:
   // struct {
   //  float X[mDim * mDim];
@@ -1159,7 +1162,7 @@ const llvm::Type *RSExportMatrixType::convertToLLVMType() const {
   llvm::LLVMContext &C = getRSContext()->getLLVMContext();
   llvm::ArrayType *X = llvm::ArrayType::get(llvm::Type::getFloatTy(C),
                                             mDim * mDim);
-  return llvm::StructType::get(C, X, false);
+  return llvm::StructType::get(C, llvm::ArrayRef<llvm::Type*>(X), false);
 }
 
 union RSType *RSExportMatrixType::convertToSpecType() const {
@@ -1202,7 +1205,7 @@ RSExportConstantArrayType
                                        Size);
 }
 
-const llvm::Type *RSExportConstantArrayType::convertToLLVMType() const {
+llvm::Type *RSExportConstantArrayType::convertToLLVMType() const {
   return llvm::ArrayType::get(mElementType->getLLVMType(), getSize());
 }
 
@@ -1303,13 +1306,11 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
   return ERT;
 }
 
-const llvm::Type *RSExportRecordType::convertToLLVMType() const {
+llvm::Type *RSExportRecordType::convertToLLVMType() const {
   // Create an opaque type since struct may reference itself recursively.
-  llvm::PATypeHolder ResultHolder =
-      llvm::OpaqueType::get(getRSContext()->getLLVMContext());
-  setAbstractLLVMType(ResultHolder.get());
 
-  std::vector<const llvm::Type*> FieldTypes;
+  // TODO(sliao): LLVM took out the OpaqueType. Any other to migrate to?
+  std::vector<llvm::Type*> FieldTypes;
 
   for (const_field_iterator FI = fields_begin(), FE = fields_end();
        FI != FE;
@@ -1323,12 +1324,11 @@ const llvm::Type *RSExportRecordType::convertToLLVMType() const {
   llvm::StructType *ST = llvm::StructType::get(getRSContext()->getLLVMContext(),
                                                FieldTypes,
                                                mIsPacked);
-  if (ST != NULL)
-    static_cast<llvm::OpaqueType*>(ResultHolder.get())
-        ->refineAbstractTypeTo(ST);
-  else
+  if (ST != NULL) {
+    return ST;
+  } else {
     return NULL;
-  return ResultHolder.get();
+  }
 }
 
 union RSType *RSExportRecordType::convertToSpecType() const {

@@ -77,7 +77,7 @@ class RSExportType : public RSExportable {
   std::string mName;
 
   // Cache the result after calling convertToLLVMType() at the first time
-  mutable const llvm::Type *mLLVMType;
+  mutable llvm::Type *mLLVMType;
   // Cache the result after calling convertToSpecType() at the first time
   mutable union RSType *mSpecType;
 
@@ -107,10 +107,10 @@ class RSExportType : public RSExportable {
   // allocation size of a given type and structure layout that LLVM used
   // (all of these information are target dependent) without dealing with these
   // by ourselves.
-  virtual const llvm::Type *convertToLLVMType() const = 0;
+  virtual llvm::Type *convertToLLVMType() const = 0;
   // Record type may recursively reference its type definition. We need a
   // temporary type setup before the type construction gets done.
-  inline void setAbstractLLVMType(const llvm::Type *LLVMType) const {
+  inline void setAbstractLLVMType(llvm::Type *LLVMType) const {
     mLLVMType = LLVMType;
   }
 
@@ -141,7 +141,7 @@ class RSExportType : public RSExportable {
 
   inline ExportClass getClass() const { return mClass; }
 
-  inline const llvm::Type *getLLVMType() const {
+  inline llvm::Type *getLLVMType() const {
     if (mLLVMType == NULL)
       mLLVMType = convertToLLVMType();
     return mLLVMType;
@@ -244,7 +244,7 @@ class RSExportPrimitiveType : public RSExportType {
     return;
   }
 
-  virtual const llvm::Type *convertToLLVMType() const;
+  virtual llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
 
   static DataType GetDataType(RSContext *Context, const clang::Type *T);
@@ -304,7 +304,7 @@ class RSExportPointerType : public RSExportType {
                                      const clang::PointerType *PT,
                                      const llvm::StringRef &TypeName);
 
-  virtual const llvm::Type *convertToLLVMType() const;
+  virtual llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
  public:
   virtual bool keep();
@@ -341,7 +341,7 @@ class RSExportVectorType : public RSExportPrimitiveType {
                                     DataKind DK = DataKindUser,
                                     bool Normalized = false);
 
-  virtual const llvm::Type *convertToLLVMType() const;
+  virtual llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
  public:
   static llvm::StringRef GetTypeName(const clang::ExtVectorType *EVT);
@@ -373,7 +373,7 @@ class RSExportMatrixType : public RSExportType {
     return;
   }
 
-  virtual const llvm::Type *convertToLLVMType() const;
+  virtual llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
  public:
   // @RT was normalized by calling RSExportType::NormalizeType() before
@@ -410,7 +410,7 @@ class RSExportConstantArrayType : public RSExportType {
   static RSExportConstantArrayType *Create(RSContext *Context,
                                            const clang::ConstantArrayType *CAT);
 
-  virtual const llvm::Type *convertToLLVMType() const;
+  virtual llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
  public:
   inline unsigned getSize() const { return mSize; }
@@ -489,7 +489,7 @@ class RSExportRecordType : public RSExportType {
                                     const llvm::StringRef &TypeName,
                                     bool mIsArtificial = false);
 
-  virtual const llvm::Type *convertToLLVMType() const;
+  virtual llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
  public:
   inline const std::list<const Field*>& getFields() const { return mFields; }

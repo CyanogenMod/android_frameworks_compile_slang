@@ -298,13 +298,15 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
           llvm::StructType *HelperFunctionParameterTy = NULL;
 
           if (!F->getArgumentList().empty()) {
-            std::vector<const llvm::Type*> HelperFunctionParameterTys;
+            std::vector<llvm::Type*> HelperFunctionParameterTys;
             for (llvm::Function::arg_iterator AI = F->arg_begin(),
                  AE = F->arg_end(); AI != AE; AI++)
               HelperFunctionParameterTys.push_back(AI->getType());
 
             HelperFunctionParameterTy =
-                llvm::StructType::get(mLLVMContext, HelperFunctionParameterTys);
+                llvm::StructType::get(mLLVMContext,
+                                      llvm::ArrayRef<llvm::Type*>(
+                                          HelperFunctionParameterTys));
           }
 
           if (!EF->checkParameterPacketType(HelperFunctionParameterTy)) {
@@ -323,7 +325,7 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
             }
           }
 
-          std::vector<const llvm::Type*> Params;
+          std::vector<llvm::Type*> Params;
           if (HelperFunctionParameterTy) {
             llvm::PointerType *HelperFunctionParameterTyP =
                 llvm::PointerType::getUnqual(HelperFunctionParameterTy);
@@ -332,7 +334,7 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
 
           llvm::FunctionType * HelperFunctionType =
               llvm::FunctionType::get(F->getReturnType(),
-                                      Params,
+                                      llvm::ArrayRef<llvm::Type*>(Params),
                                       /* IsVarArgs = */false);
 
           HelperFunction =
@@ -375,8 +377,8 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
 
             // Call and pass the all elements as paramter to F
             llvm::CallInst *CI = IB->CreateCall(F,
-                                                Params.data(),
-                                                Params.data() + Params.size());
+                                                llvm::ArrayRef<llvm::Value*>(
+                                                    Params));
 
             CI->setCallingConv(F->getCallingConv());
 

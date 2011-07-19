@@ -32,9 +32,11 @@ static_libraries_needed_by_slang := \
 	libLLVMARMCodeGen	\
 	libLLVMARMAsmPrinter	\
 	libLLVMARMInfo	\
+	libLLVMARMDesc  \
 	libLLVMX86CodeGen	\
 	libLLVMX86AsmPrinter	\
 	libLLVMX86Info	\
+	libLLVMX86Desc  \
 	libLLVMX86Utils	\
 	libLLVMAsmPrinter	\
 	libLLVMSelectionDAG	\
