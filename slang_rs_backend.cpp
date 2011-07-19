@@ -304,9 +304,7 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
               HelperFunctionParameterTys.push_back(AI->getType());
 
             HelperFunctionParameterTy =
-                llvm::StructType::get(mLLVMContext,
-                                      llvm::ArrayRef<llvm::Type*>(
-                                          HelperFunctionParameterTys));
+                llvm::StructType::get(mLLVMContext, HelperFunctionParameterTys);
           }
 
           if (!EF->checkParameterPacketType(HelperFunctionParameterTy)) {
@@ -334,7 +332,7 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
 
           llvm::FunctionType * HelperFunctionType =
               llvm::FunctionType::get(F->getReturnType(),
-                                      llvm::ArrayRef<llvm::Type*>(Params),
+                                      Params,
                                       /* IsVarArgs = */false);
 
           HelperFunction =
@@ -375,10 +373,8 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
               Params.push_back(V);
             }
 
-            // Call and pass the all elements as paramter to F
-            llvm::CallInst *CI = IB->CreateCall(F,
-                                                llvm::ArrayRef<llvm::Value*>(
-                                                    Params));
+            // Call and pass the all elements as parameter to F
+            llvm::CallInst *CI = IB->CreateCall(F, Params);
 
             CI->setCallingConv(F->getCallingConv());
 

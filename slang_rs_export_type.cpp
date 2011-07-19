@@ -884,10 +884,7 @@ llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
     if (RSObjectLLVMType == NULL) {
       std::vector<llvm::Type *> Elements;
       Elements.push_back(llvm::ArrayType::get(llvm::Type::getInt32Ty(C), 1));
-      RSObjectLLVMType = llvm::StructType::get(C,
-                                               llvm::ArrayRef<llvm::Type*>(
-                                                   Elements),
-                                               true);
+      RSObjectLLVMType = llvm::StructType::get(C, Elements, true);
     }
     return RSObjectLLVMType;
   }
@@ -1162,7 +1159,7 @@ llvm::Type *RSExportMatrixType::convertToLLVMType() const {
   llvm::LLVMContext &C = getRSContext()->getLLVMContext();
   llvm::ArrayType *X = llvm::ArrayType::get(llvm::Type::getFloatTy(C),
                                             mDim * mDim);
-  return llvm::StructType::get(C, llvm::ArrayRef<llvm::Type*>(X), false);
+  return llvm::StructType::get(C, X, false);
 }
 
 union RSType *RSExportMatrixType::convertToSpecType() const {
