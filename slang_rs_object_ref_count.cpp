@@ -227,7 +227,8 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
       RSASTReplace R(mCtx);
       R.ReplaceStmt(mOuterStmt, S, CS);
     }
-    clang::CompoundStmt *CS = dyn_cast<clang::CompoundStmt>(mOuterStmt);
+    clang::CompoundStmt *CS =
+      llvm::dyn_cast<clang::CompoundStmt>(mOuterStmt);
     slangAssert(CS);
     if (CS) {
       AppendAfterStmt(mCtx, CS, NULL, mStmtList);

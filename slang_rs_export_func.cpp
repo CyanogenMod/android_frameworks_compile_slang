@@ -128,7 +128,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
 }
 
 bool
-RSExportFunc::checkParameterPacketType(const llvm::StructType *ParamTy) const {
+RSExportFunc::checkParameterPacketType(llvm::StructType *ParamTy) const {
   if (ParamTy == NULL)
     return !hasParam();
   else if (!hasParam())
@@ -149,8 +149,8 @@ RSExportFunc::checkParameterPacketType(const llvm::StructType *ParamTy) const {
        FE = ERT->fields_end(); FI != FE; FI++, Index++) {
     const RSExportRecordType::Field *F = *FI;
 
-    const llvm::Type *T1 = F->getType()->getLLVMType();
-    const llvm::Type *T2 = ParamTy->getTypeAtIndex(Index);
+    llvm::Type *T1 = F->getType()->getLLVMType();
+    llvm::Type *T2 = ParamTy->getTypeAtIndex(Index);
 
     // Fast check
     if (T1 == T2)

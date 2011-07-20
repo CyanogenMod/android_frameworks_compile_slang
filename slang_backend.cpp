@@ -133,7 +133,7 @@ bool Backend::CreateCodeGenPasses() {
 
   // BCC needs all unknown symbols resolved at compilation time. So we don't
   // need any relocation model.
-  llvm::TargetMachine::setRelocationModel(llvm::Reloc::Static);
+  llvm::Reloc::Model RM = llvm::Reloc::Static;
 
 
   // This is set for the linker (specify how large of the virtual addresses we
@@ -159,7 +159,7 @@ bool Backend::CreateCodeGenPasses() {
     FeaturesStr = Features.getString();
   }
   llvm::TargetMachine *TM =
-      TargetInfo->createTargetMachine(Triple, mTargetOpts.CPU, FeaturesStr);
+      TargetInfo->createTargetMachine(Triple, mTargetOpts.CPU, FeaturesStr, RM);
 
   // Register scheduler
   llvm::RegisterScheduler::setDefault(llvm::createDefaultScheduler);

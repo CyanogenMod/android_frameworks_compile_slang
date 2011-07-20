@@ -101,7 +101,7 @@ class RSExportFunc : public RSExportable {
   // Check whether the given ParamsPacket type (in LLVM type) is "size
   // equivalent" to the one obtained from getParamPacketType(). If the @Params
   // is NULL, means there must be no any parameters.
-  bool checkParameterPacketType(const llvm::StructType *ParamTy) const;
+  bool checkParameterPacketType(llvm::StructType *ParamTy) const;
 };  // RSExportFunc
 
 

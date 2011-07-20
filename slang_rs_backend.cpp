@@ -84,7 +84,7 @@ void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
     // Iterate all function declarations in the program.
     for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end();
          I != E; I++) {
-      clang::FunctionDecl *FD = dyn_cast<clang::FunctionDecl>(*I);
+      clang::FunctionDecl *FD = llvm::dyn_cast<clang::FunctionDecl>(*I);
       if (FD == NULL)
         continue;
       if (!FD->getName().startswith("rs"))  // Check prefix
@@ -100,7 +100,7 @@ void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
 
   // Process any non-static function declarations
   for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; I++) {
-    clang::FunctionDecl *FD = dyn_cast<clang::FunctionDecl>(*I);
+    clang::FunctionDecl *FD = llvm::dyn_cast<clang::FunctionDecl>(*I);
     if (FD && FD->isGlobal()) {
       AnnotateFunction(FD);
     }
@@ -139,7 +139,7 @@ static bool ValidateASTContext(clang::ASTContext &C) {
           DE = TUDecl->decls_end();
        DI != DE;
        DI++) {
-    clang::VarDecl *VD = dyn_cast<clang::VarDecl>(*DI);
+    clang::VarDecl *VD = llvm::dyn_cast<clang::VarDecl>(*DI);
     if (VD && !ValidateVarDecl(VD)) {
       valid = false;
     }
@@ -172,7 +172,7 @@ void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
           E = TUDecl->decls_end(); I != E; I++) {
     if ((I->getKind() >= clang::Decl::firstFunction) &&
         (I->getKind() <= clang::Decl::lastFunction)) {
-      clang::FunctionDecl *FD = dyn_cast<clang::FunctionDecl>(*I);
+      clang::FunctionDecl *FD = llvm::dyn_cast<clang::FunctionDecl>(*I);
       if (FD && !FD->isGlobal()) {
         AnnotateFunction(FD);
       }

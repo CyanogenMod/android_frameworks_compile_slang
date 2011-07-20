@@ -18,6 +18,8 @@
 
 #include "slang_assert.h"
 
+#include "llvm/Support/Casting.h"
+
 namespace slang {
 
 void RSASTReplace::ReplaceStmt(
@@ -30,9 +32,9 @@ void RSASTReplace::ReplaceStmt(
 
   // This simplifies use in various Stmt visitor passes where the only
   // valid type is an Expr.
-  mOldExpr = dyn_cast<clang::Expr>(OldStmt);
+  mOldExpr = llvm::dyn_cast<clang::Expr>(OldStmt);
   if (mOldExpr) {
-    mNewExpr = dyn_cast<clang::Expr>(NewStmt);
+    mNewExpr = llvm::dyn_cast<clang::Expr>(NewStmt);
   }
   Visit(mOuterStmt);
 }
