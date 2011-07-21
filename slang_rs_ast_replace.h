@@ -32,7 +32,6 @@ namespace slang {
 
 class RSASTReplace : public clang::StmtVisitor<RSASTReplace> {
  private:
-
   clang::ASTContext &C;
   clang::Stmt *mOuterStmt;
   clang::Stmt *mOldStmt;

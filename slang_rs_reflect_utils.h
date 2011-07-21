@@ -29,7 +29,6 @@ enum BitCodeStorageType {
 
 class RSSlangReflectUtils {
  public:
-
   // Encode a binary bitcode file into a Java source file.
   // rsFileName: the original .rs file name (with or without path).
   // bcFileName: where is the bit code file
