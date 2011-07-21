@@ -60,6 +60,7 @@ class RSExportElement {
                               const ElementInfo *EI);
 
   static const ElementInfo *GetElementInfo(const llvm::StringRef &Name);
+
  public:
   static void Init();
 

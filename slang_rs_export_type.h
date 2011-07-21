@@ -120,6 +120,7 @@ class RSExportType : public RSExportable {
   }
 
   virtual ~RSExportType();
+
  public:
   // This function additionally verifies that the Type T is exportable.
   // If it is not, this function returns false. Otherwise it returns true.
@@ -306,6 +307,7 @@ class RSExportPointerType : public RSExportType {
 
   virtual llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
+
  public:
   virtual bool keep();
 
@@ -343,6 +345,7 @@ class RSExportVectorType : public RSExportPrimitiveType {
 
   virtual llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
+
  public:
   static llvm::StringRef GetTypeName(const clang::ExtVectorType *EVT);
 
@@ -375,6 +378,7 @@ class RSExportMatrixType : public RSExportType {
 
   virtual llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
+
  public:
   // @RT was normalized by calling RSExportType::NormalizeType() before
   // calling this.
@@ -412,6 +416,7 @@ class RSExportConstantArrayType : public RSExportType {
 
   virtual llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
+
  public:
   inline unsigned getSize() const { return mSize; }
   inline const RSExportType *getElementType() const { return mElementType; }
@@ -491,6 +496,7 @@ class RSExportRecordType : public RSExportType {
 
   virtual llvm::Type *convertToLLVMType() const;
   virtual union RSType *convertToSpecType() const;
+
  public:
   inline const std::list<const Field*>& getFields() const { return mFields; }
   inline bool isPacked() const { return mIsPacked; }

@@ -560,39 +560,39 @@ static const char *GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
 
 static const char *GetElementJavaTypeName(RSExportPrimitiveType::DataType DT) {
   static const char *ElementJavaTypeNameMap[] = {
-    NULL,               // RSExportPrimitiveType::DataTypeFloat16
-    "F32",              // RSExportPrimitiveType::DataTypeFloat32
-    "F64",              // RSExportPrimitiveType::DataTypeFloat64
-    "I8",               // RSExportPrimitiveType::DataTypeSigned8
-    "I16",              // RSExportPrimitiveType::DataTypeSigned16
-    "I32",              // RSExportPrimitiveType::DataTypeSigned32
-    "I64",              // RSExportPrimitiveType::DataTypeSigned64
-    "U8",               // RSExportPrimitiveType::DataTypeUnsigned8
-    "U16",              // RSExportPrimitiveType::DataTypeUnsigned16
-    "U32",              // RSExportPrimitiveType::DataTypeUnsigned32
-    "U64",              // RSExportPrimitiveType::DataTypeUnsigned64
-    "BOOLEAN",          // RSExportPrimitiveType::DataTypeBoolean
+    NULL,                 // RSExportPrimitiveType::DataTypeFloat16
+    "F32",                // RSExportPrimitiveType::DataTypeFloat32
+    "F64",                // RSExportPrimitiveType::DataTypeFloat64
+    "I8",                 // RSExportPrimitiveType::DataTypeSigned8
+    "I16",                // RSExportPrimitiveType::DataTypeSigned16
+    "I32",                // RSExportPrimitiveType::DataTypeSigned32
+    "I64",                // RSExportPrimitiveType::DataTypeSigned64
+    "U8",                 // RSExportPrimitiveType::DataTypeUnsigned8
+    "U16",                // RSExportPrimitiveType::DataTypeUnsigned16
+    "U32",                // RSExportPrimitiveType::DataTypeUnsigned32
+    "U64",                // RSExportPrimitiveType::DataTypeUnsigned64
+    "BOOLEAN",            // RSExportPrimitiveType::DataTypeBoolean
 
-    "RGB_565",          // RSExportPrimitiveType::DataTypeUnsigned565
-    "RGBA_5551",        // RSExportPrimitiveType::DataTypeUnsigned5551
-    "RGBA_4444",        // RSExportPrimitiveType::DataTypeUnsigned4444
+    "RGB_565",            // RSExportPrimitiveType::DataTypeUnsigned565
+    "RGBA_5551",          // RSExportPrimitiveType::DataTypeUnsigned5551
+    "RGBA_4444",          // RSExportPrimitiveType::DataTypeUnsigned4444
 
     // DataTypeRSMatrix* must have been resolved in GetBuiltinElementConstruct()
-    NULL,               // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix2x2
-    NULL,               // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix3x3
-    NULL,               // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix4x4
+    NULL,                 // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix2x2
+    NULL,                 // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix3x3
+    NULL,                 // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix4x4
 
-    "ELEMENT",          // RSExportPrimitiveType::DataTypeRSElement
-    "TYPE",             // RSExportPrimitiveType::DataTypeRSType
-    "ALLOCATION",       // RSExportPrimitiveType::DataTypeRSAllocation
-    "SAMPLER",          // RSExportPrimitiveType::DataTypeRSSampler
-    "SCRIPT",           // RSExportPrimitiveType::DataTypeRSScript
-    "MESH",             // RSExportPrimitiveType::DataTypeRSMesh
-    "PROGRAM_FRAGMENT", // RSExportPrimitiveType::DataTypeRSProgramFragment
-    "PROGRAM_VERTEX",   // RSExportPrimitiveType::DataTypeRSProgramVertex
-    "PROGRAM_RASTER",   // RSExportPrimitiveType::DataTypeRSProgramRaster
-    "PROGRAM_STORE",    // RSExportPrimitiveType::DataTypeRSProgramStore
-    "FONT",             // RSExportPrimitiveType::DataTypeRSFont
+    "ELEMENT",            // RSExportPrimitiveType::DataTypeRSElement
+    "TYPE",               // RSExportPrimitiveType::DataTypeRSType
+    "ALLOCATION",         // RSExportPrimitiveType::DataTypeRSAllocation
+    "SAMPLER",            // RSExportPrimitiveType::DataTypeRSSampler
+    "SCRIPT",             // RSExportPrimitiveType::DataTypeRSScript
+    "MESH",               // RSExportPrimitiveType::DataTypeRSMesh
+    "PROGRAM_FRAGMENT",   // RSExportPrimitiveType::DataTypeRSProgramFragment
+    "PROGRAM_VERTEX",     // RSExportPrimitiveType::DataTypeRSProgramVertex
+    "PROGRAM_RASTER",     // RSExportPrimitiveType::DataTypeRSProgramRaster
+    "PROGRAM_STORE",      // RSExportPrimitiveType::DataTypeRSProgramStore
+    "FONT",               // RSExportPrimitiveType::DataTypeRSFont
   };
 
   if (static_cast<unsigned>(DT) <
