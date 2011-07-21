@@ -1502,7 +1502,7 @@ void RSReflection::genPackVarOfType(Context &C,
 
       // There maybe some padding after the struct
       if (RSExportType::GetTypeAllocSize(ERT) > Pos)
-        C.indent() << FieldPackerName << ".skip(" 
+        C.indent() << FieldPackerName << ".skip("
                    << RSExportType::GetTypeAllocSize(ERT) - Pos << ");"
                    << std::endl;
       break;

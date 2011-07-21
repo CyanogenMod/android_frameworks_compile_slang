@@ -71,7 +71,12 @@ def ExecTest(dirname):
   # All tests that are expected to FAIL have directory names that
   # start with 'F_'. Other tests that are expected to PASS have
   # directory names that start with 'P_'.
-  ret = subprocess.call(args, stdout=stdout_file, stderr=stderr_file)
+  ret = 0
+  try:
+    ret = subprocess.call(args, stdout=stdout_file, stderr=stderr_file)
+  except:
+    passed = False
+
   stdout_file.flush()
   stderr_file.flush()
 
@@ -111,9 +116,12 @@ def ExecTest(dirname):
       print 'stderr is different'
 
   if Options.cleanup:
-    os.remove('stdout.txt')
-    os.remove('stderr.txt')
-    shutil.rmtree('tmp/')
+    try:
+      os.remove('stdout.txt')
+      os.remove('stderr.txt')
+      shutil.rmtree('tmp/')
+    except:
+      pass
 
   os.chdir('..')
   return passed

@@ -185,6 +185,7 @@ void SlangRS::initPreprocessor() {
   clang::Preprocessor &PP = getPreprocessor();
 
   std::string RSH;
+  RSH.append("#define RS_VERSION " RS_VERSION "\n");
 #define RS_HEADER_ENTRY(name, default_included)  \
   if (default_included) \
     RSH.append("#include \"" #name "."RS_HEADER_SUFFIX "\"\n");
