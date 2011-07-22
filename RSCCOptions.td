@@ -37,6 +37,10 @@ def triple : Separate<"-triple">,
 def triple_EQ : Joined<"-triple=">, Alias<triple>;
 def _triple : Separate<"-t">, Alias<triple>;
 
+def target_api : Separate<"-target-api">,
+  HelpText<"Specify target API level (e.g. 14)">;
+def target_api_EQ : Joined<"-target-api=">, Alias<target_api>;
+
 //===----------------------------------------------------------------------===//
 // Header Search Options
 //===----------------------------------------------------------------------===//

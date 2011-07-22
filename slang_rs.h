@@ -28,6 +28,16 @@
 
 #include "slang_rs_reflect_utils.h"
 
+// Define minimum and maximum target API versions. These correspond to the same
+// API levels used by the standard Android SDK.
+//
+// 12 - Honeycomb MR1
+// 13 - Honeycomb MR2
+// 14 - Ice Cream Sandwich
+// ...
+#define RS_MINIMUM_TARGET_API 12
+#define RS_MAXIMUM_TARGET_API RS_VERSION
+
 namespace clang {
   class FunctionDecl;
 }
@@ -43,9 +53,12 @@ class SlangRS : public Slang {
 
   bool mAllowRSPrefix;
 
+  unsigned int mTargetAPI;
+
   // Custom diagnostic identifiers
   unsigned mDiagErrorInvalidOutputDepParameter;
   unsigned mDiagErrorODR;
+  unsigned mDiagErrorTargetAPIRange;
 
   // Collect generated filenames (without the .java) for dependency generation
   std::vector<std::string> mGeneratedFileNames;
@@ -126,6 +139,7 @@ class SlangRS : public Slang {
                const std::vector<std::string> &AdditionalDepTargets,
                Slang::OutputType OutputType, BitCodeStorageType BitcodeStorage,
                bool AllowRSPrefix, bool OutputDep,
+               unsigned int TargetAPI,
                const std::string &JavaReflectionPathBase,
                const std::string &JavaReflectionPackageName);
 

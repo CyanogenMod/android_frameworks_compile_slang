@@ -18,6 +18,7 @@
 
 #include <cstring>
 #include <list>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -178,20 +179,23 @@ void SlangRS::initDiagnostic() {
                            "type '%0' in different translation unit (%1 v.s. "
                            "%2) has incompatible type definition");
 
+  mDiagErrorTargetAPIRange = Diag.getCustomDiagID(clang::Diagnostic::Error,
+      "target API level '%0' is out of range ('%1' - '%2')");
+
   return;
 }
 
 void SlangRS::initPreprocessor() {
   clang::Preprocessor &PP = getPreprocessor();
 
-  std::string RSH;
-  RSH.append("#define RS_VERSION " RS_VERSION "\n");
+  std::stringstream RSH;
+  RSH << "#define RS_VERSION " << mTargetAPI << std::endl;
 #define RS_HEADER_ENTRY(name, default_included)  \
   if (default_included) \
-    RSH.append("#include \"" #name "."RS_HEADER_SUFFIX "\"\n");
+    RSH << "#include \"" #name "." RS_HEADER_SUFFIX "\"" << std::endl;
   ENUM_RS_HEADER()
 #undef RS_HEADER_ENTRY
-  PP.setPredefines(RSH);
+  PP.setPredefines(RSH.str());
 
   return;
 }
@@ -217,7 +221,8 @@ clang::ASTConsumer
                          OS,
                          OT,
                          getSourceManager(),
-                         mAllowRSPrefix);
+                         mAllowRSPrefix,
+                         mTargetAPI);
 }
 
 bool SlangRS::IsRSHeaderFile(const char *File) {
@@ -237,7 +242,8 @@ bool SlangRS::IsFunctionInRSHeaderFile(const clang::FunctionDecl *FD,
   return IsRSHeaderFile(llvm::sys::path::filename(PLoc.getFilename()).data());
 }
 
-SlangRS::SlangRS() : Slang(), mRSContext(NULL), mAllowRSPrefix(false) {
+SlangRS::SlangRS() : Slang(), mRSContext(NULL), mAllowRSPrefix(false),
+    mTargetAPI(0) {
   return;
 }
 
@@ -248,6 +254,7 @@ bool SlangRS::compile(
     const std::vector<std::string> &AdditionalDepTargets,
     Slang::OutputType OutputType, BitCodeStorageType BitcodeStorage,
     bool AllowRSPrefix, bool OutputDep,
+    unsigned int TargetAPI,
     const std::string &JavaReflectionPathBase,
     const std::string &JavaReflectionPackageName) {
   if (IOFiles.empty())
@@ -271,6 +278,15 @@ bool SlangRS::compile(
   }
 
   mAllowRSPrefix = AllowRSPrefix;
+
+  mTargetAPI = TargetAPI;
+  if (mTargetAPI < RS_MINIMUM_TARGET_API ||
+      mTargetAPI > RS_MAXIMUM_TARGET_API) {
+    getDiagnostics().Report(mDiagErrorTargetAPIRange) << mTargetAPI
+                                                      << RS_MINIMUM_TARGET_API
+                                                      << RS_MAXIMUM_TARGET_API;
+    return false;
+  }
 
   for (unsigned i = 0, e = IOFiles.size(); i != e; i++) {
     InputFile = IOFileIter->first;

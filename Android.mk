@@ -32,7 +32,7 @@ else
   # See build/core/version_defaults.mk for more information about this.
   RS_VERSION := "(1 + $(PLATFORM_SDK_VERSION))"
 endif
-local_cflags_for_slang += -DRS_VERSION=\"$(RS_VERSION)\"
+local_cflags_for_slang += -DRS_VERSION=$(RS_VERSION)
 
 static_libraries_needed_by_slang := \
 	libLLVMLinker   \

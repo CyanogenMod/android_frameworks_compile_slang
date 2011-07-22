@@ -138,12 +138,15 @@ class RSCCOptions {
   unsigned mShowHelp : 1;  // Show the -help text.
   unsigned mShowVersion : 1;  // Show the -version text.
 
+  unsigned int mTargetAPI;
+
   RSCCOptions() {
     mOutputType = slang::Slang::OT_Bitcode;
     mBitcodeStorage = slang::BCST_APK_RESOURCE;
     mOutputDep = 0;
     mShowHelp = 0;
     mShowVersion = 0;
+    mTargetAPI = RS_VERSION;
   }
 };
 
@@ -261,6 +264,10 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
 
     Opts.mShowHelp = Args->hasArg(OPT_help);
     Opts.mShowVersion = Args->hasArg(OPT_version);
+
+    Opts.mTargetAPI = Args->getLastArgIntValue(OPT_target_api,
+                                               RS_VERSION,
+                                               Diags);
   }
 
   return;
@@ -417,6 +424,7 @@ int main(int argc, const char **argv) {
                                          Opts.mBitcodeStorage,
                                          Opts.mAllowRSPrefix,
                                          Opts.mOutputDep,
+                                         Opts.mTargetAPI,
                                          Opts.mJavaReflectionPathBase,
                                          Opts.mJavaReflectionPackageName);
   llvm::errs() << Compiler->getErrorMessage();
