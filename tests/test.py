@@ -11,6 +11,7 @@ import filecmp
 import glob
 import os
 import shutil
+import string
 import subprocess
 import sys
 
@@ -41,6 +42,16 @@ def CompareFiles(filename):
   return filecmp.cmp(actual, expect, False)
 
 
+def GetCommandLineArgs(filename):
+  """Extracts command line arguments from first comment line in a file"""
+  f = open(filename, 'r')
+  line = f.readline()
+  if line[0] == '/' and line [1] == '/':
+    return string.strip(line[2:])
+  else:
+    return ""
+
+
 def ExecTest(dirname):
   """Executes an llvm-rs-cc test from dirname."""
   passed = True
@@ -59,7 +70,16 @@ def ExecTest(dirname):
   base_args = cmd_string.split()
   rs_files = glob.glob('*.rs')
   rs_files.sort()
-  args = base_args + rs_files
+
+  # Extra command line arguments can be placed as // comments at the start of
+  # any .rs file. We automatically bundle up all of these extra args and invoke
+  # llvm-rs-cc with them.
+  extra_args_str = ""
+  for rs_file in rs_files:
+    extra_args_str += GetCommandLineArgs(rs_file)
+  extra_args = extra_args_str.split()
+
+  args = base_args + extra_args + rs_files
 
   if Options.verbose > 1:
     print 'Executing:',
