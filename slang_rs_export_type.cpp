@@ -1277,7 +1277,6 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
     clang::FieldDecl *FD = *FI;
 
     if (FD->isBitField()) {
-      delete ERT;
       return NULL;
     }
 
@@ -1295,7 +1294,6 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
                     "field type cannot be exported: '%0.%1'"))
           << RD->getName()
           << FD->getName();
-      delete ERT;
       return NULL;
     }
   }

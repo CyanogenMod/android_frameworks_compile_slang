@@ -114,7 +114,6 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
       fprintf(stderr, "Failed to export the function %s. There's at least one "
                       "parameter whose type is not supported by the "
                       "reflection\n", F->getName().c_str());
-      delete F;
       return NULL;
     }
 

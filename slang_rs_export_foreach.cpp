@@ -225,7 +225,6 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
   FE = new RSExportForEach(Context, Name, FD);
 
   if (!FE->validateAndConstructParams(Context, FD)) {
-    delete FE;
     return NULL;
   }
 
@@ -280,7 +279,6 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
         fprintf(stderr, "Failed to export the function %s. There's at least "
                         "one parameter whose type is not supported by the "
                         "reflection\n", FE->getName().c_str());
-        delete FE;
         return NULL;
       }
 
