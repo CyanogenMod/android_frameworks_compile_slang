@@ -2080,10 +2080,10 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
       }
 
       // There maybe some padding after the struct
-      size_t RecordStoreSize = RSExportType::GetTypeStoreSize(ERT);
+      size_t RecordAllocSize = RSExportType::GetTypeAllocSize(ERT);
 
       genAddPaddingToElementBuiler(C,
-                                   RecordStoreSize - Pos,
+                                   RecordAllocSize - Pos,
                                    ElementBuilderName,
                                    RenderScriptVar);
     } else {
