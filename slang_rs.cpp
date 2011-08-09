@@ -40,14 +40,21 @@ namespace slang {
 
 #define RS_HEADER_SUFFIX  "rsh"
 
-/* RS_HEADER_ENTRY(name, default_included) */
+/* RS_HEADER_ENTRY(name) */
 #define ENUM_RS_HEADER()  \
-  RS_HEADER_ENTRY(rs_types,     1) \
-  RS_HEADER_ENTRY(rs_cl,        1) \
-  RS_HEADER_ENTRY(rs_core,      1) \
-  RS_HEADER_ENTRY(rs_math,      1) \
-  RS_HEADER_ENTRY(rs_time,      1) \
-  RS_HEADER_ENTRY(rs_graphics,  0)
+  RS_HEADER_ENTRY(rs_allocation) \
+  RS_HEADER_ENTRY(rs_atomic) \
+  RS_HEADER_ENTRY(rs_cl) \
+  RS_HEADER_ENTRY(rs_core) \
+  RS_HEADER_ENTRY(rs_debug) \
+  RS_HEADER_ENTRY(rs_graphics) \
+  RS_HEADER_ENTRY(rs_math) \
+  RS_HEADER_ENTRY(rs_matrix) \
+  RS_HEADER_ENTRY(rs_object) \
+  RS_HEADER_ENTRY(rs_quaternion) \
+  RS_HEADER_ENTRY(rs_time) \
+  RS_HEADER_ENTRY(rs_types) \
+
 
 bool SlangRS::reflectToJava(const std::string &OutputPathBase,
                             const std::string &OutputPackageName,
@@ -190,11 +197,7 @@ void SlangRS::initPreprocessor() {
 
   std::stringstream RSH;
   RSH << "#define RS_VERSION " << mTargetAPI << std::endl;
-#define RS_HEADER_ENTRY(name, default_included)  \
-  if (default_included) \
-    RSH << "#include \"" #name "." RS_HEADER_SUFFIX "\"" << std::endl;
-  ENUM_RS_HEADER()
-#undef RS_HEADER_ENTRY
+  RSH << "#include \"rs_core." RS_HEADER_SUFFIX "\"" << std::endl;
   PP.setPredefines(RSH.str());
 
   return;
@@ -226,7 +229,7 @@ clang::ASTConsumer
 }
 
 bool SlangRS::IsRSHeaderFile(const char *File) {
-#define RS_HEADER_ENTRY(name, default_included)  \
+#define RS_HEADER_ENTRY(name)  \
   if (::strcmp(File, #name "."RS_HEADER_SUFFIX) == 0)  \
     return true;
 ENUM_RS_HEADER()
