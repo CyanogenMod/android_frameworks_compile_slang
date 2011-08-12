@@ -169,8 +169,8 @@ static void AppendAfterStmt(clang::ASTContext &C,
   return;
 }
 
-// This class visits a compound statement and inserts the StmtList containing
-// destructors in proper locations. This includes inserting them before any
+// This class visits a compound statement and inserts DtorStmt
+// in proper locations. This includes inserting it before any
 // return statement in any sub-block, at the end of the logical enclosing
 // scope (compound statement), and/or before any break/continue statement that
 // would resume outside the declared scope. We will not handle the case for
@@ -198,31 +198,48 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
   // This should always be a CompoundStmt.
   clang::Stmt *mOuterStmt;
 
-  // The list of destructors to execute for this scope.
-  std::list<clang::Stmt*> &mStmtList;
+  // The destructor to execute for this scope/variable.
+  clang::Stmt* mDtorStmt;
 
   // The stack of statements which should be replaced by a compound statement
-  // containing the new destructor calls followed by the original Stmt.
+  // containing the new destructor call followed by the original Stmt.
   std::stack<clang::Stmt*> mReplaceStmtStack;
+
+  // The source location for the variable declaration that we are trying to
+  // insert destructors for. Note that InsertDestructors() will not generate
+  // destructor calls for source locations that occur lexically before this
+  // location.
+  clang::SourceLocation mVarLoc;
 
  public:
   DestructorVisitor(clang::ASTContext &C,
                     clang::Stmt* OuterStmt,
-                    std::list<clang::Stmt*> &StmtList);
+                    clang::Stmt* DtorStmt,
+                    clang::SourceLocation VarLoc);
 
   // This code walks the collected list of Stmts to replace and actually does
-  // the replacement. It also finishes up by appending appropriate destructors
-  // to the current outermost CompoundStmt.
+  // the replacement. It also finishes up by appending the destructor to the
+  // current outermost CompoundStmt.
   void InsertDestructors() {
     clang::Stmt *S = NULL;
+    clang::SourceManager &SM = mCtx.getSourceManager();
+    std::list<clang::Stmt *> StmtList;
+    StmtList.push_back(mDtorStmt);
+
     while (!mReplaceStmtStack.empty()) {
       S = mReplaceStmtStack.top();
       mReplaceStmtStack.pop();
 
-      mStmtList.push_back(S);
+      // Skip all source locations that occur before the variable's
+      // declaration, since it won't have been initialized yet.
+      if (SM.isBeforeInTranslationUnit(S->getLocStart(), mVarLoc)) {
+        continue;
+      }
+
+      StmtList.push_back(S);
       clang::CompoundStmt *CS =
-          BuildCompoundStmt(mCtx, mStmtList, S->getLocEnd());
-      mStmtList.pop_back();
+          BuildCompoundStmt(mCtx, StmtList, S->getLocEnd());
+      StmtList.pop_back();
 
       RSASTReplace R(mCtx);
       R.ReplaceStmt(mOuterStmt, S, CS);
@@ -230,9 +247,7 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
     clang::CompoundStmt *CS =
       llvm::dyn_cast<clang::CompoundStmt>(mOuterStmt);
     slangAssert(CS);
-    if (CS) {
-      AppendAfterStmt(mCtx, CS, NULL, mStmtList);
-    }
+    AppendAfterStmt(mCtx, CS, NULL, StmtList);
   }
 
   void VisitStmt(clang::Stmt *S);
@@ -253,12 +268,14 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
 
 DestructorVisitor::DestructorVisitor(clang::ASTContext &C,
                          clang::Stmt *OuterStmt,
-                         std::list<clang::Stmt*> &StmtList)
+                         clang::Stmt *DtorStmt,
+                         clang::SourceLocation VarLoc)
   : mCtx(C),
     mLoopDepth(0),
     mSwitchDepth(0),
     mOuterStmt(OuterStmt),
-    mStmtList(StmtList) {
+    mDtorStmt(DtorStmt),
+    mVarLoc(VarLoc) {
   return;
 }
 
@@ -1208,22 +1225,20 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
 }
 
 void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
-  std::list<clang::Stmt*> RSClearObjectCalls;
   for (std::list<clang::VarDecl*>::const_iterator I = mRSO.begin(),
           E = mRSO.end();
         I != E;
         I++) {
-    clang::Stmt *S = ClearRSObject(*I);
-    if (S) {
-      RSClearObjectCalls.push_back(S);
+    clang::VarDecl *VD = *I;
+    clang::Stmt *RSClearObjectCall = ClearRSObject(VD);
+    if (RSClearObjectCall) {
+      DestructorVisitor DV((*mRSO.begin())->getASTContext(),
+                           mCS,
+                           RSClearObjectCall,
+                           VD->getSourceRange().getBegin());
+      DV.Visit(mCS);
+      DV.InsertDestructors();
     }
-  }
-  if (RSClearObjectCalls.size() > 0) {
-    DestructorVisitor DV((*mRSO.begin())->getASTContext(),
-                         mCS,
-                         RSClearObjectCalls);
-    DV.Visit(mCS);
-    DV.InsertDestructors();
   }
   return;
 }
