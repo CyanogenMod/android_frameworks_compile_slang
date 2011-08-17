@@ -34,6 +34,7 @@
 #include "slang_assert.h"
 #include "slang_rs.h"
 #include "slang_rs_context.h"
+#include "slang_rs_export_foreach.h"
 #include "slang_rs_export_func.h"
 #include "slang_rs_export_type.h"
 #include "slang_rs_export_var.h"
@@ -63,6 +64,7 @@ RSBackend::RSBackend(RSContext *Context,
       mTargetAPI(TargetAPI),
       mExportVarMetadata(NULL),
       mExportFuncMetadata(NULL),
+      mExportForEachMetadata(NULL),
       mExportTypeMetadata(NULL),
       mRSObjectSlotsMetadata(NULL),
       mRefCount(mContext->getASTContext()) {
@@ -396,6 +398,31 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
       mExportFuncMetadata->addOperand(
           llvm::MDNode::get(mLLVMContext, ExportFuncInfo));
       ExportFuncInfo.clear();
+    }
+  }
+
+  // Dump export function info
+  if (mContext->hasExportForEach()) {
+    if (mExportForEachMetadata == NULL)
+      mExportForEachMetadata =
+          M->getOrInsertNamedMetadata(RS_EXPORT_FOREACH_MN);
+
+    llvm::SmallVector<llvm::Value*, 1> ExportForEachInfo;
+
+    for (RSContext::const_export_foreach_iterator
+            I = mContext->export_foreach_begin(),
+            E = mContext->export_foreach_end();
+         I != E;
+         I++) {
+      const RSExportForEach *EFE = *I;
+
+      ExportForEachInfo.push_back(
+          llvm::MDString::get(mLLVMContext,
+                              llvm::utostr_32(EFE->getMetadataEncoding())));
+
+      mExportForEachMetadata->addOperand(
+          llvm::MDNode::get(mLLVMContext, ExportForEachInfo));
+      ExportForEachInfo.clear();
     }
   }
 

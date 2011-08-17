@@ -76,73 +76,67 @@ bool RSExportForEach::validateAndConstructParams(
   // Validate remaining parameter types
   // TODO(all): Add support for LOD/face when we have them
 
-  for (size_t i = 0; i < numParams; i++) {
-    const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
-    clang::QualType QT = PVD->getType().getCanonicalType();
-    llvm::StringRef ParamName = PVD->getName();
+  size_t i = 0;
+  const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
+  clang::QualType QT = PVD->getType().getCanonicalType();
 
-    if (QT->isPointerType()) {
-      if (QT->getPointeeType().isConstQualified()) {
-        // const T1 *in
-        // const T3 *usrData
-        if (ParamName.equals("in")) {
-          if (mIn) {
-            ReportNameError(Diags, PVD);
-            valid = false;
-          } else {
-            mIn = PVD;
-          }
-        } else if (ParamName.equals("usrData")) {
-          if (mUsrData) {
-            ReportNameError(Diags, PVD);
-            valid = false;
-          } else {
-            mUsrData = PVD;
-          }
-        } else {
-          // Issue warning about positional parameter usage
-          if (!mIn) {
-            mIn = PVD;
-          } else if (!mUsrData) {
-            mUsrData = PVD;
-          } else {
-            Diags->Report(
-                clang::FullSourceLoc(PVD->getLocation(),
-                                     Diags->getSourceManager()),
-                Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                       "Unexpected root() parameter '%0' "
-                                       "of type '%1'"))
-                << PVD->getName() << PVD->getType().getAsString();
-            valid = false;
-          }
-        }
-      } else {
-        // T2 *out
-        if (ParamName.equals("out")) {
-          if (mOut) {
-            ReportNameError(Diags, PVD);
-            valid = false;
-          } else {
-            mOut = PVD;
-          }
-        } else {
-          if (!mOut) {
-            mOut = PVD;
-          } else {
-            Diags->Report(
-                clang::FullSourceLoc(PVD->getLocation(),
-                                     Diags->getSourceManager()),
-                Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                       "Unexpected root() parameter '%0' "
-                                       "of type '%1'"))
-                << PVD->getName() << PVD->getType().getAsString();
-            valid = false;
-          }
-        }
-      }
-    } else if (QT.getUnqualifiedType() == C.UnsignedIntTy) {
+  // Check for const T1 *in
+  if (QT->isPointerType() && QT->getPointeeType().isConstQualified()) {
+    mIn = PVD;
+    i++;  // advance parameter pointer
+  }
+
+  // Check for T2 *out
+  if (i < numParams) {
+    PVD = FD->getParamDecl(i);
+    QT = PVD->getType().getCanonicalType();
+    if (QT->isPointerType() && !QT->getPointeeType().isConstQualified()) {
+      mOut = PVD;
+      i++;  // advance parameter pointer
+    }
+  }
+
+  if (!mIn && !mOut) {
+    Diags->Report(
+        clang::FullSourceLoc(FD->getLocation(),
+                             Diags->getSourceManager()),
+        Diags->getCustomDiagID(clang::Diagnostic::Error,
+                               "Compute root() must have at least one "
+                               "parameter for in or out"));
+    valid = false;
+  }
+
+  // Check for T3 *usrData
+  if (i < numParams) {
+    PVD = FD->getParamDecl(i);
+    QT = PVD->getType().getCanonicalType();
+    if (QT->isPointerType() && QT->getPointeeType().isConstQualified()) {
+      mUsrData = PVD;
+      i++;  // advance parameter pointer
+    }
+  }
+
+  while (i < numParams) {
+    PVD = FD->getParamDecl(i);
+    QT = PVD->getType().getCanonicalType();
+
+    if (QT.getUnqualifiedType() != C.UnsignedIntTy) {
+      Diags->Report(
+          clang::FullSourceLoc(PVD->getLocation(),
+                               Diags->getSourceManager()),
+          Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                 "Unexpected root() parameter '%0' "
+                                 "of type '%1'"))
+          << PVD->getName() << PVD->getType().getAsString();
+      valid = false;
+    } else {
+      llvm::StringRef ParamName = PVD->getName();
       if (ParamName.equals("x")) {
         if (mX) {
+          ReportNameError(Diags, PVD);
+          valid = false;
+        } else if (mY) {
+          // Can't go back to X after skipping Y
           ReportNameError(Diags, PVD);
           valid = false;
         } else {
@@ -155,29 +149,11 @@ bool RSExportForEach::validateAndConstructParams(
         } else {
           mY = PVD;
         }
-      } else if (ParamName.equals("z")) {
-        if (mZ) {
-          ReportNameError(Diags, PVD);
-          valid = false;
-        } else {
-          mZ = PVD;
-        }
-      } else if (ParamName.equals("ar")) {
-        if (mAr) {
-          ReportNameError(Diags, PVD);
-          valid = false;
-        } else {
-          mAr = PVD;
-        }
       } else {
-        if (!mX) {
+        if (!mX && !mY) {
           mX = PVD;
         } else if (!mY) {
           mY = PVD;
-        } else if (!mZ) {
-          mZ = PVD;
-        } else if (!mAr) {
-          mAr = PVD;
         } else {
           Diags->Report(
               clang::FullSourceLoc(PVD->getLocation(),
@@ -189,26 +165,19 @@ bool RSExportForEach::validateAndConstructParams(
           valid = false;
         }
       }
-    } else {
-      Diags->Report(
-          clang::FullSourceLoc(
-              PVD->getTypeSourceInfo()->getTypeLoc().getBeginLoc(),
-              Diags->getSourceManager()),
-          Diags->getCustomDiagID(clang::Diagnostic::Error,
-              "Unexpected root() parameter type '%0'"))
-          << PVD->getType().getAsString();
-      valid = false;
     }
+
+    i++;
   }
 
-  if (!mIn && !mOut) {
-    Diags->Report(
-        clang::FullSourceLoc(FD->getLocation(),
-                             Diags->getSourceManager()),
-        Diags->getCustomDiagID(clang::Diagnostic::Error,
-                               "Compute root() must have at least one "
-                               "parameter for in or out"));
-    valid = false;
+  mMetadataEncoding = 0;
+  if (valid) {
+    // Set up the bitwise metadata encoding for runtime argument passing.
+    mMetadataEncoding |= (mIn ?       0x01 : 0);
+    mMetadataEncoding |= (mOut ?      0x02 : 0);
+    mMetadataEncoding |= (mUsrData ?  0x04 : 0);
+    mMetadataEncoding |= (mX ?        0x08 : 0);
+    mMetadataEncoding |= (mY ?        0x10 : 0);
   }
 
   return valid;
