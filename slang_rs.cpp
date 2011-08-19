@@ -208,6 +208,7 @@ void SlangRS::initASTContext() {
                              getASTContext(),
                              getTargetInfo(),
                              &mPragmas,
+                             mTargetAPI,
                              &mGeneratedFileNames);
   return;
 }
@@ -224,8 +225,7 @@ clang::ASTConsumer
                          OS,
                          OT,
                          getSourceManager(),
-                         mAllowRSPrefix,
-                         mTargetAPI);
+                         mAllowRSPrefix);
 }
 
 bool SlangRS::IsRSHeaderFile(const char *File) {

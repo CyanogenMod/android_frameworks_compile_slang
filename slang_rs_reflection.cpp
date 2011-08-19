@@ -34,6 +34,7 @@
 #include "slang_rs_export_foreach.h"
 #include "slang_rs_export_func.h"
 #include "slang_rs_reflect_utils.h"
+#include "slang_rs_version.h"
 #include "slang_utils.h"
 
 #define RS_SCRIPT_CLASS_NAME_PREFIX      "ScriptC_"
@@ -623,12 +624,14 @@ bool RSReflection::genScriptClass(Context &C,
        I++)
     genExportVariable(C, *I);
 
-  // Reflect export for each functions
-  for (RSContext::const_export_foreach_iterator
-           I = mRSContext->export_foreach_begin(),
-           E = mRSContext->export_foreach_end();
-       I != E; I++)
-    genExportForEach(C, *I);
+  // Reflect export for each functions (only available on ICS+)
+  if (mRSContext->getTargetAPI() >= RS_ICS_TARGET_API) {
+    for (RSContext::const_export_foreach_iterator
+             I = mRSContext->export_foreach_begin(),
+             E = mRSContext->export_foreach_end();
+         I != E; I++)
+      genExportForEach(C, *I);
+  }
 
   // Reflect export function
   for (RSContext::const_export_func_iterator

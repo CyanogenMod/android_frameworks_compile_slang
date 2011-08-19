@@ -68,6 +68,7 @@ class RSContext {
   clang::ASTContext &mCtx;
   const clang::TargetInfo &mTarget;
   PragmaList *mPragmas;
+  unsigned int mTargetAPI;
   std::vector<std::string> *mGeneratedFileNames;
 
   llvm::TargetData *mTargetData;
@@ -98,6 +99,7 @@ class RSContext {
             clang::ASTContext &Ctx,
             const clang::TargetInfo &Target,
             PragmaList *Pragmas,
+            unsigned int TargetAPI,
             std::vector<std::string> *GeneratedFileNames);
 
   inline clang::Preprocessor &getPreprocessor() const { return mPP; }
@@ -112,6 +114,9 @@ class RSContext {
   }
   inline clang::Diagnostic *getDiagnostics() const {
     return &mPP.getDiagnostics();
+  }
+  inline unsigned int getTargetAPI() const {
+    return mTargetAPI;
   }
 
   inline void setLicenseNote(const std::string &S) {

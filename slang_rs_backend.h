@@ -47,8 +47,6 @@ class RSBackend : public Backend {
 
   bool mAllowRSPrefix;
 
-  unsigned int mTargetAPI;
-
   llvm::NamedMDNode *mExportVarMetadata;
   llvm::NamedMDNode *mExportFuncMetadata;
   llvm::NamedMDNode *mExportForEachMetadata;
@@ -76,8 +74,7 @@ class RSBackend : public Backend {
             llvm::raw_ostream *OS,
             Slang::OutputType OT,
             clang::SourceManager &SourceMgr,
-            bool AllowRSPrefix,
-            unsigned int TargetAPI);
+            bool AllowRSPrefix);
 
   virtual ~RSBackend();
 };

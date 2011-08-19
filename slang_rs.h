@@ -27,16 +27,7 @@
 #include "llvm/ADT/StringMap.h"
 
 #include "slang_rs_reflect_utils.h"
-
-// Define minimum and maximum target API versions. These correspond to the same
-// API levels used by the standard Android SDK.
-//
-// 12 - Honeycomb MR1
-// 13 - Honeycomb MR2
-// 14 - Ice Cream Sandwich
-// ...
-#define RS_MINIMUM_TARGET_API 12
-#define RS_MAXIMUM_TARGET_API RS_VERSION
+#include "slang_rs_version.h"
 
 namespace clang {
   class FunctionDecl;
