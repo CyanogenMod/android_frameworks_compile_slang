@@ -169,6 +169,13 @@ void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
                       "Pragma for version in source file must be set to 1"));
   }
 
+  // Create a static global destructor if necessary (to handle RS object
+  // runtime cleanup).
+  clang::FunctionDecl *FD = mRefCount.CreateStaticGlobalDtor();
+  if (FD) {
+    HandleTopLevelDecl(clang::DeclGroupRef(FD));
+  }
+
   // Process any static function declarations
   for (clang::DeclContext::decl_iterator I = TUDecl->decls_begin(),
           E = TUDecl->decls_end(); I != E; I++) {

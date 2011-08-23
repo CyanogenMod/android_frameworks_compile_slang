@@ -306,13 +306,13 @@ bool RSExportForEach::validateSpecialFuncDecl(clang::Diagnostic *Diags,
       slangAssert(false &&
           "Should not call validateSpecialFuncDecl() on compute root()");
     }
-  } else if (isInitRSFunc(FD)) {
+  } else if (isInitRSFunc(FD) || isDtorRSFunc(FD)) {
     if (FD->getNumParams() != 0) {
       Diags->Report(
           clang::FullSourceLoc(FD->getLocation(), Diags->getSourceManager()),
           Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                 "init(void) is required to have no "
-                                 "parameters"));
+                                 "%0(void) is required to have no "
+                                 "parameters")) << FD->getName();
       valid = false;
     }
 
@@ -320,12 +320,12 @@ bool RSExportForEach::validateSpecialFuncDecl(clang::Diagnostic *Diags,
       Diags->Report(
           clang::FullSourceLoc(FD->getLocation(), Diags->getSourceManager()),
           Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                 "init(void) is required to have a void "
-                                 "return type"));
+                                 "%0(void) is required to have a void "
+                                 "return type")) << FD->getName();
       valid = false;
     }
   } else {
-    slangAssert(false && "must be called on init or root function!");
+    slangAssert(false && "must be called on root, init or .rs.dtor function!");
   }
 
   return valid;

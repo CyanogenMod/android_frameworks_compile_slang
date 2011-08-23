@@ -223,6 +223,7 @@ bool OptimizeModule(Module *M) {
   std::vector<const char *> ExportList;
   ExportList.push_back("init");
   ExportList.push_back("root");
+  ExportList.push_back(".rs.dtor");
 
   if (!GetExportSymbols(M, ExportList)) {
     return false;

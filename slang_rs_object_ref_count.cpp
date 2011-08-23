@@ -1485,4 +1485,46 @@ void RSObjectRefCount::VisitStmt(clang::Stmt *S) {
   return;
 }
 
+// This function walks the list of global variables and (potentially) creates
+// a single global static destructor function that properly decrements
+// reference counts on the contained RS object types.
+clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
+  Init();
+
+  clang::DeclContext *DC = mCtx.getTranslationUnitDecl();
+  clang::SourceLocation loc;
+
+  // Generate rsClearObject() call chains for every global variable
+  // (whether static or extern).
+  std::list<clang::Stmt *> StmtList;
+  for (clang::DeclContext::decl_iterator I = DC->decls_begin(),
+          E = DC->decls_end(); I != E; I++) {
+    clang::VarDecl *VD = llvm::dyn_cast<clang::VarDecl>(*I);
+    if (VD) {
+      if (CountRSObjectTypes(mCtx, VD->getType().getTypePtr(), loc)) {
+        clang::Stmt *RSClearObjectCall = Scope::ClearRSObject(VD);
+        StmtList.push_back(RSClearObjectCall);
+      }
+    }
+  }
+
+  // Nothing needs to be destroyed, so don't emit a dtor.
+  if (StmtList.empty()) {
+    return NULL;
+  }
+
+  llvm::StringRef SR(".rs.dtor");
+  clang::IdentifierInfo &II = mCtx.Idents.get(SR);
+  clang::DeclarationName N(&II);
+  clang::FunctionProtoType::ExtProtoInfo EPI;
+  clang::QualType T = mCtx.getFunctionType(mCtx.VoidTy, NULL, 0, EPI);
+  clang::FunctionDecl *FD = clang::FunctionDecl::Create(mCtx, DC, loc, loc, N,
+                                                        T, NULL);
+  clang::CompoundStmt *CS = BuildCompoundStmt(mCtx, StmtList, loc);
+
+  FD->setBody(CS);
+
+  return FD;
+}
+
 }  // namespace slang

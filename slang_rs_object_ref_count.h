@@ -139,9 +139,11 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
   void VisitDeclStmt(clang::DeclStmt *DS);
   void VisitCompoundStmt(clang::CompoundStmt *CS);
   void VisitBinAssign(clang::BinaryOperator *AS);
-
   // We believe that RS objects are never involved in CompoundAssignOperator.
   // I.e., rs_allocation foo; foo += bar;
+
+  // Emit a global destructor to clean up RS objects.
+  clang::FunctionDecl *CreateStaticGlobalDtor();
 };
 
 }  // namespace slang

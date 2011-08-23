@@ -139,10 +139,19 @@ class RSExportForEach : public RSExportable {
     return Name.equals(FuncRoot);
   }
 
+  inline static bool isDtorRSFunc(const clang::FunctionDecl *FD) {
+    if (!FD) {
+      return false;
+    }
+    const llvm::StringRef Name = FD->getName();
+    static llvm::StringRef FuncDtor(".rs.dtor");
+    return Name.equals(FuncDtor);
+  }
+
   static bool isRSForEachFunc(const clang::FunctionDecl *FD);
 
   inline static bool isSpecialRSFunc(const clang::FunctionDecl *FD) {
-    return isRootRSFunc(FD) || isInitRSFunc(FD);
+    return isRootRSFunc(FD) || isInitRSFunc(FD) || isDtorRSFunc(FD);
   }
 
   static bool validateSpecialFuncDecl(clang::Diagnostic *Diags,
