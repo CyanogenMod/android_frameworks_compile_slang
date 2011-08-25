@@ -1618,6 +1618,7 @@ bool RSReflection::genTypeClass(Context &C,
              << std::endl;
 
   genTypeClassConstructor(C, ERT);
+  genTypeClassCopyToArrayLocal(C, ERT);
   genTypeClassCopyToArray(C, ERT);
   genTypeClassItemSetter(C, ERT);
   genTypeClassItemGetter(C, ERT);
@@ -1738,7 +1739,24 @@ void RSReflection::genTypeClassCopyToArray(Context &C,
                 ".reset(index * "RS_TYPE_ITEM_CLASS_NAME".sizeof);"
              << std::endl;
 
-  genPackVarOfType(C, ERT, "i", RS_TYPE_ITEM_BUFFER_PACKER_NAME);
+  C.indent() << "copyToArrayLocal(i, " RS_TYPE_ITEM_BUFFER_PACKER_NAME
+                ");" << std::endl;
+
+  C.endFunction();
+  return;
+}
+
+void RSReflection::genTypeClassCopyToArrayLocal(Context &C,
+                                                const RSExportRecordType *ERT) {
+  C.startFunction(Context::AM_Private,
+                  false,
+                  "void",
+                  "copyToArrayLocal",
+                  2,
+                  RS_TYPE_ITEM_CLASS_NAME, "i",
+                  "FieldPacker", "fp");
+
+  genPackVarOfType(C, ERT, "i", "fp");
 
   C.endFunction();
   return;
@@ -1746,7 +1764,7 @@ void RSReflection::genTypeClassCopyToArray(Context &C,
 
 void RSReflection::genTypeClassItemSetter(Context &C,
                                           const RSExportRecordType *ERT) {
-  C.startFunction(Context::AM_Public,
+  C.startFunction(Context::AM_PublicSynchronized,
                   false,
                   "void",
                   "set",
@@ -1761,8 +1779,10 @@ void RSReflection::genTypeClassItemSetter(Context &C,
   C.startBlock();
 
   C.indent() << "copyToArray(i, index);" << std::endl;
-  C.indent() << "mAllocation.setFromFieldPacker(index, "
-                  RS_TYPE_ITEM_BUFFER_PACKER_NAME");" << std::endl;
+  C.indent() << "FieldPacker fp = new FieldPacker(" RS_TYPE_ITEM_CLASS_NAME
+                ".sizeof);" << std::endl;
+  C.indent() << "copyToArrayLocal(i, fp);" << std::endl;
+  C.indent() << "mAllocation.setFromFieldPacker(index, fp);" << std::endl;
 
   // End of if (copyNow)
   C.endBlock();
@@ -1773,7 +1793,7 @@ void RSReflection::genTypeClassItemSetter(Context &C,
 
 void RSReflection::genTypeClassItemGetter(Context &C,
                                           const RSExportRecordType *ERT) {
-  C.startFunction(Context::AM_Public,
+  C.startFunction(Context::AM_PublicSynchronized,
                   false,
                   RS_TYPE_ITEM_CLASS_NAME,
                   "get",
@@ -1797,7 +1817,7 @@ void RSReflection::genTypeClassComponentSetter(Context &C,
     size_t FieldStoreSize = RSExportType::GetTypeStoreSize(F->getType());
     unsigned FieldIndex = C.getFieldIndex(F);
 
-    C.startFunction(Context::AM_Public,
+    C.startFunction(Context::AM_PublicSynchronized,
                     false,
                     "void",
                     "set_" + F->getName(), 3,
@@ -1844,7 +1864,7 @@ void RSReflection::genTypeClassComponentGetter(Context &C,
        FI != FE;
        FI++) {
     const RSExportRecordType::Field *F = *FI;
-    C.startFunction(Context::AM_Public,
+    C.startFunction(Context::AM_PublicSynchronized,
                     false,
                     GetTypeName(F->getType()).c_str(),
                     "get_" + F->getName(),
@@ -1861,7 +1881,7 @@ void RSReflection::genTypeClassComponentGetter(Context &C,
 
 void RSReflection::genTypeClassCopyAll(Context &C,
                                        const RSExportRecordType *ERT) {
-  C.startFunction(Context::AM_Public, false, "void", "copyAll", 0);
+  C.startFunction(Context::AM_PublicSynchronized, false, "void", "copyAll", 0);
 
   C.indent() << "for (int ct = 0; ct < "RS_TYPE_ITEM_BUFFER_NAME".length; ct++)"
                   " copyToArray("RS_TYPE_ITEM_BUFFER_NAME"[ct], ct);"
@@ -1875,7 +1895,7 @@ void RSReflection::genTypeClassCopyAll(Context &C,
 }
 
 void RSReflection::genTypeClassResize(Context &C) {
-  C.startFunction(Context::AM_Public,
+  C.startFunction(Context::AM_PublicSynchronized,
                   false,
                   "void",
                   "resize",
@@ -2242,6 +2262,7 @@ const char *RSReflection::Context::AccessModifierStr(AccessModifier AM) {
     case AM_Public: return "public"; break;
     case AM_Protected: return "protected"; break;
     case AM_Private: return "private"; break;
+    case AM_PublicSynchronized: return "public synchronized"; break;
     default: return ""; break;
   }
 }

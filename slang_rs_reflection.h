@@ -97,7 +97,8 @@ class RSReflection {
     typedef enum {
       AM_Public,
       AM_Protected,
-      AM_Private
+      AM_Private,
+      AM_PublicSynchronized
     } AccessModifier;
 
     bool mUseStdout;
@@ -257,6 +258,7 @@ class RSReflection {
   void genTypeItemClass(Context &C, const RSExportRecordType *ERT);
   void genTypeClassConstructor(Context &C, const RSExportRecordType *ERT);
   void genTypeClassCopyToArray(Context &C, const RSExportRecordType *ERT);
+  void genTypeClassCopyToArrayLocal(Context &C, const RSExportRecordType *ERT);
   void genTypeClassItemSetter(Context &C, const RSExportRecordType *ERT);
   void genTypeClassItemGetter(Context &C, const RSExportRecordType *ERT);
   void genTypeClassComponentSetter(Context &C, const RSExportRecordType *ERT);
