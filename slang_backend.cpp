@@ -52,8 +52,8 @@
 
 #include "llvm/MC/SubtargetFeature.h"
 
-#include "slang.h"
 #include "slang_assert.h"
+#include "BitWriter_2_9/ReaderWriter_2_9.h"
 
 namespace slang {
 
@@ -320,7 +320,12 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
     }
     case Slang::OT_Bitcode: {
       llvm::PassManager *BCEmitPM = new llvm::PassManager();
-      BCEmitPM->add(llvm::createBitcodeWriterPass(FormattedOutStream));
+      if (getTargetAPI() < SLANG_ICS_TARGET_API) {
+        // Pre-ICS targets must use the LLVM 2.9 BitcodeWriter
+        BCEmitPM->add(llvm_2_9::createBitcodeWriterPass(FormattedOutStream));
+      } else {
+        BCEmitPM->add(llvm::createBitcodeWriterPass(FormattedOutStream));
+      }
       BCEmitPM->run(*mpModule);
       break;
     }
