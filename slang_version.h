@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_VERSION_H_  // NOLINT
-#define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_VERSION_H_
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_VERSION_H_  // NOLINT
+#define _FRAMEWORKS_COMPILE_SLANG_SLANG_VERSION_H_
 
 // API levels used by the standard Android SDK.
 //
@@ -23,9 +23,10 @@
 // 13 - Honeycomb MR2
 // 14 - Ice Cream Sandwich
 // ...
-#define RS_MINIMUM_TARGET_API 12
-#define RS_MAXIMUM_TARGET_API RS_VERSION
+#define SLANG_MINIMUM_TARGET_API 12
+#define SLANG_MAXIMUM_TARGET_API RS_VERSION
+// Note that RS_VERSION is defined at build time (see Android.mk for details).
 
-#define RS_ICS_TARGET_API 14
+#define SLANG_ICS_TARGET_API 14
 
-#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_VERSION_H_  NOLINT
+#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_VERSION_H_  NOLINT

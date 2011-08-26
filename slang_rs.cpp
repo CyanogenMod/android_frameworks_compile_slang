@@ -283,11 +283,10 @@ bool SlangRS::compile(
   mAllowRSPrefix = AllowRSPrefix;
 
   mTargetAPI = TargetAPI;
-  if (mTargetAPI < RS_MINIMUM_TARGET_API ||
-      mTargetAPI > RS_MAXIMUM_TARGET_API) {
+  if (mTargetAPI < SLANG_MINIMUM_TARGET_API ||
+      mTargetAPI > SLANG_MAXIMUM_TARGET_API) {
     getDiagnostics().Report(mDiagErrorTargetAPIRange) << mTargetAPI
-                                                      << RS_MINIMUM_TARGET_API
-                                                      << RS_MAXIMUM_TARGET_API;
+        << SLANG_MINIMUM_TARGET_API << SLANG_MAXIMUM_TARGET_API;
     return false;
   }
 

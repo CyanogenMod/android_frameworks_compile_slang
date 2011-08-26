@@ -38,6 +38,7 @@ static_libraries_needed_by_slang := \
 	libLLVMLinker   \
 	libLLVMipo	\
 	libLLVMBitWriter	\
+	libLLVMBitWriter_2_9  \
 	libLLVMBitReader	\
 	libLLVMARMCodeGen	\
 	libLLVMARMAsmPrinter	\
@@ -249,3 +250,8 @@ include $(CLANG_TBLGEN_RULES_MK)
 include $(BUILD_HOST_EXECUTABLE)
 
 endif  # TARGET_BUILD_APPS
+
+#=====================================================================
+# Include Subdirectories
+#=====================================================================
+include $(call all-makefiles-under,$(LOCAL_PATH))

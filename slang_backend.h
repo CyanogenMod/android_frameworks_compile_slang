@@ -25,6 +25,7 @@
 
 #include "slang.h"
 #include "slang_pragma_recorder.h"
+#include "slang_version.h"
 
 namespace llvm {
   class formatted_raw_ostream;
@@ -79,6 +80,10 @@ class Backend : public clang::ASTConsumer {
   clang::Diagnostic &mDiags;
 
   PragmaList *mPragmas;
+
+  virtual unsigned int getTargetAPI() const {
+    return SLANG_MAXIMUM_TARGET_API;
+  }
 
   // This handler will be invoked before Clang translates @Ctx to LLVM IR. This
   // give you an opportunity to modified the IR in AST level (scope information,

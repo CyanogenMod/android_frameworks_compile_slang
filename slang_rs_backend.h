@@ -59,6 +59,10 @@ class RSBackend : public Backend {
   void AnnotateFunction(clang::FunctionDecl *FD);
 
  protected:
+  virtual unsigned int getTargetAPI() const {
+    return mContext->getTargetAPI();
+  }
+
   virtual void HandleTopLevelDecl(clang::DeclGroupRef D);
 
   virtual void HandleTranslationUnitPre(clang::ASTContext &C);

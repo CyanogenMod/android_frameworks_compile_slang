@@ -27,7 +27,7 @@
 #include "llvm/ADT/StringMap.h"
 
 #include "slang_rs_reflect_utils.h"
-#include "slang_rs_version.h"
+#include "slang_version.h"
 
 namespace clang {
   class FunctionDecl;
