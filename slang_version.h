@@ -19,11 +19,12 @@
 
 // API levels used by the standard Android SDK.
 //
+// 11 - Honeycomb
 // 12 - Honeycomb MR1
 // 13 - Honeycomb MR2
 // 14 - Ice Cream Sandwich
 // ...
-#define SLANG_MINIMUM_TARGET_API 12
+#define SLANG_MINIMUM_TARGET_API 11
 #define SLANG_MAXIMUM_TARGET_API RS_VERSION
 // Note that RS_VERSION is defined at build time (see Android.mk for details).
 
