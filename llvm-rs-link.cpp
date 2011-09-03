@@ -74,7 +74,7 @@ static bool GetExportSymbolNames(llvm::NamedMDNode *N,
 
     if (V->getNumOperands() < (NameOpIdx + 1)) {
       errs() << "Invalid metadata spec of " << N->getName()
-             << " in RenderScript executable. (#op)\n";
+             << " in Renderscript executable. (#op)\n";
       return false;
     }
 
@@ -82,7 +82,7 @@ static bool GetExportSymbolNames(llvm::NamedMDNode *N,
         llvm::dyn_cast<llvm::MDString>(V->getOperand(NameOpIdx));
     if (Name == NULL) {
       errs() << "Invalid metadata spec of " << N->getName()
-             << " in RenderScript executable. (#name)\n";
+             << " in Renderscript executable. (#name)\n";
       return false;
     }
 

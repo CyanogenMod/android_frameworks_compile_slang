@@ -27,16 +27,6 @@ include "clang/Driver/OptParser.td"
 // Target Options
 //===----------------------------------------------------------------------===//
 
-def target_cpu : Separate<"-target-cpu">,
-  HelpText<"Target a specific cpu type">;
-def _target_cpu : Flag<"-u">, Alias<target_cpu>;
-def target_feature : Separate<"-target-feature">,
-  HelpText<"Target specific attributes">;
-def triple : Separate<"-triple">,
-  HelpText<"Specify target triple (e.g. i686-apple-darwin9)">;
-def triple_EQ : Joined<"-triple=">, Alias<triple>;
-def _triple : Separate<"-t">, Alias<triple>;
-
 def target_api : Separate<"-target-api">,
   HelpText<"Specify target API level (e.g. 14)">;
 def target_api_EQ : Joined<"-target-api=">, Alias<target_api>;

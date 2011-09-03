@@ -241,7 +241,7 @@ endif
 intermediates := $(call local-intermediates-dir)
 LOCAL_GENERATED_SOURCES += $(intermediates)/RSCCOptions.inc
 $(intermediates)/RSCCOptions.inc: $(LOCAL_PATH)/RSCCOptions.td $(CLANG_ROOT_PATH)/include/clang/Driver/OptParser.td $(TBLGEN)
-	@echo "Building RenderScript compiler (llvm-rs-cc) Option tables with tblgen"
+	@echo "Building Renderscript compiler (llvm-rs-cc) Option tables with tblgen"
 	$(call transform-host-td-to-out,opt-parser-defs)
 
 include frameworks/compile/slang/RSSpec.mk

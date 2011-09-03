@@ -107,7 +107,7 @@ static bool GenerateAccessorHeader(
     const RSSlangReflectUtils::BitCodeAccessorContext &context, FILE *pfout) {
     fprintf(pfout, "/*\n");
     fprintf(pfout, " * This file is auto-generated. DO NOT MODIFY!\n");
-    fprintf(pfout, " * The source RenderScript file: %s\n", context.rsFileName);
+    fprintf(pfout, " * The source Renderscript file: %s\n", context.rsFileName);
     fprintf(pfout, " */\n\n");
     fprintf(pfout, "package %s;\n\n", context.packageName);
 

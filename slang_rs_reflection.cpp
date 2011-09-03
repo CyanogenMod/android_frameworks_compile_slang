@@ -2227,7 +2227,7 @@ const char *const RSReflection::Context::ApacheLicenseNote =
     "\n";
 
 const char *const RSReflection::Context::Import[] = {
-  // RenderScript java class
+  // Renderscript java class
   "android.renderscript.*",
   // Import R
   "android.content.res.Resources",
@@ -2285,7 +2285,7 @@ bool RSReflection::Context::startClass(AccessModifier AM,
   // Notice of generated file
   out() << "/*" << std::endl;
   out() << " * This file is auto-generated. DO NOT MODIFY!" << std::endl;
-  out() << " * The source RenderScript file: " << mInputRSFile << std::endl;
+  out() << " * The source Renderscript file: " << mInputRSFile << std::endl;
   out() << " */" << std::endl;
 
   // Package

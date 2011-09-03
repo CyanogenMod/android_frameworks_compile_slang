@@ -39,7 +39,7 @@ namespace slang {
 
 class SlangRS : public Slang {
  private:
-  // Context for RenderScript
+  // Context for Renderscript
   RSContext *mRSContext;
 
   bool mAllowRSPrefix;

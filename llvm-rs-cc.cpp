@@ -112,11 +112,10 @@ class RSCCOptions {
 
   unsigned mAllowRSPrefix : 1;
 
-  // If given, the name of the target triple to compile for. If not given the
-  // target will be selected to match the host.
+  // The name of the target triple to compile for.
   std::string mTriple;
 
-  // If given, the name of the target CPU to generate code for.
+  // The name of the target CPU to generate code for.
   std::string mCPU;
 
   // The list of target specific features to enable or disable -- this should
@@ -142,6 +141,10 @@ class RSCCOptions {
 
   RSCCOptions() {
     mOutputType = slang::Slang::OT_Bitcode;
+    // Triple/CPU/Features must be hard-coded to our chosen portable ABI.
+    mTriple = "armv7-none-linux-gnueabi";
+    mCPU = "";
+    slangAssert(mFeatures.empty());
     mBitcodeStorage = slang::BCST_APK_RESOURCE;
     mOutputDep = 0;
     mShowHelp = 0;
@@ -235,11 +238,6 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
           << Args->getLastArg(OPT_Output_Type_Group)->getAsString(*Args);
 
     Opts.mAllowRSPrefix = Args->hasArg(OPT_allow_rs_prefix);
-
-    Opts.mTriple = Args->getLastArgValue(OPT_triple,
-                                         "armv7-none-linux-gnueabi");
-    Opts.mCPU = Args->getLastArgValue(OPT_target_cpu);
-    Opts.mFeatures = Args->getAllArgValues(OPT_target_feature);
 
     Opts.mJavaReflectionPathBase =
         Args->getLastArgValue(OPT_java_reflection_path_base);
@@ -361,7 +359,7 @@ int main(int argc, const char **argv) {
   if (Opts.mShowHelp) {
     llvm::OwningPtr<OptTable> OptTbl(createRSCCOptTable());
     OptTbl->PrintHelp(llvm::outs(), Argv0.c_str(),
-                      "RenderScript source compiler");
+                      "Renderscript source compiler");
     return 0;
   }
 
