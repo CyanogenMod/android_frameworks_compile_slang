@@ -1,13 +1,13 @@
-=========================================
-llvm-rs-cc: Compiler for ScriptC language
-=========================================
+==============================================
+llvm-rs-cc: Compiler for Renderscript language
+==============================================
 
 
 Introduction
 ------------
 
-llvm-rs-cc compiles a program in the ScriptC language to generate the
-following files.
+llvm-rs-cc compiles a program in the Renderscript language to generate the
+following files:
 
 * Bitcode file. Note that the bitcode here denotes the LLVM (Low-Level
   Virtual Machine) bitcode representation, which will be consumed on
@@ -18,15 +18,15 @@ following files.
 * Reflected APIs for Java. As a result, Android's Java developers can
   invoke those APIs from their code.
 
-Note that although ScriptC is C99-like, we enhance it with several
+Note that although Renderscript is C99-like, we enhance it with several
 distinct, effective features for Android programming. We will use
-example usage below to illustrate these features.
+some examples to illustrate these features.
 
-llvm-rs-cc is being run on a host and is highly-optimizing. As a
-result, libbcc on the device can be lightweight and focus on
-machine-dependent code generation given some bitcode.
+llvm-rs-cc is run on the host and performs many aggressive optimizations.
+As a result, libbcc on the device can be lightweight and focus on
+machine-dependent code generation for some input bitcode.
 
-llvm-rs-cc is a driver on top of libslang. The archictecture of
+llvm-rs-cc is a driver on top of libslang. The architecture of
 libslang and libbcc is depicted in the following figure::
 
     libslang   libbcc
@@ -48,15 +48,15 @@ Usage
 
 * *-d $(PRIVATE_RS_OUTPUT_DIR)*
 
-  This option *-d* sets the directory for writing dependences.
+  This option *-d* sets the directory for writing dependence information.
 
 * *-MD*
 
-  Note that *-MD* will tell llvm-rs-cc to output dependences.
+  Note that *-MD* will tell llvm-rs-cc to output dependence information.
 
-* *-a*
+* *-a $(EXTRA_TARGETS)*
 
-  Specifies additional dependence target.
+  Specifies additional target dependencies.
 
 Example Command
 ---------------
@@ -65,8 +65,8 @@ First::
 
   $ cd <Android_Root_Directory>
 
-Using frameworks/base/libs/rs/java/Fountain as a simple app in both
-Java and ScriptC, we can find the following command line in the build
+Using frameworks/base/tests/RenderScriptTests/Fountain as a simple app in both
+Java and Renderscript, we can find the following command line in the build
 log::
 
   $ out/host/linux-x86/bin/llvm-rs-cc \
@@ -93,7 +93,7 @@ The **Script\*.java** files above will be documented below.
 Example Program: fountain.rs
 ----------------------------
 
-fountain.rs is in ScriptC language, which is based on the standard
+fountain.rs is in the Renderscript language, which is based on the standard
 C99. However, llvm-rs-cc goes beyond "clang -std=c99" and provides the
 following important features:
 
@@ -105,7 +105,7 @@ following important features:
   The ScriptC_[SCRIPT_NAME].java has to be packaged so that Java
   developers can invoke those APIs.
 
-  To do that, a ScriptC programmer should specify the package name, so
+  To do that, a Renderscript programmer should specify the package name, so
   that llvm-rs-cc knows the package expression and hence the directory
   for outputting ScriptC_[SCRIPT_NAME].java.
 
@@ -113,7 +113,7 @@ following important features:
 
     #pragma rs java_package_name(com.android.fountain)
 
-  In ScriptC.fountain.java, we have::
+  In ScriptC_fountain.java, we have::
 
     package com.android.fountain
 
@@ -129,7 +129,7 @@ following important features:
 2. Basic Reflection: Export Variables and Functions
 ---------------------------------------------------
 
-llvm-rs-cc automatically export the "externalizable and defined" functions and
+llvm-rs-cc automatically exports the "externalizable and defined" functions and
 variables to Android's Java side. That is, scripts are accessible from
 Java.
 
@@ -137,7 +137,7 @@ For instance, for::
 
   int foo = 0;
 
-In ScriptC_fountain.java, llvm-rs-cc will reflect it to::
+In ScriptC_fountain.java, llvm-rs-cc will reflect the following methods::
 
   void set_foo(int v)...
 
@@ -147,7 +147,7 @@ This access takes the form of generated classes which provide access
 to the functions and global variables within a script. In summary,
 global variables and functions within a script that are not declared
 static will generate get, set, or invoke methods.  This provides a way
-to set the data within a script and call to its functions.
+to set the data within a script and call its functions.
 
 Take the addParticles function in fountain.rs as an example::
 
@@ -177,24 +177,24 @@ In fountain.rs, we have::
   Point_t *point;
 
 llvm-rs-cc generates one ScriptField*.java file for each user-defined
-struct. I.e., in this case llvm-rs-cc will reflect to two files,
+struct. In this case, llvm-rs-cc will reflect two files,
 ScriptC_fountain.java and ScriptField_Point.java.
 
-Note that when the type of exportable variable is struct, ScriptC
-developers should avoid anonymous structs. This is because llvm-rs-cc
-uses the struct name to name the file, instead of the typedef name.
+Note that when the type of an exportable variable is a structure, Renderscript
+developers should avoid using anonymous structs. This is because llvm-rs-cc
+uses the struct name to identify the file, instead of the typedef name.
 
 For the generated Java files, using ScriptC_fountain.java as an
-example we have::
+example we also have::
 
   void bind_point(ScriptField_Point v)
 
 This binds your object with the allocated memory.
 
 You can bind the struct(e.g., Point), using the setter and getter
-method in ScriptField_Point.java.
+methods in ScriptField_Point.java.
 
-After binding, you could get the object from this method::
+After binding, you can access the object with this method::
 
   ScriptField_Point get_point()
 
@@ -234,63 +234,89 @@ In ScriptField_Point_s.java::
     ...
 
 
-4. Summarize the Java Reflection above
---------------------------------------
+4. Summary of the Java Reflection above
+---------------------------------------
 
-Let us summarize the high-level design of reflection next.
+This section summarizes the high-level design of Renderscript's reflection.
 
-* In terms of script's global functions, they can be called from Java.
+* In terms of a script's global functions, they can be called from Java.
   These calls operate asynchronously and no assumptions should be made
-  upon with a function called will actually complete operation.  If it
-  is necessary to wait for a function to complete the java application
-  may call the runtime finish method which will wait for all the script
-  threads to complete.  Two special functions also exist:
+  on whether a function called will have actually completed operation.  If it
+  is necessary to wait for a function to complete, the Java application
+  may call the runtime finish() method, which will wait for all the script
+  threads to complete pending operations.  A few special functions can also
+  exist:
 
-  * The function **init** present will be called once after the script
+  * The function **init** (if present) will be called once after the script
     is loaded.  This is useful to initialize data or anything else the
-    script may need before it can be used.  The init may not depend on
-    globals initialized from Java as it will be called before these
-    can be initialized.
+    script may need before it can be used.  The init function may not depend
+    on globals initialized from Java as it will be called before these
+    can be initialized. The function signature for init must be::
 
-  * The function **root** is a special function for graphics.  Which a
-    script must redraw its contents this function will be called.  No
+      void init(void);
+
+  * The function **root** is a special function for graphics.  This function
+    will be called when a script must redraw its contents.  No
     assumptions should be made as to when this function will be
-    called.  It will only be called if the script is bound as root.
-    Also calls to this will be synchronized with data updates and
+    called.  It will only be called if the script is bound as a graphics root.
+    Calls to this function will be synchronized with data updates and
     other invocations from Java.  Thus the script will not change due
-    to external influence during a run of **root**.  The return value
-    indicates to the runtime if the function should be called again to
+    to external influence in the middle of running **root**.  The return value
+    indicates to the runtime when the function should be called again to
     redraw in the future.  A return value of 0 indicates that no
-    redraw is necessary until something changes.  Any positive integer
-    indicates a time in ms that the runtime should wait before calling
-    root again to render another frame.
+    redraw is necessary until something changes on the Java side.  Any
+    positive integer indicates a time in milliseconds that the runtime should
+    wait before calling root again to render another frame.  The function
+    signature for a graphics root functions is as follows::
 
-* In terms of script's global data, global variables can be written
-  from Java.  The Java class will cache the value or object set and
+      int root(void);
+
+  * It is also possible to create a purely compute-based **root** function.
+    Such a function has the following signature::
+
+      void root(const T1 *in, T2 *out, const T3 *usrData, uint32_t x, uint32_t y);
+
+    T1, T2, and T3 represent any supported Renderscript type.  Any parameters
+    above can be omitted, although at least one of in/out must be present.
+    If both in and out are present, root must only be invoked with types of
+    the same exact dimensionality (i.e. matching X and Y values for dimension).
+    This root function is accessible through the Renderscript language
+    construct **forEach**.  We also reflect a Java version to access this
+    function as **forEach_root** (for API levels of 14+).  An example of this
+    can be seen in the Android SDK sample for HelloCompute.
+
+  * The function **.rs.dtor** is a function that is sometimes generated by
+    llvm-rs-cc.  This function cleans up any global variable that contains
+    (or is) a reference counted Renderscript object type (such as an
+    rs_allocation, rs_font, or rs_script).  This function will be invoked
+    implicitly by the Renderscript runtime during script teardown.
+
+* In terms of a script's global data, global variables can be written
+  from Java.  The Java instance will cache the value or object set and
   provide return methods to retrieve this value.  If a script updates
   the value, this update will not propagate back to the Java class.
-  Initializers if present will also initialize the cached Java value.
+  Initializers, if present, will also initialize the cached Java value.
   This provides a convenient way to declare constants within a script and
-  make them accessible from the java runtime.  If the script declares a
+  make them accessible to the Java runtime.  If the script declares a
   variable const, only the get methods will be generated.
 
   Globals within a script are considered local to the script.  They
   cannot be accessed by other scripts and are in effect always 'static'
-  in the traditional C sense.  Static here is used to control if a
-  accessor is generated.  Static continues to mean *not
+  in the traditional C sense.  Static here is used to control if
+  accessors are generated.  Static continues to mean *not
   externally visible* and thus prevents the generation of
-  accessors.  Globals are persistent across invocations to a script and
+  accessors.  Globals are persistent across invocations of a script and
   thus may be used to hold data from run to run.
 
   Globals of two types may be reflected into the Java class.  The first
-  type is basic non-pointer types.  Types defined in rs_types.rsh may be
-  used.  For the non-pointer class get and set methods are generated in
+  type is basic non-pointer types.  Types defined in rs_types.rsh may also be
+  used.  For the non-pointer class, get and set methods are generated for
   Java.  Globals of single pointer types behave differently.  These may
   use more complex types.  Simple structures composed of the types in
   rs_types.rsh may also be used.  These globals generate bind points in
-  java.  If the type is a structure they also generate a **Field** class
-  used to pack and unpack the contents of the structure.  Binding an
-  allocation to one of these bind points in Java effectively sets the
+  Java.  If the type is a structure they also generate an appropriate
+  **Field** class that is used to pack and unpack the contents of the
+  structure.  Binding an allocation in Java effectively sets the
   pointer in the script.  Bind points marked const indicate to the
   runtime that the script will not modify the contents of an allocation.
   This may allow the runtime to make more effective use of threads.
@@ -311,5 +337,7 @@ routines without the need for special naming.  For instance,
 * *float sin(float);*
 
 * *float2 sin(float2);*
+
+* *float3 sin(float3);*
 
 * *float4 sin(float4);*
