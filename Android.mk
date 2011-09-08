@@ -23,6 +23,7 @@ local_cflags_for_slang := -Wno-sign-promo -Wall -Wno-unused-parameter -Werror
 ifneq ($(TARGET_BUILD_VARIANT),eng)
 local_cflags_for_slang += -D__DISABLE_ASSERTS
 endif
+local_cflags_for_slang += -DTARGET_BUILD_VARIANT=$(TARGET_BUILD_VARIANT)
 
 ifeq "REL" "$(PLATFORM_VERSION_CODENAME)"
   RS_VERSION := $(PLATFORM_SDK_VERSION)

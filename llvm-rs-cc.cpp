@@ -38,6 +38,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 
 #include "slang.h"
@@ -324,6 +325,24 @@ static const char *DetermineOutputFile(const std::string &OutputDir,
   return SaveStringInSet(SavedStrings, OutputFile);
 }
 
+#define str(s) #s
+#define wrap_str(s) str(s)
+static void llvm_rs_cc_VersionPrinter() {
+  llvm::raw_ostream &OS = llvm::outs();
+  OS << "llvm-rs-cc: Renderscript compiler\n"
+     << "  (http://developer.android.com/guide/topics/renderscript)\n"
+     << "  based on LLVM (http://llvm.org):\n";
+  OS << "  Built " << __DATE__ << " (" << __TIME__ ").\n";
+  OS << "  Target APIs: " << SLANG_MINIMUM_TARGET_API << " - "
+     << SLANG_MAXIMUM_TARGET_API;
+  OS << "\n  Build type: " << wrap_str(TARGET_BUILD_VARIANT);
+#ifndef __DISABLE_ASSERTS
+  OS << " with assertions";
+#endif
+  OS << ".\n";
+  return;
+}
+
 int main(int argc, const char **argv) {
   std::set<std::string> SavedStrings;
   llvm::SmallVector<const char*, 256> ArgVector;
@@ -364,7 +383,7 @@ int main(int argc, const char **argv) {
   }
 
   if (Opts.mShowVersion) {
-    llvm::cl::PrintVersionMessage();
+    llvm_rs_cc_VersionPrinter();
     return 0;
   }
 
