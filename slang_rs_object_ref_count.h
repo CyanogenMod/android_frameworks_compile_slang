@@ -68,7 +68,8 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
 
     void InsertLocalVarDestructors();
 
-    static clang::Stmt *ClearRSObject(clang::VarDecl *VD);
+    static clang::Stmt *ClearRSObject(clang::VarDecl *VD,
+                                      clang::DeclContext *DC);
   };
 
   clang::ASTContext &mCtx;
