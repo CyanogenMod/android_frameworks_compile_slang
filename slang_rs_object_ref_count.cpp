@@ -1230,7 +1230,7 @@ void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
         I != E;
         I++) {
     clang::VarDecl *VD = *I;
-    clang::Stmt *RSClearObjectCall = ClearRSObject(VD);
+    clang::Stmt *RSClearObjectCall = ClearRSObject(VD, VD->getDeclContext());
     if (RSClearObjectCall) {
       DestructorVisitor DV((*mRSO.begin())->getASTContext(),
                            mCS,
@@ -1243,10 +1243,11 @@ void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
   return;
 }
 
-clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(clang::VarDecl *VD) {
+clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(
+    clang::VarDecl *VD,
+    clang::DeclContext *DC) {
   slangAssert(VD);
   clang::ASTContext &C = VD->getASTContext();
-  clang::DeclContext *DC = VD->getDeclContext();
   clang::SourceLocation Loc = VD->getLocation();
   clang::SourceLocation StartLoc = VD->getInnerLocStart();
   const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
@@ -1494,6 +1495,13 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
   clang::DeclContext *DC = mCtx.getTranslationUnitDecl();
   clang::SourceLocation loc;
 
+  llvm::StringRef SR(".rs.dtor");
+  clang::IdentifierInfo &II = mCtx.Idents.get(SR);
+  clang::DeclarationName N(&II);
+  clang::FunctionProtoType::ExtProtoInfo EPI;
+  clang::QualType T = mCtx.getFunctionType(mCtx.VoidTy, NULL, 0, EPI);
+  clang::FunctionDecl *FD = NULL;
+
   // Generate rsClearObject() call chains for every global variable
   // (whether static or extern).
   std::list<clang::Stmt *> StmtList;
@@ -1502,7 +1510,13 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
     clang::VarDecl *VD = llvm::dyn_cast<clang::VarDecl>(*I);
     if (VD) {
       if (CountRSObjectTypes(mCtx, VD->getType().getTypePtr(), loc)) {
-        clang::Stmt *RSClearObjectCall = Scope::ClearRSObject(VD);
+        if (!FD) {
+          // Only create FD if we are going to use it.
+          FD = clang::FunctionDecl::Create(mCtx, DC, loc, loc, N, T, NULL);
+        }
+        // Make sure to create any helpers within the function's DeclContext,
+        // not the one associated with the global translation unit.
+        clang::Stmt *RSClearObjectCall = Scope::ClearRSObject(VD, FD);
         StmtList.push_back(RSClearObjectCall);
       }
     }
@@ -1513,13 +1527,6 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
     return NULL;
   }
 
-  llvm::StringRef SR(".rs.dtor");
-  clang::IdentifierInfo &II = mCtx.Idents.get(SR);
-  clang::DeclarationName N(&II);
-  clang::FunctionProtoType::ExtProtoInfo EPI;
-  clang::QualType T = mCtx.getFunctionType(mCtx.VoidTy, NULL, 0, EPI);
-  clang::FunctionDecl *FD = clang::FunctionDecl::Create(mCtx, DC, loc, loc, N,
-                                                        T, NULL);
   clang::CompoundStmt *CS = BuildCompoundStmt(mCtx, StmtList, loc);
 
   FD->setBody(CS);
