@@ -295,6 +295,10 @@ bool SlangRS::compile(
     return false;
   }
 
+  // Skip generation of warnings a second time if we are doing more than just
+  // a single pass over the input file.
+  bool SuppressAllWarnings = (OutputType != Slang::OT_Dependency);
+
   for (unsigned i = 0, e = IOFiles.size(); i != e; i++) {
     InputFile = IOFileIter->first;
     OutputFile = IOFileIter->second;
@@ -342,8 +346,14 @@ bool SlangRS::compile(
       if (!setDepOutput(DepOutputFile))
         return false;
 
+      if (SuppressAllWarnings) {
+        getDiagnostics().setSuppressAllDiagnostics(true);
+      }
       if (generateDepFile() > 0)
         return false;
+      if (SuppressAllWarnings) {
+        getDiagnostics().setSuppressAllDiagnostics(false);
+      }
 
       DepFileIter++;
     }
