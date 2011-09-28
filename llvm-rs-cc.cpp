@@ -444,7 +444,7 @@ int main(int argc, const char **argv) {
                                          Opts.mTargetAPI,
                                          Opts.mJavaReflectionPathBase,
                                          Opts.mJavaReflectionPackageName);
-  llvm::errs() << Compiler->getErrorMessage();
+  Compiler->reset();
 
   return CompileFailed;
 }
