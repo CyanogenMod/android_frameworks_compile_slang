@@ -457,6 +457,7 @@ int Slang::compile() {
 }
 
 void Slang::reset() {
+  llvm::errs() << mDiagClient->str();
   mDiagnostics->Reset();
   mDiagClient->reset();
   return;
