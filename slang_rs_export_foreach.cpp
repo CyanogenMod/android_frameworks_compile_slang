@@ -28,6 +28,7 @@
 #include "slang_assert.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
+#include "slang_version.h"
 
 namespace slang {
 
@@ -179,6 +180,26 @@ bool RSExportForEach::validateAndConstructParams(
     mMetadataEncoding |= (mX ?        0x08 : 0);
     mMetadataEncoding |= (mY ?        0x10 : 0);
   }
+
+  if (Context->getTargetAPI() < SLANG_ICS_TARGET_API) {
+    // APIs before ICS cannot skip between parameters. It is ok, however, for
+    // them to omit further parameters (i.e. skipping X is ok if you skip Y).
+    if (mMetadataEncoding != 0x1f &&  // In, Out, UsrData, X, Y
+        mMetadataEncoding != 0x0f &&  // In, Out, UsrData, X
+        mMetadataEncoding != 0x07 &&  // In, Out, UsrData
+        mMetadataEncoding != 0x03 &&  // In, Out
+        mMetadataEncoding != 0x01) {  // In
+      Diags->Report(
+          clang::FullSourceLoc(FD->getLocation(),
+                               Diags->getSourceManager()),
+          Diags->getCustomDiagID(clang::Diagnostic::Error,
+                                 "Compute root() targeting SDK levels %0-%1 "
+                                 "may not skip parameters"))
+          << SLANG_MINIMUM_TARGET_API << (SLANG_ICS_TARGET_API-1);
+      valid = false;
+    }
+  }
+
 
   return valid;
 }
