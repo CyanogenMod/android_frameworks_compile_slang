@@ -34,15 +34,17 @@ namespace slang {
 
 namespace {
 
-static void ReportNameError(clang::Diagnostic *Diags,
-                            const clang::ParmVarDecl *PVD) {
-  slangAssert(Diags && PVD);
-  const clang::SourceManager &SM = Diags->getSourceManager();
+static void ReportNameError(clang::DiagnosticsEngine *DiagEngine,
+                            clang::ParmVarDecl const *PVD) {
+  slangAssert(DiagEngine && PVD);
+  const clang::SourceManager &SM = DiagEngine->getSourceManager();
 
-  Diags->Report(clang::FullSourceLoc(PVD->getLocation(), SM),
-                Diags->getCustomDiagID(clang::Diagnostic::Error,
-                "Duplicate parameter entry (by position/name): '%0'"))
-       << PVD->getName();
+  DiagEngine->Report(
+    clang::FullSourceLoc(PVD->getLocation(), SM),
+    DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                "Duplicate parameter entry "
+                                "(by position/name): '%0'"))
+    << PVD->getName();
   return;
 }
 
@@ -55,7 +57,7 @@ bool RSExportForEach::validateAndConstructParams(
   slangAssert(Context && FD);
   bool valid = true;
   clang::ASTContext &C = Context->getASTContext();
-  clang::Diagnostic *Diags = Context->getDiagnostics();
+  clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
 
   if (!isRootRSFunc(FD)) {
     slangAssert(false && "must be called on compute root function!");
@@ -66,11 +68,11 @@ bool RSExportForEach::validateAndConstructParams(
 
   // Compute root functions are required to return a void type for now
   if (FD->getResultType().getCanonicalType() != C.VoidTy) {
-    Diags->Report(
-        clang::FullSourceLoc(FD->getLocation(), Diags->getSourceManager()),
-        Diags->getCustomDiagID(clang::Diagnostic::Error,
-                               "compute root() is required to return a "
-                               "void type"));
+    DiagEngine->Report(
+      clang::FullSourceLoc(FD->getLocation(), DiagEngine->getSourceManager()),
+      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                  "compute root() is required to return a "
+                                  "void type"));
     valid = false;
   }
 
@@ -98,12 +100,12 @@ bool RSExportForEach::validateAndConstructParams(
   }
 
   if (!mIn && !mOut) {
-    Diags->Report(
-        clang::FullSourceLoc(FD->getLocation(),
-                             Diags->getSourceManager()),
-        Diags->getCustomDiagID(clang::Diagnostic::Error,
-                               "Compute root() must have at least one "
-                               "parameter for in or out"));
+    DiagEngine->Report(
+      clang::FullSourceLoc(FD->getLocation(),
+                           DiagEngine->getSourceManager()),
+      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                  "Compute root() must have at least one "
+                                  "parameter for in or out"));
     valid = false;
   }
 
@@ -122,30 +124,30 @@ bool RSExportForEach::validateAndConstructParams(
     QT = PVD->getType().getCanonicalType();
 
     if (QT.getUnqualifiedType() != C.UnsignedIntTy) {
-      Diags->Report(
-          clang::FullSourceLoc(PVD->getLocation(),
-                               Diags->getSourceManager()),
-          Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                 "Unexpected root() parameter '%0' "
-                                 "of type '%1'"))
-          << PVD->getName() << PVD->getType().getAsString();
+      DiagEngine->Report(
+        clang::FullSourceLoc(PVD->getLocation(),
+                             DiagEngine->getSourceManager()),
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "Unexpected root() parameter '%0' "
+                                    "of type '%1'"))
+        << PVD->getName() << PVD->getType().getAsString();
       valid = false;
     } else {
       llvm::StringRef ParamName = PVD->getName();
       if (ParamName.equals("x")) {
         if (mX) {
-          ReportNameError(Diags, PVD);
+          ReportNameError(DiagEngine, PVD);
           valid = false;
         } else if (mY) {
           // Can't go back to X after skipping Y
-          ReportNameError(Diags, PVD);
+          ReportNameError(DiagEngine, PVD);
           valid = false;
         } else {
           mX = PVD;
         }
       } else if (ParamName.equals("y")) {
         if (mY) {
-          ReportNameError(Diags, PVD);
+          ReportNameError(DiagEngine, PVD);
           valid = false;
         } else {
           mY = PVD;
@@ -156,13 +158,13 @@ bool RSExportForEach::validateAndConstructParams(
         } else if (!mY) {
           mY = PVD;
         } else {
-          Diags->Report(
-              clang::FullSourceLoc(PVD->getLocation(),
-                                   Diags->getSourceManager()),
-              Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                     "Unexpected root() parameter '%0' "
-                                     "of type '%1'"))
-              << PVD->getName() << PVD->getType().getAsString();
+          DiagEngine->Report(
+            clang::FullSourceLoc(PVD->getLocation(),
+                                 DiagEngine->getSourceManager()),
+            DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                        "Unexpected root() parameter '%0' "
+                                        "of type '%1'"))
+            << PVD->getName() << PVD->getType().getAsString();
           valid = false;
         }
       }
@@ -189,13 +191,13 @@ bool RSExportForEach::validateAndConstructParams(
         mMetadataEncoding != 0x07 &&  // In, Out, UsrData
         mMetadataEncoding != 0x03 &&  // In, Out
         mMetadataEncoding != 0x01) {  // In
-      Diags->Report(
-          clang::FullSourceLoc(FD->getLocation(),
-                               Diags->getSourceManager()),
-          Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                 "Compute root() targeting SDK levels %0-%1 "
-                                 "may not skip parameters"))
-          << SLANG_MINIMUM_TARGET_API << (SLANG_ICS_TARGET_API-1);
+      DiagEngine->Report(
+        clang::FullSourceLoc(FD->getLocation(),
+                             DiagEngine->getSourceManager()),
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "Compute root() targeting SDK levels "
+                                    "%0-%1 may not skip parameters"))
+        << SLANG_MINIMUM_TARGET_API << (SLANG_ICS_TARGET_API-1);
       valid = false;
     }
   }
@@ -305,9 +307,10 @@ bool RSExportForEach::isRSForEachFunc(const clang::FunctionDecl *FD) {
   return true;
 }
 
-bool RSExportForEach::validateSpecialFuncDecl(clang::Diagnostic *Diags,
-                                              const clang::FunctionDecl *FD) {
-  slangAssert(Diags && FD);
+bool
+RSExportForEach::validateSpecialFuncDecl(clang::DiagnosticsEngine *DiagEngine,
+                                         clang::FunctionDecl const *FD) {
+  slangAssert(DiagEngine && FD);
   bool valid = true;
   const clang::ASTContext &C = FD->getASTContext();
 
@@ -316,11 +319,12 @@ bool RSExportForEach::validateSpecialFuncDecl(clang::Diagnostic *Diags,
     if (numParams == 0) {
       // Graphics root function, so verify that it returns an int
       if (FD->getResultType().getCanonicalType() != C.IntTy) {
-        Diags->Report(
-            clang::FullSourceLoc(FD->getLocation(), Diags->getSourceManager()),
-            Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                   "root(void) is required to return "
-                                   "an int for graphics usage"));
+        DiagEngine->Report(
+          clang::FullSourceLoc(FD->getLocation(),
+                               DiagEngine->getSourceManager()),
+          DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                      "root(void) is required to return "
+                                      "an int for graphics usage"));
         valid = false;
       }
     } else {
@@ -329,20 +333,22 @@ bool RSExportForEach::validateSpecialFuncDecl(clang::Diagnostic *Diags,
     }
   } else if (isInitRSFunc(FD) || isDtorRSFunc(FD)) {
     if (FD->getNumParams() != 0) {
-      Diags->Report(
-          clang::FullSourceLoc(FD->getLocation(), Diags->getSourceManager()),
-          Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                 "%0(void) is required to have no "
-                                 "parameters")) << FD->getName();
+      DiagEngine->Report(
+          clang::FullSourceLoc(FD->getLocation(),
+                               DiagEngine->getSourceManager()),
+          DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                      "%0(void) is required to have no "
+                                      "parameters")) << FD->getName();
       valid = false;
     }
 
     if (FD->getResultType().getCanonicalType() != C.VoidTy) {
-      Diags->Report(
-          clang::FullSourceLoc(FD->getLocation(), Diags->getSourceManager()),
-          Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                 "%0(void) is required to have a void "
-                                 "return type")) << FD->getName();
+      DiagEngine->Report(
+          clang::FullSourceLoc(FD->getLocation(),
+                               DiagEngine->getSourceManager()),
+          DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                      "%0(void) is required to have a void "
+                                      "return type")) << FD->getName();
       valid = false;
     }
   } else {

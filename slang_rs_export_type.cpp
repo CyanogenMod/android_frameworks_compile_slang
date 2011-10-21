@@ -45,49 +45,49 @@ namespace {
 static const clang::Type *TypeExportableHelper(
     const clang::Type *T,
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
-    clang::Diagnostic *Diags,
+    clang::DiagnosticsEngine *DiagEngine,
     const clang::VarDecl *VD,
     const clang::RecordDecl *TopLevelRecord);
 
-static void ReportTypeError(clang::Diagnostic *Diags,
+static void ReportTypeError(clang::DiagnosticsEngine *DiagEngine,
                             const clang::VarDecl *VD,
                             const clang::RecordDecl *TopLevelRecord,
                             const char *Message) {
-  if (!Diags) {
+  if (!DiagEngine) {
     return;
   }
 
-  const clang::SourceManager &SM = Diags->getSourceManager();
+  const clang::SourceManager &SM = DiagEngine->getSourceManager();
 
   // Attempt to use the type declaration first (if we have one).
   // Fall back to the variable definition, if we are looking at something
   // like an array declaration that can't be exported.
   if (TopLevelRecord) {
-    Diags->Report(clang::FullSourceLoc(TopLevelRecord->getLocation(), SM),
-                  Diags->getCustomDiagID(clang::Diagnostic::Error, Message))
-         << TopLevelRecord->getName();
+    DiagEngine->Report(
+      clang::FullSourceLoc(TopLevelRecord->getLocation(), SM),
+      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message))
+      << TopLevelRecord->getName();
   } else if (VD) {
-    Diags->Report(clang::FullSourceLoc(VD->getLocation(), SM),
-                  Diags->getCustomDiagID(clang::Diagnostic::Error, Message))
-         << VD->getName();
+    DiagEngine->Report(
+      clang::FullSourceLoc(VD->getLocation(), SM),
+      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message))
+      << VD->getName();
   } else {
     slangAssert(false && "Variables should be validated before exporting");
   }
-
-  return;
 }
 
 static const clang::Type *ConstantArrayTypeExportableHelper(
     const clang::ConstantArrayType *CAT,
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
-    clang::Diagnostic *Diags,
+    clang::DiagnosticsEngine *DiagEngine,
     const clang::VarDecl *VD,
     const clang::RecordDecl *TopLevelRecord) {
   // Check element type
   const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
   if (ElementType->isArrayType()) {
-    ReportTypeError(Diags, VD, TopLevelRecord,
-        "multidimensional arrays cannot be exported: '%0'");
+    ReportTypeError(DiagEngine, VD, TopLevelRecord,
+                    "multidimensional arrays cannot be exported: '%0'");
     return NULL;
   } else if (ElementType->isExtVectorType()) {
     const clang::ExtVectorType *EVT =
@@ -96,30 +96,32 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
 
     const clang::Type *BaseElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
     if (!RSExportPrimitiveType::IsPrimitiveType(BaseElementType)) {
-      ReportTypeError(Diags, VD, TopLevelRecord,
-          "vectors of non-primitive types cannot be exported: '%0'");
+      ReportTypeError(DiagEngine, VD, TopLevelRecord,
+        "vectors of non-primitive types cannot be exported: '%0'");
       return NULL;
     }
 
     if (numElements == 3 && CAT->getSize() != 1) {
-      ReportTypeError(Diags, VD, TopLevelRecord,
-          "arrays of width 3 vector types cannot be exported: '%0'");
+      ReportTypeError(DiagEngine, VD, TopLevelRecord,
+        "arrays of width 3 vector types cannot be exported: '%0'");
       return NULL;
     }
   }
 
-  if (TypeExportableHelper(ElementType, SPS, Diags, VD, TopLevelRecord) == NULL)
+  if (TypeExportableHelper(ElementType, SPS, DiagEngine, VD,
+                           TopLevelRecord) == NULL)
     return NULL;
   else
     return CAT;
 }
 
 static const clang::Type *TypeExportableHelper(
-    const clang::Type *T,
-    llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
-    clang::Diagnostic *Diags,
-    const clang::VarDecl *VD,
-    const clang::RecordDecl *TopLevelRecord) {
+  clang::Type const *T,
+  llvm::SmallPtrSet<clang::Type const *, 8> &SPS,
+  clang::DiagnosticsEngine *DiagEngine,
+  clang::VarDecl const *VD,
+  clang::RecordDecl const *TopLevelRecord)
+{
   // Normalize first
   if ((T = GET_CANONICAL_TYPE(T)) == NULL)
     return NULL;
@@ -149,8 +151,8 @@ static const clang::Type *TypeExportableHelper(
 
       // Check internal struct
       if (T->isUnionType()) {
-        ReportTypeError(Diags, NULL, T->getAsUnionType()->getDecl(),
-            "unions cannot be exported: '%0'");
+        ReportTypeError(DiagEngine, NULL, T->getAsUnionType()->getDecl(),
+                        "unions cannot be exported: '%0'");
         return NULL;
       } else if (!T->isStructureType()) {
         slangAssert(false && "Unknown type cannot be exported");
@@ -161,8 +163,8 @@ static const clang::Type *TypeExportableHelper(
       if (RD != NULL) {
         RD = RD->getDefinition();
         if (RD == NULL) {
-          ReportTypeError(Diags, NULL, T->getAsStructureType()->getDecl(),
-              "struct is not defined in this module");
+          ReportTypeError(DiagEngine, NULL, T->getAsStructureType()->getDecl(),
+                          "struct is not defined in this module");
           return NULL;
         }
       }
@@ -171,8 +173,8 @@ static const clang::Type *TypeExportableHelper(
         TopLevelRecord = RD;
       }
       if (RD->getName().empty()) {
-        ReportTypeError(Diags, NULL, RD,
-            "anonymous structures cannot be exported");
+        ReportTypeError(DiagEngine, NULL, RD,
+                        "anonymous structures cannot be exported");
         return NULL;
       }
 
@@ -192,7 +194,7 @@ static const clang::Type *TypeExportableHelper(
         const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
         FT = GET_CANONICAL_TYPE(FT);
 
-        if (!TypeExportableHelper(FT, SPS, Diags, VD, TopLevelRecord)) {
+        if (!TypeExportableHelper(FT, SPS, DiagEngine, VD, TopLevelRecord)) {
           return NULL;
         }
 
@@ -200,13 +202,15 @@ static const clang::Type *TypeExportableHelper(
         //
         // TODO(zonr/srhines): allow bit fields of size 8, 16, 32
         if (FD->isBitField()) {
-          if (Diags) {
-            Diags->Report(clang::FullSourceLoc(FD->getLocation(),
-                                               Diags->getSourceManager()),
-                          Diags->getCustomDiagID(clang::Diagnostic::Error,
-                          "bit fields are not able to be exported: '%0.%1'"))
-                << RD->getName()
-                << FD->getName();
+          if (DiagEngine) {
+            DiagEngine->Report(
+              clang::FullSourceLoc(FD->getLocation(),
+                                   DiagEngine->getSourceManager()),
+              DiagEngine->getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "bit fields are not able to be exported: '%0.%1'"))
+              << RD->getName()
+              << FD->getName();
           }
           return NULL;
         }
@@ -216,8 +220,8 @@ static const clang::Type *TypeExportableHelper(
     }
     case clang::Type::Pointer: {
       if (TopLevelRecord) {
-        ReportTypeError(Diags, NULL, TopLevelRecord,
-            "structures containing pointers cannot be exported: '%0'");
+        ReportTypeError(DiagEngine, NULL, TopLevelRecord,
+          "structures containing pointers cannot be exported: '%0'");
         return NULL;
       }
 
@@ -230,7 +234,7 @@ static const clang::Type *TypeExportableHelper(
       // We don't support pointer with array-type pointee or unsupported pointee
       // type
       if (PointeeType->isArrayType() ||
-          (TypeExportableHelper(PointeeType, SPS, Diags, VD,
+          (TypeExportableHelper(PointeeType, SPS, DiagEngine, VD,
                                 TopLevelRecord) == NULL))
         return NULL;
       else
@@ -247,7 +251,7 @@ static const clang::Type *TypeExportableHelper(
       const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
 
       if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
-          (TypeExportableHelper(ElementType, SPS, Diags, VD,
+          (TypeExportableHelper(ElementType, SPS, DiagEngine, VD,
                                 TopLevelRecord) == NULL))
         return NULL;
       else
@@ -257,7 +261,7 @@ static const clang::Type *TypeExportableHelper(
       const clang::ConstantArrayType *CAT =
           UNSAFE_CAST_TYPE(const clang::ConstantArrayType, T);
 
-      return ConstantArrayTypeExportableHelper(CAT, SPS, Diags, VD,
+      return ConstantArrayTypeExportableHelper(CAT, SPS, DiagEngine, VD,
                                                TopLevelRecord);
     }
     default: {
@@ -268,18 +272,18 @@ static const clang::Type *TypeExportableHelper(
 
 // Return the type that can be used to create RSExportType, will always return
 // the canonical type
-// If the Type T is not exportable, this function returns NULL. Diags is
+// If the Type T is not exportable, this function returns NULL. DiagEngine is
 // used to generate proper Clang diagnostic messages when a
 // non-exportable type is detected. TopLevelRecord is used to capture the
 // highest struct (in the case of a nested hierarchy) for detecting other
 // types that cannot be exported (mostly pointers within a struct).
 static const clang::Type *TypeExportable(const clang::Type *T,
-                                         clang::Diagnostic *Diags,
+                                         clang::DiagnosticsEngine *DiagEngine,
                                          const clang::VarDecl *VD) {
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  return TypeExportableHelper(T, SPS, Diags, VD, NULL);
+  return TypeExportableHelper(T, SPS, DiagEngine, VD, NULL);
 }
 
 static bool ValidateVarDeclHelper(
@@ -391,25 +395,25 @@ static bool ValidateVarDeclHelper(
 /****************************** RSExportType ******************************/
 bool RSExportType::NormalizeType(const clang::Type *&T,
                                  llvm::StringRef &TypeName,
-                                 clang::Diagnostic *Diags,
+                                 clang::DiagnosticsEngine *DiagEngine,
                                  const clang::VarDecl *VD) {
-  if ((T = TypeExportable(T, Diags, VD)) == NULL) {
+  if ((T = TypeExportable(T, DiagEngine, VD)) == NULL) {
     return false;
   }
   // Get type name
   TypeName = RSExportType::GetTypeName(T);
   if (TypeName.empty()) {
-    if (Diags) {
+    if (DiagEngine) {
       if (VD) {
-        Diags->Report(clang::FullSourceLoc(VD->getLocation(),
-                                           Diags->getSourceManager()),
-                      Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                             "anonymous types cannot "
-                                             "be exported"));
+        DiagEngine->Report(
+          clang::FullSourceLoc(VD->getLocation(),
+                               DiagEngine->getSourceManager()),
+          DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                      "anonymous types cannot be exported"));
       } else {
-        Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
-                                             "anonymous types cannot "
-                                             "be exported"));
+        DiagEngine->Report(
+          DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                      "anonymous types cannot be exported"));
       }
     }
     return false;
@@ -607,10 +611,11 @@ RSExportType *RSExportType::Create(RSContext *Context,
       break;
     }
     default: {
-      clang::Diagnostic *Diags = Context->getDiagnostics();
-      Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
-                        "unknown type cannot be exported: '%0'"))
-          << T->getTypeClassName();
+      clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
+      DiagEngine->Report(
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "unknown type cannot be exported: '%0'"))
+        << T->getTypeClassName();
       break;
     }
   }
@@ -817,10 +822,12 @@ RSExportPrimitiveType::GetDataType(RSContext *Context, const clang::Type *T) {
         // The size of type WChar depend on platform so we abandon the support
         // to them.
         default: {
-          clang::Diagnostic *Diags = Context->getDiagnostics();
-          Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
-                            "built-in type cannot be exported: '%0'"))
-              << T->getTypeClassName();
+          clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
+          DiagEngine->Report(
+            DiagEngine->getCustomDiagID(
+              clang::DiagnosticsEngine::Error,
+              "built-in type cannot be exported: '%0'"))
+            << T->getTypeClassName();
           break;
         }
       }
@@ -831,9 +838,10 @@ RSExportPrimitiveType::GetDataType(RSContext *Context, const clang::Type *T) {
       return RSExportPrimitiveType::GetRSSpecificType(T);
     }
     default: {
-      clang::Diagnostic *Diags = Context->getDiagnostics();
-      Diags->Report(Diags->getCustomDiagID(clang::Diagnostic::Error,
-                        "primitive type cannot be exported: '%0'"))
+      clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
+      DiagEngine->Report(
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "primitive type cannot be exported: '%0'"))
           << T->getTypeClassName();
       break;
     }
@@ -1088,14 +1096,15 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
   const clang::RecordDecl* RD = RT->getDecl();
   RD = RD->getDefinition();
   if (RD != NULL) {
-    clang::Diagnostic *Diags = Context->getDiagnostics();
+    clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
     const clang::SourceManager *SM = Context->getSourceManager();
     // Find definition, perform further examination
     if (RD->field_empty()) {
-      Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
-                    Diags->getCustomDiagID(clang::Diagnostic::Error,
-                        "invalid matrix struct: must have 1 field for saving "
-                        "values: '%0'"))
+      DiagEngine->Report(
+        clang::FullSourceLoc(RD->getLocation(), *SM),
+        DiagEngine->getCustomDiagID(
+          clang::DiagnosticsEngine::Error,
+          "invalid matrix struct: must have 1 field for saving values: '%0'"))
            << RD->getName();
       return NULL;
     }
@@ -1104,11 +1113,12 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
     const clang::FieldDecl *FD = *FIT;
     const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
     if ((FT == NULL) || (FT->getTypeClass() != clang::Type::ConstantArray)) {
-      Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
-                    Diags->getCustomDiagID(clang::Diagnostic::Error,
-                        "invalid matrix struct: first field should be an "
-                        "array with constant size: '%0'"))
-           << RD->getName();
+      DiagEngine->Report(
+        clang::FullSourceLoc(RD->getLocation(), *SM),
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "invalid matrix struct: first field should"
+                                    " be an array with constant size: '%0'"))
+        << RD->getName();
       return NULL;
     }
     const clang::ConstantArrayType *CAT =
@@ -1116,33 +1126,35 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
     const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
     if ((ElementType == NULL) ||
         (ElementType->getTypeClass() != clang::Type::Builtin) ||
-        (static_cast<const clang::BuiltinType *>(ElementType)->getKind()
-          != clang::BuiltinType::Float)) {
-      Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
-                    Diags->getCustomDiagID(clang::Diagnostic::Error,
-                        "invalid matrix struct: first field should be a "
-                        "float array: '%0'"))
-           << RD->getName();
+        (static_cast<const clang::BuiltinType *>(ElementType)->getKind() !=
+         clang::BuiltinType::Float)) {
+      DiagEngine->Report(
+        clang::FullSourceLoc(RD->getLocation(), *SM),
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "invalid matrix struct: first field "
+                                    "should be a float array: '%0'"))
+        << RD->getName();
       return NULL;
     }
 
     if (CAT->getSize() != Dim * Dim) {
-      Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
-                    Diags->getCustomDiagID(clang::Diagnostic::Error,
-                        "invalid matrix struct: first field should be an "
-                        "array with size %0: '%1'"))
-           << Dim * Dim
-           << RD->getName();
+      DiagEngine->Report(
+        clang::FullSourceLoc(RD->getLocation(), *SM),
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "invalid matrix struct: first field "
+                                    "should be an array with size %0: '%1'"))
+        << (Dim * Dim) << (RD->getName());
       return NULL;
     }
 
     FIT++;
     if (FIT != RD->field_end()) {
-      Diags->Report(clang::FullSourceLoc(RD->getLocation(), *SM),
-                    Diags->getCustomDiagID(clang::Diagnostic::Error,
-                        "invalid matrix struct: must have exactly 1 field: "
-                        "'%0'"))
-           << RD->getName();
+      DiagEngine->Report(
+        clang::FullSourceLoc(RD->getLocation(), *SM),
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "invalid matrix struct: must have "
+                                    "exactly 1 field: '%0'"))
+        << RD->getName();
       return NULL;
     }
   }
@@ -1270,7 +1282,7 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
            FE = RD->field_end();
        FI != FE;
        FI++, Index++) {
-    clang::Diagnostic *Diags = Context->getDiagnostics();
+    clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
 
     // FIXME: All fields should be primitive type
     slangAssert((*FI)->getKind() == clang::Decl::Field);
@@ -1288,12 +1300,11 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
           new Field(ET, FD->getName(), ERT,
                     static_cast<size_t>(RL->getFieldOffset(Index) >> 3)));
     } else {
-      Diags->Report(clang::FullSourceLoc(RD->getLocation(),
-                                         Diags->getSourceManager()),
-                    Diags->getCustomDiagID(clang::Diagnostic::Error,
-                    "field type cannot be exported: '%0.%1'"))
-          << RD->getName()
-          << FD->getName();
+      DiagEngine->Report(
+        clang::FullSourceLoc(RD->getLocation(), DiagEngine->getSourceManager()),
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "field type cannot be exported: '%0.%1'"))
+        << RD->getName() << FD->getName();
       return NULL;
     }
   }

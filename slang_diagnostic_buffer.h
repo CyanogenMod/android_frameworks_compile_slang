@@ -29,17 +29,24 @@ namespace llvm {
 
 namespace slang {
 
-// The diagnostics client instance (for reading the processed diagnostics)
-class DiagnosticBuffer : public clang::DiagnosticClient {
+// The diagnostics consumer instance (for reading the processed diagnostics)
+class DiagnosticBuffer : public clang::DiagnosticConsumer {
  private:
   std::string mDiags;
-  llvm::raw_string_ostream *mSOS;
+  llvm::OwningPtr<llvm::raw_string_ostream> mSOS;
 
  public:
   DiagnosticBuffer();
 
-  virtual void HandleDiagnostic(clang::Diagnostic::Level DiagLevel,
-                                const clang::DiagnosticInfo& Info);
+  DiagnosticBuffer(DiagnosticBuffer const &src);
+
+  virtual ~DiagnosticBuffer();
+
+  virtual void HandleDiagnostic(clang::DiagnosticsEngine::Level DiagLevel,
+                                const clang::Diagnostic& Info);
+
+  virtual clang::DiagnosticConsumer *
+    clone(clang::DiagnosticsEngine &Diags) const;
 
   inline const std::string &str() const {
     mSOS->flush();
@@ -48,11 +55,9 @@ class DiagnosticBuffer : public clang::DiagnosticClient {
 
   inline void reset() {
     this->mSOS->str().clear();
-    return;
   }
-
-  virtual ~DiagnosticBuffer();
 };
+
 }
 
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_DIAGNOSTIC_BUFFER_H_  NOLINT

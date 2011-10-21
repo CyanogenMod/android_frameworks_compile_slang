@@ -59,10 +59,9 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Path.h"
-
-#include "llvm/Target/TargetSelect.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/ToolOutputFile.h"
 
 #include "slang_assert.h"
 #include "slang_backend.h"
@@ -81,7 +80,7 @@ struct ForceSlangLinking {
 
     // llvm-rs-link needs following functions existing in libslang.
     llvm::ParseBitcodeFile(NULL, llvm::getGlobalContext(), NULL);
-    llvm::Linker::LinkModules(NULL, NULL, NULL);
+    llvm::Linker::LinkModules(NULL, NULL, 0, NULL);
 
     // llvm-rs-cc need this.
     new clang::TextDiagnosticPrinter(llvm::errs(),
@@ -114,12 +113,14 @@ clang::CodeGenOptions Slang::CodeGenOpts;
 // bcc.cpp)
 const llvm::StringRef Slang::PragmaMetadataName = "#pragma";
 
-static inline llvm::tool_output_file *OpenOutputFile(const char *OutputFile,
-                                                     unsigned Flags,
-                                                     std::string* Error,
-                                                     clang::Diagnostic* Diag) {
-  slangAssert((OutputFile != NULL) && (Error != NULL) && (Diag != NULL) &&
-              "Invalid parameter!");
+static inline llvm::tool_output_file *
+OpenOutputFile(const char *OutputFile,
+               unsigned Flags,
+               std::string* Error,
+               clang::DiagnosticsEngine *DiagEngine)
+{
+  slangAssert((OutputFile != NULL) && (Error != NULL) &&
+              (DiagEngine != NULL) && "Invalid parameter!");
 
   if (SlangUtils::CreateDirectoryWithParents(
                         llvm::sys::path::parent_path(OutputFile), Error)) {
@@ -130,7 +131,8 @@ static inline llvm::tool_output_file *OpenOutputFile(const char *OutputFile,
   }
 
   // Report error here.
-  Diag->Report(clang::diag::err_fe_error_opening) << OutputFile << *Error;
+  DiagEngine->Report(clang::diag::err_fe_error_opening)
+    << OutputFile << *Error;
 
   return NULL;
 }
@@ -159,22 +161,24 @@ void Slang::GlobalInitialization() {
 
     GlobalInitialized = true;
   }
-
-  return;
 }
 
 void Slang::LLVMErrorHandler(void *UserData, const std::string &Message) {
-  clang::Diagnostic* Diags = static_cast<clang::Diagnostic*>(UserData);
-  Diags->Report(clang::diag::err_fe_error_backend) << Message;
+  clang::DiagnosticsEngine* DiagEngine =
+    static_cast<clang::DiagnosticsEngine *>(UserData);
+
+  DiagEngine->Report(clang::diag::err_fe_error_backend) << Message;
   exit(1);
 }
 
 void Slang::createDiagnostic() {
   mDiagClient = new DiagnosticBuffer();
+
   mDiagIDs = new clang::DiagnosticIDs();
-  mDiagnostics = new clang::Diagnostic(mDiagIDs, mDiagClient, true);
+  mDiagEngine = new clang::DiagnosticsEngine(mDiagIDs, mDiagClient, true);
+  mDiag.reset(new clang::Diagnostic(mDiagEngine.getPtr()));
+
   initDiagnostic();
-  return;
 }
 
 void Slang::createTarget(const std::string &Triple, const std::string &CPU,
@@ -190,10 +194,8 @@ void Slang::createTarget(const std::string &Triple, const std::string &CPU,
   if (!Features.empty())
     mTargetOpts.Features = Features;
 
-  mTarget.reset(clang::TargetInfo::CreateTargetInfo(*mDiagnostics,
+  mTarget.reset(clang::TargetInfo::CreateTargetInfo(*mDiagEngine,
                                                     mTargetOpts));
-
-  return;
 }
 
 void Slang::createFileManager() {
@@ -202,19 +204,19 @@ void Slang::createFileManager() {
 }
 
 void Slang::createSourceManager() {
-  mSourceMgr.reset(new clang::SourceManager(*mDiagnostics, *mFileMgr));
-  return;
+  mSourceMgr.reset(new clang::SourceManager(*mDiagEngine, *mFileMgr));
 }
 
 void Slang::createPreprocessor() {
   // Default only search header file in current dir
-  clang::HeaderSearch *HS = new clang::HeaderSearch(*mFileMgr);
+  clang::HeaderSearch *HeaderInfo = new clang::HeaderSearch(*mFileMgr);
 
-  mPP.reset(new clang::Preprocessor(*mDiagnostics,
+  mPP.reset(new clang::Preprocessor(*mDiagEngine,
                                     LangOpts,
-                                    *mTarget,
+                                    mTarget.get(),
                                     *mSourceMgr,
-                                    *HS,
+                                    *HeaderInfo,
+                                    *this,
                                     NULL,
                                     /* OwnsHeaderSearch = */true));
   // Initialize the preprocessor
@@ -232,42 +234,34 @@ void Slang::createPreprocessor() {
     }
   }
 
-  HS->SetSearchPaths(SearchList,
-                     /* angledDirIdx = */1,
-                     /* systemDixIdx = */1,
-                     /* noCurDirSearch = */false);
+  HeaderInfo->SetSearchPaths(SearchList,
+                             /* angledDirIdx = */1,
+                             /* systemDixIdx = */1,
+                             /* noCurDirSearch = */false);
 
   initPreprocessor();
-  return;
 }
 
 void Slang::createASTContext() {
   mASTContext.reset(new clang::ASTContext(LangOpts,
                                           *mSourceMgr,
-                                          *mTarget,
+                                          mTarget.get(),
                                           mPP->getIdentifierTable(),
                                           mPP->getSelectorTable(),
                                           mPP->getBuiltinInfo(),
                                           /* size_reserve = */0));
   initASTContext();
-  return;
 }
 
-clang::ASTConsumer
-*Slang::createBackend(const clang::CodeGenOptions& CodeGenOpts,
-                      llvm::raw_ostream *OS,
-                      OutputType OT) {
-  return new Backend(mDiagnostics.getPtr(),
-                     CodeGenOpts,
-                     mTargetOpts,
-                     &mPragmas,
-                     OS,
-                     OT);
+clang::ASTConsumer *
+Slang::createBackend(const clang::CodeGenOptions& CodeGenOpts,
+                     llvm::raw_ostream *OS, OutputType OT) {
+  return new Backend(mDiagEngine.getPtr(), CodeGenOpts, mTargetOpts,
+                     &mPragmas, OS, OT);
 }
 
 Slang::Slang() : mInitialized(false), mDiagClient(NULL), mOT(OT_Default) {
   GlobalInitialization();
-  return;
 }
 
 void Slang::init(const std::string &Triple, const std::string &CPU,
@@ -276,15 +270,21 @@ void Slang::init(const std::string &Triple, const std::string &CPU,
     return;
 
   createDiagnostic();
-  llvm::install_fatal_error_handler(LLVMErrorHandler, mDiagnostics.getPtr());
+  llvm::install_fatal_error_handler(LLVMErrorHandler, mDiagEngine.getPtr());
 
   createTarget(Triple, CPU, Features);
   createFileManager();
   createSourceManager();
 
   mInitialized = true;
+}
 
-  return;
+clang::ModuleKey Slang::loadModule(clang::SourceLocation ImportLoc,
+                                   clang::IdentifierInfo &ModuleName,
+                                   clang::SourceLocation ModuleNameLoc) {
+  //FIXME: Don't we have to implement this?
+  slangAssert(0 && "Not implemented");
+  return NULL;
 }
 
 bool Slang::setInputSource(llvm::StringRef InputFile,
@@ -301,7 +301,7 @@ bool Slang::setInputSource(llvm::StringRef InputFile,
   mSourceMgr->createMainFileIDForMemBuffer(SB);
 
   if (mSourceMgr->getMainFileID().isInvalid()) {
-    mDiagnostics->Report(clang::diag::err_fe_error_reading) << InputFile;
+    mDiagEngine->Report(clang::diag::err_fe_error_reading) << InputFile;
     return false;
   }
   return true;
@@ -317,7 +317,7 @@ bool Slang::setInputSource(llvm::StringRef InputFile) {
     mSourceMgr->createMainFileID(File);
 
   if (mSourceMgr->getMainFileID().isInvalid()) {
-    mDiagnostics->Report(clang::diag::err_fe_error_reading) << InputFile;
+    mDiagEngine->Report(clang::diag::err_fe_error_reading) << InputFile;
     return false;
   }
 
@@ -333,7 +333,7 @@ bool Slang::setOutput(const char *OutputFile) {
     case OT_Dependency:
     case OT_Assembly:
     case OT_LLVMAssembly: {
-      OS = OpenOutputFile(OutputFile, 0, &Error, mDiagnostics.getPtr());
+      OS = OpenOutputFile(OutputFile, 0, &Error, mDiagEngine.getPtr());
       break;
     }
     case OT_Nothing: {
@@ -341,10 +341,8 @@ bool Slang::setOutput(const char *OutputFile) {
     }
     case OT_Object:
     case OT_Bitcode: {
-      OS = OpenOutputFile(OutputFile,
-                          llvm::raw_fd_ostream::F_Binary,
-                          &Error,
-                          mDiagnostics.getPtr());
+      OS = OpenOutputFile(OutputFile, llvm::raw_fd_ostream::F_Binary,
+                          &Error, mDiagEngine.getPtr());
       break;
     }
     default: {
@@ -366,7 +364,7 @@ bool Slang::setDepOutput(const char *OutputFile) {
   llvm::sys::Path OutputFilePath(OutputFile);
   std::string Error;
 
-  mDOS.reset(OpenOutputFile(OutputFile, 0, &Error, mDiagnostics.getPtr()));
+  mDOS.reset(OpenOutputFile(OutputFile, 0, &Error, mDiagEngine.getPtr()));
   if (!Error.empty() || (mDOS.get() == NULL))
     return false;
 
@@ -376,7 +374,7 @@ bool Slang::setDepOutput(const char *OutputFile) {
 }
 
 int Slang::generateDepFile() {
-  if (mDiagnostics->hasErrorOccurred())
+  if (mDiagEngine->hasErrorOccurred())
     return 1;
   if (mDOS.get() == NULL)
     return 1;
@@ -412,18 +410,18 @@ int Slang::generateDepFile() {
   mPP->EndSourceFile();
 
   // Declare success if no error
-  if (!mDiagnostics->hasErrorOccurred())
+  if (!mDiagEngine->hasErrorOccurred())
     mDOS->keep();
 
   // Clean up after compilation
   mPP.reset();
   mDOS.reset();
 
-  return mDiagnostics->hasErrorOccurred() ? 1 : 0;
+  return mDiagEngine->hasErrorOccurred() ? 1 : 0;
 }
 
 int Slang::compile() {
-  if (mDiagnostics->hasErrorOccurred())
+  if (mDiagEngine->hasErrorOccurred())
     return 1;
   if (mOS.get() == NULL)
     return 1;
@@ -444,7 +442,7 @@ int Slang::compile() {
   mDiagClient->EndSourceFile();
 
   // Declare success if no error
-  if (!mDiagnostics->hasErrorOccurred())
+  if (!mDiagEngine->hasErrorOccurred())
     mOS->keep();
 
   // The compilation ended, clear
@@ -453,19 +451,17 @@ int Slang::compile() {
   mPP.reset();
   mOS.reset();
 
-  return mDiagnostics->hasErrorOccurred() ? 1 : 0;
+  return mDiagEngine->hasErrorOccurred() ? 1 : 0;
 }
 
 void Slang::reset() {
   llvm::errs() << mDiagClient->str();
-  mDiagnostics->Reset();
+  mDiagEngine->Reset();
   mDiagClient->reset();
-  return;
 }
 
 Slang::~Slang() {
   llvm::llvm_shutdown();
-  return;
 }
 
 }  // namespace slang

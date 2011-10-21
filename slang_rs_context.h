@@ -112,7 +112,7 @@ class RSContext {
   inline const clang::SourceManager *getSourceManager() const {
     return &mPP.getSourceManager();
   }
-  inline clang::Diagnostic *getDiagnostics() const {
+  inline clang::DiagnosticsEngine *getDiagnostics() const {
     return &mPP.getDiagnostics();
   }
   inline unsigned int getTargetAPI() const {

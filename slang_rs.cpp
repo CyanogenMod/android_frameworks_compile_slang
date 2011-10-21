@@ -166,30 +166,33 @@ bool SlangRS::checkODR(const char *CurInputFile) {
 }
 
 void SlangRS::initDiagnostic() {
-  clang::Diagnostic &Diag = getDiagnostics();
-  if (Diag.setDiagnosticGroupMapping("implicit-function-declaration",
-                                     clang::diag::MAP_ERROR))
-    Diag.Report(clang::diag::warn_unknown_warning_option)
-        << "implicit-function-declaration";
+  clang::DiagnosticsEngine &DiagEngine = getDiagnostics();
 
-  Diag.setDiagnosticMapping(
-      clang::diag::ext_typecheck_convert_discards_qualifiers,
-      clang::diag::MAP_ERROR,
-      clang::SourceLocation());
+  if (DiagEngine.setDiagnosticGroupMapping("implicit-function-declaration",
+                                           clang::diag::MAP_ERROR))
+    DiagEngine.Report(clang::diag::warn_unknown_warning_option)
+      << "implicit-function-declaration";
+
+  DiagEngine.setDiagnosticMapping(
+    clang::diag::ext_typecheck_convert_discards_qualifiers,
+    clang::diag::MAP_ERROR,
+    clang::SourceLocation());
 
   mDiagErrorInvalidOutputDepParameter =
-      Diag.getCustomDiagID(clang::Diagnostic::Error,
-                           "invalid parameter for output dependencies files.");
+    DiagEngine.getCustomDiagID(
+      clang::DiagnosticsEngine::Error,
+      "invalid parameter for output dependencies files.");
 
   mDiagErrorODR =
-      Diag.getCustomDiagID(clang::Diagnostic::Error,
-                           "type '%0' in different translation unit (%1 v.s. "
-                           "%2) has incompatible type definition");
+    DiagEngine.getCustomDiagID(
+      clang::DiagnosticsEngine::Error,
+      "type '%0' in different translation unit (%1 v.s. %2) "
+      "has incompatible type definition");
 
-  mDiagErrorTargetAPIRange = Diag.getCustomDiagID(clang::Diagnostic::Error,
+  mDiagErrorTargetAPIRange =
+    DiagEngine.getCustomDiagID(
+      clang::DiagnosticsEngine::Error,
       "target API level '%0' is out of range ('%1' - '%2')");
-
-  return;
 }
 
 void SlangRS::initPreprocessor() {
@@ -199,8 +202,6 @@ void SlangRS::initPreprocessor() {
   RSH << "#define RS_VERSION " << mTargetAPI << std::endl;
   RSH << "#include \"rs_core." RS_HEADER_SUFFIX "\"" << std::endl;
   PP.setPredefines(RSH.str());
-
-  return;
 }
 
 void SlangRS::initASTContext() {
@@ -210,7 +211,6 @@ void SlangRS::initASTContext() {
                              &mPragmas,
                              mTargetAPI,
                              &mGeneratedFileNames);
-  return;
 }
 
 clang::ASTConsumer
@@ -250,9 +250,8 @@ bool SlangRS::IsFunctionInRSHeaderFile(const clang::FunctionDecl *FD,
   }
 }
 
-SlangRS::SlangRS() : Slang(), mRSContext(NULL), mAllowRSPrefix(false),
-    mTargetAPI(0) {
-  return;
+SlangRS::SlangRS()
+  : Slang(), mRSContext(NULL), mAllowRSPrefix(false), mTargetAPI(0) {
 }
 
 bool SlangRS::compile(

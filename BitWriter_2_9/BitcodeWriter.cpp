@@ -181,7 +181,7 @@ static void WriteTypeSymbolTable(const ValueEnumerator &VE,
     switch (T->getTypeID()) {
     case Type::StructTyID: {
       StructType *ST = cast<StructType>(T);
-      if (ST->isAnonymous()) {
+      if (ST->isLiteral()) {
         // Skip anonymous struct definitions in type symbol table
         // FIXME(srhines)
         break;

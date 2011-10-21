@@ -27,7 +27,7 @@ namespace llvm {
 
 namespace clang {
   class ASTConsumer;
-  class Diagnostic;
+  class DiagnosticsEngine;
   class TargetOptions;
   class CodeGenerator;
   class ASTContext;
@@ -71,7 +71,7 @@ class RSBackend : public Backend {
 
  public:
   RSBackend(RSContext *Context,
-            clang::Diagnostic *Diags,
+            clang::DiagnosticsEngine *DiagEngine,
             const clang::CodeGenOptions &CodeGenOpts,
             const clang::TargetOptions &TargetOpts,
             PragmaList *Pragmas,
