@@ -146,6 +146,7 @@ class RSCCOptions {
     mTriple = "armv7-none-linux-gnueabi";
     mCPU = "";
     slangAssert(mFeatures.empty());
+    mFeatures.push_back("+long64");
     mBitcodeStorage = slang::BCST_APK_RESOURCE;
     mOutputDep = 0;
     mShowHelp = 0;
