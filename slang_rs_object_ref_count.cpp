@@ -1061,10 +1061,12 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
         RSExportPrimitiveType::GetRSSpecificType(FT);
 
     if (IsArrayType) {
-      clang::Diagnostic &Diags = C.getDiagnostics();
-      Diags.Report(clang::FullSourceLoc(Loc, C.getSourceManager()),
-          Diags.getCustomDiagID(clang::Diagnostic::Error,
-            "Arrays of RS object types within structures cannot be copied"));
+      clang::DiagnosticsEngine &DiagEngine = C.getDiagnostics();
+      DiagEngine.Report(
+        clang::FullSourceLoc(Loc, C.getSourceManager()),
+        DiagEngine.getCustomDiagID(
+          clang::DiagnosticsEngine::Error,
+          "Arrays of RS object types within structures cannot be copied"));
       // TODO(srhines): Support setting arrays of RS objects
       // StmtArray[StmtCount++] =
       //    CreateArrayRSSetObject(C, DstMember, SrcMember, StartLoc, Loc);

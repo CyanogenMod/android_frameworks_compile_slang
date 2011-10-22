@@ -154,7 +154,7 @@ class RSExportForEach : public RSExportable {
     return isRootRSFunc(FD) || isInitRSFunc(FD) || isDtorRSFunc(FD);
   }
 
-  static bool validateSpecialFuncDecl(clang::Diagnostic *Diags,
+  static bool validateSpecialFuncDecl(clang::DiagnosticsEngine *DiagEngine,
                                       const clang::FunctionDecl *FD);
 };  // RSExportForEach
 

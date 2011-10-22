@@ -36,41 +36,41 @@ endif
 local_cflags_for_slang += -DRS_VERSION=$(RS_VERSION)
 
 static_libraries_needed_by_slang := \
-	libLLVMLinker   \
-	libLLVMipo	\
-	libLLVMBitWriter	\
-	libLLVMBitWriter_2_9  \
-	libLLVMBitReader	\
-	libLLVMARMCodeGen	\
-	libLLVMARMAsmPrinter	\
-	libLLVMARMInfo	\
-	libLLVMARMDesc  \
-	libLLVMX86CodeGen	\
-	libLLVMX86AsmPrinter	\
-	libLLVMX86Info	\
-	libLLVMX86Desc  \
-	libLLVMX86Utils	\
-	libLLVMAsmPrinter	\
-	libLLVMSelectionDAG	\
-	libLLVMCodeGen	\
-	libLLVMScalarOpts	\
-	libLLVMInstCombine	\
-	libLLVMTransformUtils	\
-	libLLVMInstrumentation	\
-	libLLVMipa	\
-	libLLVMAnalysis	\
-	libLLVMTarget	\
-	libLLVMMC	\
-	libLLVMMCParser	\
-	libLLVMCore	\
-	libclangParse	\
-	libclangSema	\
-	libclangAnalysis	\
-	libclangAST	\
-	libclangLex	\
-	libclangFrontend	\
-	libclangCodeGen	\
-	libclangBasic	\
+	libLLVMLinker \
+	libLLVMipo \
+	libLLVMBitWriter \
+	libLLVMBitWriter_2_9 \
+	libLLVMBitReader \
+	libLLVMARMCodeGen \
+	libLLVMARMAsmPrinter \
+	libLLVMARMInfo \
+	libLLVMARMDesc \
+	libLLVMX86CodeGen \
+	libLLVMX86Info \
+	libLLVMX86Desc \
+	libLLVMX86AsmPrinter \
+	libLLVMX86Utils \
+	libLLVMAsmPrinter \
+	libLLVMSelectionDAG \
+	libLLVMCodeGen \
+	libLLVMScalarOpts \
+	libLLVMInstCombine \
+	libLLVMTransformUtils \
+	libLLVMInstrumentation \
+	libLLVMipa \
+	libLLVMAnalysis \
+	libLLVMTarget \
+	libLLVMMC \
+	libLLVMMCParser \
+	libLLVMCore \
+	libclangParse \
+	libclangSema \
+	libclangAnalysis \
+	libclangCodeGen \
+	libclangAST \
+	libclangLex \
+	libclangFrontend \
+	libclangBasic \
 	libLLVMSupport
 
 # Static library libslang for host
@@ -243,7 +243,7 @@ intermediates := $(call local-intermediates-dir)
 LOCAL_GENERATED_SOURCES += $(intermediates)/RSCCOptions.inc
 $(intermediates)/RSCCOptions.inc: $(LOCAL_PATH)/RSCCOptions.td $(CLANG_ROOT_PATH)/include/clang/Driver/OptParser.td $(TBLGEN)
 	@echo "Building Renderscript compiler (llvm-rs-cc) Option tables with tblgen"
-	$(call transform-host-td-to-out,opt-parser-defs)
+	$(call transform-host-clang-td-to-out,opt-parser-defs)
 
 include frameworks/compile/slang/RSSpec.mk
 include $(CLANG_HOST_BUILD_MK)

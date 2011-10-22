@@ -25,14 +25,23 @@
 
 namespace slang {
 
-DiagnosticBuffer::DiagnosticBuffer() : mSOS(NULL) {
-  mSOS = new llvm::raw_string_ostream(mDiags);
-  return;
+DiagnosticBuffer::DiagnosticBuffer()
+: mSOS(new llvm::raw_string_ostream(mDiags)) {
 }
 
-void DiagnosticBuffer::HandleDiagnostic(clang::Diagnostic::Level DiagLevel,
-                                        const clang::DiagnosticInfo &Info) {
-  const clang::SourceLocation &SrcLoc = Info.getLocation();
+DiagnosticBuffer::DiagnosticBuffer(DiagnosticBuffer const &src)
+: mDiags(src.mDiags), mSOS(new llvm::raw_string_ostream(mDiags)) {
+}
+
+DiagnosticBuffer::~DiagnosticBuffer() {
+}
+
+void DiagnosticBuffer::HandleDiagnostic(
+  clang::DiagnosticsEngine::Level DiagLevel,
+  clang::Diagnostic const &Info) {
+
+  clang::SourceLocation const &SrcLoc = Info.getLocation();
+
   // 100 is enough for storing general diagnosis message
   llvm::SmallString<100> Buf;
 
@@ -42,19 +51,19 @@ void DiagnosticBuffer::HandleDiagnostic(clang::Diagnostic::Level DiagLevel,
   }
 
   switch (DiagLevel) {
-    case clang::Diagnostic::Note: {
+    case clang::DiagnosticsEngine::Note: {
       (*mSOS) << "note: ";
       break;
     }
-    case clang::Diagnostic::Warning: {
+    case clang::DiagnosticsEngine::Warning: {
       (*mSOS) << "warning: ";
       break;
     }
-    case clang::Diagnostic::Error: {
+    case clang::DiagnosticsEngine::Error: {
       (*mSOS) << "error: ";
       break;
     }
-    case clang::Diagnostic::Fatal: {
+    case clang::DiagnosticsEngine::Fatal: {
       (*mSOS) << "fatal: ";
       break;
     }
@@ -63,16 +72,13 @@ void DiagnosticBuffer::HandleDiagnostic(clang::Diagnostic::Level DiagLevel,
     }
   }
 
-
   Info.FormatDiagnostic(Buf);
   (*mSOS) << Buf.str() << '\n';
-
-  return;
 }
 
-DiagnosticBuffer::~DiagnosticBuffer() {
-  delete mSOS;
-  return;
+clang::DiagnosticConsumer *
+DiagnosticBuffer::clone(clang::DiagnosticsEngine &Diags) const {
+  return new DiagnosticBuffer(*this);
 }
 
 }  // namespace slang

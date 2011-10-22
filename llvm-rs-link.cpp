@@ -31,10 +31,13 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PassManagerBuilder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/system_error.h"
+
+#include "llvm/PassManager.h"
+#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
 #include "llvm/Target/TargetData.h"
 
@@ -201,7 +204,8 @@ Module *PerformLinking(const std::string &InputFile,
     if (Lib == NULL)
       return NULL;
 
-    if (llvm::Linker::LinkModules(Composite.get(), Lib, &Err)) {
+    if (llvm::Linker::LinkModules(Composite.get(), Lib,
+                                  llvm::Linker::DestroySource, &Err)) {
       errs() << "Failed to link `" << InputFile << "' with library bitcode `"
              << (*I)->getBufferIdentifier() << "' (" << Err << ")\n";
       return NULL;

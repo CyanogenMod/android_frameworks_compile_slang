@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "clang/Basic/TargetOptions.h"
+#include "clang/Lex/ModuleLoader.h"
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -35,23 +36,24 @@ namespace llvm {
 }
 
 namespace clang {
+  class ASTConsumer;
+  class ASTContext;
+  class Backend;
+  class CodeGenOptions;
   class Diagnostic;
+  class DiagnosticsEngine;
   class FileManager;
   class FileSystemOptions;
-  class SourceManager;
   class LangOptions;
   class Preprocessor;
-  class TargetOptions;
-  class CodeGenOptions;
-  class ASTContext;
-  class ASTConsumer;
-  class Backend;
+  class SourceManager;
   class TargetInfo;
+  class TargetOptions;
 }
 
 namespace slang {
 
-class Slang {
+class Slang : public clang::ModuleLoader {
   static clang::LangOptions LangOpts;
   static clang::CodeGenOptions CodeGenOpts;
 
@@ -60,7 +62,7 @@ class Slang {
   static void LLVMErrorHandler(void *UserData, const std::string &Message);
 
  public:
-  typedef enum {
+  enum OutputType {
     OT_Dependency,
     OT_Assembly,
     OT_LLVMAssembly,
@@ -69,49 +71,60 @@ class Slang {
     OT_Object,
 
     OT_Default = OT_Bitcode
-  } OutputType;
+  };
 
  private:
   bool mInitialized;
 
-  // The diagnostics engine instance (for status reporting during compilation)
-  llvm::IntrusiveRefCntPtr<clang::Diagnostic> mDiagnostics;
-  // The diagnostics id
+  // Diagnostics Mediator (An interface for both Producer and Consumer)
+  llvm::OwningPtr<clang::Diagnostic> mDiag;
+
+  // Diagnostics ID
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> mDiagIDs;
-  // The clients of diagnostics engine. The ownership is taken by the
-  // mDiagnostics after creation.
+
+  // Diagnostics Engine (Producer and Diagnostics Reporter)
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> mDiagEngine;
+
+  // Diagnostics Consumer
+  // NOTE: The ownership is taken by mDiagEngine after creation.
   DiagnosticBuffer *mDiagClient;
+
   void createDiagnostic();
+
 
   // The target being compiled for
   clang::TargetOptions mTargetOpts;
   llvm::OwningPtr<clang::TargetInfo> mTarget;
-  void createTarget(const std::string &Triple, const std::string &CPU,
-                    const std::vector<std::string> &Features);
+  void createTarget(std::string const &Triple, std::string const &CPU,
+                    std::vector<std::string> const &Features);
 
-  // Below is for parsing and code generation
 
-  // The file manager (for prepocessor doing the job such as header file search)
+  // File manager (for prepocessor doing the job such as header file search)
   llvm::OwningPtr<clang::FileManager> mFileMgr;
   llvm::OwningPtr<clang::FileSystemOptions> mFileSysOpt;
   void createFileManager();
 
-  // The source manager (responsible for the source code handling)
+
+  // Source manager (responsible for the source code handling)
   llvm::OwningPtr<clang::SourceManager> mSourceMgr;
   void createSourceManager();
 
-  // The preprocessor (source code preprocessor)
+
+  // Preprocessor (source code preprocessor)
   llvm::OwningPtr<clang::Preprocessor> mPP;
   void createPreprocessor();
 
-  // The AST context (the context to hold long-lived AST nodes)
+
+  // AST context (the context to hold long-lived AST nodes)
   llvm::OwningPtr<clang::ASTContext> mASTContext;
   void createASTContext();
 
-  // The AST consumer, responsible for code generation
+
+  // AST consumer, responsible for code generation
   llvm::OwningPtr<clang::ASTConsumer> mBackend;
 
-  // Input file name
+
+  // File names
   std::string mInputFileName;
   std::string mOutputFileName;
 
@@ -124,6 +137,7 @@ class Slang {
 
   // Output stream
   llvm::OwningPtr<llvm::tool_output_file> mOS;
+
   // Dependency output stream
   llvm::OwningPtr<llvm::tool_output_file> mDOS;
 
@@ -132,24 +146,24 @@ class Slang {
  protected:
   PragmaList mPragmas;
 
-  inline clang::Diagnostic &getDiagnostics() { return *mDiagnostics; }
-  inline const clang::TargetInfo &getTargetInfo() const { return *mTarget; }
-  inline clang::FileManager &getFileManager() { return *mFileMgr; }
-  inline clang::SourceManager &getSourceManager() { return *mSourceMgr; }
-  inline clang::Preprocessor &getPreprocessor() { return *mPP; }
-  inline clang::ASTContext &getASTContext() { return *mASTContext; }
+  clang::DiagnosticsEngine &getDiagnostics() { return *mDiagEngine; }
+  clang::TargetInfo const &getTargetInfo() const { return *mTarget; }
+  clang::FileManager &getFileManager() { return *mFileMgr; }
+  clang::SourceManager &getSourceManager() { return *mSourceMgr; }
+  clang::Preprocessor &getPreprocessor() { return *mPP; }
+  clang::ASTContext &getASTContext() { return *mASTContext; }
 
-  inline const clang::TargetOptions &getTargetOptions() const
+  inline clang::TargetOptions const &getTargetOptions() const
     { return mTargetOpts; }
 
   virtual void initDiagnostic() {}
   virtual void initPreprocessor() {}
   virtual void initASTContext() {}
 
-  virtual clang::ASTConsumer
-  *createBackend(const clang::CodeGenOptions& CodeGenOpts,
-                 llvm::raw_ostream *OS,
-                 OutputType OT);
+  virtual clang::ASTConsumer *
+    createBackend(const clang::CodeGenOptions& CodeGenOpts,
+                  llvm::raw_ostream *OS,
+                  OutputType OT);
 
  public:
   static const llvm::StringRef PragmaMetadataName;
@@ -161,41 +175,49 @@ class Slang {
   void init(const std::string &Triple, const std::string &CPU,
             const std::vector<std::string> &Features);
 
+  virtual clang::ModuleKey loadModule(clang::SourceLocation ImportLoc,
+                                      clang::IdentifierInfo &ModuleName,
+                                      clang::SourceLocation ModuleNameLoc);
+
   bool setInputSource(llvm::StringRef InputFile, const char *Text,
                       size_t TextLength);
 
   bool setInputSource(llvm::StringRef InputFile);
 
-  inline const std::string &getInputFileName() const { return mInputFileName; }
+  std::string const &getInputFileName() const { return mInputFileName; }
 
-  inline void setIncludePaths(const std::vector<std::string> &IncludePaths) {
+  void setIncludePaths(const std::vector<std::string> &IncludePaths) {
     mIncludePaths = IncludePaths;
   }
 
-  inline void setOutputType(OutputType OT) { mOT = OT; }
+  void setOutputType(OutputType OT) { mOT = OT; }
 
   bool setOutput(const char *OutputFile);
-  inline const std::string &getOutputFileName() const {
+
+  std::string const &getOutputFileName() const {
     return mOutputFileName;
   }
 
   bool setDepOutput(const char *OutputFile);
-  inline void setDepTargetBC(const char *TargetBCFile) {
+
+  void setDepTargetBC(const char *TargetBCFile) {
     mDepTargetBCFileName = TargetBCFile;
   }
-  inline void setAdditionalDepTargets(
-      const std::vector<std::string> &AdditionalDepTargets) {
+
+  void setAdditionalDepTargets(
+      std::vector<std::string> const &AdditionalDepTargets) {
     mAdditionalDepTargets = AdditionalDepTargets;
   }
-  inline void appendGeneratedFileName(
-      const std::string &GeneratedFileName) {
+
+  void appendGeneratedFileName(std::string const &GeneratedFileName) {
     mGeneratedFileNames.push_back(GeneratedFileName);
   }
 
   int generateDepFile();
+
   int compile();
 
-  inline const char *getErrorMessage() { return mDiagClient->str().c_str(); }
+  char const *getErrorMessage() { return mDiagClient->str().c_str(); }
 
   // Reset the slang compiler state such that it can be reused to compile
   // another file

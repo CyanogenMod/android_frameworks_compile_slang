@@ -159,7 +159,7 @@ class RSCCOptions {
 static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
                            llvm::SmallVectorImpl<const char*> &Inputs,
                            RSCCOptions &Opts,
-                           clang::Diagnostic &Diags) {
+                           clang::DiagnosticsEngine &DiagEngine) {
   if (ArgVector.size() > 1) {
     const char **ArgBegin = ArgVector.data() + 1;
     const char **ArgEnd = ArgVector.data() + ArgVector.size();
@@ -170,13 +170,13 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
 
     // Check for missing argument error.
     if (MissingArgCount)
-      Diags.Report(clang::diag::err_drv_missing_argument)
+      DiagEngine.Report(clang::diag::err_drv_missing_argument)
         << Args->getArgString(MissingArgIndex) << MissingArgCount;
 
     // Issue errors on unknown arguments.
     for (arg_iterator it = Args->filtered_begin(OPT_UNKNOWN),
         ie = Args->filtered_end(); it != ie; ++it)
-      Diags.Report(clang::diag::err_drv_unknown_argument)
+      DiagEngine.Report(clang::diag::err_drv_unknown_argument)
         << (*it)->getAsString(*Args);
 
     for (ArgList::const_iterator it = Args->begin(), ie = Args->end();
@@ -235,7 +235,7 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
     if (Opts.mOutputDep &&
         ((Opts.mOutputType != slang::Slang::OT_Bitcode) &&
          (Opts.mOutputType != slang::Slang::OT_Dependency)))
-      Diags.Report(clang::diag::err_drv_argument_not_allowed_with)
+      DiagEngine.Report(clang::diag::err_drv_argument_not_allowed_with)
           << Args->getLastArg(OPT_M_Group)->getAsString(*Args)
           << Args->getLastArg(OPT_Output_Type_Group)->getAsString(*Args);
 
@@ -253,7 +253,7 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
     else if (BitcodeStorageValue == "jc")
       Opts.mBitcodeStorage = slang::BCST_JAVA_CODE;
     else if (!BitcodeStorageValue.empty())
-      Diags.Report(clang::diag::err_drv_invalid_value)
+      DiagEngine.Report(clang::diag::err_drv_invalid_value)
           << OptParser->getOptionName(OPT_bitcode_storage)
           << BitcodeStorageValue;
 
@@ -267,7 +267,7 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
 
     Opts.mTargetAPI = Args->getLastArgIntValue(OPT_target_api,
                                                RS_VERSION,
-                                               Diags);
+                                               DiagEngine);
   }
 
   return;
@@ -366,14 +366,16 @@ int main(int argc, const char **argv) {
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagIDs(
     new clang::DiagnosticIDs());
 
-  clang::Diagnostic Diags(DiagIDs, DiagClient, true);
+  clang::DiagnosticsEngine DiagEngine(DiagIDs, DiagClient, true);
+
+  clang::Diagnostic Diags(&DiagEngine);
 
   slang::Slang::GlobalInitialization();
 
-  ParseArguments(ArgVector, Inputs, Opts, Diags);
+  ParseArguments(ArgVector, Inputs, Opts, DiagEngine);
 
   // Exits when there's any error occurred during parsing the arguments
-  if (Diags.hasErrorOccurred())
+  if (DiagEngine.hasErrorOccurred())
     return 1;
 
   if (Opts.mShowHelp) {
@@ -390,7 +392,7 @@ int main(int argc, const char **argv) {
 
   // No input file
   if (Inputs.empty()) {
-    Diags.Report(clang::diag::err_drv_no_input_files);
+    DiagEngine.Report(clang::diag::err_drv_no_input_files);
     return 1;
   }
 

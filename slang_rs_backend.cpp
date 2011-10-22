@@ -43,7 +43,7 @@
 namespace slang {
 
 RSBackend::RSBackend(RSContext *Context,
-                     clang::Diagnostic *Diags,
+                     clang::DiagnosticsEngine *DiagEngine,
                      const clang::CodeGenOptions &CodeGenOpts,
                      const clang::TargetOptions &TargetOpts,
                      PragmaList *Pragmas,
@@ -51,22 +51,16 @@ RSBackend::RSBackend(RSContext *Context,
                      Slang::OutputType OT,
                      clang::SourceManager &SourceMgr,
                      bool AllowRSPrefix)
-    : Backend(Diags,
-              CodeGenOpts,
-              TargetOpts,
-              Pragmas,
-              OS,
-              OT),
-      mContext(Context),
-      mSourceMgr(SourceMgr),
-      mAllowRSPrefix(AllowRSPrefix),
-      mExportVarMetadata(NULL),
-      mExportFuncMetadata(NULL),
-      mExportForEachMetadata(NULL),
-      mExportTypeMetadata(NULL),
-      mRSObjectSlotsMetadata(NULL),
-      mRefCount(mContext->getASTContext()) {
-  return;
+  : Backend(DiagEngine, CodeGenOpts, TargetOpts, Pragmas, OS, OT),
+    mContext(Context),
+    mSourceMgr(SourceMgr),
+    mAllowRSPrefix(AllowRSPrefix),
+    mExportVarMetadata(NULL),
+    mExportFuncMetadata(NULL),
+    mExportForEachMetadata(NULL),
+    mExportTypeMetadata(NULL),
+    mRSObjectSlotsMetadata(NULL),
+    mRefCount(mContext->getASTContext()) {
 }
 
 // 1) Add zero initialization of local RS object types
@@ -92,11 +86,12 @@ void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
       if (!FD->getName().startswith("rs"))  // Check prefix
         continue;
       if (!SlangRS::IsFunctionInRSHeaderFile(FD, mSourceMgr))
-        mDiags.Report(clang::FullSourceLoc(FD->getLocation(), mSourceMgr),
-                      mDiags.getCustomDiagID(clang::Diagnostic::Error,
-                                             "invalid function name prefix, "
-                                             "\"rs\" is reserved: '%0'"))
-            << FD->getName();
+        mDiagEngine.Report(
+          clang::FullSourceLoc(FD->getLocation(), mSourceMgr),
+          mDiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                      "invalid function name prefix, "
+                                      "\"rs\" is reserved: '%0'"))
+          << FD->getName();
     }
   }
 
@@ -162,11 +157,13 @@ void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
   int version = mContext->getVersion();
   if (version == 0) {
     // Not setting a version is an error
-    mDiags.Report(mDiags.getCustomDiagID(clang::Diagnostic::Error,
-                      "Missing pragma for version in source file"));
+    mDiagEngine.Report(mDiagEngine.getCustomDiagID(
+      clang::DiagnosticsEngine::Error,
+      "Missing pragma for version in source file"));
   } else if (version > 1) {
-    mDiags.Report(mDiags.getCustomDiagID(clang::Diagnostic::Error,
-                      "Pragma for version in source file must be set to 1"));
+    mDiagEngine.Report(mDiagEngine.getCustomDiagID(
+      clang::DiagnosticsEngine::Error,
+      "Pragma for version in source file must be set to 1"));
   }
 
   // Create a static global destructor if necessary (to handle RS object
@@ -370,12 +367,11 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
             // parameter .p
             for (size_t i = 0; i < EF->getNumParameters(); i++) {
               // getelementptr
-              Idx[1] =
-                  llvm::ConstantInt::get(
-                      llvm::Type::getInt32Ty(mLLVMContext), i);
-              llvm::Value *Ptr = IB->CreateInBoundsGEP(HelperFunctionParameter,
-                                                       Idx,
-                                                       Idx + 2);
+              Idx[1] = llvm::ConstantInt::get(
+                llvm::Type::getInt32Ty(mLLVMContext), i);
+
+              llvm::Value *Ptr =
+                IB->CreateInBoundsGEP(HelperFunctionParameter, Idx);
 
               // load
               llvm::Value *V = IB->CreateLoad(Ptr);
