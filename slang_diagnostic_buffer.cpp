@@ -26,11 +26,13 @@
 namespace slang {
 
 DiagnosticBuffer::DiagnosticBuffer()
-: mSOS(new llvm::raw_string_ostream(mDiags)) {
+  : mSOS(new llvm::raw_string_ostream(mDiags)) {
 }
 
 DiagnosticBuffer::DiagnosticBuffer(DiagnosticBuffer const &src)
-: mDiags(src.mDiags), mSOS(new llvm::raw_string_ostream(mDiags)) {
+  : clang::DiagnosticConsumer(src),
+    mDiags(src.mDiags),
+    mSOS(new llvm::raw_string_ostream(mDiags)) {
 }
 
 DiagnosticBuffer::~DiagnosticBuffer() {
