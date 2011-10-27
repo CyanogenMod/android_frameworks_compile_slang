@@ -148,13 +148,14 @@ class RSExportForEach : public RSExportable {
     return Name.equals(FuncDtor);
   }
 
-  static bool isRSForEachFunc(const clang::FunctionDecl *FD);
+  static bool isRSForEachFunc(int targetAPI, const clang::FunctionDecl *FD);
 
   inline static bool isSpecialRSFunc(const clang::FunctionDecl *FD) {
     return isRootRSFunc(FD) || isInitRSFunc(FD) || isDtorRSFunc(FD);
   }
 
-  static bool validateSpecialFuncDecl(clang::DiagnosticsEngine *DiagEngine,
+  static bool validateSpecialFuncDecl(int targetAPI,
+                                      clang::DiagnosticsEngine *DiagEngine,
                                       const clang::FunctionDecl *FD);
 };  // RSExportForEach
 
