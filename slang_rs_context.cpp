@@ -116,7 +116,7 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     return false;
   }
 
-  if (RSExportForEach::isRSForEachFunc(FD)) {
+  if (RSExportForEach::isRSForEachFunc(mTargetAPI, FD)) {
     RSExportForEach *EFE = RSExportForEach::Create(this, FD);
     if (EFE == NULL)
       return false;
@@ -125,7 +125,8 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     return true;
   } else if (RSExportForEach::isSpecialRSFunc(FD)) {
     // Do not reflect specialized RS functions like init or graphics root.
-    if (!RSExportForEach::validateSpecialFuncDecl(getDiagnostics(), FD)) {
+    if (!RSExportForEach::validateSpecialFuncDecl(mTargetAPI,
+                                                  getDiagnostics(), FD)) {
       return false;
     }
     return true;

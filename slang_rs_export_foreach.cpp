@@ -294,7 +294,8 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
   return FE;
 }
 
-bool RSExportForEach::isRSForEachFunc(const clang::FunctionDecl *FD) {
+bool RSExportForEach::isRSForEachFunc(int targetAPI,
+    const clang::FunctionDecl *FD) {
   // We currently support only compute root() being exported via forEach
   if (!isRootRSFunc(FD)) {
     return false;
@@ -304,11 +305,24 @@ bool RSExportForEach::isRSForEachFunc(const clang::FunctionDecl *FD) {
     // Graphics compute function
     return false;
   }
+
+  // Handle legacy graphics root functions.
+  if ((targetAPI < SLANG_ICS_TARGET_API) && (FD->getNumParams() == 1)) {
+    const clang::ParmVarDecl *PVD = FD->getParamDecl(0);
+    clang::QualType QT = PVD->getType().getCanonicalType();
+    const clang::QualType &IntType = FD->getASTContext().IntTy;
+    if ((FD->getResultType().getCanonicalType() == IntType) &&
+        (QT == IntType)) {
+      return false;
+    }
+  }
+
   return true;
 }
 
 bool
-RSExportForEach::validateSpecialFuncDecl(clang::DiagnosticsEngine *DiagEngine,
+RSExportForEach::validateSpecialFuncDecl(int targetAPI,
+                                         clang::DiagnosticsEngine *DiagEngine,
                                          clang::FunctionDecl const *FD) {
   slangAssert(DiagEngine && FD);
   bool valid = true;
@@ -327,6 +341,9 @@ RSExportForEach::validateSpecialFuncDecl(clang::DiagnosticsEngine *DiagEngine,
                                       "an int for graphics usage"));
         valid = false;
       }
+    } else if ((targetAPI < SLANG_ICS_TARGET_API) && (numParams == 1)) {
+      // Legacy graphics root function
+      // This has already been validated in isRSForEachFunc().
     } else {
       slangAssert(false &&
           "Should not call validateSpecialFuncDecl() on compute root()");
