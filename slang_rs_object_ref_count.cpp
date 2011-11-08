@@ -1344,6 +1344,7 @@ clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
     case RSExportPrimitiveType::DataTypeRSSampler:
     case RSExportPrimitiveType::DataTypeRSScript:
     case RSExportPrimitiveType::DataTypeRSMesh:
+    case RSExportPrimitiveType::DataTypeRSPath:
     case RSExportPrimitiveType::DataTypeRSProgramFragment:
     case RSExportPrimitiveType::DataTypeRSProgramVertex:
     case RSExportPrimitiveType::DataTypeRSProgramRaster:

@@ -56,6 +56,7 @@
     ENUM_RS_OBJECT_DATA_TYPE(RSSampler, "rs_sampler")                   \
     ENUM_RS_OBJECT_DATA_TYPE(RSScript, "rs_script")                     \
     ENUM_RS_OBJECT_DATA_TYPE(RSMesh, "rs_mesh")                         \
+    ENUM_RS_OBJECT_DATA_TYPE(RSPath, "rs_path")                         \
     ENUM_RS_OBJECT_DATA_TYPE(RSProgramFragment, "rs_program_fragment")  \
     ENUM_RS_OBJECT_DATA_TYPE(RSProgramVertex, "rs_program_vertex")      \
     ENUM_RS_OBJECT_DATA_TYPE(RSProgramRaster, "rs_program_raster")      \
