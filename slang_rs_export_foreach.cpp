@@ -246,7 +246,6 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
                                     clang::SourceLocation(),
                                     &Ctx.Idents.get(Id));
 
-      llvm::StringRef ParamName = PVD->getName();
       clang::FieldDecl *FD =
           clang::FieldDecl::Create(Ctx,
                                    RD,
