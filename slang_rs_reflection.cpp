@@ -2096,11 +2096,14 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
           EB_ADD(NewElementBuilderName << ".create()");
         }
 
-        // There is padding within the field type
-        genAddPaddingToElementBuiler(C,
-                                     (FieldAllocSize - FieldStoreSize),
-                                     ElementBuilderName,
-                                     RenderScriptVar);
+        if (mRSContext->getTargetAPI() < SLANG_ICS_TARGET_API) {
+          // There is padding within the field type. This is only necessary
+          // for HC-targeted APIs.
+          genAddPaddingToElementBuiler(C,
+                                       (FieldAllocSize - FieldStoreSize),
+                                       ElementBuilderName,
+                                       RenderScriptVar);
+        }
 
         Pos = FieldOffset + FieldAllocSize;
       }
@@ -2148,6 +2151,13 @@ bool RSReflection::reflect(const std::string &OutputPathBase,
                            const std::string &OutputBCFileName) {
   Context *C = NULL;
   std::string ResourceId = "";
+  std::string PaddingPrefix = "";
+
+  if (mRSContext->getTargetAPI() < SLANG_ICS_TARGET_API) {
+    PaddingPrefix = "#padding_";
+  } else {
+    PaddingPrefix = "#rs_padding_";
+  }
 
   if (!GetClassNameFromFileName(OutputBCFileName, ResourceId))
     return false;
@@ -2157,10 +2167,10 @@ bool RSReflection::reflect(const std::string &OutputPathBase,
 
   if (OutputPackageName.empty() || OutputPackageName == "-")
     C = new Context(OutputPathBase, InputFileName, "<Package Name>",
-                    ResourceId, true);
+                    ResourceId, PaddingPrefix, true);
   else
     C = new Context(OutputPathBase, InputFileName, OutputPackageName,
-                    ResourceId, false);
+                    ResourceId, PaddingPrefix, false);
 
   if (C != NULL) {
     std::string ErrorMsg, ScriptClassName;
