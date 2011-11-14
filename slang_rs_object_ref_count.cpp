@@ -1399,7 +1399,7 @@ clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
       clang::Expr *InitExpr =
           new(C) clang::InitListExpr(C, Loc, InitVals, N * N, Loc);
       InitExpr->setType(C.getConstantArrayType(FloatTy,
-                                               llvm::APInt(32, 4),
+                                               llvm::APInt(32, N * N),
                                                clang::ArrayType::Normal,
                                                /* EltTypeQuals = */0));
 
