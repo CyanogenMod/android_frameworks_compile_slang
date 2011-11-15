@@ -814,7 +814,10 @@ void RSReflection::genInitExportVariable(Context &C,
         case clang::APValue::Uninitialized:
         case clang::APValue::ComplexInt:
         case clang::APValue::ComplexFloat:
-        case clang::APValue::LValue: {
+        case clang::APValue::LValue:
+        case clang::APValue::Array:
+        case clang::APValue::Struct:
+        case clang::APValue::Union: {
           slangAssert(false && "Unexpected type of value of initializer.");
         }
       }
