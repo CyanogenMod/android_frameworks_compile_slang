@@ -169,10 +169,10 @@ bool Backend::CreateCodeGenPasses() {
 
   // Register allocation policy:
   //  createFastRegisterAllocator: fast but bad quality
-  //  createLinearScanRegisterAllocator: not so fast but good quality
+  //  createGreedyRegisterAllocator: not so fast but good quality
   llvm::RegisterRegAlloc::setDefault((mCodeGenOpts.OptimizationLevel == 0) ?
                                      llvm::createFastRegisterAllocator :
-                                     llvm::createLinearScanRegisterAllocator);
+                                     llvm::createGreedyRegisterAllocator);
 
   llvm::CodeGenOpt::Level OptLevel = llvm::CodeGenOpt::Default;
   if (mCodeGenOpts.OptimizationLevel == 0) {
