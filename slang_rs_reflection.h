@@ -59,6 +59,7 @@ class RSReflection {
 
     std::string mPackageName;
     std::string mResourceId;
+    std::string mPaddingPrefix;
 
     std::string mClassName;
 
@@ -112,12 +113,14 @@ class RSReflection {
             const std::string &InputRSFile,
             const std::string &PackageName,
             const std::string &ResourceId,
+            const std::string &PaddingPrefix,
             bool UseStdout)
         : mVerbose(true),
           mOutputPathBase(OutputPathBase),
           mInputRSFile(InputRSFile),
           mPackageName(PackageName),
           mResourceId(ResourceId),
+          mPaddingPrefix(PaddingPrefix),
           mLicenseNote(ApacheLicenseNote),
           mUseStdout(UseStdout) {
       clear();
@@ -155,7 +158,7 @@ class RSReflection {
     // Will remove later due to field name information is not necessary for
     // C-reflect-to-Java
     inline std::string createPaddingField() {
-      return "#padding_" + llvm::itostr(mPaddingFieldIndex++);
+      return mPaddingPrefix + llvm::itostr(mPaddingFieldIndex++);
     }
 
     inline void setLicenseNote(const std::string &LicenseNote) {
