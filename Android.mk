@@ -104,6 +104,8 @@ LOCAL_SRC_FILES :=	\
 	slang_pragma_recorder.cpp	\
 	slang_diagnostic_buffer.cpp
 
+LOCAL_C_INCLUDES += frameworks/compile/libbcc/include
+
 LOCAL_LDLIBS := -ldl -lpthread
 
 include $(CLANG_HOST_BUILD_MK)
