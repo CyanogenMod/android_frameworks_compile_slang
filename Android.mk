@@ -40,6 +40,7 @@ static_libraries_needed_by_slang := \
 	libLLVMipo \
 	libLLVMBitWriter \
 	libLLVMBitWriter_2_9 \
+	libLLVMBitWriter_2_9_func \
 	libLLVMBitReader \
 	libLLVMARMCodeGen \
 	libLLVMARMAsmPrinter \
