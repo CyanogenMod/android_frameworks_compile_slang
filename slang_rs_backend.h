@@ -63,7 +63,7 @@ class RSBackend : public Backend {
     return mContext->getTargetAPI();
   }
 
-  virtual void HandleTopLevelDecl(clang::DeclGroupRef D);
+  virtual bool HandleTopLevelDecl(clang::DeclGroupRef D);
 
   virtual void HandleTranslationUnitPre(clang::ASTContext &C);
 
