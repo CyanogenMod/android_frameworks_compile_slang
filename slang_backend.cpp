@@ -248,9 +248,9 @@ void Backend::WrapBitcode(llvm::raw_string_ostream &Bitcode) {
   return;
 }
 
-void Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
+bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
   mGen->HandleTopLevelDecl(D);
-  return;
+  return true;
 }
 
 void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {

@@ -116,7 +116,7 @@ class Backend : public clang::ASTConsumer {
   // called by the parser to process every top-level Decl*. Note that D can be
   // the head of a chain of Decls (e.g. for `int a, b` the chain will have two
   // elements). Use Decl::getNextDeclarator() to walk the chain.
-  virtual void HandleTopLevelDecl(clang::DeclGroupRef D);
+  virtual bool HandleTopLevelDecl(clang::DeclGroupRef D);
 
   // HandleTranslationUnit - This method is called when the ASTs for entire
   // translation unit have been parsed.

@@ -74,7 +74,7 @@ void RSBackend::AnnotateFunction(clang::FunctionDecl *FD) {
   return;
 }
 
-void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
+bool RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
   // Disallow user-defined functions with prefix "rs"
   if (!mAllowRSPrefix) {
     // Iterate all function declarations in the program.
@@ -103,8 +103,7 @@ void RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
     }
   }
 
-  Backend::HandleTopLevelDecl(D);
-  return;
+  return Backend::HandleTopLevelDecl(D);
 }
 
 namespace {

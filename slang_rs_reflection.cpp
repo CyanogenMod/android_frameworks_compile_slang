@@ -811,6 +811,7 @@ void RSReflection::genInitExportVariable(Context &C,
           }
           break;
         }
+        case clang::APValue::MemberPointer:
         case clang::APValue::Uninitialized:
         case clang::APValue::ComplexInt:
         case clang::APValue::ComplexFloat:
