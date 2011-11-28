@@ -18,16 +18,18 @@
 #define _FRAMEWORKS_COMPILE_SLANG_SLANG_VERSION_H_
 
 // API levels used by the standard Android SDK.
-//
-// 11 - Honeycomb
-// 12 - Honeycomb MR1
-// 13 - Honeycomb MR2
-// 14 - Ice Cream Sandwich
-// ...
-#define SLANG_MINIMUM_TARGET_API 11
-#define SLANG_MAXIMUM_TARGET_API RS_VERSION
+// MR -> Maintenance Release
+// HC -> Honeycomb
+// ICS -> Ice Cream Sandwich
+enum SlangTargetAPI {
+  SLANG_MINIMUM_TARGET_API = 11,
+  SLANG_HC_TARGET_API = 11,
+  SLANG_HC_MR1_TARGET_API = 12,
+  SLANG_HC_MR2_TARGET_API = 13,
+  SLANG_ICS_TARGET_API = 14,
+  SLANG_ICS_MR1_TARGET_API = 15,
+  SLANG_MAXIMUM_TARGET_API = RS_VERSION
+};
 // Note that RS_VERSION is defined at build time (see Android.mk for details).
-
-#define SLANG_ICS_TARGET_API 14
 
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_VERSION_H_  NOLINT

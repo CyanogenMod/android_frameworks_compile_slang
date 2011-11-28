@@ -56,6 +56,7 @@
 
 #include "slang_assert.h"
 #include "BitWriter_2_9/ReaderWriter_2_9.h"
+#include "BitWriter_2_9_func/ReaderWriter_2_9_func.h"
 
 namespace slang {
 
@@ -345,11 +346,29 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
       llvm::PassManager *BCEmitPM = new llvm::PassManager();
       std::string BCStr;
       llvm::raw_string_ostream Bitcode(BCStr);
-      if (getTargetAPI() < SLANG_ICS_TARGET_API) {
-        // Pre-ICS targets must use the LLVM 2.9 BitcodeWriter
-        BCEmitPM->add(llvm_2_9::createBitcodeWriterPass(Bitcode));
-      } else {
-        BCEmitPM->add(llvm::createBitcodeWriterPass(Bitcode));
+      unsigned int TargetAPI = getTargetAPI();
+      switch (TargetAPI) {
+        case SLANG_HC_TARGET_API:
+        case SLANG_HC_MR1_TARGET_API:
+        case SLANG_HC_MR2_TARGET_API: {
+          // Pre-ICS targets must use the LLVM 2.9 BitcodeWriter
+          BCEmitPM->add(llvm_2_9::createBitcodeWriterPass(Bitcode));
+          break;
+        }
+        case SLANG_ICS_TARGET_API:
+        case SLANG_ICS_MR1_TARGET_API: {
+          // ICS targets must use the LLVM 2.9_func BitcodeWriter
+          BCEmitPM->add(llvm_2_9_func::createBitcodeWriterPass(Bitcode));
+          break;
+        }
+        default: {
+          if (TargetAPI < SLANG_MINIMUM_TARGET_API ||
+              TargetAPI > SLANG_MAXIMUM_TARGET_API) {
+            slangAssert(false && "Invalid target API value");
+          }
+          BCEmitPM->add(llvm::createBitcodeWriterPass(Bitcode));
+          break;
+        }
       }
 
       BCEmitPM->run(*mpModule);
