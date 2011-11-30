@@ -47,6 +47,7 @@
 
 #define RS_TYPE_ITEM_BUFFER_NAME         "mItemArray"
 #define RS_TYPE_ITEM_BUFFER_PACKER_NAME  "mIOBuffer"
+#define RS_TYPE_ELEMENT_REF_NAME         "mElementCache"
 
 #define RS_EXPORT_VAR_INDEX_PREFIX       "mExportVarIdx_"
 #define RS_EXPORT_VAR_PREFIX             "mExportVar_"
@@ -1620,6 +1621,8 @@ bool RSReflection::genTypeClass(Context &C,
       ";" << std::endl;
   C.indent() << "private FieldPacker "RS_TYPE_ITEM_BUFFER_PACKER_NAME";"
              << std::endl;
+  C.indent() << "private static java.lang.ref.WeakReference<Element> "RS_TYPE_ELEMENT_REF_NAME
+             " = new java.lang.ref.WeakReference<Element>(null);" << std::endl;
 
   genTypeClassConstructor(C, ERT);
   genTypeClassCopyToArrayLocal(C, ERT);
@@ -1689,9 +1692,30 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   "createElement",
                   1,
                   "RenderScript", RenderScriptVar);
-  genBuildElement(C, "eb", ERT, RenderScriptVar, /* IsInline = */false);
+
+  C.indent() << "Element e = " << RS_TYPE_ELEMENT_REF_NAME << ".get();" << std::endl;
+  C.indent() << "if (e != null) return e;" << std::endl;
+  genBuildElement(C, "eb", ERT, RenderScriptVar, /* IsInline = */true);
+  C.indent() << "e = eb.create();" << std::endl;
+  C.indent() << RS_TYPE_ELEMENT_REF_NAME <<
+             " = new java.lang.ref.WeakReference<Element>(e);" << std::endl;
+  C.indent() << "return e;" << std::endl;
   C.endFunction();
 
+
+  // private with element
+  C.startFunction(Context::AM_Private,
+                  false,
+                  NULL,
+                  C.getClassName(),
+                  1,
+                  "RenderScript", RenderScriptVar);
+  C.indent() << RS_TYPE_ITEM_BUFFER_NAME" = null;" << std::endl;
+  C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME" = null;" << std::endl;
+  C.indent() << "mElement = createElement(" << RenderScriptVar << ");" << std::endl;
+  C.endFunction();
+
+  // 1D without usage
   C.startFunction(Context::AM_Public,
                   false,
                   NULL,
@@ -1708,6 +1732,7 @@ void RSReflection::genTypeClassConstructor(Context &C,
   C.indent() << "init(" << RenderScriptVar << ", count);" << std::endl;
   C.endFunction();
 
+  // 1D with usage
   C.startFunction(Context::AM_Public,
                   false,
                   NULL,
@@ -1725,8 +1750,103 @@ void RSReflection::genTypeClassConstructor(Context &C,
   C.indent() << "init(" << RenderScriptVar << ", count, usages);" << std::endl;
   C.endFunction();
 
-  return;
+
+  // create1D with usage
+  C.startFunction(Context::AM_Public,
+                  true,
+                  C.getClassName().c_str(),
+                  "create1D",
+                  3,
+                  "RenderScript", RenderScriptVar,
+                  "int", "dimX",
+                  "int", "usages");
+  C.indent() << C.getClassName() << " obj = new " << C.getClassName() << "("
+             << RenderScriptVar << ");" << std::endl;
+  C.indent() << "obj.mAllocation = Allocation.createSized(rs, obj.mElement, dimX, usages);"
+             << std::endl;
+  C.indent() << "return obj;" << std::endl;
+  C.endFunction();
+
+  // create1D without usage
+  C.startFunction(Context::AM_Public,
+                  true,
+                  C.getClassName().c_str(),
+                  "create1D",
+                  2,
+                  "RenderScript", RenderScriptVar,
+                  "int", "dimX");
+  C.indent() << "return create1D(" << RenderScriptVar << ", dimX, Allocation.USAGE_SCRIPT);"
+             << std::endl;
+  C.endFunction();
+
+
+  // create2D without usage
+  C.startFunction(Context::AM_Public,
+                  true,
+                  C.getClassName().c_str(),
+                  "create2D",
+                  3,
+                  "RenderScript", RenderScriptVar,
+                  "int", "dimX",
+                  "int", "dimY");
+  C.indent() << "return create2D(" << RenderScriptVar << ", dimX, dimY, Allocation.USAGE_SCRIPT);"
+             << std::endl;
+  C.endFunction();
+
+  // create2D with usage
+  C.startFunction(Context::AM_Public,
+                  true,
+                  C.getClassName().c_str(),
+                  "create2D",
+                  4,
+                  "RenderScript", RenderScriptVar,
+                  "int", "dimX",
+                  "int", "dimY",
+                  "int", "usages");
+
+  C.indent() << C.getClassName() << " obj = new " << C.getClassName() << "("
+             << RenderScriptVar << ");" << std::endl;
+  C.indent() << "Type.Builder b = new Type.Builder(rs, obj.mElement);" << std::endl;
+  C.indent() << "b.setX(dimX);" << std::endl;
+  C.indent() << "b.setY(dimY);" << std::endl;
+  C.indent() << "Type t = b.create();" << std::endl;
+  C.indent() << "obj.mAllocation = Allocation.createTyped(rs, t, usages);" << std::endl;
+  C.indent() << "return obj;" << std::endl;
+  C.endFunction();
+
+
+  // createTypeBuilder
+  C.startFunction(Context::AM_Public,
+                  true,
+                  "Type.Builder",
+                  "createTypeBuilder",
+                  1,
+                  "RenderScript", RenderScriptVar);
+  C.indent() << "Element e = createElement(" << RenderScriptVar << ");" << std::endl;
+  C.indent() << "return new Type.Builder(rs, e);" << std::endl;
+  C.endFunction();
+
+  // createCustom with usage
+  C.startFunction(Context::AM_Public,
+                  true,
+                  C.getClassName().c_str(),
+                  "createCustom",
+                  3,
+                  "RenderScript", RenderScriptVar,
+                  "Type.Builder", "tb",
+                  "int", "usages");
+  C.indent() << C.getClassName() << " obj = new " << C.getClassName() << "("
+             << RenderScriptVar << ");" << std::endl;
+  C.indent() << "Type t = tb.create();" << std::endl;
+  C.indent() << "if (t.getElement() != obj.mElement) {" << std::endl;
+  C.indent() << "    throw new RSIllegalArgumentException(\"Type.Builder did not match expected element type.\");"
+             << std::endl;
+  C.indent() << "}" << std::endl;
+  C.indent() << "obj.mAllocation = Allocation.createTyped(rs, t, usages);" << std::endl;
+  C.indent() << "return obj;" << std::endl;
+  C.endFunction();
 }
+
 
 void RSReflection::genTypeClassCopyToArray(Context &C,
                                            const RSExportRecordType *ERT) {
