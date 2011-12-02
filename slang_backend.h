@@ -75,6 +75,8 @@ class Backend : public clang::ASTConsumer {
   void CreateModulePasses();
   bool CreateCodeGenPasses();
 
+  void WrapBitcode(llvm::raw_string_ostream &Bitcode);
+
  protected:
   llvm::LLVMContext &mLLVMContext;
   clang::DiagnosticsEngine &mDiagEngine;
