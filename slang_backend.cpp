@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include "bcinfo/BitcodeWrapper.h"
+
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclGroup.h"
@@ -228,6 +230,24 @@ void Backend::Initialize(clang::ASTContext &Ctx) {
   return;
 }
 
+// Encase the Bitcode in a wrapper containing RS version information.
+void Backend::WrapBitcode(llvm::raw_string_ostream &Bitcode) {
+  struct bcinfo::BCWrapperHeader header;
+  header.Magic = 0x0B17C0DE;
+  header.Version = 0;
+  header.BitcodeOffset = sizeof(header);
+  header.BitcodeSize = Bitcode.str().length();
+  header.HeaderVersion = 0;
+  header.TargetAPI = getTargetAPI();
+
+  // Write out the bitcode wrapper.
+  FormattedOutStream.write((const char*) &header, sizeof(header));
+
+  // Write out the actual encoded bitcode.
+  FormattedOutStream << Bitcode.str();
+  return;
+}
+
 void Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
   mGen->HandleTopLevelDecl(D);
   return;
@@ -323,13 +343,17 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
     }
     case Slang::OT_Bitcode: {
       llvm::PassManager *BCEmitPM = new llvm::PassManager();
+      std::string BCStr;
+      llvm::raw_string_ostream Bitcode(BCStr);
       if (getTargetAPI() < SLANG_ICS_TARGET_API) {
         // Pre-ICS targets must use the LLVM 2.9 BitcodeWriter
-        BCEmitPM->add(llvm_2_9::createBitcodeWriterPass(FormattedOutStream));
+        BCEmitPM->add(llvm_2_9::createBitcodeWriterPass(Bitcode));
       } else {
-        BCEmitPM->add(llvm::createBitcodeWriterPass(FormattedOutStream));
+        BCEmitPM->add(llvm::createBitcodeWriterPass(Bitcode));
       }
+
       BCEmitPM->run(*mpModule);
+      WrapBitcode(Bitcode);
       break;
     }
     case Slang::OT_Nothing: {
