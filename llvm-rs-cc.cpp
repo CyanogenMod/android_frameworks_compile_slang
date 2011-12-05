@@ -29,6 +29,7 @@
 
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Frontend/Utils.h"
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -43,6 +44,7 @@
 
 #include "slang.h"
 #include "slang_assert.h"
+#include "slang_diagnostic_buffer.h"
 #include "slang_rs.h"
 #include "slang_rs_reflect_utils.h"
 
@@ -172,6 +174,11 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
     if (MissingArgCount)
       DiagEngine.Report(clang::diag::err_drv_missing_argument)
         << Args->getArgString(MissingArgIndex) << MissingArgCount;
+
+    clang::DiagnosticOptions DiagOpts;
+    DiagOpts.IgnoreWarnings = Args->hasArg(OPT_w);
+    DiagOpts.Warnings = Args->getAllArgValues(OPT_W);
+    clang::ProcessWarningOptions(DiagEngine, DiagOpts);
 
     // Issue errors on unknown arguments.
     for (arg_iterator it = Args->filtered_begin(OPT_UNKNOWN),
@@ -343,6 +350,8 @@ static void llvm_rs_cc_VersionPrinter() {
   OS << ".\n";
   return;
 }
+#undef wrap_str
+#undef str
 
 int main(int argc, const char **argv) {
   std::set<std::string> SavedStrings;
@@ -359,24 +368,22 @@ int main(int argc, const char **argv) {
   Argv0 = llvm::sys::path::stem(ArgVector[0]);
 
   // Setup diagnostic engine
-  clang::TextDiagnosticPrinter *DiagClient =
-    new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
-  DiagClient->setPrefix(Argv0);
+  slang::DiagnosticBuffer *DiagClient = new slang::DiagnosticBuffer();
 
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagIDs(
     new clang::DiagnosticIDs());
 
   clang::DiagnosticsEngine DiagEngine(DiagIDs, DiagClient, true);
 
-  clang::Diagnostic Diags(&DiagEngine);
-
   slang::Slang::GlobalInitialization();
 
   ParseArguments(ArgVector, Inputs, Opts, DiagEngine);
 
   // Exits when there's any error occurred during parsing the arguments
-  if (DiagEngine.hasErrorOccurred())
+  if (DiagEngine.hasErrorOccurred()) {
+    llvm::errs() << DiagClient->str();
     return 1;
+  }
 
   if (Opts.mShowHelp) {
     llvm::OwningPtr<OptTable> OptTbl(createRSCCOptTable());
@@ -393,6 +400,7 @@ int main(int argc, const char **argv) {
   // No input file
   if (Inputs.empty()) {
     DiagEngine.Report(clang::diag::err_drv_no_input_files);
+    llvm::errs() << DiagClient->str();
     return 1;
   }
 
@@ -402,7 +410,8 @@ int main(int argc, const char **argv) {
 
   llvm::OwningPtr<slang::SlangRS> Compiler(new slang::SlangRS());
 
-  Compiler->init(Opts.mTriple, Opts.mCPU, Opts.mFeatures);
+  Compiler->init(Opts.mTriple, Opts.mCPU, Opts.mFeatures, &DiagEngine,
+                 DiagClient);
 
   for (int i = 0, e = Inputs.size(); i != e; i++) {
     const char *InputFile = Inputs[i];

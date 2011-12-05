@@ -77,6 +77,9 @@ def bitcode_storage : Separate<"-bitcode-storage">,
   MetaVarName<"<value>">, HelpText<"<value> should be 'ar' or 'jc'">;
 def _bitcode_storage : Separate<"-s">, Alias<bitcode_storage>;
 
+def W : Joined<"-W">;
+def w : Flag<"-w">, HelpText<"Suppress all warnings">;
+
 //===----------------------------------------------------------------------===//
 // Dependency Output Options
 //===----------------------------------------------------------------------===//

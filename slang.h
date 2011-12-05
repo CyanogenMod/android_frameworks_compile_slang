@@ -79,18 +79,12 @@ class Slang : public clang::ModuleLoader {
   // Diagnostics Mediator (An interface for both Producer and Consumer)
   llvm::OwningPtr<clang::Diagnostic> mDiag;
 
-  // Diagnostics ID
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> mDiagIDs;
-
   // Diagnostics Engine (Producer and Diagnostics Reporter)
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> mDiagEngine;
+  clang::DiagnosticsEngine *mDiagEngine;
 
   // Diagnostics Consumer
   // NOTE: The ownership is taken by mDiagEngine after creation.
   DiagnosticBuffer *mDiagClient;
-
-  void createDiagnostic();
-
 
   // The target being compiled for
   clang::TargetOptions mTargetOpts;
@@ -173,7 +167,9 @@ class Slang : public clang::ModuleLoader {
   Slang();
 
   void init(const std::string &Triple, const std::string &CPU,
-            const std::vector<std::string> &Features);
+            const std::vector<std::string> &Features,
+            clang::DiagnosticsEngine *DiagEngine,
+            DiagnosticBuffer *DiagClient);
 
   virtual clang::ModuleKey loadModule(clang::SourceLocation ImportLoc,
                                       clang::IdentifierInfo &ModuleName,
