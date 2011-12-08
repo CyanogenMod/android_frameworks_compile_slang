@@ -171,16 +171,6 @@ void Slang::LLVMErrorHandler(void *UserData, const std::string &Message) {
   exit(1);
 }
 
-void Slang::createDiagnostic() {
-  mDiagClient = new DiagnosticBuffer();
-
-  mDiagIDs = new clang::DiagnosticIDs();
-  mDiagEngine = new clang::DiagnosticsEngine(mDiagIDs, mDiagClient, true);
-  mDiag.reset(new clang::Diagnostic(mDiagEngine.getPtr()));
-
-  initDiagnostic();
-}
-
 void Slang::createTarget(const std::string &Triple, const std::string &CPU,
                          const std::vector<std::string> &Features) {
   if (!Triple.empty())
@@ -257,7 +247,7 @@ void Slang::createASTContext() {
 clang::ASTConsumer *
 Slang::createBackend(const clang::CodeGenOptions& CodeGenOpts,
                      llvm::raw_ostream *OS, OutputType OT) {
-  return new Backend(mDiagEngine.getPtr(), CodeGenOpts, mTargetOpts,
+  return new Backend(mDiagEngine, CodeGenOpts, mTargetOpts,
                      &mPragmas, OS, OT);
 }
 
@@ -266,12 +256,17 @@ Slang::Slang() : mInitialized(false), mDiagClient(NULL), mOT(OT_Default) {
 }
 
 void Slang::init(const std::string &Triple, const std::string &CPU,
-                 const std::vector<std::string> &Features) {
+                 const std::vector<std::string> &Features,
+                 clang::DiagnosticsEngine *DiagEngine,
+                 DiagnosticBuffer *DiagClient) {
   if (mInitialized)
     return;
 
-  createDiagnostic();
-  llvm::install_fatal_error_handler(LLVMErrorHandler, mDiagEngine.getPtr());
+  mDiagEngine = DiagEngine;
+  mDiagClient = DiagClient;
+  mDiag.reset(new clang::Diagnostic(mDiagEngine));
+  initDiagnostic();
+  llvm::install_fatal_error_handler(LLVMErrorHandler, mDiagEngine);
 
   createTarget(Triple, CPU, Features);
   createFileManager();
@@ -334,7 +329,7 @@ bool Slang::setOutput(const char *OutputFile) {
     case OT_Dependency:
     case OT_Assembly:
     case OT_LLVMAssembly: {
-      OS = OpenOutputFile(OutputFile, 0, &Error, mDiagEngine.getPtr());
+      OS = OpenOutputFile(OutputFile, 0, &Error, mDiagEngine);
       break;
     }
     case OT_Nothing: {
@@ -343,7 +338,7 @@ bool Slang::setOutput(const char *OutputFile) {
     case OT_Object:
     case OT_Bitcode: {
       OS = OpenOutputFile(OutputFile, llvm::raw_fd_ostream::F_Binary,
-                          &Error, mDiagEngine.getPtr());
+                          &Error, mDiagEngine);
       break;
     }
     default: {
@@ -365,7 +360,7 @@ bool Slang::setDepOutput(const char *OutputFile) {
   llvm::sys::Path OutputFilePath(OutputFile);
   std::string Error;
 
-  mDOS.reset(OpenOutputFile(OutputFile, 0, &Error, mDiagEngine.getPtr()));
+  mDOS.reset(OpenOutputFile(OutputFile, 0, &Error, mDiagEngine));
   if (!Error.empty() || (mDOS.get() == NULL))
     return false;
 
