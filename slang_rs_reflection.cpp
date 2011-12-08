@@ -1693,13 +1693,15 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   1,
                   "RenderScript", RenderScriptVar);
 
-  C.indent() << "Element e = " << RS_TYPE_ELEMENT_REF_NAME << ".get();" << std::endl;
-  C.indent() << "if (e != null) return e;" << std::endl;
+  // TODO: Fix weak-refs + multi-context issue.
+  //C.indent() << "Element e = " << RS_TYPE_ELEMENT_REF_NAME << ".get();" << std::endl;
+  //C.indent() << "if (e != null) return e;" << std::endl;
   genBuildElement(C, "eb", ERT, RenderScriptVar, /* IsInline = */true);
-  C.indent() << "e = eb.create();" << std::endl;
-  C.indent() << RS_TYPE_ELEMENT_REF_NAME <<
-             " = new java.lang.ref.WeakReference<Element>(e);" << std::endl;
-  C.indent() << "return e;" << std::endl;
+  C.indent() << "return eb.create();" << std::endl;
+  //C.indent() << "e = eb.create();" << std::endl;
+  //C.indent() << RS_TYPE_ELEMENT_REF_NAME <<
+  //           " = new java.lang.ref.WeakReference<Element>(e);" << std::endl;
+  //C.indent() << "return e;" << std::endl;
   C.endFunction();
 
 
