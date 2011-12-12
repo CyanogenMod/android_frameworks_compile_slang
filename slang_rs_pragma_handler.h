@@ -45,7 +45,8 @@ class RSPragmaHandler : public clang::PragmaHandler {
   }
 
   virtual void handleItem(const std::string &Item) { return; }
-  virtual void handleInt(const int v) { return; }
+  virtual void handleInt(clang::Preprocessor &PP, clang::Token &Tok,
+                         const int v) { return; }
 
   // Handle pragma like #pragma rs [name] ([item #1],[item #2],...,[item #i])
   void handleItemListPragma(clang::Preprocessor &PP,

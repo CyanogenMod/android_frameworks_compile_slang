@@ -156,13 +156,13 @@ void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
   int version = mContext->getVersion();
   if (version == 0) {
     // Not setting a version is an error
-    mDiagEngine.Report(mDiagEngine.getCustomDiagID(
-      clang::DiagnosticsEngine::Error,
-      "Missing pragma for version in source file"));
-  } else if (version > 1) {
-    mDiagEngine.Report(mDiagEngine.getCustomDiagID(
-      clang::DiagnosticsEngine::Error,
-      "Pragma for version in source file must be set to 1"));
+    mDiagEngine.Report(
+        mSourceMgr.getLocForEndOfFile(mSourceMgr.getMainFileID()),
+        mDiagEngine.getCustomDiagID(
+            clang::DiagnosticsEngine::Error,
+            "missing pragma for version in source file"));
+  } else {
+    slangAssert(version == 1);
   }
 
   // Create a static global destructor if necessary (to handle RS object
