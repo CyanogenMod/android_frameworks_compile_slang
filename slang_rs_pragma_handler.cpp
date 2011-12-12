@@ -140,7 +140,17 @@ class RSReflectLicensePragmaHandler : public RSPragmaHandler {
 
 class RSVersionPragmaHandler : public RSPragmaHandler {
  private:
-  void handleInt(const int v) {
+  void handleInt(clang::Preprocessor &PP,
+                 clang::Token &Tok,
+                 const int v) {
+    if (v != 1) {
+      PP.Diag(Tok,
+              PP.getDiagnostics().getCustomDiagID(
+                  clang::DiagnosticsEngine::Error,
+                  "pragma for version in source file must be set to 1"));
+      mContext->setVersion(1);
+      return;
+    }
     std::stringstream ss;
     ss << v;
     mContext->addPragma(this->getName(), ss.str());
@@ -218,8 +228,13 @@ void RSPragmaHandler::handleNonParamPragma(clang::Preprocessor &PP,
 
   // Should be end immediately
   if (PragmaToken.isNot(clang::tok::eod))
-    fprintf(stderr, "RSPragmaHandler::handleNonParamPragma: "
-                    "expected a clang::tok::eod\n");
+    if (PragmaToken.isNot(clang::tok::r_paren)) {
+      PP.Diag(PragmaToken,
+              PP.getDiagnostics().getCustomDiagID(
+                  clang::DiagnosticsEngine::Error,
+                  "expected a ')'"));
+      return;
+    }
   return;
 }
 
@@ -239,17 +254,23 @@ void RSPragmaHandler::handleOptionalStringLiteralParamPragma(
   if (PragmaToken.isNot(clang::tok::r_paren)) {
     // Eat the whole string literal
     clang::StringLiteralParser StringLiteral(&PragmaToken, 1, PP);
-    if (StringLiteral.hadError)
-      fprintf(stderr, "RSPragmaHandler::handleOptionalStringLiteralParamPragma"
-                      ": illegal string literal\n");
-    else
+    if (StringLiteral.hadError) {
+      // Diagnostics will be generated automatically
+      return;
+    }
+    else {
       this->handleItem(std::string(StringLiteral.GetString()));
+    }
 
     // The current token should be clang::tok::r_para
     PP.LexUnexpandedToken(PragmaToken);
-    if (PragmaToken.isNot(clang::tok::r_paren))
-      fprintf(stderr, "RSPragmaHandler::handleOptionalStringLiteralParamPragma"
-                      ": expected a ')'\n");
+    if (PragmaToken.isNot(clang::tok::r_paren)) {
+      PP.Diag(PragmaToken,
+              PP.getDiagnostics().getCustomDiagID(
+                  clang::DiagnosticsEngine::Error,
+                  "expected a ')'"));
+      return;
+    }
   } else {
     // If no argument, remove the license
     this->handleItem("");
@@ -264,8 +285,11 @@ void RSPragmaHandler::handleIntegerParamPragma(
   PP.LexUnexpandedToken(PragmaToken);
 
   // Now, the current token must be clang::tok::lpara
-  if (PragmaToken.isNot(clang::tok::l_paren))
+  if (PragmaToken.isNot(clang::tok::l_paren)) {
+    // If no argument, set the version to 0
+    this->handleInt(PP, PragmaToken, 0);
     return;
+  }
   PP.LexUnexpandedToken(PragmaToken);
 
   if (PragmaToken.is(clang::tok::numeric_constant)) {
@@ -273,22 +297,25 @@ void RSPragmaHandler::handleIntegerParamPragma(
         PragmaToken.getLiteralData() + PragmaToken.getLength(),
         PragmaToken.getLocation(), PP);
     if (NumericLiteral.hadError) {
-      fprintf(stderr, "RSPragmaHandler::handleIntegerParamPragma"
-                      ": illegal numeric literal\n");
+      // Diagnostics will be generated automatically
+      return;
     } else {
       llvm::APInt Val(32, 0);
       NumericLiteral.GetIntegerValue(Val);
-      this->handleInt(static_cast<int>(Val.getSExtValue()));
+      this->handleInt(PP, PragmaToken, static_cast<int>(Val.getSExtValue()));
     }
     PP.LexUnexpandedToken(PragmaToken);
   } else {
     // If no argument, set the version to 0
-    this->handleInt(0);
+    this->handleInt(PP, PragmaToken, 0);
   }
 
   if (PragmaToken.isNot(clang::tok::r_paren)) {
-    fprintf(stderr, "RSPragmaHandler::handleIntegerParamPragma"
-                    ": expected a ')'\n");
+    PP.Diag(PragmaToken,
+            PP.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "expected a ')'"));
+    return;
   }
 
   do {
