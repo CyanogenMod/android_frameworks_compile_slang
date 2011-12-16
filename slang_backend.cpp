@@ -122,17 +122,20 @@ bool Backend::CreateCodeGenPasses() {
     return false;
   }
 
-  llvm::NoFramePointerElim = mCodeGenOpts.DisableFPElim;
+  // Target Machine Options
+  llvm::TargetOptions Options;
+
+  Options.NoFramePointerElim = mCodeGenOpts.DisableFPElim;
 
   // Use hardware FPU.
   //
   // FIXME: Need to detect the CPU capability and decide whether to use softfp.
   // To use softfp, change following 2 lines to
   //
-  //  llvm::FloatABIType = llvm::FloatABI::Soft;
-  //  llvm::UseSoftFloat = true;
-  llvm::FloatABIType = llvm::FloatABI::Hard;
-  llvm::UseSoftFloat = false;
+  // Options.FloatABIType = llvm::FloatABI::Soft;
+  // Options.UseSoftFloat = true;
+  Options.FloatABIType = llvm::FloatABI::Hard;
+  Options.UseSoftFloat = false;
 
   // BCC needs all unknown symbols resolved at compilation time. So we don't
   // need any relocation model.
@@ -165,7 +168,7 @@ bool Backend::CreateCodeGenPasses() {
 
   llvm::TargetMachine *TM =
     TargetInfo->createTargetMachine(Triple, mTargetOpts.CPU, FeaturesStr,
-                                    RM, CM);
+                                    Options, RM, CM);
 
   // Register scheduler
   llvm::RegisterScheduler::setDefault(llvm::createDefaultScheduler);
