@@ -155,7 +155,7 @@ class RSExportForEach : public RSExportable {
   }
 
   static bool validateSpecialFuncDecl(int targetAPI,
-                                      clang::Diagnostic *Diags,
+                                      clang::DiagnosticsEngine *DiagEngine,
                                       const clang::FunctionDecl *FD);
 };  // RSExportForEach
 

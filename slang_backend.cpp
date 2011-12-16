@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include "bcinfo/BitcodeWrapper.h"
+
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclGroup.h"
@@ -43,12 +45,12 @@
 #include "llvm/Module.h"
 #include "llvm/Metadata.h"
 
-#include "llvm/Support/PassManagerBuilder.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 
 #include "llvm/MC/SubtargetFeature.h"
 
@@ -115,7 +117,7 @@ bool Backend::CreateCodeGenPasses() {
   const llvm::Target* TargetInfo =
       llvm::TargetRegistry::lookupTarget(Triple, Error);
   if (TargetInfo == NULL) {
-    mDiags.Report(clang::diag::err_fe_unable_to_create_target) << Error;
+    mDiagEngine.Report(clang::diag::err_fe_unable_to_create_target) << Error;
     return false;
   }
 
@@ -135,15 +137,16 @@ bool Backend::CreateCodeGenPasses() {
   // need any relocation model.
   llvm::Reloc::Model RM = llvm::Reloc::Static;
 
-
   // This is set for the linker (specify how large of the virtual addresses we
   // can access for all unknown symbols.)
-  if (mpModule->getPointerSize() == llvm::Module::Pointer32)
-    llvm::TargetMachine::setCodeModel(llvm::CodeModel::Small);
-  else
+  llvm::CodeModel::Model CM;
+  if (mpModule->getPointerSize() == llvm::Module::Pointer32) {
+    CM = llvm::CodeModel::Small;
+  } else {
     // The target may have pointer size greater than 32 (e.g. x86_64
     // architecture) may need large data address model
-    llvm::TargetMachine::setCodeModel(llvm::CodeModel::Medium);
+    CM = llvm::CodeModel::Medium;
+  }
 
   // Setup feature string
   std::string FeaturesStr;
@@ -158,8 +161,10 @@ bool Backend::CreateCodeGenPasses() {
 
     FeaturesStr = Features.getString();
   }
+
   llvm::TargetMachine *TM =
-      TargetInfo->createTargetMachine(Triple, mTargetOpts.CPU, FeaturesStr, RM);
+    TargetInfo->createTargetMachine(Triple, mTargetOpts.CPU, FeaturesStr,
+                                    RM, CM);
 
   // Register scheduler
   llvm::RegisterScheduler::setDefault(llvm::createDefaultScheduler);
@@ -185,14 +190,14 @@ bool Backend::CreateCodeGenPasses() {
   }
   if (TM->addPassesToEmitFile(*mCodeGenPasses, FormattedOutStream,
                               CGFT, OptLevel)) {
-    mDiags.Report(clang::diag::err_fe_unable_to_interface_with_target);
+    mDiagEngine.Report(clang::diag::err_fe_unable_to_interface_with_target);
     return false;
   }
 
   return true;
 }
 
-Backend::Backend(clang::Diagnostic *Diags,
+Backend::Backend(clang::DiagnosticsEngine *DiagEngine,
                  const clang::CodeGenOptions &CodeGenOpts,
                  const clang::TargetOptions &TargetOpts,
                  PragmaList *Pragmas,
@@ -209,11 +214,11 @@ Backend::Backend(clang::Diagnostic *Diags,
       mPerModulePasses(NULL),
       mCodeGenPasses(NULL),
       mLLVMContext(llvm::getGlobalContext()),
-      mDiags(*Diags),
+      mDiagEngine(*DiagEngine),
       mPragmas(Pragmas) {
   FormattedOutStream.setStream(*mpOS,
                                llvm::formatted_raw_ostream::PRESERVE_STREAM);
-  mGen = CreateLLVMCodeGen(mDiags, "", mCodeGenOpts, mLLVMContext);
+  mGen = CreateLLVMCodeGen(mDiagEngine, "", mCodeGenOpts, mLLVMContext);
   return;
 }
 
@@ -222,6 +227,24 @@ void Backend::Initialize(clang::ASTContext &Ctx) {
 
   mpModule = mGen->GetModule();
 
+  return;
+}
+
+// Encase the Bitcode in a wrapper containing RS version information.
+void Backend::WrapBitcode(llvm::raw_string_ostream &Bitcode) {
+  struct bcinfo::BCWrapperHeader header;
+  header.Magic = 0x0B17C0DE;
+  header.Version = 0;
+  header.BitcodeOffset = sizeof(header);
+  header.BitcodeSize = Bitcode.str().length();
+  header.HeaderVersion = 0;
+  header.TargetAPI = getTargetAPI();
+
+  // Write out the bitcode wrapper.
+  FormattedOutStream.write((const char*) &header, sizeof(header));
+
+  // Write out the actual encoded bitcode.
+  FormattedOutStream << Bitcode.str();
   return;
 }
 
@@ -320,13 +343,17 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
     }
     case Slang::OT_Bitcode: {
       llvm::PassManager *BCEmitPM = new llvm::PassManager();
+      std::string BCStr;
+      llvm::raw_string_ostream Bitcode(BCStr);
       if (getTargetAPI() < SLANG_ICS_TARGET_API) {
         // Pre-ICS targets must use the LLVM 2.9 BitcodeWriter
-        BCEmitPM->add(llvm_2_9::createBitcodeWriterPass(FormattedOutStream));
+        BCEmitPM->add(llvm_2_9::createBitcodeWriterPass(Bitcode));
       } else {
-        BCEmitPM->add(llvm::createBitcodeWriterPass(FormattedOutStream));
+        BCEmitPM->add(llvm::createBitcodeWriterPass(Bitcode));
       }
+
       BCEmitPM->run(*mpModule);
+      WrapBitcode(Bitcode);
       break;
     }
     case Slang::OT_Nothing: {

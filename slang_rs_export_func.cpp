@@ -32,16 +32,16 @@ namespace slang {
 namespace {
 
 // Ensure that the exported function is actually valid
-static bool ValidateFuncDecl(clang::Diagnostic *Diags,
+static bool ValidateFuncDecl(clang::DiagnosticsEngine *DiagEngine,
                              const clang::FunctionDecl *FD) {
-  slangAssert(Diags && FD);
+  slangAssert(DiagEngine && FD);
   const clang::ASTContext &C = FD->getASTContext();
   if (FD->getResultType().getCanonicalType() != C.VoidTy) {
-    Diags->Report(
-        clang::FullSourceLoc(FD->getLocation(), Diags->getSourceManager()),
-        Diags->getCustomDiagID(clang::Diagnostic::Error,
-                               "invokable non-static functions are required "
-                               "to return void"));
+    DiagEngine->Report(
+      clang::FullSourceLoc(FD->getLocation(), DiagEngine->getSourceManager()),
+      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                  "invokable non-static functions are "
+                                  "required to return void"));
     return false;
   }
   return true;

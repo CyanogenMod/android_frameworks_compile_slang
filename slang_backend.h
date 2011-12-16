@@ -75,9 +75,11 @@ class Backend : public clang::ASTConsumer {
   void CreateModulePasses();
   bool CreateCodeGenPasses();
 
+  void WrapBitcode(llvm::raw_string_ostream &Bitcode);
+
  protected:
   llvm::LLVMContext &mLLVMContext;
-  clang::Diagnostic &mDiags;
+  clang::DiagnosticsEngine &mDiagEngine;
 
   PragmaList *mPragmas;
 
@@ -99,7 +101,7 @@ class Backend : public clang::ASTConsumer {
   virtual void HandleTranslationUnitPost(llvm::Module *M) { return; }
 
  public:
-  Backend(clang::Diagnostic *Diags,
+  Backend(clang::DiagnosticsEngine *DiagEngine,
           const clang::CodeGenOptions &CodeGenOpts,
           const clang::TargetOptions &TargetOpts,
           PragmaList *Pragmas,
