@@ -40,6 +40,12 @@ using namespace llvm;
 #define FUNC_CODE_INST_CALL_2_7       22
 #define FUNC_CODE_DEBUG_LOC_2_7       32
 
+// Redefine older bitcode opcodes for use here. Note that these come from
+// LLVM 2.7 - 3.0.
+#define TYPE_BLOCK_ID_OLD_3_0 10
+#define TYPE_SYMTAB_BLOCK_ID_OLD_3_0 13
+#define TYPE_CODE_STRUCT_OLD_3_0 10
+
 /// These are manifest constants used by the bitcode writer. They do not need to
 /// be kept in sync with the reader, but need to be consistent within this file.
 enum {
@@ -162,7 +168,7 @@ static void WriteAttributeTable(const ValueEnumerator &VE,
 static void WriteTypeSymbolTable(const ValueEnumerator &VE,
                                  BitstreamWriter &Stream) {
   const ValueEnumerator::TypeList &TypeList = VE.getTypes();
-  Stream.EnterSubblock(bitc::TYPE_SYMTAB_BLOCK_ID_OLD, 3);
+  Stream.EnterSubblock(TYPE_SYMTAB_BLOCK_ID_OLD_3_0, 3);
 
   // 7-bit fixed width VST_CODE_ENTRY strings.
   BitCodeAbbrev *Abbv = new BitCodeAbbrev();
@@ -235,7 +241,7 @@ static void WriteTypeSymbolTable(const ValueEnumerator &VE,
 static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   const ValueEnumerator::TypeList &TypeList = VE.getTypes();
 
-  Stream.EnterSubblock(bitc::TYPE_BLOCK_ID_OLD, 4 /*count from # abbrevs */);
+  Stream.EnterSubblock(TYPE_BLOCK_ID_OLD_3_0, 4 /*count from # abbrevs */);
   SmallVector<uint64_t, 64> TypeVals;
 
   // Abbrev for TYPE_CODE_POINTER.
@@ -285,7 +291,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
 
   // Abbrev for TYPE_CODE_STRUCT.
   Abbv = new BitCodeAbbrev();
-  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_STRUCT_OLD));
+  Abbv->Add(BitCodeAbbrevOp(TYPE_CODE_STRUCT_OLD_3_0));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));  // ispacked
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,

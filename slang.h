@@ -171,9 +171,10 @@ class Slang : public clang::ModuleLoader {
             clang::DiagnosticsEngine *DiagEngine,
             DiagnosticBuffer *DiagClient);
 
-  virtual clang::ModuleKey loadModule(clang::SourceLocation ImportLoc,
-                                      clang::IdentifierInfo &ModuleName,
-                                      clang::SourceLocation ModuleNameLoc);
+  virtual clang::Module *loadModule(clang::SourceLocation ImportLoc,
+                                    clang::ModuleIdPath Path,
+                                    clang::Module::NameVisibilityKind VK,
+                                    bool IsInclusionDirective);
 
   bool setInputSource(llvm::StringRef InputFile, const char *Text,
                       size_t TextLength);
