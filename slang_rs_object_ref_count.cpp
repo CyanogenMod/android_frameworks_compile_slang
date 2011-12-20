@@ -1110,7 +1110,7 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
       RSExportPrimitiveType::DataTypeRSFont)->getASTContext();
 
   clang::SourceLocation Loc = AS->getExprLoc();
-  clang::SourceLocation StartLoc = AS->getExprLoc();
+  clang::SourceLocation StartLoc = AS->getLHS()->getExprLoc();
   clang::Stmt *UpdatedStmt = NULL;
 
   if (!RSExportPrimitiveType::IsRSObjectType(QT.getTypePtr())) {
