@@ -28,6 +28,8 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 
+#include "llvm/Target/TargetMachine.h"
+
 #include "slang_diagnostic_buffer.h"
 #include "slang_pragma_recorder.h"
 
@@ -218,6 +220,10 @@ class Slang : public clang::ModuleLoader {
   int compile();
 
   char const *getErrorMessage() { return mDiagClient->str().c_str(); }
+
+  void setDebugMetadataEmission(bool EmitDebug);
+
+  void setOptimizationLevel(llvm::CodeGenOpt::Level OptimizationLevel);
 
   // Reset the slang compiler state such that it can be reused to compile
   // another file

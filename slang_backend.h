@@ -48,7 +48,6 @@ namespace slang {
 
 class Backend : public clang::ASTConsumer {
  private:
-  const clang::CodeGenOptions &mCodeGenOpts;
   const clang::TargetOptions &mTargetOpts;
 
   llvm::Module *mpModule;
@@ -80,6 +79,7 @@ class Backend : public clang::ASTConsumer {
  protected:
   llvm::LLVMContext &mLLVMContext;
   clang::DiagnosticsEngine &mDiagEngine;
+  const clang::CodeGenOptions &mCodeGenOpts;
 
   PragmaList *mPragmas;
 
