@@ -1,17 +1,17 @@
 #!/usr/bin/python2.4
 #
-# Copyright 2010 Google Inc. All Rights Reserved.
+# Copyright 2010-2012 Google Inc. All Rights Reserved.
 
-"""RenderScript Compiler Test.
+"""Renderscript Compiler Test.
 
-Runs subdirectories of tests for the RenderScript compiler.
+Runs subdirectories of tests for the Renderscript compiler.
 """
 
 import filecmp
 import glob
 import os
+import re
 import shutil
-import string
 import subprocess
 import sys
 
@@ -23,13 +23,11 @@ class Options(object):
     return
   verbose = 0
   cleanup = 1
+  updateCTS = 0
 
 
-def CompareFiles(filename):
-  """Compares filename and filename.expect for equality."""
-  actual = filename
-  expect = filename + '.expect'
-
+def CompareFiles(actual, expect):
+  """Compares actual and expect for equality."""
   if not os.path.isfile(actual):
     if Options.verbose:
       print 'Could not find %s' % actual
@@ -42,14 +40,21 @@ def CompareFiles(filename):
   return filecmp.cmp(actual, expect, False)
 
 
+def UpdateFiles(src, dst):
+  """Update dst if it is different from src."""
+  if not CompareFiles(src, dst):
+    print 'Copying from %s to %s' % (src, dst)
+    shutil.copyfile(src, dst)
+
+
 def GetCommandLineArgs(filename):
-  """Extracts command line arguments from first comment line in a file"""
+  """Extracts command line arguments from first comment line in a file."""
   f = open(filename, 'r')
   line = f.readline()
   if line[0] == '/' and line [1] == '/':
-    return string.strip(line[2:])
+    return line[2:].strip()
   else:
-    return ""
+    return ''
 
 
 def ExecTest(dirname):
@@ -75,7 +80,7 @@ def ExecTest(dirname):
   # Extra command line arguments can be placed as // comments at the start of
   # any .rs file. We automatically bundle up all of these extra args and invoke
   # llvm-rs-cc with them.
-  extra_args_str = ""
+  extra_args_str = ''
   for rs_file in rs_files:
     extra_args_str += GetCommandLineArgs(rs_file)
   extra_args = extra_args_str.split()
@@ -127,14 +132,27 @@ def ExecTest(dirname):
     if Options.verbose:
       print 'Test Directory name should start with an F or a P'
 
-  if not CompareFiles('stdout.txt'):
+  if not CompareFiles('stdout.txt', 'stdout.txt.expect'):
     passed = False
     if Options.verbose:
       print 'stdout is different'
-  if not CompareFiles('stderr.txt'):
+  if not CompareFiles('stderr.txt', 'stderr.txt.expect'):
     passed = False
     if Options.verbose:
       print 'stderr is different'
+
+  if Options.updateCTS:
+    # Copy resulting files to appropriate CTS directory (if different).
+    if passed and glob.glob('IN_CTS'):
+      cts_path = '../../../../../cts/'
+      cts_res_raw_path = cts_path + 'tests/res/raw/'
+      cts_src_path = cts_path + 'tests/tests/renderscript/src/'
+      for bc_src in glob.glob('tmp/*.bc'):
+        bc_dst = re.sub('tmp\/', cts_res_raw_path, bc_src, 1)
+        UpdateFiles(bc_src, bc_dst)
+      for java_src in glob.glob('tmp/android/renderscript/cts/*.java'):
+        java_dst = re.sub('tmp\/', cts_src_path, java_src, 1)
+        UpdateFiles(java_src, java_dst)
 
   if Options.cleanup:
     try:
@@ -149,12 +167,14 @@ def ExecTest(dirname):
 
 
 def Usage():
+  """Print out usage information."""
   print ('Usage: %s [OPTION]... [TESTNAME]...'
-         'RenderScript Compiler Test Harness\n'
+         'Renderscript Compiler Test Harness\n'
          'Runs TESTNAMEs (all tests by default)\n'
          'Available Options:\n'
          '  -h, --help          Help message\n'
          '  -n, --no-cleanup    Don\'t clean up after running tests\n'
+         '  -u, --update-cts    Update CTS test versions\n'
          '  -v, --verbose       Verbose output\n'
         ) % (sys.argv[0]),
   return
@@ -172,6 +192,8 @@ def main():
       return 0
     elif arg in ('-n', '--no-cleanup'):
       Options.cleanup = 0
+    elif arg in ('-u', '--update-cts'):
+      Options.updateCTS = 1
     elif arg in ('-v', '--verbose'):
       Options.verbose += 1
     else:
