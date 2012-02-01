@@ -51,6 +51,7 @@
 
 #define RS_EXPORT_VAR_INDEX_PREFIX       "mExportVarIdx_"
 #define RS_EXPORT_VAR_PREFIX             "mExportVar_"
+#define RS_EXPORT_VAR_CONST_PREFIX       "const_"
 
 #define RS_EXPORT_FUNC_INDEX_PREFIX      "mExportFuncIdx_"
 #define RS_EXPORT_FOREACH_INDEX_PREFIX   "mExportForEachIdx_"
@@ -720,13 +721,7 @@ void RSReflection::genInitBoolExportVariable(Context &C,
   return;
 }
 
-void RSReflection::genInitPrimitiveExportVariable(
-      Context &C,
-      const std::string &VarName,
-      const clang::APValue &Val) {
-  slangAssert(!Val.isUninit() && "Not a valid initializer");
-
-  C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
+void RSReflection::genInitValue(Context &C, const clang::APValue &Val) {
   switch (Val.getKind()) {
     case clang::APValue::Int: {
       llvm::APInt api = Val.getInt();
@@ -758,6 +753,16 @@ void RSReflection::genInitPrimitiveExportVariable(
       slangAssert(false && "Unknown kind of initializer");
     }
   }
+}
+
+void RSReflection::genInitPrimitiveExportVariable(
+      Context &C,
+      const std::string &VarName,
+      const clang::APValue &Val) {
+  slangAssert(!Val.isUninit() && "Not a valid initializer");
+
+  C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
+  genInitValue(C, Val);
   C.out() << ";" << std::endl;
 
   return;
@@ -1180,8 +1185,20 @@ void RSReflection::genPrimitiveTypeExportVariable(
   C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
              << EV->getName() << ";" << std::endl;
 
-  // set_*()
-  if (!EV->isConst()) {
+  if (EV->isConst()) {
+    C.indent() << "public final static " << TypeName
+               << " " RS_EXPORT_VAR_CONST_PREFIX << EV->getName() << " = ";
+    const clang::APValue &Val = EV->getInit();
+    if (EPT->getType() == RSExportPrimitiveType::DataTypeBoolean) {
+      slangAssert((Val.getKind() == clang::APValue::Int) &&
+                  "Bool type has wrong initial APValue");
+      C.out() << ((Val.getInt().getSExtValue() == 0) ? "false" : "true");
+    } else {
+      genInitValue(C, Val);
+    }
+    C.out() << ";" << std::endl;
+  } else {
+    // set_*()
     C.startFunction(Context::AM_Public,
                     false,
                     "void",
