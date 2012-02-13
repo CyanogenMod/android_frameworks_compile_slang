@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,23 @@
 
 #include "llvm/ADT/APSInt.h"
 
-#include "slang_assert.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
 
 namespace slang {
+
+namespace {
+
+static clang::DiagnosticBuilder ReportVarError(RSContext *Context,
+                           const clang::SourceLocation Loc,
+                           const char *Message) {
+  clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
+  const clang::SourceManager *SM = Context->getSourceManager();
+  return DiagEngine->Report(clang::FullSourceLoc(Loc, *SM),
+      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message));
+}
+
+}  // namespace
 
 RSExportVar::RSExportVar(RSContext *Context,
                          const clang::VarDecl *VD,
@@ -32,7 +44,9 @@ RSExportVar::RSExportVar(RSContext *Context,
     : RSExportable(Context, RSExportable::EX_VAR),
       mName(VD->getName().data(), VD->getName().size()),
       mET(ET),
-      mIsConst(false) {
+      mIsConst(false),
+      mArraySize(0),
+      mNumInits(0) {
   // mInit - Evaluate initializer expression
   const clang::Expr *Initializer = VD->getAnyInitializer();
   if (Initializer != NULL) {
@@ -43,22 +57,47 @@ RSExportVar::RSExportVar(RSContext *Context,
         break;
       }
       case RSExportType::ExportClassPointer: {
-        if (Initializer->isNullPointerConstant
-            (Context->getASTContext(),
-             clang::Expr::NPC_ValueDependentIsNotNull)
-            )
+        if (Initializer->isNullPointerConstant(Context->getASTContext(),
+                clang::Expr::NPC_ValueDependentIsNotNull)) {
           mInit.Val = clang::APValue(llvm::APSInt(1));
-        else
-          Initializer->EvaluateAsRValue(mInit, Context->getASTContext());
+        } else {
+          if (!Initializer->EvaluateAsRValue(mInit, Context->getASTContext())) {
+            ReportVarError(Context, Initializer->getExprLoc(),
+                           "initializer is not an R-value");
+          }
+        }
         break;
       }
+      case RSExportType::ExportClassConstantArray: {
+        const clang::InitListExpr *IList = 
+            static_cast<const clang::InitListExpr*>(Initializer);
+        if (!IList) {
+          ReportVarError(Context, VD->getLocation(),
+                         "Unable to find initializer list");
+          break;
+        }
+        const RSExportConstantArrayType *ECAT =
+            static_cast<const RSExportConstantArrayType*>(ET);
+        mArraySize = ECAT->getSize();
+        mNumInits = IList->getNumInits();
+        for (unsigned int i = 0; i < mNumInits; i++) {
+          clang::Expr::EvalResult tempInit;
+          if (!IList->getInit(i)->EvaluateAsRValue(tempInit,
+                                                   Context->getASTContext())) {
+            ReportVarError(Context, IList->getInit(i)->getExprLoc(),
+                           "initializer is not an R-value");
+          }
+          mInitArray.push_back(tempInit);
+        }
+        break;
+      }
+      case RSExportType::ExportClassMatrix:
       case RSExportType::ExportClassRecord: {
-        // No action
-        fprintf(stderr, "RSExportVar::RSExportVar : Reflection of initializer "
-                        "to variable '%s' (of type '%s') is unsupported "
-                        "currently.\n",
-                mName.c_str(),
-                ET->getName().c_str());
+        ReportVarError(Context, VD->getLocation(),
+                       "Reflection of initializer to variable '%0' (of type "
+                       "'%1') is unsupported currently.")
+            << mName
+            << ET->getName();
         break;
       }
       default: {

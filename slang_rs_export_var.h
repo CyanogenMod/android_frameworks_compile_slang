@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 
 #include "llvm/ADT/StringRef.h"
 
+#include "slang_assert.h"
 #include "slang_rs_exportable.h"
 
 namespace clang {
@@ -43,6 +44,10 @@ class RSExportVar : public RSExportable {
 
   clang::Expr::EvalResult mInit;
 
+  size_t mArraySize;
+  size_t mNumInits;
+  llvm::SmallVector<clang::Expr::EvalResult, 0> mInitArray;
+
   RSExportVar(RSContext *Context,
               const clang::VarDecl *VD,
               const RSExportType *ET);
@@ -53,6 +58,13 @@ class RSExportVar : public RSExportable {
   inline bool isConst() const { return mIsConst; }
 
   inline const clang::APValue &getInit() const { return mInit.Val; }
+
+  inline size_t getArraySize() const { return mArraySize; }
+  inline size_t getNumInits() const { return mNumInits; }
+  inline const clang::APValue &getInitArray(unsigned int i) const {
+    slangAssert(i < mNumInits);
+    return mInitArray[i].Val;
+  }
 };  // RSExportVar
 
 }   // namespace slang
