@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <cctype>
 
 #include <algorithm>
+#include <sstream>
 #include <string>
 #include <utility>
 
@@ -321,7 +322,7 @@ static const char *GetPackerAPIName(const RSExportPrimitiveType *EPT) {
   return NULL;
 }
 
-static std::string GetTypeName(const RSExportType *ET) {
+static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
   switch (ET->getClass()) {
     case RSExportType::ExportClassPrimitive: {
       return GetPrimitiveTypeName(
@@ -346,7 +347,9 @@ static std::string GetTypeName(const RSExportType *ET) {
       const RSExportConstantArrayType* CAT =
           static_cast<const RSExportConstantArrayType*>(ET);
       std::string ElementTypeName = GetTypeName(CAT->getElementType());
-      ElementTypeName.append("[]");
+      if (Brackets) {
+        ElementTypeName.append("[]");
+      }
       return ElementTypeName;
     }
     case RSExportType::ExportClassRecord: {
@@ -673,8 +676,23 @@ void RSReflection::genScriptClassConstructor(Context &C) {
        I != E;
        I++) {
     const RSExportVar *EV = *I;
-    if (!EV->getInit().isUninit())
+    if (!EV->getInit().isUninit()) {
       genInitExportVariable(C, EV->getType(), EV->getName(), EV->getInit());
+    } else if (EV->getArraySize()) {
+      // Always create an initial zero-init array object.
+      C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = new "
+                 << GetTypeName(EV->getType(), false) << "["
+                 << EV->getArraySize() << "];" << std::endl;
+      size_t NumInits = EV->getNumInits();
+      const RSExportConstantArrayType *ECAT =
+          static_cast<const RSExportConstantArrayType*>(EV->getType());
+      const RSExportType *ET = ECAT->getElementType();
+      for (size_t i = 0; i < NumInits; i++) {
+        std::stringstream Name;
+        Name << EV->getName() << "[" << i << "]";
+        genInitExportVariable(C, ET, Name.str(), EV->getInitArray(i));
+      }
+    }
   }
 
   for (RSContext::const_export_foreach_iterator
