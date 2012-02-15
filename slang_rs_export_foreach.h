@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, The Android Open Source Project
+ * Copyright 2011-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,10 +148,15 @@ class RSExportForEach : public RSExportable {
     return Name.equals(FuncDtor);
   }
 
+  static bool isGraphicsRootRSFunc(int targetAPI,
+                                   const clang::FunctionDecl *FD);
+
   static bool isRSForEachFunc(int targetAPI, const clang::FunctionDecl *FD);
 
-  inline static bool isSpecialRSFunc(const clang::FunctionDecl *FD) {
-    return isRootRSFunc(FD) || isInitRSFunc(FD) || isDtorRSFunc(FD);
+  inline static bool isSpecialRSFunc(int targetAPI,
+                                     const clang::FunctionDecl *FD) {
+    return isGraphicsRootRSFunc(targetAPI, FD) || isInitRSFunc(FD) ||
+           isDtorRSFunc(FD);
   }
 
   static bool validateSpecialFuncDecl(int targetAPI,

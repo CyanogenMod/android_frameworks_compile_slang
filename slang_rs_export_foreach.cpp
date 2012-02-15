@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, The Android Open Source Project
+ * Copyright 2011-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -293,6 +293,28 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
   return FE;
 }
 
+bool RSExportForEach::isGraphicsRootRSFunc(int targetAPI,
+                                           const clang::FunctionDecl *FD) {
+  if (!isRootRSFunc(FD)) {
+    return false;
+  }
+
+  if (FD->getNumParams() == 0) {
+    // Graphics root function
+    return true;
+  }
+
+  // Check for legacy graphics root function (with single parameter).
+  if ((targetAPI < SLANG_ICS_TARGET_API) && (FD->getNumParams() == 1)) {
+    const clang::QualType &IntType = FD->getASTContext().IntTy;
+    if (FD->getResultType().getCanonicalType() == IntType) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool RSExportForEach::isRSForEachFunc(int targetAPI,
     const clang::FunctionDecl *FD) {
   // We currently support only compute root() being exported via forEach
@@ -300,20 +322,8 @@ bool RSExportForEach::isRSForEachFunc(int targetAPI,
     return false;
   }
 
-  if (FD->getNumParams() == 0) {
-    // Graphics compute function
+  if (isGraphicsRootRSFunc(targetAPI, FD)) {
     return false;
-  }
-
-  // Handle legacy graphics root functions.
-  if ((targetAPI < SLANG_ICS_TARGET_API) && (FD->getNumParams() == 1)) {
-    const clang::ParmVarDecl *PVD = FD->getParamDecl(0);
-    clang::QualType QT = PVD->getType().getCanonicalType();
-    const clang::QualType &IntType = FD->getASTContext().IntTy;
-    if ((FD->getResultType().getCanonicalType() == IntType) &&
-        (QT == IntType)) {
-      return false;
-    }
   }
 
   return true;
@@ -326,26 +336,34 @@ RSExportForEach::validateSpecialFuncDecl(int targetAPI,
   slangAssert(DiagEngine && FD);
   bool valid = true;
   const clang::ASTContext &C = FD->getASTContext();
+  const clang::QualType &IntType = FD->getASTContext().IntTy;
 
-  if (isRootRSFunc(FD)) {
-    unsigned int numParams = FD->getNumParams();
-    if (numParams == 0) {
-      // Graphics root function, so verify that it returns an int
-      if (FD->getResultType().getCanonicalType() != C.IntTy) {
+  if (isGraphicsRootRSFunc(targetAPI, FD)) {
+    if ((targetAPI < SLANG_ICS_TARGET_API) && (FD->getNumParams() == 1)) {
+      // Legacy graphics root function
+      const clang::ParmVarDecl *PVD = FD->getParamDecl(0);
+      clang::QualType QT = PVD->getType().getCanonicalType();
+      if (QT != IntType) {
         DiagEngine->Report(
-          clang::FullSourceLoc(FD->getLocation(),
+          clang::FullSourceLoc(PVD->getLocation(),
                                DiagEngine->getSourceManager()),
           DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                      "root(void) is required to return "
-                                      "an int for graphics usage"));
+                                      "invalid parameter type for legacy "
+                                      "graphics root() function: %0"))
+          << PVD->getType();
         valid = false;
       }
-    } else if ((targetAPI < SLANG_ICS_TARGET_API) && (numParams == 1)) {
-      // Legacy graphics root function
-      // This has already been validated in isRSForEachFunc().
-    } else {
-      slangAssert(false &&
-          "Should not call validateSpecialFuncDecl() on compute root()");
+    }
+
+    // Graphics root function, so verify that it returns an int
+    if (FD->getResultType().getCanonicalType() != IntType) {
+      DiagEngine->Report(
+        clang::FullSourceLoc(FD->getLocation(),
+                             DiagEngine->getSourceManager()),
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "root() is required to return "
+                                    "an int for graphics usage"));
+      valid = false;
     }
   } else if (isInitRSFunc(FD) || isDtorRSFunc(FD)) {
     if (FD->getNumParams() != 0) {

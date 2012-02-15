@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,19 +116,16 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     return false;
   }
 
-  if (RSExportForEach::isRSForEachFunc(mTargetAPI, FD)) {
+  if (RSExportForEach::isSpecialRSFunc(mTargetAPI, FD)) {
+    // Do not reflect specialized functions like init, dtor, or graphics root.
+    return RSExportForEach::validateSpecialFuncDecl(mTargetAPI,
+                                                    getDiagnostics(), FD);
+  } else if (RSExportForEach::isRSForEachFunc(mTargetAPI, FD)) {
     RSExportForEach *EFE = RSExportForEach::Create(this, FD);
     if (EFE == NULL)
       return false;
     else
       mExportForEach.push_back(EFE);
-    return true;
-  } else if (RSExportForEach::isSpecialRSFunc(FD)) {
-    // Do not reflect specialized RS functions like init or graphics root.
-    if (!RSExportForEach::validateSpecialFuncDecl(mTargetAPI,
-                                                  getDiagnostics(), FD)) {
-      return false;
-    }
     return true;
   }
 

@@ -1,3 +1,1 @@
-root_graphics_13.rs:5:5: error: compute root() is required to return a void type
-root_graphics_13.rs:5:5: error: Compute root() must have at least one parameter for in or out
-root_graphics_13.rs:5:5: error: Compute root() targeting SDK levels 11-13 may not skip parameters
+root_graphics_13.rs:5:23: error: invalid parameter type for legacy graphics root() function: 'unsigned int'
