@@ -21,6 +21,7 @@
 // MR -> Maintenance Release
 // HC -> Honeycomb
 // ICS -> Ice Cream Sandwich
+// JB -> Jelly Bean
 enum SlangTargetAPI {
   SLANG_MINIMUM_TARGET_API = 11,
   SLANG_HC_TARGET_API = 11,
@@ -28,6 +29,7 @@ enum SlangTargetAPI {
   SLANG_HC_MR2_TARGET_API = 13,
   SLANG_ICS_TARGET_API = 14,
   SLANG_ICS_MR1_TARGET_API = 15,
+  SLANG_JB_TARGET_API = 16,
   SLANG_MAXIMUM_TARGET_API = RS_VERSION
 };
 // Note that RS_VERSION is defined at build time (see Android.mk for details).
