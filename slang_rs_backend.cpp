@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,8 @@ RSBackend::RSBackend(RSContext *Context,
     mAllowRSPrefix(AllowRSPrefix),
     mExportVarMetadata(NULL),
     mExportFuncMetadata(NULL),
-    mExportForEachMetadata(NULL),
+    mExportForEachNameMetadata(NULL),
+    mExportForEachSignatureMetadata(NULL),
     mExportTypeMetadata(NULL),
     mRSObjectSlotsMetadata(NULL),
     mRefCount(mContext->getASTContext()) {
@@ -403,10 +404,16 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
 
   // Dump export function info
   if (mContext->hasExportForEach()) {
-    if (mExportForEachMetadata == NULL)
-      mExportForEachMetadata =
+    if (mExportForEachNameMetadata == NULL) {
+      mExportForEachNameMetadata =
+          M->getOrInsertNamedMetadata(RS_EXPORT_FOREACH_NAME_MN);
+    }
+    if (mExportForEachSignatureMetadata == NULL) {
+      mExportForEachSignatureMetadata =
           M->getOrInsertNamedMetadata(RS_EXPORT_FOREACH_MN);
+    }
 
+    llvm::SmallVector<llvm::Value*, 1> ExportForEachName;
     llvm::SmallVector<llvm::Value*, 1> ExportForEachInfo;
 
     for (RSContext::const_export_foreach_iterator
@@ -416,11 +423,18 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
          I++) {
       const RSExportForEach *EFE = *I;
 
+      ExportForEachName.push_back(
+          llvm::MDString::get(mLLVMContext, EFE->getName().c_str()));
+
+      mExportForEachNameMetadata->addOperand(
+          llvm::MDNode::get(mLLVMContext, ExportForEachName));
+      ExportForEachName.clear();
+
       ExportForEachInfo.push_back(
           llvm::MDString::get(mLLVMContext,
-                              llvm::utostr_32(EFE->getMetadataEncoding())));
+                              llvm::utostr_32(EFE->getSignatureMetadata())));
 
-      mExportForEachMetadata->addOperand(
+      mExportForEachSignatureMetadata->addOperand(
           llvm::MDNode::get(mLLVMContext, ExportForEachInfo));
       ExportForEachInfo.clear();
     }

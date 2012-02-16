@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@
 #define RS_EXPORT_TYPE_MN "#rs_export_type"
 
 #define RS_OBJECT_SLOTS_MN "#rs_object_slots"
+
+#define RS_EXPORT_FOREACH_NAME_MN "#rs_export_foreach_name"
 
 #define RS_EXPORT_FOREACH_MN "#rs_export_foreach"
 

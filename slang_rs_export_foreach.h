@@ -43,7 +43,7 @@ class RSExportForEach : public RSExportable {
   RSExportType *mOutType;
   size_t numParams;
 
-  unsigned int mMetadataEncoding;
+  unsigned int mSignatureMetadata;
 
   const clang::ParmVarDecl *mIn;
   const clang::ParmVarDecl *mOut;
@@ -58,7 +58,7 @@ class RSExportForEach : public RSExportable {
          const clang::FunctionDecl *FD)
     : RSExportable(Context, RSExportable::EX_FOREACH),
       mName(Name.data(), Name.size()), mParamPacketType(NULL), mInType(NULL),
-      mOutType(NULL), numParams(0), mMetadataEncoding(0),
+      mOutType(NULL), numParams(0), mSignatureMetadata(0),
       mIn(NULL), mOut(NULL), mUsrData(NULL),
       mX(NULL), mY(NULL), mZ(NULL), mAr(NULL) {
     return;
@@ -103,8 +103,8 @@ class RSExportForEach : public RSExportable {
     return mParamPacketType;
   }
 
-  inline unsigned int getMetadataEncoding() const {
-    return mMetadataEncoding;
+  inline unsigned int getSignatureMetadata() const {
+    return mSignatureMetadata;
   }
 
   typedef RSExportRecordType::const_field_iterator const_param_iterator;

@@ -59,20 +59,30 @@ bool RSExportForEach::validateAndConstructParams(
   clang::ASTContext &C = Context->getASTContext();
   clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
 
-  if (!isRootRSFunc(FD)) {
-    slangAssert(false && "must be called on compute root function!");
-  }
-
   numParams = FD->getNumParams();
   slangAssert(numParams > 0);
 
-  // Compute root functions are required to return a void type for now
+  if (Context->getTargetAPI() < SLANG_JB_TARGET_API) {
+    if (!isRootRSFunc(FD)) {
+      DiagEngine->Report(
+        clang::FullSourceLoc(FD->getLocation(), DiagEngine->getSourceManager()),
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "Non-root compute kernel %0() is "
+                                    "not supported in SDK levels %1-%2"))
+        << FD->getName()
+        << SLANG_MINIMUM_TARGET_API
+        << (SLANG_JB_TARGET_API - 1);
+      return false;
+    }
+  }
+
+  // Compute kernel functions are required to return a void type for now
   if (FD->getResultType().getCanonicalType() != C.VoidTy) {
     DiagEngine->Report(
       clang::FullSourceLoc(FD->getLocation(), DiagEngine->getSourceManager()),
       DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                  "compute root() is required to return a "
-                                  "void type"));
+                                  "Compute kernel %0() is required to return a "
+                                  "void type")) << FD->getName();
     valid = false;
   }
 
@@ -104,8 +114,8 @@ bool RSExportForEach::validateAndConstructParams(
       clang::FullSourceLoc(FD->getLocation(),
                            DiagEngine->getSourceManager()),
       DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                  "Compute root() must have at least one "
-                                  "parameter for in or out"));
+                                  "Compute kernel %0() must have at least one "
+                                  "parameter for in or out")) << FD->getName();
     valid = false;
   }
 
@@ -128,9 +138,9 @@ bool RSExportForEach::validateAndConstructParams(
         clang::FullSourceLoc(PVD->getLocation(),
                              DiagEngine->getSourceManager()),
         DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "Unexpected root() parameter '%0' "
-                                    "of type '%1'"))
-        << PVD->getName() << PVD->getType().getAsString();
+                                    "Unexpected kernel %0() parameter '%1' "
+                                    "of type '%2'"))
+        << FD->getName() << PVD->getName() << PVD->getType().getAsString();
       valid = false;
     } else {
       llvm::StringRef ParamName = PVD->getName();
@@ -162,9 +172,9 @@ bool RSExportForEach::validateAndConstructParams(
             clang::FullSourceLoc(PVD->getLocation(),
                                  DiagEngine->getSourceManager()),
             DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                        "Unexpected root() parameter '%0' "
-                                        "of type '%1'"))
-            << PVD->getName() << PVD->getType().getAsString();
+                                        "Unexpected kernel %0() parameter '%1' "
+                                        "of type '%2'"))
+            << FD->getName() << PVD->getName() << PVD->getType().getAsString();
           valid = false;
         }
       }
@@ -173,35 +183,35 @@ bool RSExportForEach::validateAndConstructParams(
     i++;
   }
 
-  mMetadataEncoding = 0;
+  mSignatureMetadata = 0;
   if (valid) {
     // Set up the bitwise metadata encoding for runtime argument passing.
-    mMetadataEncoding |= (mIn ?       0x01 : 0);
-    mMetadataEncoding |= (mOut ?      0x02 : 0);
-    mMetadataEncoding |= (mUsrData ?  0x04 : 0);
-    mMetadataEncoding |= (mX ?        0x08 : 0);
-    mMetadataEncoding |= (mY ?        0x10 : 0);
+    mSignatureMetadata |= (mIn ?       0x01 : 0);
+    mSignatureMetadata |= (mOut ?      0x02 : 0);
+    mSignatureMetadata |= (mUsrData ?  0x04 : 0);
+    mSignatureMetadata |= (mX ?        0x08 : 0);
+    mSignatureMetadata |= (mY ?        0x10 : 0);
   }
 
   if (Context->getTargetAPI() < SLANG_ICS_TARGET_API) {
     // APIs before ICS cannot skip between parameters. It is ok, however, for
     // them to omit further parameters (i.e. skipping X is ok if you skip Y).
-    if (mMetadataEncoding != 0x1f &&  // In, Out, UsrData, X, Y
-        mMetadataEncoding != 0x0f &&  // In, Out, UsrData, X
-        mMetadataEncoding != 0x07 &&  // In, Out, UsrData
-        mMetadataEncoding != 0x03 &&  // In, Out
-        mMetadataEncoding != 0x01) {  // In
+    if (mSignatureMetadata != 0x1f &&  // In, Out, UsrData, X, Y
+        mSignatureMetadata != 0x0f &&  // In, Out, UsrData, X
+        mSignatureMetadata != 0x07 &&  // In, Out, UsrData
+        mSignatureMetadata != 0x03 &&  // In, Out
+        mSignatureMetadata != 0x01) {  // In
       DiagEngine->Report(
         clang::FullSourceLoc(FD->getLocation(),
                              DiagEngine->getSourceManager()),
         DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "Compute root() targeting SDK levels "
-                                    "%0-%1 may not skip parameters"))
-        << SLANG_MINIMUM_TARGET_API << (SLANG_ICS_TARGET_API-1);
+                                    "Compute kernel %0() targeting SDK levels "
+                                    "%1-%2 may not skip parameters"))
+        << FD->getName() << SLANG_MINIMUM_TARGET_API
+        << (SLANG_ICS_TARGET_API - 1);
       valid = false;
     }
   }
-
 
   return valid;
 }
@@ -317,16 +327,32 @@ bool RSExportForEach::isGraphicsRootRSFunc(int targetAPI,
 
 bool RSExportForEach::isRSForEachFunc(int targetAPI,
     const clang::FunctionDecl *FD) {
-  // We currently support only compute root() being exported via forEach
-  if (!isRootRSFunc(FD)) {
-    return false;
-  }
-
   if (isGraphicsRootRSFunc(targetAPI, FD)) {
     return false;
   }
 
-  return true;
+  // Check if first parameter is a pointer (which is required for ForEach).
+  unsigned int numParams = FD->getNumParams();
+
+  if (numParams > 0) {
+    const clang::ParmVarDecl *PVD = FD->getParamDecl(0);
+    clang::QualType QT = PVD->getType().getCanonicalType();
+
+    if (QT->isPointerType()) {
+      return true;
+    }
+
+    // Any non-graphics root() is automatically a ForEach candidate.
+    // At this point, however, we know that it is not going to be a valid
+    // compute root() function (due to not having a pointer parameter). We
+    // still want to return true here, so that we can issue appropriate
+    // diagnostics.
+    if (isRootRSFunc(FD)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool
