@@ -183,6 +183,42 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
   return (ET != NULL);
 }
 
+
+// Possibly re-order ForEach exports (maybe generating a dummy "root" function).
+// We require "root" to be listed as slot 0 of our exported compute kernels,
+// so this only needs to be created if we have other non-root kernels.
+void RSContext::cleanupForEach() {
+  bool foundNonRoot = false;
+  ExportForEachList::iterator begin = mExportForEach.begin();
+
+  for (ExportForEachList::iterator I = begin, E = mExportForEach.end();
+       I != E;
+       I++) {
+    RSExportForEach *EFE = *I;
+    if (!EFE->getName().compare("root")) {
+      if (I == begin) {
+        // Nothing to do, since it is the first function
+        return;
+      }
+
+      mExportForEach.erase(I);
+      mExportForEach.push_front(EFE);
+      return;
+    } else {
+      foundNonRoot = true;
+    }
+  }
+
+  // If we found a non-root kernel, but no root() function, we need to add a
+  // dummy version (so that script->script calls of rsForEach don't behave
+  // erratically).
+  if (foundNonRoot) {
+    RSExportForEach *DummyRoot = RSExportForEach::CreateDummyRoot(this);
+    mExportForEach.push_front(DummyRoot);
+  }
+}
+
+
 bool RSContext::processExport() {
   bool valid = true;
 
@@ -212,6 +248,10 @@ bool RSContext::processExport() {
         }
       }
     }
+  }
+
+  if (valid) {
+    cleanupForEach();
   }
 
   // Finally, export type forcely set to be exported by user

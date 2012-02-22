@@ -89,6 +89,8 @@ class RSContext {
   bool processExportFunc(const clang::FunctionDecl *FD);
   bool processExportType(const llvm::StringRef &Name);
 
+  void cleanupForEach();
+
   ExportVarList mExportVars;
   ExportFuncList mExportFuncs;
   ExportForEachList mExportForEach;

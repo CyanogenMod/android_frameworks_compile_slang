@@ -977,6 +977,15 @@ void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
 }
 
 void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
+  if (EF->isDummyRoot()) {
+    // Skip reflection for dummy root() kernels. Note that we have to
+    // advance the next slot number for ForEach, however.
+    C.indent() << "//private final static int "RS_EXPORT_FOREACH_INDEX_PREFIX
+               << EF->getName() << " = " << C.getNextExportForEachSlot() << ";"
+               << std::endl;
+    return;
+  }
+
   C.indent() << "private final static int "RS_EXPORT_FOREACH_INDEX_PREFIX
              << EF->getName() << " = " << C.getNextExportForEachSlot() << ";"
              << std::endl;

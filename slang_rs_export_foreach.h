@@ -53,14 +53,15 @@ class RSExportForEach : public RSExportable {
   const clang::ParmVarDecl *mZ;
   const clang::ParmVarDecl *mAr;
 
+  bool mDummyRoot;
+
   // TODO(all): Add support for LOD/face when we have them
-  RSExportForEach(RSContext *Context, const llvm::StringRef &Name,
-         const clang::FunctionDecl *FD)
+  RSExportForEach(RSContext *Context, const llvm::StringRef &Name)
     : RSExportable(Context, RSExportable::EX_FOREACH),
       mName(Name.data(), Name.size()), mParamPacketType(NULL), mInType(NULL),
       mOutType(NULL), numParams(0), mSignatureMetadata(0),
       mIn(NULL), mOut(NULL), mUsrData(NULL),
-      mX(NULL), mY(NULL), mZ(NULL), mAr(NULL) {
+      mX(NULL), mY(NULL), mZ(NULL), mAr(NULL), mDummyRoot(false) {
     return;
   }
 
@@ -70,6 +71,8 @@ class RSExportForEach : public RSExportable {
  public:
   static RSExportForEach *Create(RSContext *Context,
                                  const clang::FunctionDecl *FD);
+
+  static RSExportForEach *CreateDummyRoot(RSContext *Context);
 
   inline const std::string &getName() const {
     return mName;
@@ -105,6 +108,10 @@ class RSExportForEach : public RSExportable {
 
   inline unsigned int getSignatureMetadata() const {
     return mSignatureMetadata;
+  }
+
+  inline bool isDummyRoot() const {
+    return mDummyRoot;
   }
 
   typedef RSExportRecordType::const_field_iterator const_param_iterator;
