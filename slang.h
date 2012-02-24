@@ -49,7 +49,7 @@ namespace clang {
   class SourceManager;
   class TargetInfo;
   class TargetOptions;
-}
+}  // namespace clang
 
 namespace slang {
 

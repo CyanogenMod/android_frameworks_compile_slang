@@ -39,9 +39,8 @@ DiagnosticBuffer::~DiagnosticBuffer() {
 }
 
 void DiagnosticBuffer::HandleDiagnostic(
-  clang::DiagnosticsEngine::Level DiagLevel,
-  clang::Diagnostic const &Info) {
-
+    clang::DiagnosticsEngine::Level DiagLevel,
+    clang::Diagnostic const &Info) {
   clang::SourceLocation const &SrcLoc = Info.getLocation();
 
   // 100 is enough for storing general diagnosis message

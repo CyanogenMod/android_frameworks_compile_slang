@@ -1671,7 +1671,8 @@ bool RSReflection::genTypeClass(Context &C,
       ";" << std::endl;
   C.indent() << "private FieldPacker "RS_TYPE_ITEM_BUFFER_PACKER_NAME";"
              << std::endl;
-  C.indent() << "private static java.lang.ref.WeakReference<Element> "RS_TYPE_ELEMENT_REF_NAME
+  C.indent() << "private static java.lang.ref.WeakReference<Element> "
+             RS_TYPE_ELEMENT_REF_NAME
              " = new java.lang.ref.WeakReference<Element>(null);" << std::endl;
 
   genTypeClassConstructor(C, ERT);
@@ -1743,15 +1744,17 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   1,
                   "RenderScript", RenderScriptVar);
 
-  // TODO: Fix weak-refs + multi-context issue.
-  //C.indent() << "Element e = " << RS_TYPE_ELEMENT_REF_NAME << ".get();" << std::endl;
-  //C.indent() << "if (e != null) return e;" << std::endl;
+  // TODO(all): Fix weak-refs + multi-context issue.
+  // C.indent() << "Element e = " << RS_TYPE_ELEMENT_REF_NAME
+  //            << ".get();" << std::endl;
+  // C.indent() << "if (e != null) return e;" << std::endl;
   genBuildElement(C, "eb", ERT, RenderScriptVar, /* IsInline = */true);
   C.indent() << "return eb.create();" << std::endl;
-  //C.indent() << "e = eb.create();" << std::endl;
-  //C.indent() << RS_TYPE_ELEMENT_REF_NAME <<
-  //           " = new java.lang.ref.WeakReference<Element>(e);" << std::endl;
-  //C.indent() << "return e;" << std::endl;
+  // C.indent() << "e = eb.create();" << std::endl;
+  // C.indent() << RS_TYPE_ELEMENT_REF_NAME
+  //            << " = new java.lang.ref.WeakReference<Element>(e);"
+  //            << std::endl;
+  // C.indent() << "return e;" << std::endl;
   C.endFunction();
 
 
@@ -1764,7 +1767,8 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   "RenderScript", RenderScriptVar);
   C.indent() << RS_TYPE_ITEM_BUFFER_NAME" = null;" << std::endl;
   C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME" = null;" << std::endl;
-  C.indent() << "mElement = createElement(" << RenderScriptVar << ");" << std::endl;
+  C.indent() << "mElement = createElement(" << RenderScriptVar << ");"
+             << std::endl;
   C.endFunction();
 
   // 1D without usage
@@ -1814,8 +1818,8 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   "int", "usages");
   C.indent() << C.getClassName() << " obj = new " << C.getClassName() << "("
              << RenderScriptVar << ");" << std::endl;
-  C.indent() << "obj.mAllocation = Allocation.createSized(rs, obj.mElement, dimX, usages);"
-             << std::endl;
+  C.indent() << "obj.mAllocation = Allocation.createSized("
+                "rs, obj.mElement, dimX, usages);" << std::endl;
   C.indent() << "return obj;" << std::endl;
   C.endFunction();
 
@@ -1827,8 +1831,8 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   2,
                   "RenderScript", RenderScriptVar,
                   "int", "dimX");
-  C.indent() << "return create1D(" << RenderScriptVar << ", dimX, Allocation.USAGE_SCRIPT);"
-             << std::endl;
+  C.indent() << "return create1D(" << RenderScriptVar
+             << ", dimX, Allocation.USAGE_SCRIPT);" << std::endl;
   C.endFunction();
 
 
@@ -1841,8 +1845,8 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   "RenderScript", RenderScriptVar,
                   "int", "dimX",
                   "int", "dimY");
-  C.indent() << "return create2D(" << RenderScriptVar << ", dimX, dimY, Allocation.USAGE_SCRIPT);"
-             << std::endl;
+  C.indent() << "return create2D(" << RenderScriptVar
+             << ", dimX, dimY, Allocation.USAGE_SCRIPT);" << std::endl;
   C.endFunction();
 
   // create2D with usage
@@ -1858,11 +1862,13 @@ void RSReflection::genTypeClassConstructor(Context &C,
 
   C.indent() << C.getClassName() << " obj = new " << C.getClassName() << "("
              << RenderScriptVar << ");" << std::endl;
-  C.indent() << "Type.Builder b = new Type.Builder(rs, obj.mElement);" << std::endl;
+  C.indent() << "Type.Builder b = new Type.Builder(rs, obj.mElement);"
+             << std::endl;
   C.indent() << "b.setX(dimX);" << std::endl;
   C.indent() << "b.setY(dimY);" << std::endl;
   C.indent() << "Type t = b.create();" << std::endl;
-  C.indent() << "obj.mAllocation = Allocation.createTyped(rs, t, usages);" << std::endl;
+  C.indent() << "obj.mAllocation = Allocation.createTyped(rs, t, usages);"
+             << std::endl;
   C.indent() << "return obj;" << std::endl;
   C.endFunction();
 
@@ -1874,7 +1880,8 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   "createTypeBuilder",
                   1,
                   "RenderScript", RenderScriptVar);
-  C.indent() << "Element e = createElement(" << RenderScriptVar << ");" << std::endl;
+  C.indent() << "Element e = createElement(" << RenderScriptVar << ");"
+             << std::endl;
   C.indent() << "return new Type.Builder(rs, e);" << std::endl;
   C.endFunction();
 
@@ -1891,10 +1898,12 @@ void RSReflection::genTypeClassConstructor(Context &C,
              << RenderScriptVar << ");" << std::endl;
   C.indent() << "Type t = tb.create();" << std::endl;
   C.indent() << "if (t.getElement() != obj.mElement) {" << std::endl;
-  C.indent() << "    throw new RSIllegalArgumentException(\"Type.Builder did not match expected element type.\");"
+  C.indent() << "    throw new RSIllegalArgumentException("
+                "\"Type.Builder did not match expected element type.\");"
              << std::endl;
   C.indent() << "}" << std::endl;
-  C.indent() << "obj.mAllocation = Allocation.createTyped(rs, t, usages);" << std::endl;
+  C.indent() << "obj.mAllocation = Allocation.createTyped(rs, t, usages);"
+             << std::endl;
   C.indent() << "return obj;" << std::endl;
   C.endFunction();
 }

@@ -77,6 +77,6 @@ class RSSlangReflectUtils {
   // Generate the bit code accessor Java source file.
   static bool GenerateBitCodeAccessor(const BitCodeAccessorContext &context);
 };
-}
+}  // namespace slang
 
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_REFLECT_UTILS_H_  NOLINT

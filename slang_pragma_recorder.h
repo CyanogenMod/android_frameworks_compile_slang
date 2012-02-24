@@ -49,6 +49,6 @@ class PragmaRecorder : public clang::PragmaHandler {
                             clang::PragmaIntroducerKind Introducer,
                             clang::Token &FirstToken);
 };
-}
+}  // namespace slang
 
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_PRAGMA_RECORDER_H_  NOLINT

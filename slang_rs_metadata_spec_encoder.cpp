@@ -110,7 +110,8 @@ RS_DATA_TYPE_CLASS_ENUMS
 
   int finalize();
 };
-}
+
+}  // namespace
 
 RSMetadataEncoderInternal::RSMetadataEncoderInternal(llvm::Module *M)
     : mModule(M),

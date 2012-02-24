@@ -69,7 +69,7 @@ RSExportVar::RSExportVar(RSContext *Context,
         break;
       }
       case RSExportType::ExportClassConstantArray: {
-        const clang::InitListExpr *IList = 
+        const clang::InitListExpr *IList =
             static_cast<const clang::InitListExpr*>(Initializer);
         if (!IList) {
           ReportVarError(Context, VD->getLocation(),

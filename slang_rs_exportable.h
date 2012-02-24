@@ -59,6 +59,6 @@ class RSExportable {
 
   virtual ~RSExportable() { }
 };
-}
+}  // namespace slang
 
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORTABLE_H_  NOLINT

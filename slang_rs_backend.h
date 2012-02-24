@@ -83,6 +83,6 @@ class RSBackend : public Backend {
 
   virtual ~RSBackend();
 };
-}
+}  // namespace slang
 
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_BACKEND_H_  NOLINT

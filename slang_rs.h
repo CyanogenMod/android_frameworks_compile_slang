@@ -138,6 +138,6 @@ class SlangRS : public Slang {
 
   virtual ~SlangRS();
 };
-}
+}  // namespace slang
 
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_H_  NOLINT

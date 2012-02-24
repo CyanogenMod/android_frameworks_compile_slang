@@ -117,8 +117,7 @@ static inline llvm::tool_output_file *
 OpenOutputFile(const char *OutputFile,
                unsigned Flags,
                std::string* Error,
-               clang::DiagnosticsEngine *DiagEngine)
-{
+               clang::DiagnosticsEngine *DiagEngine) {
   slangAssert((OutputFile != NULL) && (Error != NULL) &&
               (DiagEngine != NULL) && "Invalid parameter!");
 
@@ -279,7 +278,6 @@ clang::Module *Slang::loadModule(clang::SourceLocation ImportLoc,
                                  clang::ModuleIdPath Path,
                                  clang::Module::NameVisibilityKind Visibility,
                                  bool IsInclusionDirective) {
-  //FIXME: Don't we have to implement this?
   slangAssert(0 && "Not implemented");
   return NULL;
 }

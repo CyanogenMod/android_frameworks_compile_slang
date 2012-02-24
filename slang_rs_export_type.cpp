@@ -116,12 +116,11 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
 }
 
 static const clang::Type *TypeExportableHelper(
-  clang::Type const *T,
-  llvm::SmallPtrSet<clang::Type const *, 8> &SPS,
-  clang::DiagnosticsEngine *DiagEngine,
-  clang::VarDecl const *VD,
-  clang::RecordDecl const *TopLevelRecord)
-{
+    clang::Type const *T,
+    llvm::SmallPtrSet<clang::Type const *, 8> &SPS,
+    clang::DiagnosticsEngine *DiagEngine,
+    clang::VarDecl const *VD,
+    clang::RecordDecl const *TopLevelRecord) {
   // Normalize first
   if ((T = GET_CANONICAL_TYPE(T)) == NULL)
     return NULL;

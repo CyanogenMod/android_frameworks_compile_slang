@@ -267,4 +267,4 @@ bool RSSlangReflectUtils::GenerateBitCodeAccessor(
     fclose(pfout);
     return ret;
 }
-}
+}  // namespace slang

@@ -38,7 +38,7 @@ class DiagnosticBuffer : public clang::DiagnosticConsumer {
  public:
   DiagnosticBuffer();
 
-  DiagnosticBuffer(DiagnosticBuffer const &src);
+  explicit DiagnosticBuffer(DiagnosticBuffer const &src);
 
   virtual ~DiagnosticBuffer();
 
@@ -58,6 +58,6 @@ class DiagnosticBuffer : public clang::DiagnosticConsumer {
   }
 };
 
-}
+}  // namespace slang
 
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_DIAGNOSTIC_BUFFER_H_  NOLINT

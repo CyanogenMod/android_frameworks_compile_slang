@@ -33,6 +33,6 @@ class SlangUtils {
   static bool CreateDirectoryWithParents(llvm::StringRef Dir,
                                          std::string* Error);
 };
-}
+}  // namespace slang
 
 #endif  // _COMPILE_SLANG_SLANG_UTILS_H_  NOLINT

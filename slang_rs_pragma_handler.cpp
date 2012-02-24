@@ -257,8 +257,7 @@ void RSPragmaHandler::handleOptionalStringLiteralParamPragma(
     if (StringLiteral.hadError) {
       // Diagnostics will be generated automatically
       return;
-    }
-    else {
+    } else {
       this->handleItem(std::string(StringLiteral.GetString()));
     }
 
