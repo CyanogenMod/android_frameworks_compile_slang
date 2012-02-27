@@ -314,26 +314,34 @@ bool SlangRS::compile(
       return false;
 
     if (OutputType != Slang::OT_Dependency) {
-      if (!reflectToJava(JavaReflectionPathBase,
-                         JavaReflectionPackageName,
-                         &RealPackageName))
-        return false;
 
-      for (std::vector<std::string>::const_iterator
-               I = mGeneratedFileNames.begin(), E = mGeneratedFileNames.end();
-           I != E;
-           I++) {
-        std::string ReflectedName = RSSlangReflectUtils::ComputePackagedPath(
-            JavaReflectionPathBase.c_str(),
-            (RealPackageName + OS_PATH_SEPARATOR_STR + *I).c_str());
-        appendGeneratedFileName(ReflectedName + ".java");
-      }
+      if (BitcodeStorage == BCST_CPP_CODE) {
+        // TODO: Call C++ reflection routines + appendGeneratedFileName().
+      } else {
 
-      if ((OutputType == Slang::OT_Bitcode) &&
-          (BitcodeStorage == BCST_JAVA_CODE) &&
-          !generateBitcodeAccessor(JavaReflectionPathBase,
-                                     RealPackageName.c_str()))
+        if (!reflectToJava(JavaReflectionPathBase,
+                           JavaReflectionPackageName,
+                           &RealPackageName)) {
           return false;
+        }
+
+        for (std::vector<std::string>::const_iterator
+                 I = mGeneratedFileNames.begin(), E = mGeneratedFileNames.end();
+             I != E;
+             I++) {
+          std::string ReflectedName = RSSlangReflectUtils::ComputePackagedPath(
+              JavaReflectionPathBase.c_str(),
+              (RealPackageName + OS_PATH_SEPARATOR_STR + *I).c_str());
+          appendGeneratedFileName(ReflectedName + ".java");
+        }
+
+        if ((OutputType == Slang::OT_Bitcode) &&
+            (BitcodeStorage == BCST_JAVA_CODE) &&
+            !generateBitcodeAccessor(JavaReflectionPathBase,
+                                     RealPackageName.c_str())) {
+          return false;
+        }
+      }
     }
 
     if (OutputDep) {
