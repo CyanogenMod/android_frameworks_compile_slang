@@ -155,6 +155,7 @@ void Slang::GlobalInitialization() {
     LangOpts.RTTI = 0;  // Turn off the RTTI information support
     LangOpts.NeXTRuntime = 0;   // Turn off the NeXT runtime uses
     LangOpts.C99 = 1;
+    LangOpts.CharIsSigned = 1;  // Signed char is our default.
 
     CodeGenOpts.OptimizationLevel = 3;  /* -O3 */
 
