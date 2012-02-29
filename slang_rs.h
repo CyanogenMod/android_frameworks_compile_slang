@@ -120,6 +120,11 @@ class SlangRS : public Slang {
   //
   // @JavaReflectionPathBase - The path base for storing reflection files.
   //
+  // @EmitDebug - true to allow debug metadata emission
+  //
+  // @OptimizationLevel - code generation optimization level: None is recommended for
+  //                      interactive debugging. The default is Aggresive.
+  //
   // @JavaReflectionPackageName - The package name given by user in command
   //                              line. This may override the package name
   //                              specified in the .rs using #pragma.
@@ -130,7 +135,8 @@ class SlangRS : public Slang {
                const std::vector<std::string> &AdditionalDepTargets,
                Slang::OutputType OutputType, BitCodeStorageType BitcodeStorage,
                bool AllowRSPrefix, bool OutputDep,
-               unsigned int TargetAPI,
+               unsigned int TargetAPI, bool EmitDebug,
+               llvm::CodeGenOpt::Level OptimizationLevel,
                const std::string &JavaReflectionPathBase,
                const std::string &JavaReflectionPackageName);
 

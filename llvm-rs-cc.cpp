@@ -40,6 +40,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Target/TargetMachine.h"
 
 #include "slang.h"
 #include "slang_assert.h"
@@ -140,6 +141,12 @@ class RSCCOptions {
 
   unsigned int mTargetAPI;
 
+  // Enable emission of debugging symbols
+  unsigned mDebugEmission : 1;
+
+  // The optimization level used in CodeGen, and encoded in emitted bitcode
+  llvm::CodeGenOpt::Level mOptimizationLevel;
+
   RSCCOptions() {
     mOutputType = slang::Slang::OT_Bitcode;
     // Triple/CPU/Features must be hard-coded to our chosen portable ABI.
@@ -152,6 +159,8 @@ class RSCCOptions {
     mShowHelp = 0;
     mShowVersion = 0;
     mTargetAPI = RS_VERSION;
+    mDebugEmission = 0;
+    mOptimizationLevel = llvm::CodeGenOpt::Aggressive;
   }
 };
 
@@ -264,6 +273,14 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
 
     Opts.mShowHelp = Args->hasArg(OPT_help);
     Opts.mShowVersion = Args->hasArg(OPT_version);
+    Opts.mDebugEmission = Args->hasArg(OPT_emit_g);
+
+    size_t OptLevel = Args->getLastArgIntValue(OPT_optimization_level,
+                                               3,
+                                               DiagEngine);
+
+    Opts.mOptimizationLevel = OptLevel == 0 ? llvm::CodeGenOpt::None
+                                            : llvm::CodeGenOpt::Aggressive;
 
     Opts.mTargetAPI = Args->getLastArgIntValue(OPT_target_api,
                                                RS_VERSION,
@@ -445,6 +462,8 @@ int main(int argc, const char **argv) {
                                          Opts.mAllowRSPrefix,
                                          Opts.mOutputDep,
                                          Opts.mTargetAPI,
+                                         Opts.mDebugEmission,
+                                         Opts.mOptimizationLevel,
                                          Opts.mJavaReflectionPathBase,
                                          Opts.mJavaReflectionPackageName);
   Compiler->reset();
