@@ -157,7 +157,7 @@ void Slang::GlobalInitialization() {
     LangOpts.C99 = 1;
     LangOpts.CharIsSigned = 1;  // Signed char is our default.
 
-    CodeGenOpts.OptimizationLevel = 3;  /* -O3 */
+    CodeGenOpts.OptimizationLevel = 3;
 
     GlobalInitialized = true;
   }
@@ -448,6 +448,14 @@ int Slang::compile() {
   mOS.reset();
 
   return mDiagEngine->hasErrorOccurred() ? 1 : 0;
+}
+
+void Slang::setDebugMetadataEmission(bool EmitDebug) {
+  CodeGenOpts.DebugInfo = EmitDebug;
+}
+
+void Slang::setOptimizationLevel(llvm::CodeGenOpt::Level OptimizationLevel) {
+  CodeGenOpts.OptimizationLevel = OptimizationLevel;
 }
 
 void Slang::reset() {

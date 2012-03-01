@@ -261,7 +261,8 @@ bool SlangRS::compile(
     const std::vector<std::string> &AdditionalDepTargets,
     Slang::OutputType OutputType, BitCodeStorageType BitcodeStorage,
     bool AllowRSPrefix, bool OutputDep,
-    unsigned int TargetAPI,
+    unsigned int TargetAPI, bool EmitDebug,
+    llvm::CodeGenOpt::Level OptimizationLevel,
     const std::string &JavaReflectionPathBase,
     const std::string &JavaReflectionPackageName) {
   if (IOFiles.empty())
@@ -283,6 +284,10 @@ bool SlangRS::compile(
   if (OutputDep) {
     setAdditionalDepTargets(AdditionalDepTargets);
   }
+
+  setDebugMetadataEmission(EmitDebug);
+
+  setOptimizationLevel(OptimizationLevel);
 
   mAllowRSPrefix = AllowRSPrefix;
 

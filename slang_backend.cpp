@@ -208,7 +208,6 @@ Backend::Backend(clang::DiagnosticsEngine *DiagEngine,
                  llvm::raw_ostream *OS,
                  Slang::OutputType OT)
     : ASTConsumer(),
-      mCodeGenOpts(CodeGenOpts),
       mTargetOpts(TargetOpts),
       mpModule(NULL),
       mpOS(OS),
@@ -219,6 +218,7 @@ Backend::Backend(clang::DiagnosticsEngine *DiagEngine,
       mCodeGenPasses(NULL),
       mLLVMContext(llvm::getGlobalContext()),
       mDiagEngine(*DiagEngine),
+      mCodeGenOpts(CodeGenOpts),
       mPragmas(Pragmas) {
   FormattedOutStream.setStream(*mpOS,
                                llvm::formatted_raw_ostream::PRESERVE_STREAM);

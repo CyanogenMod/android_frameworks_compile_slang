@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include "clang/Frontend/CodeGenOptions.h"
+
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/StringExtras.h"
 
@@ -29,6 +31,7 @@
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
 
+#include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/IRBuilder.h"
 
 #include "slang_assert.h"
@@ -61,6 +64,7 @@ RSBackend::RSBackend(RSContext *Context,
     mExportForEachSignatureMetadata(NULL),
     mExportTypeMetadata(NULL),
     mRSObjectSlotsMetadata(NULL),
+    mRSOptimizationMetadata(NULL),
     mRefCount(mContext->getASTContext()) {
 }
 
@@ -193,6 +197,16 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
   if (!mContext->processExport()) {
     return;
   }
+
+  // Write optimization level
+  llvm::SmallVector<llvm::Value*, 1> OptimizationOption;
+  OptimizationOption.push_back(llvm::ConstantInt::get(
+    mLLVMContext, llvm::APInt(32, mCodeGenOpts.OptimizationLevel)));
+
+  if (mRSOptimizationMetadata == NULL)
+    mRSOptimizationMetadata = M->getOrInsertNamedMetadata(OPTIMIZATION_LEVEL_MN);
+  mRSOptimizationMetadata->addOperand(
+    llvm::MDNode::get(mLLVMContext, OptimizationOption));
 
   // Dump export variable info
   if (mContext->hasExportVar()) {
