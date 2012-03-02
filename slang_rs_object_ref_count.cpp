@@ -831,7 +831,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
                                             clang::SourceLocation StartLoc,
                                             clang::SourceLocation Loc);
 
-static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
+/*static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
                                            clang::Expr *DstArr,
                                            clang::Expr *SrcArr,
                                            clang::SourceLocation StartLoc,
@@ -987,7 +987,7 @@ static clang::Stmt *CreateArrayRSSetObject(clang::ASTContext &C,
       new(C) clang::CompoundStmt(C, StmtArray, StmtCtr, Loc, Loc);
 
   return CS;
-}
+} */
 
 static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
                                             clang::Expr *LHS,
