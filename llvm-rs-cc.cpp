@@ -273,6 +273,10 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
           << OptParser->getOptionName(OPT_bitcode_storage)
           << BitcodeStorageValue;
 
+    if (Args->hasArg(OPT_reflect_cpp)) {
+      Opts.mBitcodeStorage = slang::BCST_CPP_CODE;
+    }
+
     Opts.mOutputDepDir =
         Args->getLastArgValue(OPT_output_dep_dir, Opts.mOutputDir);
     Opts.mAdditionalDepTargets =
@@ -475,6 +479,7 @@ int main(int argc, const char **argv) {
                                          Opts.mOptimizationLevel,
                                          Opts.mJavaReflectionPathBase,
                                          Opts.mJavaReflectionPackageName);
+
   Compiler->reset();
 
   return CompileFailed;

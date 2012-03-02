@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,13 @@ def _output_dep_dir : Separate<"-d">, Alias<output_dep_dir>;
 def additional_dep_target: Separate<"-additional-dep-target">,
   HelpText<"Additional targets to show up in dependencies output">;
 def _additional_dep_target : Separate<"-a">, Alias<additional_dep_target>;
+
+//===----------------------------------------------------------------------===//
+// Reflection Options
+//===----------------------------------------------------------------------===//
+
+def reflect_cpp : Flag<"-reflect-c++">,
+  HelpText<"Reflect C++ classes">;
 
 //===----------------------------------------------------------------------===//
 // Misc Options

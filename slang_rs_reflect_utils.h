@@ -24,7 +24,8 @@ namespace slang {
 // BitCode storage type
 enum BitCodeStorageType {
   BCST_APK_RESOURCE,
-  BCST_JAVA_CODE
+  BCST_JAVA_CODE,
+  BCST_CPP_CODE
 };
 
 class RSSlangReflectUtils {
