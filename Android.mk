@@ -72,7 +72,8 @@ static_libraries_needed_by_slang := \
 	libclangLex \
 	libclangFrontend \
 	libclangBasic \
-	libLLVMSupport
+	libLLVMSupport \
+	libLLVMVectorize
 
 # Static library libslang for host
 # ========================================================

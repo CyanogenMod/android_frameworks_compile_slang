@@ -283,7 +283,7 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
   if (const Constant *C = dyn_cast<Constant>(V)) {
     if (isa<GlobalValue>(C)) {
       // Initializers for globals are handled explicitly elsewhere.
-    } else if (isa<ConstantArray>(C) && cast<ConstantArray>(C)->isString()) {
+    //} else if (isa<ConstantArray>(C) && cast<ConstantArray>(C)->isString()) {
       // Do not enumerate the initializers for an array of simple characters.
       // The initializers just pollute the value table, and we emit the strings
       // specially.

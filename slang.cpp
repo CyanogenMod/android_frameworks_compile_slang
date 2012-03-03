@@ -200,7 +200,9 @@ void Slang::createSourceManager() {
 void Slang::createPreprocessor() {
   // Default only search header file in current dir
   clang::HeaderSearch *HeaderInfo = new clang::HeaderSearch(*mFileMgr,
-                                                            *mDiagEngine);
+                                                            *mDiagEngine,
+                                                            LangOpts,
+                                                            mTarget.get());
 
   mPP.reset(new clang::Preprocessor(*mDiagEngine,
                                     LangOpts,

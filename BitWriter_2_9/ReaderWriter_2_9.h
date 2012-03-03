@@ -55,10 +55,6 @@ namespace llvm_2_9 {
   /// should be in "binary" mode.
   void WriteBitcodeToFile(const llvm::Module *M, llvm::raw_ostream &Out);
 
-  /// WriteBitcodeToStream - Write the specified module to the specified
-  /// raw output stream.
-  void WriteBitcodeToStream(const llvm::Module *M, llvm::BitstreamWriter &Stream);
-
   /// createBitcodeWriterPass - Create and return a pass that writes the module
   /// to the specified ostream.
   llvm::ModulePass *createBitcodeWriterPass(llvm::raw_ostream &Str);

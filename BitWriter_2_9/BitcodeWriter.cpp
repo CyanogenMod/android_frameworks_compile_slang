@@ -150,10 +150,11 @@ static void WriteAttributeTable(const ValueEnumerator &VE,
       // Store the alignment in the bitcode as a 16-bit raw value instead of a
       // 5-bit log2 encoded value. Shift the bits above the alignment up by
       // 11 bits.
-      uint64_t FauxAttr = PAWI.Attrs & 0xffff;
+      uint64_t FauxAttr = PAWI.Attrs.Raw() & 0xffff;
       if (PAWI.Attrs & Attribute::Alignment)
-        FauxAttr |= (1ull<<16)<<(((PAWI.Attrs & Attribute::Alignment)-1) >> 16);
-      FauxAttr |= (PAWI.Attrs & (0x3FFull << 21)) << 11;
+        FauxAttr |= (1ull<<16)<<
+            (((PAWI.Attrs & Attribute::Alignment).Raw()-1) >> 16);
+      FauxAttr |= (PAWI.Attrs.Raw() & (0x3FFull << 21)) << 11;
 
       Record.push_back(FauxAttr);
     }
@@ -882,34 +883,56 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       } else {
         assert (0 && "Unknown FP type!");
       }
-    } else if (isa<ConstantArray>(C) && cast<ConstantArray>(C)->isString()) {
-      const ConstantArray *CA = cast<ConstantArray>(C);
+    } else if (isa<ConstantDataSequential>(C) &&
+               cast<ConstantDataSequential>(C)->isString()) {
+      const ConstantDataSequential *Str = cast<ConstantDataSequential>(C);
       // Emit constant strings specially.
-      unsigned NumOps = CA->getNumOperands();
+      unsigned NumElts = Str->getNumElements();
       // If this is a null-terminated string, use the denser CSTRING encoding.
-      if (CA->getOperand(NumOps-1)->isNullValue()) {
+      if (Str->isCString()) {
         Code = bitc::CST_CODE_CSTRING;
-        --NumOps;  // Don't encode the null, which isn't allowed by char6.
+        --NumElts;  // Don't encode the null, which isn't allowed by char6.
       } else {
         Code = bitc::CST_CODE_STRING;
         AbbrevToUse = String8Abbrev;
       }
       bool isCStr7 = Code == bitc::CST_CODE_CSTRING;
       bool isCStrChar6 = Code == bitc::CST_CODE_CSTRING;
-      for (unsigned i = 0; i != NumOps; ++i) {
-        unsigned char V = cast<ConstantInt>(CA->getOperand(i))->getZExtValue();
+      for (unsigned i = 0; i != NumElts; ++i) {
+        unsigned char V = Str->getElementAsInteger(i);
         Record.push_back(V);
         isCStr7 &= (V & 128) == 0;
         if (isCStrChar6)
           isCStrChar6 = BitCodeAbbrevOp::isChar6(V);
       }
-
+      
       if (isCStrChar6)
         AbbrevToUse = CString6Abbrev;
       else if (isCStr7)
         AbbrevToUse = CString7Abbrev;
-    } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(V) ||
-               isa<ConstantVector>(V)) {
+    } else if (const ConstantDataSequential *CDS = 
+                  dyn_cast<ConstantDataSequential>(C)) {
+      Code = bitc::CST_CODE_DATA;
+      Type *EltTy = CDS->getType()->getElementType();
+      if (isa<IntegerType>(EltTy)) {
+        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i)
+          Record.push_back(CDS->getElementAsInteger(i));
+      } else if (EltTy->isFloatTy()) {
+        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
+          union { float F; uint32_t I; };
+          F = CDS->getElementAsFloat(i);
+          Record.push_back(I);
+        }
+      } else {
+        assert(EltTy->isDoubleTy() && "Unknown ConstantData element type");
+        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
+          union { double F; uint64_t I; };
+          F = CDS->getElementAsDouble(i);
+          Record.push_back(I);
+        }
+      }
+    } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(C) ||
+               isa<ConstantVector>(C)) {
       Code = bitc::CST_CODE_AGGREGATE;
       for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
         Record.push_back(VE.getValueID(C->getOperand(i)));
@@ -1188,9 +1211,6 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     }
     break;
   }
-  case Instruction::Unwind:
-    Code = bitc::FUNC_CODE_INST_UNWIND;
-    break;
   case Instruction::Unreachable:
     Code = bitc::FUNC_CODE_INST_UNREACHABLE;
     AbbrevToUse = FUNCTION_INST_UNREACHABLE_ABBREV;
@@ -1622,7 +1642,17 @@ enum {
   DarwinBCHeaderSize = 5*4
 };
 
-static void EmitDarwinBCHeader(BitstreamWriter &Stream, const Triple &TT) {
+static void WriteInt32ToBuffer(uint32_t Value, SmallVectorImpl<char> &Buffer,
+                               uint32_t &Position) {
+  Buffer[Position + 0] = (unsigned char) (Value >>  0);
+  Buffer[Position + 1] = (unsigned char) (Value >>  8);
+  Buffer[Position + 2] = (unsigned char) (Value >> 16);
+  Buffer[Position + 3] = (unsigned char) (Value >> 24);
+  Position += 4;
+}
+
+static void EmitDarwinBCHeaderAndTrailer(SmallVectorImpl<char> &Buffer,
+                                         const Triple &TT) {
   unsigned CPUType = ~0U;
 
   // Match x86_64-*, i[3-9]86-*, powerpc-*, powerpc64-*, arm-*, thumb-*,
@@ -1649,63 +1679,55 @@ static void EmitDarwinBCHeader(BitstreamWriter &Stream, const Triple &TT) {
     CPUType = DARWIN_CPU_TYPE_ARM;
 
   // Traditional Bitcode starts after header.
+  assert(Buffer.size() >= DarwinBCHeaderSize &&
+         "Expected header size to be reserved");
   unsigned BCOffset = DarwinBCHeaderSize;
+  unsigned BCSize = Buffer.size()-DarwinBCHeaderSize;
 
-  Stream.Emit(0x0B17C0DE, 32);
-  Stream.Emit(0         , 32);  // Version.
-  Stream.Emit(BCOffset  , 32);
-  Stream.Emit(0         , 32);  // Filled in later.
-  Stream.Emit(CPUType   , 32);
-}
-
-/// EmitDarwinBCTrailer - Emit the darwin epilog after the bitcode file and
-/// finalize the header.
-static void EmitDarwinBCTrailer(BitstreamWriter &Stream, unsigned BufferSize) {
-  // Update the size field in the header.
-  Stream.BackpatchWord(DarwinBCSizeFieldOffset, BufferSize-DarwinBCHeaderSize);
+  // Write the magic and version.
+  unsigned Position = 0;
+  WriteInt32ToBuffer(0x0B17C0DE , Buffer, Position);
+  WriteInt32ToBuffer(0          , Buffer, Position); // Version.
+  WriteInt32ToBuffer(BCOffset   , Buffer, Position);
+  WriteInt32ToBuffer(BCSize     , Buffer, Position);
+  WriteInt32ToBuffer(CPUType    , Buffer, Position);
 
   // If the file is not a multiple of 16 bytes, insert dummy padding.
-  while (BufferSize & 15) {
-    Stream.Emit(0, 8);
-    ++BufferSize;
-  }
+  while (Buffer.size() & 15)
+    Buffer.push_back(0);
 }
-
 
 /// WriteBitcodeToFile - Write the specified module to the specified output
 /// stream.
 void llvm_2_9::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
-  std::vector<unsigned char> Buffer;
-  BitstreamWriter Stream(Buffer);
-
+  SmallVector<char, 1024> Buffer;
   Buffer.reserve(256*1024);
 
-  WriteBitcodeToStream( M, Stream );
+  // If this is darwin or another generic macho target, reserve space for the
+  // header.
+  Triple TT(M->getTargetTriple());
+  if (TT.isOSDarwin())
+    Buffer.insert(Buffer.begin(), DarwinBCHeaderSize, 0);
+
+  // Emit the module into the buffer.
+  {
+    BitstreamWriter Stream(Buffer);
+
+    // Emit the file header.
+    Stream.Emit((unsigned)'B', 8);
+    Stream.Emit((unsigned)'C', 8);
+    Stream.Emit(0x0, 4);
+    Stream.Emit(0xC, 4);
+    Stream.Emit(0xE, 4);
+    Stream.Emit(0xD, 4);
+
+    // Emit the module.
+    WriteModule(M, Stream);
+  }
+
+  if (TT.isOSDarwin())
+    EmitDarwinBCHeaderAndTrailer(Buffer, TT);
 
   // Write the generated bitstream to "Out".
   Out.write((char*)&Buffer.front(), Buffer.size());
-}
-
-/// WriteBitcodeToStream - Write the specified module to the specified output
-/// stream.
-void llvm_2_9::WriteBitcodeToStream(const Module *M, BitstreamWriter &Stream) {
-  // If this is darwin or another generic macho target, emit a file header and
-  // trailer if needed.
-  Triple TT(M->getTargetTriple());
-  if (TT.isOSDarwin())
-    EmitDarwinBCHeader(Stream, TT);
-
-  // Emit the file header.
-  Stream.Emit((unsigned)'B', 8);
-  Stream.Emit((unsigned)'C', 8);
-  Stream.Emit(0x0, 4);
-  Stream.Emit(0xC, 4);
-  Stream.Emit(0xE, 4);
-  Stream.Emit(0xD, 4);
-
-  // Emit the module.
-  WriteModule(M, Stream);
-
-  if (TT.isOSDarwin())
-    EmitDarwinBCTrailer(Stream, Stream.getBuffer().size());
 }
