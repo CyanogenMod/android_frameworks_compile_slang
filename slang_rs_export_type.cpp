@@ -50,12 +50,12 @@ static RSReflectionType gReflectionTypes[] = {
     {"SIGNED_16", "I16", 16, "int16_t", "short", "Short", "Short", false},
     {"SIGNED_32", "I32", 32, "int32_t", "int", "Int", "Int", false},
     {"SIGNED_64", "I64", 64, "int64_t", "long", "Long", "Long", false},
-    {"UNSIGNED_8", "U8", 8, "uint8_t", "short", "Short", "UByte", true},
-    {"UNSIGNED_16", "U16", 16, "uint16_t", "int", "Int", "UShort", true},
-    {"UNSIGNED_32", "U32", 32, "uint32_t", "long", "Long", "UInt", true},
-    {"UNSIGNED_64", "U64", 64, "uint64_t", "long", "Long", "ULong", false},
+    {"UNSIGNED_8", "U8", 8, "uint8_t", "short", "UByte", "Short", true},
+    {"UNSIGNED_16", "U16", 16, "uint16_t", "int", "UShort", "Int", true},
+    {"UNSIGNED_32", "U32", 32, "uint32_t", "long", "UInt", "Long", true},
+    {"UNSIGNED_64", "U64", 64, "uint64_t", "long", "ULong", "Long", false},
 
-    {"BOOLEAN", NULL, 8, "bool", "boolean", NULL, NULL, false},
+    {"BOOLEAN", "BOOLEAN", 8, "bool", "boolean", NULL, NULL, false},
 
     {"UNSIGNED_5_6_5", NULL, 16, NULL, NULL, NULL, NULL, false},
     {"UNSIGNED_5_5_5_1", NULL, 16, NULL, NULL, NULL, NULL, false},

@@ -76,132 +76,6 @@ static bool GetClassNameFromFileName(const std::string &FileName,
   return true;
 }
 
-static const char *GetVectorTypeName(const RSExportVectorType *EVT) {
-  static const char *VectorTypeJavaNameMap[][3] = {
-    /* 0 */ { "Byte2",    "Byte3",    "Byte4" },
-    /* 1 */ { "Short2",   "Short3",   "Short4" },
-    /* 2 */ { "Int2",     "Int3",     "Int4" },
-    /* 3 */ { "Long2",    "Long3",    "Long4" },
-    /* 4 */ { "Float2",   "Float3",   "Float4" },
-    /* 5 */ { "Double2",  "Double3",  "Double4" }
-  };
-
-  const char **BaseElement = NULL;
-
-  switch (EVT->getType()) {
-    case RSExportPrimitiveType::DataTypeSigned8: {
-      BaseElement = VectorTypeJavaNameMap[0];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeSigned16:
-    case RSExportPrimitiveType::DataTypeUnsigned8: {
-      BaseElement = VectorTypeJavaNameMap[1];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeSigned32:
-    case RSExportPrimitiveType::DataTypeUnsigned16: {
-      BaseElement = VectorTypeJavaNameMap[2];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeSigned64:
-    case RSExportPrimitiveType::DataTypeUnsigned64:
-    case RSExportPrimitiveType::DataTypeUnsigned32: {
-      BaseElement = VectorTypeJavaNameMap[3];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeFloat32: {
-      BaseElement = VectorTypeJavaNameMap[4];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeFloat64: {
-      BaseElement = VectorTypeJavaNameMap[5];
-      break;
-    }
-    default: {
-      slangAssert(false && "RSReflection::GetVectorTypeName : Unsupported "
-                           "vector element data type");
-      break;
-    }
-  }
-
-  slangAssert((EVT->getNumElement() > 1) &&
-              (EVT->getNumElement() <= 4) &&
-              "Number of elements in vector type is invalid");
-
-  return BaseElement[EVT->getNumElement() - 2];
-}
-
-static const char *GetVectorElementName(const RSExportVectorType *EVT) {
-  static const char *VectorElementNameMap[][3] = {
-    /* 0 */ { "U8_2",   "U8_3",   "U8_4" },
-    /* 1 */ { "I8_2",   "I8_3",   "I8_4" },
-    /* 2 */ { "U16_2",  "U16_3",  "U16_4" },
-    /* 3 */ { "I16_2",  "I16_3",  "I16_4" },
-    /* 4 */ { "U32_2",  "U32_3",  "U32_4" },
-    /* 5 */ { "I32_2",  "I32_3",  "I32_4" },
-    /* 6 */ { "U64_2",  "U64_3",  "U64_4" },
-    /* 7 */ { "I64_2",  "I64_3",  "I64_4" },
-    /* 8 */ { "F32_2",  "F32_3",  "F32_4" },
-    /* 9 */ { "F64_2",  "F64_3",  "F64_4" },
-  };
-
-  const char **BaseElement = NULL;
-
-  switch (EVT->getType()) {
-    case RSExportPrimitiveType::DataTypeUnsigned8: {
-      BaseElement = VectorElementNameMap[0];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeSigned8: {
-      BaseElement = VectorElementNameMap[1];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeUnsigned16: {
-      BaseElement = VectorElementNameMap[2];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeSigned16: {
-      BaseElement = VectorElementNameMap[3];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeUnsigned32: {
-      BaseElement = VectorElementNameMap[4];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeSigned32: {
-      BaseElement = VectorElementNameMap[5];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeUnsigned64: {
-      BaseElement = VectorElementNameMap[6];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeSigned64: {
-      BaseElement = VectorElementNameMap[7];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeFloat32: {
-      BaseElement = VectorElementNameMap[8];
-      break;
-    }
-    case RSExportPrimitiveType::DataTypeFloat64: {
-      BaseElement = VectorElementNameMap[9];
-      break;
-    }
-    default: {
-      slangAssert(false && "RSReflection::GetVectorElementName : Unsupported "
-                           "vector element data type");
-      break;
-    }
-  }
-
-  slangAssert((EVT->getNumElement() > 1) &&
-              (EVT->getNumElement() <= 4) &&
-              "Number of elements in vector type is invalid");
-
-  return BaseElement[EVT->getNumElement() - 2];
-}
-
 static const char *GetMatrixTypeName(const RSExportMatrixType *EMT) {
   static const char *MatrixTypeJavaNameMap[] = {
     /* 2x2 */ "Matrix2f",
@@ -292,7 +166,12 @@ static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
         return RS_TYPE_CLASS_NAME_PREFIX + PointeeType->getName();
     }
     case RSExportType::ExportClassVector: {
-      return GetVectorTypeName(static_cast<const RSExportVectorType*>(ET));
+      const RSExportVectorType *EVT =
+          static_cast<const RSExportVectorType*>(ET);
+      std::stringstream VecName;
+      VecName << EVT->getRSReflectionType(EVT)->rs_java_vector_prefix
+              << EVT->getNumElement();
+      return VecName.str();
     }
     case RSExportType::ExportClassMatrix: {
       return GetMatrixTypeName(static_cast<const RSExportMatrixType*>(ET));
@@ -346,72 +225,12 @@ static const char *GetTypeNullValue(const RSExportType *ET) {
   return "";
 }
 
-static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
+static std::string GetBuiltinElementConstruct(const RSExportType *ET) {
   if (ET->getClass() == RSExportType::ExportClassPrimitive) {
     const RSExportPrimitiveType *EPT =
         static_cast<const RSExportPrimitiveType*>(ET);
-    if (EPT->getKind() == RSExportPrimitiveType::DataKindUser) {
-      static const char *PrimitiveBuiltinElementConstructMap[] = {
-        NULL,               // RSExportPrimitiveType::DataTypeFloat16
-        "Element.F32",      // RSExportPrimitiveType::DataTypeFloat32
-        "Element.F64",      // RSExportPrimitiveType::DataTypeFloat64
-        "Element.I8",       // RSExportPrimitiveType::DataTypeSigned8
-        "Element.I16",      // RSExportPrimitiveType::DataTypeSigned16
-        "Element.I32",      // RSExportPrimitiveType::DataTypeSigned32
-        "Element.I64",      // RSExportPrimitiveType::DataTypeSigned64
-        "Element.U8",       // RSExportPrimitiveType::DataTypeUnsigned8
-        "Element.U16",      // RSExportPrimitiveType::DataTypeUnsigned16
-        "Element.U32",      // RSExportPrimitiveType::DataTypeUnsigned32
-        "Element.U64",      // RSExportPrimitiveType::DataTypeUnsigned64
-        "Element.BOOLEAN",  // RSExportPrimitiveType::DataTypeBoolean
-
-        NULL,   // RSExportPrimitiveType::DataTypeUnsigned565
-        NULL,   // RSExportPrimitiveType::DataTypeUnsigned5551
-        NULL,   // RSExportPrimitiveType::DataTypeUnsigned4444
-
-        NULL,   // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix2x2
-        NULL,   // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix3x3
-        NULL,   // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix4x4
-
-        "Element.ELEMENT",      // RSExportPrimitiveType::DataTypeRSElement
-        "Element.TYPE",         // RSExportPrimitiveType::DataTypeRSType
-        "Element.ALLOCATION",   // RSExportPrimitiveType::DataTypeRSAllocation
-        "Element.SAMPLER",      // RSExportPrimitiveType::DataTypeRSSampler
-        "Element.SCRIPT",       // RSExportPrimitiveType::DataTypeRSScript
-        "Element.MESH",         // RSExportPrimitiveType::DataTypeRSMesh
-        "Element.PATH",         // RSExportPrimitiveType::DataTypeRSPath
-        "Element.PROGRAM_FRAGMENT",
-          // RSExportPrimitiveType::DataTypeRSProgramFragment
-        "Element.PROGRAM_VERTEX",
-          // RSExportPrimitiveType::DataTypeRSProgramVertex
-        "Element.PROGRAM_RASTER",
-          // RSExportPrimitiveType::DataTypeRSProgramRaster
-        "Element.PROGRAM_STORE",
-          // RSExportPrimitiveType::DataTypeRSProgramStore
-        "Element.FONT",
-          // RSExportPrimitiveType::DataTypeRSFont
-      };
-      unsigned TypeId = EPT->getType();
-
-      if (TypeId <
-          (sizeof(PrimitiveBuiltinElementConstructMap) / sizeof(const char*)))
-        return PrimitiveBuiltinElementConstructMap[ EPT->getType() ];
-    } else if (EPT->getKind() == RSExportPrimitiveType::DataKindPixelA) {
-      if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
-        return "Element.A_8";
-    } else if (EPT->getKind() == RSExportPrimitiveType::DataKindPixelRGB) {
-      if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned565)
-        return "Element.RGB_565";
-      else if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
-        return "Element.RGB_888";
-    } else if (EPT->getKind() == RSExportPrimitiveType::DataKindPixelRGBA) {
-      if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned5551)
-        return "Element.RGBA_5551";
-      else if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned4444)
-        return "Element.RGBA_4444";
-      else if (EPT->getType() == RSExportPrimitiveType::DataTypeUnsigned8)
-        return "Element.RGBA_8888";
-    }
+    return std::string("Element.") +
+           RSExportPrimitiveType::getRSReflectionType(EPT)->rs_short_type;
   } else if (ET->getClass() == RSExportType::ExportClassVector) {
     const RSExportVectorType *EVT = static_cast<const RSExportVectorType*>(ET);
     if (EVT->getKind() == RSExportPrimitiveType::DataKindUser) {
@@ -435,137 +254,10 @@ static const char *GetBuiltinElementConstruct(const RSExportType *ET) {
       case 4: return "Element.MATRIX_4X4";
       default: slangAssert(false && "Unsupported dimension of matrix");
     }
-  } else if (ET->getClass() == RSExportType::ExportClassPointer) {
-    // Treat pointer type variable as unsigned int
-    // TODO(zonr): this is target dependent
-    return "Element.USER_I32";
   }
+  // RSExportType::ExportClassPointer can't be generated in a struct.
 
-  return NULL;
-}
-
-static const char *GetElementDataKindName(RSExportPrimitiveType::DataKind DK) {
-  static const char *ElementDataKindNameMap[] = {
-    "Element.DataKind.USER",        // RSExportPrimitiveType::DataKindUser
-    "Element.DataKind.PIXEL_L",     // RSExportPrimitiveType::DataKindPixelL
-    "Element.DataKind.PIXEL_A",     // RSExportPrimitiveType::DataKindPixelA
-    "Element.DataKind.PIXEL_LA",    // RSExportPrimitiveType::DataKindPixelLA
-    "Element.DataKind.PIXEL_RGB",   // RSExportPrimitiveType::DataKindPixelRGB
-    "Element.DataKind.PIXEL_RGBA",  // RSExportPrimitiveType::DataKindPixelRGBA
-  };
-
-  if (static_cast<unsigned>(DK) <
-      (sizeof(ElementDataKindNameMap) / sizeof(const char*)))
-    return ElementDataKindNameMap[ DK ];
-  else
-    return NULL;
-}
-
-static const char *GetElementDataTypeName(RSExportPrimitiveType::DataType DT) {
-  static const char *ElementDataTypeNameMap[] = {
-    NULL,                            // RSExportPrimitiveType::DataTypeFloat16
-    "Element.DataType.FLOAT_32",     // RSExportPrimitiveType::DataTypeFloat32
-    "Element.DataType.FLOAT_64",     // RSExportPrimitiveType::DataTypeFloat64
-    "Element.DataType.SIGNED_8",     // RSExportPrimitiveType::DataTypeSigned8
-    "Element.DataType.SIGNED_16",    // RSExportPrimitiveType::DataTypeSigned16
-    "Element.DataType.SIGNED_32",    // RSExportPrimitiveType::DataTypeSigned32
-    "Element.DataType.SIGNED_64",    // RSExportPrimitiveType::DataTypeSigned64
-    "Element.DataType.UNSIGNED_8",   // RSExportPrimitiveType::DataTypeUnsigned8
-    "Element.DataType.UNSIGNED_16",
-      // RSExportPrimitiveType::DataTypeUnsigned16
-    "Element.DataType.UNSIGNED_32",
-      // RSExportPrimitiveType::DataTypeUnsigned32
-    "Element.DataType.UNSIGNED_64",
-      // RSExportPrimitiveType::DataTypeUnsigned64
-    "Element.DataType.BOOLEAN",
-      // RSExportPrimitiveType::DataTypeBoolean
-
-    // RSExportPrimitiveType::DataTypeUnsigned565
-    "Element.DataType.UNSIGNED_5_6_5",
-    // RSExportPrimitiveType::DataTypeUnsigned5551
-    "Element.DataType.UNSIGNED_5_5_5_1",
-    // RSExportPrimitiveType::DataTypeUnsigned4444
-    "Element.DataType.UNSIGNED_4_4_4_4",
-
-    // DataTypeRSMatrix* must have been resolved in GetBuiltinElementConstruct()
-    NULL,  // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix2x2
-    NULL,  // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix3x3
-    NULL,  // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix4x4
-
-    "Element.DataType.RS_ELEMENT",  // RSExportPrimitiveType::DataTypeRSElement
-    "Element.DataType.RS_TYPE",     // RSExportPrimitiveType::DataTypeRSType
-      // RSExportPrimitiveType::DataTypeRSAllocation
-    "Element.DataType.RS_ALLOCATION",
-      // RSExportPrimitiveType::DataTypeRSSampler
-    "Element.DataType.RS_SAMPLER",
-      // RSExportPrimitiveType::DataTypeRSScript
-    "Element.DataType.RS_SCRIPT",
-      // RSExportPrimitiveType::DataTypeRSMesh
-    "Element.DataType.RS_MESH",
-      // RSExportPrimitiveType::DataTypeRSPath
-    "Element.DataType.RS_PATH",
-      // RSExportPrimitiveType::DataTypeRSProgramFragment
-    "Element.DataType.RS_PROGRAM_FRAGMENT",
-      // RSExportPrimitiveType::DataTypeRSProgramVertex
-    "Element.DataType.RS_PROGRAM_VERTEX",
-      // RSExportPrimitiveType::DataTypeRSProgramRaster
-    "Element.DataType.RS_PROGRAM_RASTER",
-      // RSExportPrimitiveType::DataTypeRSProgramStore
-    "Element.DataType.RS_PROGRAM_STORE",
-      // RSExportPrimitiveType::DataTypeRSFont
-    "Element.DataType.RS_FONT",
-  };
-
-  if (static_cast<unsigned>(DT) <
-      (sizeof(ElementDataTypeNameMap) / sizeof(const char*)))
-    return ElementDataTypeNameMap[ DT ];
-  else
-    return NULL;
-}
-
-static const char *GetElementJavaTypeName(RSExportPrimitiveType::DataType DT) {
-  static const char *ElementJavaTypeNameMap[] = {
-    NULL,                 // RSExportPrimitiveType::DataTypeFloat16
-    "F32",                // RSExportPrimitiveType::DataTypeFloat32
-    "F64",                // RSExportPrimitiveType::DataTypeFloat64
-    "I8",                 // RSExportPrimitiveType::DataTypeSigned8
-    "I16",                // RSExportPrimitiveType::DataTypeSigned16
-    "I32",                // RSExportPrimitiveType::DataTypeSigned32
-    "I64",                // RSExportPrimitiveType::DataTypeSigned64
-    "U8",                 // RSExportPrimitiveType::DataTypeUnsigned8
-    "U16",                // RSExportPrimitiveType::DataTypeUnsigned16
-    "U32",                // RSExportPrimitiveType::DataTypeUnsigned32
-    "U64",                // RSExportPrimitiveType::DataTypeUnsigned64
-    "BOOLEAN",            // RSExportPrimitiveType::DataTypeBoolean
-
-    "RGB_565",            // RSExportPrimitiveType::DataTypeUnsigned565
-    "RGBA_5551",          // RSExportPrimitiveType::DataTypeUnsigned5551
-    "RGBA_4444",          // RSExportPrimitiveType::DataTypeUnsigned4444
-
-    // DataTypeRSMatrix* must have been resolved in GetBuiltinElementConstruct()
-    NULL,                 // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix2x2
-    NULL,                 // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix3x3
-    NULL,                 // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix4x4
-
-    "ELEMENT",            // RSExportPrimitiveType::DataTypeRSElement
-    "TYPE",               // RSExportPrimitiveType::DataTypeRSType
-    "ALLOCATION",         // RSExportPrimitiveType::DataTypeRSAllocation
-    "SAMPLER",            // RSExportPrimitiveType::DataTypeRSSampler
-    "SCRIPT",             // RSExportPrimitiveType::DataTypeRSScript
-    "MESH",               // RSExportPrimitiveType::DataTypeRSMesh
-    "PATH",               // RSExportPrimitiveType::DataTypeRSPath
-    "PROGRAM_FRAGMENT",   // RSExportPrimitiveType::DataTypeRSProgramFragment
-    "PROGRAM_VERTEX",     // RSExportPrimitiveType::DataTypeRSProgramVertex
-    "PROGRAM_RASTER",     // RSExportPrimitiveType::DataTypeRSProgramRaster
-    "PROGRAM_STORE",      // RSExportPrimitiveType::DataTypeRSProgramStore
-    "FONT",               // RSExportPrimitiveType::DataTypeRSFont
-  };
-
-  if (static_cast<unsigned>(DT) <
-      (sizeof(ElementJavaTypeNameMap) / sizeof(const char*)))
-    return ElementJavaTypeNameMap[DT];
-  else
-    return NULL;
+  return "";
 }
 
 
@@ -776,8 +468,11 @@ void RSReflection::genInitExportVariable(Context &C,
           break;
         }
         case clang::APValue::Vector: {
+          std::stringstream VecName;
+          VecName << EVT->getRSReflectionType(EVT)->rs_java_vector_prefix
+                  << EVT->getNumElement();
           C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = new "
-                     << GetVectorTypeName(EVT) << "();" << std::endl;
+                     << VecName.str() << "();" << std::endl;
 
           unsigned NumElements =
               std::min(static_cast<unsigned>(EVT->getNumElement()),
@@ -1050,7 +745,8 @@ void RSReflection::genTypeInstance(Context &C,
 
           case RSExportPrimitiveType::DataKindUser:
           default: {
-            std::string TypeName = GetElementJavaTypeName(EPT->getType());
+            std::string TypeName =
+                RSExportPrimitiveType::getRSReflectionType(EPT)->rs_short_type;
             if (C.mTypesToCheck.find(TypeName) == C.mTypesToCheck.end()) {
               C.indent() << "__" << TypeName << " = Element." << TypeName
                          << "(rs);" << std::endl;
@@ -1067,7 +763,10 @@ void RSReflection::genTypeInstance(Context &C,
             static_cast<const RSExportVectorType*>(ET);
         slangAssert(EVT);
 
-        const char *TypeName = GetVectorElementName(EVT);
+        std::stringstream VecName;
+        VecName << EVT->getRSReflectionType(EVT)->rs_short_type
+                << "_" << EVT->getNumElement();
+        std::string TypeName = VecName.str();
         if (C.mTypesToCheck.find(TypeName) == C.mTypesToCheck.end()) {
           C.indent() << "__" << TypeName << " = Element." << TypeName
                      << "(rs);" << std::endl;
@@ -1116,7 +815,8 @@ void RSReflection::genTypeCheck(Context &C,
       slangAssert(EPT);
 
       if (EPT->getKind() == RSExportPrimitiveType::DataKindUser) {
-        TypeName = GetElementJavaTypeName(EPT->getType());
+        TypeName =
+            RSExportPrimitiveType::getRSReflectionType(EPT)->rs_short_type;
       }
       break;
     }
@@ -1125,7 +825,10 @@ void RSReflection::genTypeCheck(Context &C,
       const RSExportVectorType *EVT =
           static_cast<const RSExportVectorType*>(ET);
       slangAssert(EVT);
-      TypeName = GetVectorElementName(EVT);
+      std::stringstream VecName;
+      VecName << EVT->getRSReflectionType(EVT)->rs_short_type
+              << "_" << EVT->getNumElement();
+      TypeName = VecName.str();
       break;
     }
 
@@ -1250,7 +953,10 @@ void RSReflection::genVectorTypeExportVariable(Context &C,
 
   const RSExportVectorType *EVT =
       static_cast<const RSExportVectorType*>(EV->getType());
-  const char *TypeName = GetVectorTypeName(EVT);
+  std::stringstream VecName;
+  VecName << EVT->getRSReflectionType(EVT)->rs_java_vector_prefix
+          << EVT->getNumElement();
+  std::string TypeName = VecName.str();
   const char *FieldPackerName = "fp";
 
   C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
@@ -1263,7 +969,7 @@ void RSReflection::genVectorTypeExportVariable(Context &C,
                     "void",
                     "set_" + EV->getName(),
                     1,
-                    TypeName, "v");
+                    TypeName.c_str(), "v");
     C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
 
     if (genCreateFieldPacker(C, EVT, FieldPackerName))
@@ -2104,48 +1810,33 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
                                                  const char *ElementBuilderName,
                                                  const char *RenderScriptVar,
                                                  unsigned ArraySize) {
-  const char *ElementConstruct = GetBuiltinElementConstruct(ET);
+  std::string ElementConstruct = GetBuiltinElementConstruct(ET);
 
-  if (ElementConstruct != NULL) {
+  if (ElementConstruct != "") {
     EB_ADD(ElementConstruct << "(" << RenderScriptVar << ")");
   } else {
     if ((ET->getClass() == RSExportType::ExportClassPrimitive) ||
         (ET->getClass() == RSExportType::ExportClassVector)) {
       const RSExportPrimitiveType *EPT =
           static_cast<const RSExportPrimitiveType*>(ET);
-      const char *DataKindName = GetElementDataKindName(EPT->getKind());
-      const char *DataTypeName = GetElementDataTypeName(EPT->getType());
+      const char *DataTypeName =
+          RSExportPrimitiveType::getRSReflectionType(EPT)->rs_type;
       int Size = (ET->getClass() == RSExportType::ExportClassVector) ?
           static_cast<const RSExportVectorType*>(ET)->getNumElement() :
           1;
 
-      switch (EPT->getKind()) {
-        case RSExportPrimitiveType::DataKindPixelL:
-        case RSExportPrimitiveType::DataKindPixelA:
-        case RSExportPrimitiveType::DataKindPixelLA:
-        case RSExportPrimitiveType::DataKindPixelRGB:
-        case RSExportPrimitiveType::DataKindPixelRGBA: {
-          // Element.createPixel()
-          EB_ADD("Element.createPixel(" << RenderScriptVar << ", "
-                                        << DataTypeName << ", "
-                                        << DataKindName << ")");
-          break;
-        }
-        case RSExportPrimitiveType::DataKindUser:
-        default: {
-          if (EPT->getClass() == RSExportType::ExportClassPrimitive) {
-            // Element.createUser()
-            EB_ADD("Element.createUser(" << RenderScriptVar << ", "
-                                         << DataTypeName << ")");
-          } else {
-            slangAssert((ET->getClass() == RSExportType::ExportClassVector) &&
-                        "Unexpected type.");
-            EB_ADD("Element.createVector(" << RenderScriptVar << ", "
-                                           << DataTypeName << ", "
-                                           << Size << ")");
-          }
-          break;
-        }
+      if (EPT->getClass() == RSExportType::ExportClassPrimitive) {
+        // Element.createUser()
+        EB_ADD("Element.createUser(" << RenderScriptVar
+                                     << ", Element.DataType."
+                                     << DataTypeName << ")");
+      } else {
+        slangAssert((ET->getClass() == RSExportType::ExportClassVector) &&
+                    "Unexpected type.");
+        EB_ADD("Element.createVector(" << RenderScriptVar
+                                       << ", Element.DataType."
+                                       << DataTypeName << ", "
+                                       << Size << ")");
       }
 #ifndef NDEBUG
     } else if (ET->getClass() == RSExportType::ExportClassPointer) {
