@@ -282,13 +282,6 @@ unsigned RSMetadataEncoderInternal::encodeRecordType(const union RSType *T) {
       return 0;
     }
 
-    // 3. field data kind
-    if (!EncodeInteger(mModule->getContext(),
-                       RS_RECORD_TYPE_GET_FIELD_DATA_KIND(T, i),
-                       FieldInfo)) {
-      return 0;
-    }
-
     RecordInfoMetadata->addOperand(llvm::MDNode::get(mModule->getContext(),
                                                      FieldInfo));
     FieldInfo.clear();

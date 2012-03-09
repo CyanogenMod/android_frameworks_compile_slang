@@ -506,27 +506,6 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
               llvm::MDString::get(mLLVMContext,
                                   F->getType()->getName().c_str()));
 
-          // 3. field kind
-          switch (F->getType()->getClass()) {
-            case RSExportType::ExportClassPrimitive:
-            case RSExportType::ExportClassVector: {
-              const RSExportPrimitiveType *EPT =
-                  static_cast<const RSExportPrimitiveType*>(F->getType());
-              FieldInfo.push_back(
-                  llvm::MDString::get(mLLVMContext,
-                                      llvm::itostr(EPT->getKind())));
-              break;
-            }
-
-            default: {
-              FieldInfo.push_back(
-                  llvm::MDString::get(mLLVMContext,
-                                      llvm::itostr(
-                                        RSExportPrimitiveType::DataKindUser)));
-              break;
-            }
-          }
-
           StructInfoMetadata->addOperand(
               llvm::MDNode::get(mLLVMContext, FieldInfo));
           FieldInfo.clear();

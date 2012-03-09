@@ -233,18 +233,16 @@ static std::string GetBuiltinElementConstruct(const RSExportType *ET) {
            RSExportPrimitiveType::getRSReflectionType(EPT)->rs_short_type;
   } else if (ET->getClass() == RSExportType::ExportClassVector) {
     const RSExportVectorType *EVT = static_cast<const RSExportVectorType*>(ET);
-    if (EVT->getKind() == RSExportPrimitiveType::DataKindUser) {
-      if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
-        if (EVT->getNumElement() == 2)
-          return "Element.F32_2";
-        else if (EVT->getNumElement() == 3)
-          return "Element.F32_3";
-        else if (EVT->getNumElement() == 4)
-          return "Element.F32_4";
-      } else if (EVT->getType() == RSExportPrimitiveType::DataTypeUnsigned8) {
-        if (EVT->getNumElement() == 4)
-          return "Element.U8_4";
-      }
+    if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
+      if (EVT->getNumElement() == 2)
+        return "Element.F32_2";
+      else if (EVT->getNumElement() == 3)
+        return "Element.F32_3";
+      else if (EVT->getNumElement() == 4)
+        return "Element.F32_4";
+    } else if (EVT->getType() == RSExportPrimitiveType::DataTypeUnsigned8) {
+      if (EVT->getNumElement() == 4)
+        return "Element.U8_4";
     }
   } else if (ET->getClass() == RSExportType::ExportClassMatrix) {
     const RSExportMatrixType *EMT = static_cast<const RSExportMatrixType *>(ET);
@@ -734,26 +732,12 @@ void RSReflection::genTypeInstance(Context &C,
             static_cast<const RSExportPrimitiveType*>(ET);
         slangAssert(EPT);
 
-        switch (EPT->getKind()) {
-          case RSExportPrimitiveType::DataKindPixelL:
-          case RSExportPrimitiveType::DataKindPixelA:
-          case RSExportPrimitiveType::DataKindPixelLA:
-          case RSExportPrimitiveType::DataKindPixelRGB:
-          case RSExportPrimitiveType::DataKindPixelRGBA: {
-            break;
-          }
-
-          case RSExportPrimitiveType::DataKindUser:
-          default: {
-            std::string TypeName =
-                RSExportPrimitiveType::getRSReflectionType(EPT)->rs_short_type;
-            if (C.mTypesToCheck.find(TypeName) == C.mTypesToCheck.end()) {
-              C.indent() << "__" << TypeName << " = Element." << TypeName
-                         << "(rs);" << std::endl;
-              C.mTypesToCheck.insert(TypeName);
-            }
-            break;
-          }
+        std::string TypeName =
+            RSExportPrimitiveType::getRSReflectionType(EPT)->rs_short_type;
+        if (C.mTypesToCheck.find(TypeName) == C.mTypesToCheck.end()) {
+          C.indent() << "__" << TypeName << " = Element." << TypeName
+                     << "(rs);" << std::endl;
+          C.mTypesToCheck.insert(TypeName);
         }
         break;
       }
@@ -814,10 +798,8 @@ void RSReflection::genTypeCheck(Context &C,
           static_cast<const RSExportPrimitiveType*>(ET);
       slangAssert(EPT);
 
-      if (EPT->getKind() == RSExportPrimitiveType::DataKindUser) {
-        TypeName =
-            RSExportPrimitiveType::getRSReflectionType(EPT)->rs_short_type;
-      }
+      TypeName =
+          RSExportPrimitiveType::getRSReflectionType(EPT)->rs_short_type;
       break;
     }
 

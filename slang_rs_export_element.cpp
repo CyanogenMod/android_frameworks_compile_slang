@@ -34,10 +34,9 @@ RSExportElement::ElementInfoMapTy RSExportElement::ElementInfoMap;
 void RSExportElement::Init() {
   if (!Initialized) {
     // Initialize ElementInfoMap
-#define ENUM_RS_DATA_ELEMENT(_name, _dk, _dt, _norm, _vsize)  \
+#define ENUM_RS_DATA_ELEMENT(_name, _dt, _norm, _vsize)  \
     {                                                         \
       ElementInfo *EI = new ElementInfo;                      \
-      EI->kind = RSExportPrimitiveType::DataKind ## _dk;      \
       EI->type = RSExportPrimitiveType::DataType ## _dt;      \
       EI->normalized = _norm;                                 \
       EI->vsize = _vsize;                                     \
@@ -83,7 +82,6 @@ RSExportType *RSExportElement::Create(RSContext *Context,
           RSExportPrimitiveType::Create(Context,
                                         T,
                                         TypeName,
-                                        EI->kind,
                                         EI->normalized);
       // Verify
       slangAssert(EI->type == EPT->getType() && "Element has unexpected type");
@@ -99,7 +97,6 @@ RSExportType *RSExportElement::Create(RSContext *Context,
                                          T->getCanonicalTypeInternal()
                                              .getTypePtr()),
                                      TypeName,
-                                     EI->kind,
                                      EI->normalized);
       // Verify
       slangAssert(EI->type == EVT->getType() && "Element has unexpected type");

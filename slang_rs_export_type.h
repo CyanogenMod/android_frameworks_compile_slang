@@ -207,14 +207,6 @@ class RSExportPrimitiveType : public RSExportType {
     DataTypeMax
   } DataType;
 
-  // From graphics/java/android/renderscript/Element.java: Element.DataKind
-  typedef enum {
-    DataKindUnknown = -1
-#define ENUM_RS_DATA_KIND(kind) \
-    , DataKind ## kind
-#include "RSDataKindEnums.inc"
-  } DataKind;
-
  private:
   // NOTE: There's no any instance of RSExportPrimitiveType which mType
   // is of the value DataTypeRSMatrix*. DataTypeRSMatrix* enumeration here is
@@ -222,7 +214,6 @@ class RSExportPrimitiveType : public RSExportType {
   // rs_matrix{2x2, 3x3, 4x4}. These matrix type are represented as
   // RSExportMatrixType.
   DataType mType;
-  DataKind mKind;
   bool mNormalized;
 
   typedef llvm::StringMap<DataType> RSSpecificTypeMapTy;
@@ -238,7 +229,6 @@ class RSExportPrimitiveType : public RSExportType {
   static RSExportPrimitiveType *Create(RSContext *Context,
                                        const clang::Type *T,
                                        const llvm::StringRef &TypeName,
-                                       DataKind DK = DataKindUser,
                                        bool Normalized = false);
 
  protected:
@@ -247,11 +237,9 @@ class RSExportPrimitiveType : public RSExportType {
                         ExportClass Class,
                         const llvm::StringRef &Name,
                         DataType DT,
-                        DataKind DK,
                         bool Normalized)
       : RSExportType(Context, Class, Name),
         mType(DT),
-        mKind(DK),
         mNormalized(Normalized) {
     return;
   }
@@ -268,8 +256,7 @@ class RSExportPrimitiveType : public RSExportType {
 
   // @T may not be normalized
   static RSExportPrimitiveType *Create(RSContext *Context,
-                                       const clang::Type *T,
-                                       DataKind DK = DataKindUser);
+                                       const clang::Type *T);
 
   static DataType GetRSSpecificType(const llvm::StringRef &TypeName);
   static DataType GetRSSpecificType(const clang::Type *T);
@@ -287,7 +274,6 @@ class RSExportPrimitiveType : public RSExportType {
   static size_t GetSizeInBits(const RSExportPrimitiveType *EPT);
 
   inline DataType getType() const { return mType; }
-  inline DataKind getKind() const { return mKind; }
   inline bool isRSObjectType() const {
     return ((mType >= FirstRSObjectType) && (mType <= LastRSObjectType));
   }
@@ -343,11 +329,10 @@ class RSExportVectorType : public RSExportPrimitiveType {
   RSExportVectorType(RSContext *Context,
                      const llvm::StringRef &Name,
                      DataType DT,
-                     DataKind DK,
                      bool Normalized,
                      unsigned NumElement)
       : RSExportPrimitiveType(Context, ExportClassVector, Name,
-                              DT, DK, Normalized),
+                              DT, Normalized),
         mNumElement(NumElement) {
     return;
   }
@@ -357,7 +342,6 @@ class RSExportVectorType : public RSExportPrimitiveType {
   static RSExportVectorType *Create(RSContext *Context,
                                     const clang::ExtVectorType *EVT,
                                     const llvm::StringRef &TypeName,
-                                    DataKind DK = DataKindUser,
                                     bool Normalized = false);
 
   virtual llvm::Type *convertToLLVMType() const;

@@ -890,7 +890,6 @@ RSExportPrimitiveType
 *RSExportPrimitiveType::Create(RSContext *Context,
                                const clang::Type *T,
                                const llvm::StringRef &TypeName,
-                               DataKind DK,
                                bool Normalized) {
   DataType DT = GetDataType(Context, T);
 
@@ -898,16 +897,15 @@ RSExportPrimitiveType
     return NULL;
   else
     return new RSExportPrimitiveType(Context, ExportClassPrimitive, TypeName,
-                                     DT, DK, Normalized);
+                                     DT, Normalized);
 }
 
 RSExportPrimitiveType *RSExportPrimitiveType::Create(RSContext *Context,
-                                                     const clang::Type *T,
-                                                     DataKind DK) {
+                                                     const clang::Type *T) {
   llvm::StringRef TypeName;
   if (RSExportType::NormalizeType(T, TypeName, Context->getDiagnostics(), NULL)
       && IsPrimitiveType(T)) {
-    return Create(Context, T, TypeName, DK);
+    return Create(Context, T, TypeName);
   } else {
     return NULL;
   }
@@ -1087,7 +1085,6 @@ RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT) {
 RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
                                                const clang::ExtVectorType *EVT,
                                                const llvm::StringRef &TypeName,
-                                               DataKind DK,
                                                bool Normalized) {
   slangAssert(EVT != NULL && EVT->getTypeClass() == clang::Type::ExtVector);
 
@@ -1099,7 +1096,6 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
     return new RSExportVectorType(Context,
                                   TypeName,
                                   DT,
-                                  DK,
                                   Normalized,
                                   EVT->getNumElements());
   else
@@ -1404,17 +1400,6 @@ union RSType *RSExportRecordType::convertToSpecType() const {
 
     RS_RECORD_TYPE_SET_FIELD_NAME(ST, FieldIdx, F->getName().c_str());
     RS_RECORD_TYPE_SET_FIELD_TYPE(ST, FieldIdx, F->getType()->getSpecType());
-
-    enum RSDataKind DK = RS_DK_User;
-    if ((F->getType()->getClass() == ExportClassPrimitive) ||
-        (F->getType()->getClass() == ExportClassVector)) {
-      const RSExportPrimitiveType *EPT =
-        static_cast<const RSExportPrimitiveType*>(F->getType());
-      // enum RSExportPrimitiveType::DataKind is synced with enum RSDataKind in
-      // slang_rs_type_spec.h
-      DK = static_cast<enum RSDataKind>(EPT->getKind());
-    }
-    RS_RECORD_TYPE_SET_FIELD_DATA_KIND(ST, FieldIdx, DK);
   }
 
   // TODO(slang): Check whether all fields were created normally.

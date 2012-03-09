@@ -64,14 +64,6 @@
     ENUM_RS_OBJECT_DATA_TYPE(RSFont, "rs_font")                         \
     RS_OBJECT_DATA_TYPE_RANGE(RSElement, RSFont)
 
-#define RS_DATA_KIND_ENUMS        \
-    ENUM_RS_DATA_KIND(User)       \
-    ENUM_RS_DATA_KIND(PixelL)     \
-    ENUM_RS_DATA_KIND(PixelA)     \
-    ENUM_RS_DATA_KIND(PixelLA)    \
-    ENUM_RS_DATA_KIND(PixelRGB)   \
-    ENUM_RS_DATA_KIND(PixelRGBA)
-
 enum RSTypeClass {
 #define ENUM_RS_DATA_TYPE_CLASS(x)  RS_TC_ ## x,
   RS_DATA_TYPE_CLASS_ENUMS
@@ -105,13 +97,6 @@ enum RSDataType {
 #undef RS_OBJECT_DATA_TYPE_RANGE
 
   RS_DT_USER_DEFINED
-};
-
-enum RSDataKind {
-#define ENUM_RS_DATA_KIND(x) RS_DK_ ## x,
-  RS_DATA_KIND_ENUMS
-#undef ENUM_RS_DATA_KIND
-  RS_DK_Max
 };
 
 // Forward declaration
@@ -164,7 +149,6 @@ struct RSConstantArrayType {
 struct RSRecordField {
   const char *name;  // field name
   const union RSType *type;
-  enum RSDataKind dk;
 };
 
 struct RSRecordType {
@@ -258,10 +242,5 @@ union RSType {
     RS_CAST_TO_RECORD_TYPE(R)->field[(I)].type
 #define RS_RECORD_TYPE_SET_FIELD_TYPE(R, I, V) \
     RS_RECORD_TYPE_GET_FIELD_TYPE(R, I) = (V)
-
-#define RS_RECORD_TYPE_GET_FIELD_DATA_KIND(R, I)  \
-    RS_CAST_TO_RECORD_TYPE(R)->field[(I)].dk
-#define RS_RECORD_TYPE_SET_FIELD_DATA_KIND(R, I, V) \
-    RS_RECORD_TYPE_GET_FIELD_DATA_KIND(R, I) = (V)
 
 #endif  // _COMPILE_SLANG_SLANG_RS_TYPE_SPEC_H_  NOLINT

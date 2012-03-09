@@ -50,12 +50,6 @@ $(intermediates)/RSObjectTypeEnums.inc: $(RS_SPEC_GEN)
 	$(call generate-rs-spec-inc,rs-object-type-enums)
 endif
 
-ifneq ($(findstring RSDataKindEnums.inc,$(RS_SPEC_TABLES)),)
-LOCAL_GENERATED_SOURCES += $(intermediates)/RSDataKindEnums.inc
-$(intermediates)/RSDataKindEnums.inc: $(RS_SPEC_GEN)
-	$(call generate-rs-spec-inc,rs-data-kind-enums)
-endif
-
 ifneq ($(findstring RSDataElementEnums.inc,$(RS_SPEC_TABLES)),)
 LOCAL_GENERATED_SOURCES += $(intermediates)/RSDataElementEnums.inc
 $(intermediates)/RSDataElementEnums.inc: $(RS_SPEC_GEN)

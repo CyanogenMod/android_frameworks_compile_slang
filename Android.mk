@@ -211,7 +211,6 @@ RS_SPEC_TABLES :=	\
 	RSClangBuiltinEnums.inc	\
 	RSDataTypeEnums.inc	\
 	RSDataElementEnums.inc	\
-	RSDataKindEnums.inc	\
 	RSMatrixTypeEnums.inc	\
 	RSObjectTypeEnums.inc
 
