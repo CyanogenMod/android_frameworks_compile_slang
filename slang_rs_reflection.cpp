@@ -76,52 +76,6 @@ static bool GetClassNameFromFileName(const std::string &FileName,
   return true;
 }
 
-static const char *GetPrimitiveTypeName(const RSExportPrimitiveType *EPT) {
-  static const char *PrimitiveTypeJavaNameMap[] = {
-    "",         // RSExportPrimitiveType::DataTypeFloat16
-    "float",    // RSExportPrimitiveType::DataTypeFloat32
-    "double",   // RSExportPrimitiveType::DataTypeFloat64
-    "byte",     // RSExportPrimitiveType::DataTypeSigned8
-    "short",    // RSExportPrimitiveType::DataTypeSigned16
-    "int",      // RSExportPrimitiveType::DataTypeSigned32
-    "long",     // RSExportPrimitiveType::DataTypeSigned64
-    "short",    // RSExportPrimitiveType::DataTypeUnsigned8
-    "int",      // RSExportPrimitiveType::DataTypeUnsigned16
-    "long",     // RSExportPrimitiveType::DataTypeUnsigned32
-    "long",     // RSExportPrimitiveType::DataTypeUnsigned64
-    "boolean",  // RSExportPrimitiveType::DataTypeBoolean
-
-    "int",      // RSExportPrimitiveType::DataTypeUnsigned565
-    "int",      // RSExportPrimitiveType::DataTypeUnsigned5551
-    "int",      // RSExportPrimitiveType::DataTypeUnsigned4444
-
-    "",     // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix2x2
-    "",     // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix3x3
-    "",     // (Dummy) RSExportPrimitiveType::DataTypeRSMatrix4x4
-
-    "Element",      // RSExportPrimitiveType::DataTypeRSElement
-    "Type",         // RSExportPrimitiveType::DataTypeRSType
-    "Allocation",   // RSExportPrimitiveType::DataTypeRSAllocation
-    "Sampler",      // RSExportPrimitiveType::DataTypeRSSampler
-    "Script",       // RSExportPrimitiveType::DataTypeRSScript
-    "Mesh",         // RSExportPrimitiveType::DataTypeRSMesh
-    "Path",         // RSExportPrimitiveType::DataTypeRSPath
-    "ProgramFragment",  // RSExportPrimitiveType::DataTypeRSProgramFragment
-    "ProgramVertex",    // RSExportPrimitiveType::DataTypeRSProgramVertex
-    "ProgramRaster",    // RSExportPrimitiveType::DataTypeRSProgramRaster
-    "ProgramStore",     // RSExportPrimitiveType::DataTypeRSProgramStore
-    "Font",     // RSExportPrimitiveType::DataTypeRSFont
-  };
-  unsigned TypeId = EPT->getType();
-
-  if (TypeId < (sizeof(PrimitiveTypeJavaNameMap) / sizeof(const char*))) {
-    return PrimitiveTypeJavaNameMap[ EPT->getType() ];
-  }
-
-  slangAssert(false && "GetPrimitiveTypeName : Unknown primitive data type");
-  return NULL;
-}
-
 static const char *GetVectorTypeName(const RSExportVectorType *EVT) {
   static const char *VectorTypeJavaNameMap[][3] = {
     /* 0 */ { "Byte2",    "Byte3",    "Byte4" },
@@ -325,8 +279,8 @@ static const char *GetPackerAPIName(const RSExportPrimitiveType *EPT) {
 static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
   switch (ET->getClass()) {
     case RSExportType::ExportClassPrimitive: {
-      return GetPrimitiveTypeName(
-                static_cast<const RSExportPrimitiveType*>(ET));
+      return RSExportPrimitiveType::getRSReflectionType(
+          static_cast<const RSExportPrimitiveType*>(ET))->java_name;
     }
     case RSExportType::ExportClassPointer: {
       const RSExportType *PointeeType =
@@ -1208,7 +1162,8 @@ void RSReflection::genPrimitiveTypeExportVariable(
 
   const RSExportPrimitiveType *EPT =
       static_cast<const RSExportPrimitiveType*>(EV->getType());
-  const char *TypeName = GetPrimitiveTypeName(EPT);
+  const char *TypeName =
+      RSExportPrimitiveType::getRSReflectionType(EPT)->java_name;
 
   C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
              << EV->getName() << ";" << std::endl;

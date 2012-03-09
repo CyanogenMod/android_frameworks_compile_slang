@@ -60,6 +60,17 @@ namespace slang {
 
   class RSContext;
 
+typedef struct {
+    const char * rs_type;
+    const char * rs_short_type;
+    uint32_t size_in_bits;
+    const char * c_name;
+    const char * java_name;
+    const char * rs_c_vector_prefix;
+    const char * rs_java_vector_prefix;
+    bool java_promotion;
+} RSReflectionType;
+
 class RSExportType : public RSExportable {
   friend class RSExportElement;
  public:
@@ -282,6 +293,12 @@ class RSExportPrimitiveType : public RSExportType {
   }
 
   virtual bool equals(const RSExportable *E) const;
+
+  static RSReflectionType *getRSReflectionType(DataType DT);
+  static RSReflectionType *getRSReflectionType(
+      const RSExportPrimitiveType *EPT) {
+    return getRSReflectionType(EPT->getType());
+  }
 };  // RSExportPrimitiveType
 
 

@@ -42,6 +42,43 @@ namespace slang {
 
 namespace {
 
+static RSReflectionType gReflectionTypes[] = {
+    {"FLOAT_16", "F16", 16, "half", "half", "Half", "Half", false},
+    {"FLOAT_32", "F32", 32, "float", "float", "Float", "Float", false},
+    {"FLOAT_64", "F64", 64, "double", "double", "Double", "Double",false},
+    {"SIGNED_8", "I8", 8, "int8_t", "byte", "Byte", "Byte", false},
+    {"SIGNED_16", "I16", 16, "int16_t", "short", "Short", "Short", false},
+    {"SIGNED_32", "I32", 32, "int32_t", "int", "Int", "Int", false},
+    {"SIGNED_64", "I64", 64, "int64_t", "long", "Long", "Long", false},
+    {"UNSIGNED_8", "U8", 8, "uint8_t", "short", "Short", "UByte", true},
+    {"UNSIGNED_16", "U16", 16, "uint16_t", "int", "Int", "UShort", true},
+    {"UNSIGNED_32", "U32", 32, "uint32_t", "long", "Long", "UInt", true},
+    {"UNSIGNED_64", "U64", 64, "uint64_t", "long", "Long", "ULong", false},
+
+    {"BOOLEAN", NULL, 8, "bool", "boolean", NULL, NULL, false},
+
+    {"UNSIGNED_5_6_5", NULL, 16, NULL, NULL, NULL, NULL, false},
+    {"UNSIGNED_5_5_5_1", NULL, 16, NULL, NULL, NULL, NULL, false},
+    {"UNSIGNED_4_4_4_4", NULL, 16, NULL, NULL, NULL, NULL, false},
+
+    {"MATRIX_2X2", NULL, 4*32, "rsMatrix_2x2", "Matrix2f", NULL, NULL, false},
+    {"MATRIX_3X3", NULL, 9*32, "rsMatrix_3x3", "Matrix3f", NULL, NULL, false},
+    {"MATRIX_4X4", NULL, 16*32, "rsMatrix_4x4", "Matrix4f", NULL, NULL, false},
+
+    {"RS_ELEMENT", "ELEMENT", 32, "Element", "Element", NULL, NULL, false},
+    {"RS_TYPE", "TYPE", 32, "Type", "Type", NULL, NULL, false},
+    {"RS_ALLOCATION", "ALLOCATION", 32, "Allocation", "Allocation", NULL, NULL, false},
+    {"RS_SAMPLER", "SAMPLER", 32, "Sampler", "Sampler", NULL, NULL, false},
+    {"RS_SCRIPT", "SCRIPT", 32, "Script", "Script", NULL, NULL, false},
+    {"RS_MESH", "MESH", 32, "Mesh", "Mesh", NULL, NULL, false},
+    {"RS_PATH", "PATH", 32, "Path", "Path", NULL, NULL, false},
+    {"RS_PROGRAM_FRAGMENT", "PROGRAM_FRAGMENT", 32, "ProgramFragment", "ProgramFragment", NULL, NULL, false},
+    {"RS_PROGRAM_VERTEX", "PROGRAM_VERTEX", 32, "ProgramVertex", "ProgramVertex", NULL, NULL, false},
+    {"RS_PROGRAM_RASTER", "PROGRAM_RASTER", 32, "ProgramRaster", "ProgramRaster", NULL, NULL, false},
+    {"RS_PROGRAM_STORE", "PROGRAM_STORE", 32, "ProgramStore", "ProgramStore", NULL, NULL, false},
+    {"RS_FONT", "FONT", 32, "Font", "Font", NULL, NULL, false}
+};
+
 static const clang::Type *TypeExportableHelper(
     const clang::Type *T,
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
@@ -952,6 +989,14 @@ union RSType *RSExportPrimitiveType::convertToSpecType() const {
 bool RSExportPrimitiveType::equals(const RSExportable *E) const {
   CHECK_PARENT_EQUALITY(RSExportType, E);
   return (static_cast<const RSExportPrimitiveType*>(E)->getType() == getType());
+}
+
+RSReflectionType *RSExportPrimitiveType::getRSReflectionType(DataType DT) {
+  if (DT > DataTypeUnknown && DT < DataTypeMax) {
+    return &gReflectionTypes[DT];
+  } else {
+    return NULL;
+  }
 }
 
 /**************************** RSExportPointerType ****************************/
