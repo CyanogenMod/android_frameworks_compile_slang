@@ -71,6 +71,20 @@ typedef struct {
     bool java_promotion;
 } RSReflectionType;
 
+
+typedef struct RSReflectionTypeData_rec {
+    const RSReflectionType *type;
+    uint32_t vecSize;
+    bool isPointer;
+    uint32_t arraySize;
+
+    // Subelements
+    //std::vector<const struct RSReflectionTypeData_rec *> fields;
+    //std::vector< std::string > fieldNames;
+    //std::vector< uint32_t> fieldOffsetBytes;
+} RSReflectionTypeData;
+
+
 class RSExportType : public RSExportable {
   friend class RSExportElement;
  public:
@@ -82,6 +96,8 @@ class RSExportType : public RSExportable {
     ExportClassConstantArray,
     ExportClassRecord
   } ExportClass;
+
+  void convertToRTD(RSReflectionTypeData *rtd) const;
 
  private:
   ExportClass mClass;

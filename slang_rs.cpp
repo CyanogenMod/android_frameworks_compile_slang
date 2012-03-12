@@ -36,6 +36,8 @@
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
 
+#include "slang_rs_reflection_cpp.h"
+
 namespace slang {
 
 #define RS_HEADER_SUFFIX  "rsh"
@@ -321,7 +323,11 @@ bool SlangRS::compile(
     if (OutputType != Slang::OT_Dependency) {
 
       if (BitcodeStorage == BCST_CPP_CODE) {
-        // TODO: Call C++ reflection routines + appendGeneratedFileName().
+          RSReflectionCpp R(mRSContext);
+          bool ret = R.reflect(JavaReflectionPathBase, getInputFileName(), getOutputFileName());
+          if (!ret) {
+            return false;
+          }
       } else {
 
         if (!reflectToJava(JavaReflectionPathBase,

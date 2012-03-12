@@ -1439,4 +1439,52 @@ bool RSExportRecordType::equals(const RSExportable *E) const {
   return true;
 }
 
+void RSExportType::convertToRTD(RSReflectionTypeData *rtd) const {
+    memset(rtd, 0, sizeof(*rtd));
+    rtd->vecSize = 1;
+
+    switch(getClass()) {
+    case RSExportType::ExportClassPrimitive: {
+            const RSExportPrimitiveType *EPT = static_cast<const RSExportPrimitiveType*>(this);
+            rtd->type = RSExportPrimitiveType::getRSReflectionType(EPT);
+            return;
+        }
+    case RSExportType::ExportClassPointer: {
+            const RSExportPointerType *EPT = static_cast<const RSExportPointerType*>(this);
+            const RSExportType *PointeeType = EPT->getPointeeType();
+            PointeeType->convertToRTD(rtd);
+            rtd->isPointer = true;
+            return;
+        }
+    case RSExportType::ExportClassVector: {
+            const RSExportVectorType *EVT = static_cast<const RSExportVectorType*>(this);
+            rtd->type = EVT->getRSReflectionType(EVT);
+            rtd->vecSize = EVT->getNumElement();
+            return;
+        }
+    case RSExportType::ExportClassMatrix: {
+            const RSExportMatrixType *EMT = static_cast<const RSExportMatrixType*>(this);
+            unsigned Dim = EMT->getDim();
+            slangAssert((Dim >= 2) && (Dim <= 4));
+            rtd->type = &gReflectionTypes[15 + Dim-2];
+            return;
+        }
+    case RSExportType::ExportClassConstantArray: {
+            const RSExportConstantArrayType* CAT =
+              static_cast<const RSExportConstantArrayType*>(this);
+            CAT->getElementType()->convertToRTD(rtd);
+            rtd->arraySize = CAT->getSize();
+            return;
+        }
+    case RSExportType::ExportClassRecord: {
+            slangAssert(!"RSExportType::ExportClassRecord not implemented");
+            return;// RS_TYPE_CLASS_NAME_PREFIX + ET->getName() + ".Item";
+        }
+    default: {
+            slangAssert(false && "Unknown class of type");
+        }
+    }
+}
+
+
 }  // namespace slang

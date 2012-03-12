@@ -229,7 +229,9 @@ LOCAL_SRC_FILES :=	\
 	slang_rs_export_foreach.cpp \
 	slang_rs_object_ref_count.cpp	\
 	slang_rs_reflection.cpp \
-	slang_rs_reflect_utils.cpp  \
+	slang_rs_reflection_base.cpp \
+	slang_rs_reflection_cpp.cpp \
+	slang_rs_reflect_utils.cpp
 
 LOCAL_STATIC_LIBRARIES :=	\
 	libclangDriver libslang \
