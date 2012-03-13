@@ -94,37 +94,65 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
     //out() << std::endl;
 
     if(!baseClass.empty()) {
-        write("class " + mClassName + " : public " + baseClass + " {");
+        write("class " + mClassName + " : protected " + baseClass + " {");
     } else {
         write("class " + mClassName + " {");
     }
+
+    write("private:");
+    uint32_t slot = 0;
+    incIndent();
+    for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
+           E = mRSContext->export_vars_end(); I != E; I++, slot++) {
+
+        const RSExportVar *ev = *I;
+        RSReflectionTypeData rtd;
+        ev->getType()->convertToRTD(&rtd);
+        if(!ev->isConst()) {
+            write(string(rtd.type->c_name) + " __" + ev->getName() + ";");
+        }
+    }
+    decIndent();
 
     write("public:");
     incIndent();
     write(mClassName + "(RenderScript *rs, const char *cacheDir, size_t cacheDirLength);");
     write("virtual ~" + mClassName + "();");
+    write("");
 
 
     // Reflect export variable
-    uint32_t slot = 0;
+    slot = 0;
     for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
-           E = mRSContext->export_vars_end(); I != E; I++) {
+           E = mRSContext->export_vars_end(); I != E; I++, slot++) {
 
         const RSExportVar *ev = *I;
-        //const RSExportType *et = ev->getType();
+        RSReflectionTypeData rtd;
+        ev->getType()->convertToRTD(&rtd);
 
-        char buf[256];
-        sprintf(buf, " = %i;", slot++);
-        write("const static int mExportVarIdx_" + ev->getName() + buf);
-
-        //switch (ET->getClass()) {
-
-        //genExportVariable(C, *I);
+        if(!ev->isConst()) {
+            write(string("void set_") + ev->getName() + "(" + rtd.type->c_name + " v) {");
+            stringstream tmp;
+            tmp << slot;
+            write(string("    setVar(") + tmp.str() + ", v);");
+            write(string("    __") + ev->getName() + " = v;");
+            write("}");
+        }
+        write(string(rtd.type->c_name) + " get_" + ev->getName() + "() const {");
+        if(ev->isConst()) {
+            const clang::APValue &val = ev->getInit();
+            bool isBool = !strcmp(rtd.type->c_name, "bool");
+            write(string("    return ") + genInitValue(val, isBool) + ";");
+        } else {
+            write(string("    return __") + ev->getName() + ";");
+        }
+        write("}");
+        write("");
     }
 
     // Reflect export for each functions
     for (RSContext::const_export_foreach_iterator I = mRSContext->export_foreach_begin(),
-             E = mRSContext->export_foreach_end(); I != E; I++, slot++) {
+             E = mRSContext->export_foreach_end(); I != E; I++) {
 
         const RSExportForEach *ef = *I;
         if (ef->isDummyRoot()) {
@@ -132,15 +160,15 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
             continue;
         }
 
-        char buf[256];
-        sprintf(buf, " = %i;", slot);
-        write("const static int mExportForEachIdx_" + ef->getName() + buf);
-
-        string tmp("void forEach_" + ef->getName() + "(");
-        if(ef->hasIn())
-            tmp += "Allocation ain";
-        if(ef->hasOut())
-            tmp += "Allocation aout";
+        stringstream tmp;
+        tmp << "void forEach_" << ef->getName() << "(";
+        if(ef->hasIn() && ef->hasOut()) {
+            tmp << "const Allocation *ain, const Allocation *aout";
+        } else if(ef->hasIn()) {
+            tmp << "const Allocation *ain";
+        } else {
+            tmp << "const Allocation *aout";
+        }
 
         if(ef->getParamPacketType()) {
             for(RSExportForEach::const_param_iterator i = ef->params_begin(),
@@ -148,12 +176,10 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
                 RSReflectionTypeData rtd;
                 (*i)->getType()->convertToRTD(&rtd);
-                tmp += rtd.type->c_name;
-                tmp += " ";
-                tmp +=(*i)->getName();
+                tmp << rtd.type->c_name << " " << (*i)->getName();
             }
         }
-        tmp += ") const;";
+        tmp << ") const;";
         write(tmp);
     }
 
@@ -212,38 +238,20 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
 
     write(mClassName + "::" + mClassName +
           "(RenderScript *rs, const char *cacheDir, size_t cacheDirLength) :");
-    write("        ScriptC(rs, __txt, sizeof(__txt), " + mInputFileName +
-          ", 4, cacheDir, cacheDirLength) {");
+    write("        ScriptC(rs, __txt, sizeof(__txt), \"" + mInputFileName +
+          "\", 4, cacheDir, cacheDirLength) {");
     incIndent();
     //...
     decIndent();
     write("}");
     write("");
 
-    write("virtual ~" + mClassName + "::" + mClassName + "() {");
+    write(mClassName + "::~" + mClassName + "() {");
     write("}");
     write("");
 
-
-    // Reflect export variable
-    uint32_t slot = 0;
-    for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
-           E = mRSContext->export_vars_end(); I != E; I++) {
-
-        const RSExportVar *ev = *I;
-        //const RSExportType *et = ev->getType();
-
-        char buf[256];
-        sprintf(buf, " = %i;", slot++);
-        write("const static int mExportVarIdx_" + ev->getName() + buf);
-
-        //switch (ET->getClass()) {
-
-        //genExportVariable(C, *I);
-    }
-
     // Reflect export for each functions
-    slot = 0;
+    uint32_t slot = 0;
     for (RSContext::const_export_foreach_iterator I = mRSContext->export_foreach_begin(),
              E = mRSContext->export_foreach_end(); I != E; I++, slot++) {
 
@@ -253,30 +261,28 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
             continue;
         }
 
-        char buf[256];
-        string tmp("void forEach_" + ef->getName() + "(");
+        stringstream tmp;
+        tmp << "void " << mClassName << "::forEach_" << ef->getName() << "(";
         if(ef->hasIn() && ef->hasOut()) {
-            tmp += "Allocation ain, Allocation aout";
+            tmp << "const Allocation *ain, const Allocation *aout";
         } else if(ef->hasIn()) {
-            tmp += "Allocation ain";
+            tmp << "const Allocation *ain";
         } else {
-            tmp += "Allocation aout";
+            tmp << "const Allocation *aout";
         }
-        tmp += ") const {";
+        tmp << ") const {";
         write(tmp);
+        tmp.str("");
 
-        incIndent();
-        sprintf(buf, "forEach(%i, ", slot);
-        tmp = buf;
+        tmp << "    forEach(" << slot << ", ";
         if(ef->hasIn() && ef->hasOut()) {
-            tmp += "ain, aout, NULL, 0);";
+            tmp << "ain, aout, NULL, 0);";
         } else if(ef->hasIn()) {
-            tmp += "ain, NULL, 0);";
+            tmp << "ain, NULL, 0);";
         } else {
-            tmp += "aout, NULL, 0);";
+            tmp << "aout, NULL, 0);";
         }
         write(tmp);
-        decIndent();
 
         write("}");
         write("");

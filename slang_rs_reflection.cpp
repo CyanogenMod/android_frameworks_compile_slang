@@ -38,6 +38,8 @@
 #include "slang_version.h"
 #include "slang_utils.h"
 
+#include "slang_rs_reflection_base.h"
+
 #define RS_SCRIPT_CLASS_NAME_PREFIX      "ScriptC_"
 #define RS_SCRIPT_CLASS_SUPER_CLASS_NAME "ScriptC"
 
@@ -383,40 +385,6 @@ void RSReflection::genInitBoolExportVariable(Context &C,
   return;
 }
 
-void RSReflection::genInitValue(Context &C, const clang::APValue &Val) {
-  switch (Val.getKind()) {
-    case clang::APValue::Int: {
-      llvm::APInt api = Val.getInt();
-      C.out() << api.getSExtValue();
-      if (api.getBitWidth() > 32) {
-        C.out() << "L";
-      }
-      break;
-    }
-    case clang::APValue::Float: {
-      llvm::APFloat apf = Val.getFloat();
-      if (&apf.getSemantics() == &llvm::APFloat::IEEEsingle) {
-        C.out() << apf.convertToFloat() << "f";
-      } else {
-        C.out() << apf.convertToDouble();
-      }
-      break;
-    }
-
-    case clang::APValue::ComplexInt:
-    case clang::APValue::ComplexFloat:
-    case clang::APValue::LValue:
-    case clang::APValue::Vector: {
-      slangAssert(false &&
-                  "Primitive type cannot have such kind of initializer");
-      break;
-    }
-    default: {
-      slangAssert(false && "Unknown kind of initializer");
-    }
-  }
-}
-
 void RSReflection::genInitPrimitiveExportVariable(
       Context &C,
       const std::string &VarName,
@@ -424,7 +392,7 @@ void RSReflection::genInitPrimitiveExportVariable(
   slangAssert(!Val.isUninit() && "Not a valid initializer");
 
   C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
-  genInitValue(C, Val);
+  C.out() << RSReflectionBase::genInitValue(Val);
   C.out() << ";" << std::endl;
 
   return;
@@ -857,14 +825,8 @@ void RSReflection::genPrimitiveTypeExportVariable(
     C.indent() << "public final static " << TypeName
                << " " RS_EXPORT_VAR_CONST_PREFIX << EV->getName() << " = ";
     const clang::APValue &Val = EV->getInit();
-    if (EPT->getType() == RSExportPrimitiveType::DataTypeBoolean) {
-      slangAssert((Val.getKind() == clang::APValue::Int) &&
-                  "Bool type has wrong initial APValue");
-      C.out() << ((Val.getInt().getSExtValue() == 0) ? "false" : "true");
-    } else {
-      genInitValue(C, Val);
-    }
-    C.out() << ";" << std::endl;
+    C.out() << RSReflectionBase::genInitValue(Val, EPT->getType() ==
+        RSExportPrimitiveType::DataTypeBoolean) << ";" << std::endl;
   } else {
     // set_*()
     C.startFunction(Context::AM_Public,

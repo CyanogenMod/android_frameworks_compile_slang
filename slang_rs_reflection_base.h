@@ -61,6 +61,7 @@ protected:
     void incIndent();
     void decIndent();
     void write(const std::string &t);
+    void write(const std::stringstream &t);
 
     std::string stripRS(const std::string &s) const;
 
@@ -72,6 +73,7 @@ private:
 public:
     virtual ~RSReflectionBase();
 
+    static std::string genInitValue(const clang::APValue &Val, bool asBool=false);
 
 };  // class RSReflection
 
