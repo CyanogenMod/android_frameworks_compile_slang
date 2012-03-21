@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, The Android Open Source Project
+ * Copyright 2011-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,5 +29,16 @@
 // Note that RS_VERSION is defined at build time (see Android.mk for details).
 
 #define SLANG_ICS_TARGET_API 14
+
+// SlangVersion refers to the released compiler version (for which certain
+// behaviors could change - i.e. critical bugs fixed that may require
+// additional workarounds in the backend compiler).
+namespace SlangVersion {
+enum {
+  LEGACY = 0,
+  ICS = 1400,
+  CURRENT = ICS
+};
+}  // namespace SlangVersion
 
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_VERSION_H_  NOLINT
