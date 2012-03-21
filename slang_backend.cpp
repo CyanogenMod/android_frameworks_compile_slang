@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,16 +236,15 @@ void Backend::Initialize(clang::ASTContext &Ctx) {
 
 // Encase the Bitcode in a wrapper containing RS version information.
 void Backend::WrapBitcode(llvm::raw_string_ostream &Bitcode) {
-  struct bcinfo::BCWrapperHeader header;
-  header.Magic = 0x0B17C0DE;
-  header.Version = 0;
-  header.BitcodeOffset = sizeof(header);
-  header.BitcodeSize = Bitcode.str().length();
-  header.HeaderVersion = 0;
-  header.TargetAPI = getTargetAPI();
+  bcinfo::AndroidBitcodeWrapper wrapper;
+  size_t actualWrapperLen = bcinfo::writeAndroidBitcodeWrapper(
+      &wrapper, Bitcode.str().length(), getTargetAPI(),
+      SlangVersion::CURRENT, mCodeGenOpts.OptimizationLevel);
+
+  slangAssert(actualWrapperLen > 0);
 
   // Write out the bitcode wrapper.
-  FormattedOutStream.write((const char*) &header, sizeof(header));
+  FormattedOutStream.write(reinterpret_cast<char*>(&wrapper), actualWrapperLen);
 
   // Write out the actual encoded bitcode.
   FormattedOutStream << Bitcode.str();
