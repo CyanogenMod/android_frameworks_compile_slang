@@ -49,11 +49,15 @@ namespace slang {
   RS_HEADER_ENTRY(rs_cl) \
   RS_HEADER_ENTRY(rs_core) \
   RS_HEADER_ENTRY(rs_debug) \
+  RS_HEADER_ENTRY(rs_element) \
   RS_HEADER_ENTRY(rs_graphics) \
   RS_HEADER_ENTRY(rs_math) \
+  RS_HEADER_ENTRY(rs_mesh) \
   RS_HEADER_ENTRY(rs_matrix) \
   RS_HEADER_ENTRY(rs_object) \
+  RS_HEADER_ENTRY(rs_program) \
   RS_HEADER_ENTRY(rs_quaternion) \
+  RS_HEADER_ENTRY(rs_sampler) \
   RS_HEADER_ENTRY(rs_time) \
   RS_HEADER_ENTRY(rs_types) \
 
