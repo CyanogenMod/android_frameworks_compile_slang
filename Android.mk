@@ -70,6 +70,7 @@ static_libraries_needed_by_slang := \
 	libclangCodeGen \
 	libclangAST \
 	libclangLex \
+	libclangEdit \
 	libclangFrontend \
 	libclangBasic \
 	libLLVMSupport \
