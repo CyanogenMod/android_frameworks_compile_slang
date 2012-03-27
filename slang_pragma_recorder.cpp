@@ -61,7 +61,7 @@ void PragmaRecorder::HandlePragma(clang::Preprocessor &PP,
   // Pragma in ACC should be a name/value pair
 
   if (GetPragmaNameFromToken(FirstToken, PragmaName)) {
-    // start parsing the value '(' PragmaValue ')'
+    // start parsing the value '(' PragmaValue ')', if we have one.
     const clang::Token* NextToken = &PP.LookAhead(0);
 
     if (NextToken->is(clang::tok::l_paren))
@@ -70,24 +70,44 @@ void PragmaRecorder::HandlePragma(clang::Preprocessor &PP,
       goto end_parsing_pragma_value;
 
     NextToken = &PP.LookAhead(0);
-    if (GetPragmaValueFromToken(*NextToken, PragmaValue))
+    if (GetPragmaValueFromToken(*NextToken, PragmaValue)) {
       PP.Lex(CurrentToken);
-    else
-      goto end_parsing_pragma_value;
+    } else {
+      PP.LexUnexpandedToken(CurrentToken);
+      PP.Diag(NextToken->getLocation(),
+              PP.getDiagnostics().getCustomDiagID(
+                  clang::DiagnosticsEngine::Error,
+                  "expected value after '#pragma %0('")) << PragmaName;
+      return;
+    }
 
     if (!NextToken->is(clang::tok::r_paren)) {
       NextToken = &PP.LookAhead(0);
-      if (NextToken->is(clang::tok::r_paren))
+      if (NextToken->is(clang::tok::r_paren)) {
         PP.LexUnexpandedToken(CurrentToken);
-      else
-        goto end_parsing_pragma_value;
+      } else {
+        PP.LexUnexpandedToken(CurrentToken);
+        PP.Diag(NextToken->getLocation(),
+                PP.getDiagnostics().getCustomDiagID(
+                    clang::DiagnosticsEngine::Error,
+                    "missing ')' after '#pragma %0(%1'"))
+            << PragmaName << PragmaValue;
+        return;
+      }
     }
-
-    // Until now, we ensure that we have a pragma name/value pair
-    mPragmas->push_back(make_pair(PragmaName, PragmaValue));
+  } else {
+    PP.Diag(FirstToken.getLocation(),
+            PP.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "no pragma name or value"));
+    return;
   }
 
  end_parsing_pragma_value:
+
+  // PragmaValue may be an empty string.
+  mPragmas->push_back(make_pair(PragmaName, PragmaValue));
+
   // Inform lex to eat the token
   PP.LexUnexpandedToken(CurrentToken);
 
