@@ -64,7 +64,6 @@ RSBackend::RSBackend(RSContext *Context,
     mExportForEachSignatureMetadata(NULL),
     mExportTypeMetadata(NULL),
     mRSObjectSlotsMetadata(NULL),
-    mRSOptimizationMetadata(NULL),
     mRefCount(mContext->getASTContext()) {
 }
 
@@ -202,11 +201,6 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
   llvm::SmallVector<llvm::Value*, 1> OptimizationOption;
   OptimizationOption.push_back(llvm::ConstantInt::get(
     mLLVMContext, llvm::APInt(32, mCodeGenOpts.OptimizationLevel)));
-
-  if (mRSOptimizationMetadata == NULL)
-    mRSOptimizationMetadata = M->getOrInsertNamedMetadata(OPTIMIZATION_LEVEL_MN);
-  mRSOptimizationMetadata->addOperand(
-    llvm::MDNode::get(mLLVMContext, OptimizationOption));
 
   // Dump export variable info
   if (mContext->hasExportVar()) {

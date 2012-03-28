@@ -33,6 +33,4 @@
 
 #define RS_EXPORT_FOREACH_MN "#rs_export_foreach"
 
-#define OPTIMIZATION_LEVEL_MN "#optimization_level"
-
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_METADATA_H_  NOLINT
