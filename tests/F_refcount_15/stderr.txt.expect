@@ -1,2 +1,0 @@
-refcount_15.rs:5:15: error: arrays containing RS object types cannot be exported in target API < 16: 'a'
-refcount_15.rs:7:8: error: structures containing RS object types cannot be exported in target API < 16: 'rsStruct'
