@@ -58,11 +58,11 @@ bool RSReflectionCpp::reflect(const string &OutputPathBase,
     mOutputBCFileName = OutputBCFileName;
     mClassName = string("ScriptC_") + stripRS(InputFileName);
 
-    makeHeader("ScriptC");
+    makeHeader("android::renderscriptCpp::ScriptC");
     std::vector< std::string > header(mText);
     mText.clear();
 
-    makeImpl("ScriptC");
+    makeImpl("android::renderscriptCpp::ScriptC");
     std::vector< std::string > cpp(mText);
     mText.clear();
 
@@ -94,7 +94,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
     //out() << std::endl;
 
     if(!baseClass.empty()) {
-        write("class " + mClassName + " : protected " + baseClass + " {");
+        write("class " + mClassName + " : public " + baseClass + " {");
     } else {
         write("class " + mClassName + " {");
     }
@@ -116,7 +116,8 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
     write("public:");
     incIndent();
-    write(mClassName + "(RenderScript *rs, const char *cacheDir, size_t cacheDirLength);");
+    write(mClassName + "(android::renderscriptCpp::RenderScript *rs," +
+            " const char *cacheDir, size_t cacheDirLength);");
     write("virtual ~" + mClassName + "();");
     write("");
 
@@ -163,11 +164,12 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
         stringstream tmp;
         tmp << "void forEach_" << ef->getName() << "(";
         if(ef->hasIn() && ef->hasOut()) {
-            tmp << "const Allocation *ain, const Allocation *aout";
+            tmp << "android::sp<const android::renderscriptCpp::Allocation> ain";
+            tmp << ", android::sp<const android::renderscriptCpp::Allocation> aout";
         } else if(ef->hasIn()) {
-            tmp << "const Allocation *ain";
+            tmp << "android::sp<const android::renderscriptCpp::Allocation> ain";
         } else {
-            tmp << "const Allocation *aout";
+            tmp << "android::sp<const android::renderscriptCpp::Allocation> aout";
         }
 
         if(ef->getParamPacketType()) {
@@ -237,7 +239,7 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
     //out() << std::endl;
 
     write(mClassName + "::" + mClassName +
-          "(RenderScript *rs, const char *cacheDir, size_t cacheDirLength) :");
+          "(android::renderscriptCpp::RenderScript *rs, const char *cacheDir, size_t cacheDirLength) :");
     write("        ScriptC(rs, __txt, sizeof(__txt), \"" + mInputFileName +
           "\", 4, cacheDir, cacheDirLength) {");
     incIndent();
@@ -264,11 +266,12 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
         stringstream tmp;
         tmp << "void " << mClassName << "::forEach_" << ef->getName() << "(";
         if(ef->hasIn() && ef->hasOut()) {
-            tmp << "const Allocation *ain, const Allocation *aout";
+            tmp << "android::sp<const android::renderscriptCpp::Allocation> ain";
+            tmp << ", android::sp<const android::renderscriptCpp::Allocation> aout";
         } else if(ef->hasIn()) {
-            tmp << "const Allocation *ain";
+            tmp << "android::sp<const android::renderscriptCpp::Allocation> ain";
         } else {
-            tmp << "const Allocation *aout";
+            tmp << "android::sp<const android::renderscriptCpp::Allocation> aout";
         }
         tmp << ") const {";
         write(tmp);
