@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 #include "slang_rs_context.h"
 #include "slang_rs_export_element.h"
 #include "slang_rs_type_spec.h"
+#include "slang_version.h"
 
 #define CHECK_PARENT_EQUALITY(ParentClass, E) \
   if (!ParentClass::equals(E))                \
@@ -84,12 +85,15 @@ static const clang::Type *TypeExportableHelper(
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
     clang::DiagnosticsEngine *DiagEngine,
     const clang::VarDecl *VD,
-    const clang::RecordDecl *TopLevelRecord);
+    const clang::RecordDecl *TopLevelRecord,
+    bool InArray,
+    unsigned int TargetAPI);
 
 static void ReportTypeError(clang::DiagnosticsEngine *DiagEngine,
                             const clang::VarDecl *VD,
                             const clang::RecordDecl *TopLevelRecord,
-                            const char *Message) {
+                            const char *Message,
+                            unsigned int TargetAPI = 0) {
   if (!DiagEngine) {
     return;
   }
@@ -103,12 +107,12 @@ static void ReportTypeError(clang::DiagnosticsEngine *DiagEngine,
     DiagEngine->Report(
       clang::FullSourceLoc(TopLevelRecord->getLocation(), SM),
       DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message))
-      << TopLevelRecord->getName();
+      << TopLevelRecord->getName() << TargetAPI;
   } else if (VD) {
     DiagEngine->Report(
       clang::FullSourceLoc(VD->getLocation(), SM),
       DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message))
-      << VD->getName();
+      << VD->getName() << TargetAPI;
   } else {
     slangAssert(false && "Variables should be validated before exporting");
   }
@@ -119,7 +123,8 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
     clang::DiagnosticsEngine *DiagEngine,
     const clang::VarDecl *VD,
-    const clang::RecordDecl *TopLevelRecord) {
+    const clang::RecordDecl *TopLevelRecord,
+    unsigned int TargetAPI) {
   // Check element type
   const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
   if (ElementType->isArrayType()) {
@@ -146,10 +151,11 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
   }
 
   if (TypeExportableHelper(ElementType, SPS, DiagEngine, VD,
-                           TopLevelRecord) == NULL)
+                           TopLevelRecord, true, TargetAPI) == NULL) {
     return NULL;
-  else
+  } else {
     return CAT;
+  }
 }
 
 static const clang::Type *TypeExportableHelper(
@@ -157,7 +163,9 @@ static const clang::Type *TypeExportableHelper(
     llvm::SmallPtrSet<clang::Type const *, 8> &SPS,
     clang::DiagnosticsEngine *DiagEngine,
     clang::VarDecl const *VD,
-    clang::RecordDecl const *TopLevelRecord) {
+    clang::RecordDecl const *TopLevelRecord,
+    bool InArray,
+    unsigned int TargetAPI) {
   // Normalize first
   if ((T = GET_CANONICAL_TYPE(T)) == NULL)
     return NULL;
@@ -182,12 +190,30 @@ static const clang::Type *TypeExportableHelper(
     }
     case clang::Type::Record: {
       if (RSExportPrimitiveType::GetRSSpecificType(T) !=
-          RSExportPrimitiveType::DataTypeUnknown)
+          RSExportPrimitiveType::DataTypeUnknown) {
+        if (TargetAPI < SLANG_JB_TARGET_API) {
+          // TopLevelRecord denotes an outer struct around the RS type.
+          if (TopLevelRecord) {
+            ReportTypeError(DiagEngine, VD, TopLevelRecord,
+                            "structures containing RS object types cannot "
+                            "be exported in target API < %1: '%0'",
+                            SLANG_JB_TARGET_API);
+            return NULL;
+          } else if (InArray) {
+            ReportTypeError(DiagEngine, VD, TopLevelRecord,
+                            "arrays containing RS object types cannot "
+                            "be exported in target API < %1: '%0'",
+                            SLANG_JB_TARGET_API);
+            return NULL;
+          }
+        }
+
         return T;  // RS object type, no further checks are needed
+      }
 
       // Check internal struct
       if (T->isUnionType()) {
-        ReportTypeError(DiagEngine, NULL, T->getAsUnionType()->getDecl(),
+        ReportTypeError(DiagEngine, VD, T->getAsUnionType()->getDecl(),
                         "unions cannot be exported: '%0'");
         return NULL;
       } else if (!T->isStructureType()) {
@@ -230,7 +256,8 @@ static const clang::Type *TypeExportableHelper(
         const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
         FT = GET_CANONICAL_TYPE(FT);
 
-        if (!TypeExportableHelper(FT, SPS, DiagEngine, VD, TopLevelRecord)) {
+        if (!TypeExportableHelper(FT, SPS, DiagEngine, VD, TopLevelRecord,
+                                  InArray, TargetAPI)) {
           return NULL;
         }
 
@@ -271,7 +298,7 @@ static const clang::Type *TypeExportableHelper(
       // type
       if (PointeeType->isArrayType() ||
           (TypeExportableHelper(PointeeType, SPS, DiagEngine, VD,
-                                TopLevelRecord) == NULL))
+                                TopLevelRecord, InArray, TargetAPI) == NULL))
         return NULL;
       else
         return T;
@@ -288,7 +315,7 @@ static const clang::Type *TypeExportableHelper(
 
       if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
           (TypeExportableHelper(ElementType, SPS, DiagEngine, VD,
-                                TopLevelRecord) == NULL))
+                                TopLevelRecord, InArray, TargetAPI) == NULL))
         return NULL;
       else
         return T;
@@ -298,7 +325,7 @@ static const clang::Type *TypeExportableHelper(
           UNSAFE_CAST_TYPE(const clang::ConstantArrayType, T);
 
       return ConstantArrayTypeExportableHelper(CAT, SPS, DiagEngine, VD,
-                                               TopLevelRecord);
+                                               TopLevelRecord, TargetAPI);
     }
     default: {
       return NULL;
@@ -315,11 +342,12 @@ static const clang::Type *TypeExportableHelper(
 // types that cannot be exported (mostly pointers within a struct).
 static const clang::Type *TypeExportable(const clang::Type *T,
                                          clang::DiagnosticsEngine *DiagEngine,
-                                         const clang::VarDecl *VD) {
+                                         const clang::VarDecl *VD,
+                                         unsigned int TargetAPI) {
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  return TypeExportableHelper(T, SPS, DiagEngine, VD, NULL);
+  return TypeExportableHelper(T, SPS, DiagEngine, VD, NULL, false, TargetAPI);
 }
 
 static bool ValidateVarDeclHelper(
@@ -432,8 +460,9 @@ static bool ValidateVarDeclHelper(
 bool RSExportType::NormalizeType(const clang::Type *&T,
                                  llvm::StringRef &TypeName,
                                  clang::DiagnosticsEngine *DiagEngine,
-                                 const clang::VarDecl *VD) {
-  if ((T = TypeExportable(T, DiagEngine, VD)) == NULL) {
+                                 const clang::VarDecl *VD,
+                                 unsigned int TargetAPI) {
+  if ((T = TypeExportable(T, DiagEngine, VD, TargetAPI)) == NULL) {
     return false;
   }
   // Get type name
@@ -540,7 +569,8 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
       // "*" plus pointee name
       const clang::Type *PT = GET_POINTEE_TYPE(T);
       llvm::StringRef PointeeName;
-      if (NormalizeType(PT, PointeeName, NULL, NULL)) {
+      if (NormalizeType(PT, PointeeName, NULL, NULL,
+                        SLANG_MAXIMUM_TARGET_API)) {
         char *Name = new char[ 1 /* * */ + PointeeName.size() + 1 ];
         Name[0] = '*';
         memcpy(Name + 1, PointeeName.data(), PointeeName.size());
@@ -661,10 +691,12 @@ RSExportType *RSExportType::Create(RSContext *Context,
 
 RSExportType *RSExportType::Create(RSContext *Context, const clang::Type *T) {
   llvm::StringRef TypeName;
-  if (NormalizeType(T, TypeName, Context->getDiagnostics(), NULL))
+  if (NormalizeType(T, TypeName, Context->getDiagnostics(), NULL,
+                    Context->getTargetAPI())) {
     return Create(Context, T, TypeName);
-  else
+  } else {
     return NULL;
+  }
 }
 
 RSExportType *RSExportType::CreateFromDecl(RSContext *Context,
@@ -903,7 +935,8 @@ RSExportPrimitiveType
 RSExportPrimitiveType *RSExportPrimitiveType::Create(RSContext *Context,
                                                      const clang::Type *T) {
   llvm::StringRef TypeName;
-  if (RSExportType::NormalizeType(T, TypeName, Context->getDiagnostics(), NULL)
+  if (RSExportType::NormalizeType(T, TypeName, Context->getDiagnostics(), NULL,
+                                  Context->getTargetAPI())
       && IsPrimitiveType(T)) {
     return Create(Context, T, TypeName);
   } else {

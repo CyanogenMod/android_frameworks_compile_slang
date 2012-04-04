@@ -112,7 +112,7 @@ bool RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
 
 namespace {
 
-static bool ValidateVarDecl(clang::VarDecl *VD) {
+static bool ValidateVarDecl(clang::VarDecl *VD, unsigned int TargetAPI) {
   if (!VD) {
     return true;
   }
@@ -123,7 +123,8 @@ static bool ValidateVarDecl(clang::VarDecl *VD) {
 
   if (VD->getLinkage() == clang::ExternalLinkage) {
     llvm::StringRef TypeName;
-    if (!RSExportType::NormalizeType(T, TypeName, &C.getDiagnostics(), VD)) {
+    if (!RSExportType::NormalizeType(T, TypeName, &C.getDiagnostics(), VD,
+                                     TargetAPI)) {
       valid = false;
     }
   }
@@ -132,7 +133,7 @@ static bool ValidateVarDecl(clang::VarDecl *VD) {
   return valid;
 }
 
-static bool ValidateASTContext(clang::ASTContext &C) {
+static bool ValidateASTContext(clang::ASTContext &C, unsigned int TargetAPI) {
   bool valid = true;
   clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
   for (clang::DeclContext::decl_iterator DI = TUDecl->decls_begin(),
@@ -140,7 +141,7 @@ static bool ValidateASTContext(clang::ASTContext &C) {
        DI != DE;
        DI++) {
     clang::VarDecl *VD = llvm::dyn_cast<clang::VarDecl>(*DI);
-    if (VD && !ValidateVarDecl(VD)) {
+    if (VD && !ValidateVarDecl(VD, TargetAPI)) {
       valid = false;
     }
   }
@@ -153,7 +154,7 @@ static bool ValidateASTContext(clang::ASTContext &C) {
 void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
   clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
 
-  if (!ValidateASTContext(C)) {
+  if (!ValidateASTContext(C, getTargetAPI())) {
     return;
   }
 
