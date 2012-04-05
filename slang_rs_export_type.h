@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ class RSExportType : public RSExportable {
 
   // This function ensures that the VarDecl can be properly handled by RS.
   // If it cannot, this function returns false. Otherwise it returns true.
-  static bool ValidateVarDecl(clang::VarDecl *VD);
+  static bool ValidateVarDecl(clang::VarDecl *VD, unsigned int TargetAPI);
 
   // @T may not be normalized
   static RSExportType *Create(RSContext *Context, const clang::Type *T);

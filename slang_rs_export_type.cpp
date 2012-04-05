@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 #include "slang_rs_context.h"
 #include "slang_rs_export_element.h"
 #include "slang_rs_type_spec.h"
+#include "slang_version.h"
 
 #define CHECK_PARENT_EQUALITY(ParentClass, E) \
   if (!ParentClass::equals(E))                \
@@ -89,7 +90,8 @@ static const clang::Type *TypeExportableHelper(
 static void ReportTypeError(clang::DiagnosticsEngine *DiagEngine,
                             const clang::VarDecl *VD,
                             const clang::RecordDecl *TopLevelRecord,
-                            const char *Message) {
+                            const char *Message,
+                            unsigned int TargetAPI = 0) {
   if (!DiagEngine) {
     return;
   }
@@ -103,12 +105,12 @@ static void ReportTypeError(clang::DiagnosticsEngine *DiagEngine,
     DiagEngine->Report(
       clang::FullSourceLoc(TopLevelRecord->getLocation(), SM),
       DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message))
-      << TopLevelRecord->getName();
+      << TopLevelRecord->getName() << TargetAPI;
   } else if (VD) {
     DiagEngine->Report(
       clang::FullSourceLoc(VD->getLocation(), SM),
       DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message))
-      << VD->getName();
+      << VD->getName() << TargetAPI;
   } else {
     slangAssert(false && "Variables should be validated before exporting");
   }
@@ -146,10 +148,11 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
   }
 
   if (TypeExportableHelper(ElementType, SPS, DiagEngine, VD,
-                           TopLevelRecord) == NULL)
+                           TopLevelRecord) == NULL) {
     return NULL;
-  else
+  } else {
     return CAT;
+  }
 }
 
 static const clang::Type *TypeExportableHelper(
@@ -182,12 +185,13 @@ static const clang::Type *TypeExportableHelper(
     }
     case clang::Type::Record: {
       if (RSExportPrimitiveType::GetRSSpecificType(T) !=
-          RSExportPrimitiveType::DataTypeUnknown)
+          RSExportPrimitiveType::DataTypeUnknown) {
         return T;  // RS object type, no further checks are needed
+      }
 
       // Check internal struct
       if (T->isUnionType()) {
-        ReportTypeError(DiagEngine, NULL, T->getAsUnionType()->getDecl(),
+        ReportTypeError(DiagEngine, VD, T->getAsUnionType()->getDecl(),
                         "unions cannot be exported: '%0'");
         return NULL;
       } else if (!T->isStructureType()) {
@@ -322,11 +326,50 @@ static const clang::Type *TypeExportable(const clang::Type *T,
   return TypeExportableHelper(T, SPS, DiagEngine, VD, NULL);
 }
 
+static bool ValidateRSObjectInVarDecl(clang::VarDecl *VD,
+                                      bool InCompositeType,
+                                      unsigned int TargetAPI) {
+  if (TargetAPI < SLANG_JB_TARGET_API) {
+    // Only if we are already in a composite type (like an array or structure).
+    if (InCompositeType) {
+      // Only if we are actually exported (i.e. non-static).
+      if (VD->getLinkage() == clang::ExternalLinkage) {
+        // Only if we are not a pointer to an object.
+        const clang::Type *T = GET_CANONICAL_TYPE(VD->getType().getTypePtr());
+        if (T->getTypeClass() != clang::Type::Pointer) {
+          clang::ASTContext &C = VD->getASTContext();
+          ReportTypeError(&C.getDiagnostics(), VD, NULL,
+                          "arrays/structures containing RS object types "
+                          "cannot be exported in target API < %1: '%0'",
+                          SLANG_JB_TARGET_API);
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
+// Helper function for ValidateVarDecl(). We do a recursive descent on the
+// type hierarchy to ensure that we can properly export/handle the
+// declaration.
+// \return true if the variable declaration is valid,
+//         false if it is invalid (along with proper diagnostics).
+//
+// VD - top-level variable declaration that we are validating.
+// T - sub-type of VD's type that we are validating.
+// SPS - set of types we have already seen/validated.
+// InCompositeType - true if we are within an outer composite type.
+// UnionDecl - set if we are in a sub-type of a union.
+// TargetAPI - target SDK API level.
 static bool ValidateVarDeclHelper(
     clang::VarDecl *VD,
     const clang::Type *&T,
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
-    clang::RecordDecl *UnionDecl) {
+    bool InCompositeType,
+    clang::RecordDecl *UnionDecl,
+    unsigned int TargetAPI) {
   if ((T = GET_CANONICAL_TYPE(T)) == NULL)
     return true;
 
@@ -335,6 +378,12 @@ static bool ValidateVarDeclHelper(
 
   switch (T->getTypeClass()) {
     case clang::Type::Record: {
+      if (RSExportPrimitiveType::IsRSObjectType(T)) {
+        if (!ValidateRSObjectInVarDecl(VD, InCompositeType, TargetAPI)) {
+          return false;
+        }
+      }
+
       if (RSExportPrimitiveType::GetRSSpecificType(T) !=
           RSExportPrimitiveType::DataTypeUnknown) {
         if (!UnionDecl) {
@@ -384,7 +433,7 @@ static bool ValidateVarDeclHelper(
         const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
         FT = GET_CANONICAL_TYPE(FT);
 
-        if (!ValidateVarDeclHelper(VD, FT, SPS, UnionDecl)) {
+        if (!ValidateVarDeclHelper(VD, FT, SPS, true, UnionDecl, TargetAPI)) {
           return false;
         }
       }
@@ -401,21 +450,24 @@ static bool ValidateVarDeclHelper(
         UNSAFE_CAST_TYPE(const clang::PointerType, T);
       const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
 
-      return ValidateVarDeclHelper(VD, PointeeType, SPS, UnionDecl);
+      return ValidateVarDeclHelper(VD, PointeeType, SPS, InCompositeType,
+                                   UnionDecl, TargetAPI);
     }
 
     case clang::Type::ExtVector: {
       const clang::ExtVectorType *EVT =
           UNSAFE_CAST_TYPE(const clang::ExtVectorType, T);
       const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
-      return ValidateVarDeclHelper(VD, ElementType, SPS, UnionDecl);
+      return ValidateVarDeclHelper(VD, ElementType, SPS, true, UnionDecl,
+                                   TargetAPI);
     }
 
     case clang::Type::ConstantArray: {
       const clang::ConstantArrayType *CAT =
           UNSAFE_CAST_TYPE(const clang::ConstantArrayType, T);
       const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
-      return ValidateVarDeclHelper(VD, ElementType, SPS, UnionDecl);
+      return ValidateVarDeclHelper(VD, ElementType, SPS, true, UnionDecl,
+                                   TargetAPI);
     }
 
     default: {
@@ -458,12 +510,12 @@ bool RSExportType::NormalizeType(const clang::Type *&T,
   return true;
 }
 
-bool RSExportType::ValidateVarDecl(clang::VarDecl *VD) {
+bool RSExportType::ValidateVarDecl(clang::VarDecl *VD, unsigned int TargetAPI) {
   const clang::Type *T = VD->getType().getTypePtr();
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  return ValidateVarDeclHelper(VD, T, SPS, NULL);
+  return ValidateVarDeclHelper(VD, T, SPS, false, NULL, TargetAPI);
 }
 
 const clang::Type
@@ -661,10 +713,11 @@ RSExportType *RSExportType::Create(RSContext *Context,
 
 RSExportType *RSExportType::Create(RSContext *Context, const clang::Type *T) {
   llvm::StringRef TypeName;
-  if (NormalizeType(T, TypeName, Context->getDiagnostics(), NULL))
+  if (NormalizeType(T, TypeName, Context->getDiagnostics(), NULL)) {
     return Create(Context, T, TypeName);
-  else
+  } else {
     return NULL;
+  }
 }
 
 RSExportType *RSExportType::CreateFromDecl(RSContext *Context,
