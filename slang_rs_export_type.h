@@ -20,6 +20,7 @@
 #include <list>
 #include <set>
 #include <string>
+#include <sstream>
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/Type.h"
@@ -189,6 +190,11 @@ class RSExportType : public RSExportable {
 
   inline const std::string &getName() const { return mName; }
 
+  virtual std::string getElementName() const {
+    // Base case is actually an invalid C/Java identifier.
+    return "@@INVALID@@";
+  }
+
   virtual bool keep();
   virtual bool equals(const RSExportable *E) const;
 };  // RSExportType
@@ -301,6 +307,10 @@ class RSExportPrimitiveType : public RSExportType {
       const RSExportPrimitiveType *EPT) {
     return getRSReflectionType(EPT->getType());
   }
+
+  std::string getElementName() const {
+    return getRSReflectionType(this)->rs_short_type;
+  }
 };  // RSExportPrimitiveType
 
 
@@ -367,6 +377,13 @@ class RSExportVectorType : public RSExportPrimitiveType {
   static llvm::StringRef GetTypeName(const clang::ExtVectorType *EVT);
 
   inline unsigned getNumElement() const { return mNumElement; }
+
+  std::string getElementName() const {
+    std::stringstream Name;
+    Name << RSExportPrimitiveType::getRSReflectionType(this)->rs_short_type
+         << "_" << getNumElement();
+    return Name.str();
+  }
 
   virtual bool equals(const RSExportable *E) const;
 };
@@ -437,6 +454,10 @@ class RSExportConstantArrayType : public RSExportType {
  public:
   inline unsigned getSize() const { return mSize; }
   inline const RSExportType *getElementType() const { return mElementType; }
+
+  std::string getElementName() const {
+    return mElementType->getElementName();
+  }
 
   virtual bool keep();
   virtual bool equals(const RSExportable *E) const;
@@ -519,6 +540,10 @@ class RSExportRecordType : public RSExportType {
   inline bool isPacked() const { return mIsPacked; }
   inline bool isArtificial() const { return mIsArtificial; }
   inline size_t getAllocSize() const { return mAllocSize; }
+
+  virtual std::string getElementName() const {
+    return "ScriptField_" + getName();
+  }
 
   virtual bool keep();
   virtual bool equals(const RSExportable *E) const;

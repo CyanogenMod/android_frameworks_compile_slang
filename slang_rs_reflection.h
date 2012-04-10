@@ -253,6 +253,9 @@ class RSReflection {
                            const RSExportType *ET,
                            const char *VarName);
 
+  static void genTypeInstanceFromPointer(Context &C,
+                                         const RSExportType *ET);
+
   static void genTypeInstance(Context &C,
                               const RSExportType *ET);
 
