@@ -260,8 +260,8 @@ static const clang::Type *TypeExportableHelper(
     }
     case clang::Type::Pointer: {
       if (TopLevelRecord) {
-        ReportTypeError(DiagEngine, NULL, TopLevelRecord,
-          "structures containing pointers cannot be exported: '%0'");
+        ReportTypeError(DiagEngine, VD, TopLevelRecord,
+            "structures containing pointers cannot be exported: '%0'");
         return NULL;
       }
 
@@ -269,8 +269,11 @@ static const clang::Type *TypeExportableHelper(
         UNSAFE_CAST_TYPE(const clang::PointerType, T);
       const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
 
-      if (PointeeType->getTypeClass() == clang::Type::Pointer)
-        return T;
+      if (PointeeType->getTypeClass() == clang::Type::Pointer) {
+        ReportTypeError(DiagEngine, VD, TopLevelRecord,
+            "multiple levels of pointers cannot be exported: '%0'");
+        return NULL;
+      }
       // We don't support pointer with array-type pointee or unsupported pointee
       // type
       if (PointeeType->isArrayType() ||
