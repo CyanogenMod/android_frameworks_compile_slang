@@ -27,10 +27,7 @@
 #include "clang/Basic/Linkage.h"
 #include "clang/Basic/TargetInfo.h"
 
-#include "clang/Index/ASTLocation.h"
-
 #include "llvm/LLVMContext.h"
-
 #include "llvm/Target/TargetData.h"
 
 #include "slang.h"
