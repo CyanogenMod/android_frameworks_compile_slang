@@ -170,6 +170,8 @@ class RSExportType : public RSExportable {
 
   inline ExportClass getClass() const { return mClass; }
 
+  virtual unsigned getSize() const { return 1; }
+
   inline llvm::Type *getLLVMType() const {
     if (mLLVMType == NULL)
       mLLVMType = convertToLLVMType();
@@ -452,7 +454,7 @@ class RSExportConstantArrayType : public RSExportType {
   virtual union RSType *convertToSpecType() const;
 
  public:
-  inline unsigned getSize() const { return mSize; }
+  virtual unsigned getSize() const { return mSize; }
   inline const RSExportType *getElementType() const { return mElementType; }
 
   std::string getElementName() const {
