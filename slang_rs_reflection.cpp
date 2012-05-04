@@ -775,15 +775,14 @@ void RSReflection::genPrimitiveTypeExportVariable(
 
   const RSExportPrimitiveType *EPT =
       static_cast<const RSExportPrimitiveType*>(EV->getType());
-  const char *TypeName =
-      RSExportPrimitiveType::getRSReflectionType(EPT)->java_name;
+  std::string TypeName = GetTypeName(EPT);
+  std::string VarName = EV->getName();
 
-  C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
-             << EV->getName() << ";" << std::endl;
+  genPrivateExportVariable(C, TypeName, EV->getName());
 
   if (EV->isConst()) {
     C.indent() << "public final static " << TypeName
-               << " " RS_EXPORT_VAR_CONST_PREFIX << EV->getName() << " = ";
+               << " " RS_EXPORT_VAR_CONST_PREFIX << VarName << " = ";
     const clang::APValue &Val = EV->getInit();
     C.out() << RSReflectionBase::genInitValue(Val, EPT->getType() ==
         RSExportPrimitiveType::DataTypeBoolean) << ";" << std::endl;
@@ -792,19 +791,18 @@ void RSReflection::genPrimitiveTypeExportVariable(
     C.startFunction(Context::AM_Public,
                     false,
                     "void",
-                    "set_" + EV->getName(),
+                    "set_" + VarName,
                     1,
-                    TypeName, "v");
-    C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
+                    TypeName.c_str(), "v");
+    C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = v;" << std::endl;
 
-    C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName()
+    C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName
                << ", v);" << std::endl;
 
     C.endFunction();
   }
 
-  genGetExportVariable(C, TypeName, EV->getName());
-
+  genGetExportVariable(C, TypeName, VarName);
   return;
 }
 
@@ -812,41 +810,39 @@ void RSReflection::genPointerTypeExportVariable(Context &C,
                                                 const RSExportVar *EV) {
   const RSExportType *ET = EV->getType();
   const RSExportType *PointeeType;
-  std::string TypeName;
 
   slangAssert((ET->getClass() == RSExportType::ExportClassPointer) &&
               "Variable should be type of pointer here");
 
   PointeeType = static_cast<const RSExportPointerType*>(ET)->getPointeeType();
-  TypeName = GetTypeName(ET);
+  std::string TypeName = GetTypeName(ET);
+  std::string VarName = EV->getName();
 
-  C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
-             << EV->getName() << ";" << std::endl;
+  genPrivateExportVariable(C, TypeName, VarName);
 
   // bind_*()
   C.startFunction(Context::AM_Public,
                   false,
                   "void",
-                  "bind_" + EV->getName(),
+                  "bind_" + VarName,
                   1,
                   TypeName.c_str(), "v");
 
-  C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
+  C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = v;" << std::endl;
   C.indent() << "if (v == null) bindAllocation(null, "RS_EXPORT_VAR_INDEX_PREFIX
-             << EV->getName() << ");" << std::endl;
+             << VarName << ");" << std::endl;
 
   if (PointeeType->getClass() == RSExportType::ExportClassRecord)
     C.indent() << "else bindAllocation(v.getAllocation(), "
-        RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ");"
+        RS_EXPORT_VAR_INDEX_PREFIX << VarName << ");"
                << std::endl;
   else
     C.indent() << "else bindAllocation(v, "RS_EXPORT_VAR_INDEX_PREFIX
-               << EV->getName() << ");" << std::endl;
+               << VarName << ");" << std::endl;
 
   C.endFunction();
 
-  genGetExportVariable(C, TypeName, EV->getName());
-
+  genGetExportVariable(C, TypeName, VarName);
   return;
 }
 
@@ -855,48 +851,12 @@ void RSReflection::genVectorTypeExportVariable(Context &C,
   slangAssert((EV->getType()->getClass() == RSExportType::ExportClassVector) &&
               "Variable should be type of vector here");
 
-  const RSExportVectorType *EVT =
-      static_cast<const RSExportVectorType*>(EV->getType());
-  std::stringstream VecName;
-  VecName << EVT->getRSReflectionType(EVT)->rs_java_vector_prefix
-          << EVT->getNumElement();
-  std::string TypeName = VecName.str();
-  const char *FieldPackerName = "fp";
+  std::string TypeName = GetTypeName(EV->getType());
+  std::string VarName = EV->getName();
 
-  C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
-             << EV->getName() << ";" << std::endl;
-
-  // set_*()
-  if (!EV->isConst()) {
-    C.startFunction(Context::AM_Public,
-                    false,
-                    "void",
-                    "set_" + EV->getName(),
-                    1,
-                    TypeName.c_str(), "v");
-    C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
-
-    if (genCreateFieldPacker(C, EVT, FieldPackerName))
-      genPackVarOfType(C, EVT, "v", FieldPackerName);
-
-    if (mRSContext->getTargetAPI() < SLANG_JB_TARGET_API) {
-      // Legacy apps must use the old setVar() without Element/dim components.
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", "
-                 << FieldPackerName << ");" << std::endl;
-    } else {
-      // We only have support for one-dimensional array reflection today,
-      // but the entry point (i.e. setVar()) takes an array of dimensions.
-      C.indent() << "int []__dimArr = new int[1];" << std::endl;
-      C.indent() << "__dimArr[0] = 1;" << std::endl;
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", "
-                 << FieldPackerName << ", " RS_ELEM_PREFIX
-                 << EVT->getElementName() << ", __dimArr);" << std::endl;
-    }
-
-    C.endFunction();
-  }
-
-  genGetExportVariable(C, TypeName, EV->getName());
+  genPrivateExportVariable(C, TypeName, VarName);
+  genSetExportVariable(C, TypeName, EV);
+  genGetExportVariable(C, TypeName, VarName);
   return;
 }
 
@@ -905,33 +865,32 @@ void RSReflection::genMatrixTypeExportVariable(Context &C,
   slangAssert((EV->getType()->getClass() == RSExportType::ExportClassMatrix) &&
               "Variable should be type of matrix here");
 
-  const RSExportMatrixType *EMT =
-      static_cast<const RSExportMatrixType*>(EV->getType());
-  const char *TypeName = GetMatrixTypeName(EMT);
-  const char *FieldPackerName = "fp";
+    const RSExportType *ET = EV->getType();
+  std::string TypeName = GetTypeName(ET);
+  std::string VarName = EV->getName();
 
-  C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
-             << EV->getName() << ";" << std::endl;
+  genPrivateExportVariable(C, TypeName, VarName);
 
   // set_*()
   if (!EV->isConst()) {
+    const char *FieldPackerName = "fp";
     C.startFunction(Context::AM_Public,
                     false,
                     "void",
-                    "set_" + EV->getName(),
+                    "set_" + VarName,
                     1,
-                    TypeName, "v");
-    C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
+                    TypeName.c_str(), "v");
+    C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = v;" << std::endl;
 
-    if (genCreateFieldPacker(C, EMT, FieldPackerName))
-      genPackVarOfType(C, EMT, "v", FieldPackerName);
-    C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", "
+    if (genCreateFieldPacker(C, ET, FieldPackerName))
+      genPackVarOfType(C, ET, "v", FieldPackerName);
+    C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName << ", "
                << FieldPackerName << ");" << std::endl;
 
     C.endFunction();
   }
 
-  genGetExportVariable(C, TypeName, EV->getName());
+  genGetExportVariable(C, TypeName, VarName);
   return;
 }
 
@@ -942,44 +901,12 @@ void RSReflection::genConstantArrayTypeExportVariable(
                RSExportType::ExportClassConstantArray) &&
               "Variable should be type of constant array here");
 
-  const RSExportConstantArrayType *ECAT =
-      static_cast<const RSExportConstantArrayType*>(EV->getType());
-  std::string TypeName = GetTypeName(ECAT);
-  const char *FieldPackerName = "fp";
+  std::string TypeName = GetTypeName(EV->getType());
+  std::string VarName = EV->getName();
 
-  C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
-             << EV->getName() << ";" << std::endl;
-
-  // set_*()
-  if (!EV->isConst()) {
-    C.startFunction(Context::AM_Public,
-                    false,
-                    "void",
-                    "set_" + EV->getName(),
-                    1,
-                    TypeName.c_str(), "v");
-    C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
-
-    if (genCreateFieldPacker(C, ECAT, FieldPackerName))
-      genPackVarOfType(C, ECAT, "v", FieldPackerName);
-
-    if (mRSContext->getTargetAPI() < SLANG_JB_TARGET_API) {
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", "
-                 << FieldPackerName << ");" << std::endl;
-    } else {
-      // We only have support for one-dimensional array reflection today,
-      // but the entry point (i.e. setVar()) takes an array of dimensions.
-      C.indent() << "int []__dimArr = new int[1];" << std::endl;
-      C.indent() << "__dimArr[0] = " << ECAT->getSize() << ";" << std::endl;
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", "
-                 << FieldPackerName << ", " RS_ELEM_PREFIX
-                 << ECAT->getElementName() << ", __dimArr);" << std::endl;
-    }
-
-    C.endFunction();
-  }
-
-  genGetExportVariable(C, TypeName, EV->getName());
+  genPrivateExportVariable(C, TypeName, VarName);
+  genSetExportVariable(C, TypeName, EV);
+  genGetExportVariable(C, TypeName, VarName);
   return;
 }
 
@@ -988,45 +915,57 @@ void RSReflection::genRecordTypeExportVariable(Context &C,
   slangAssert((EV->getType()->getClass() == RSExportType::ExportClassRecord) &&
               "Variable should be type of struct here");
 
-  const RSExportRecordType *ERT =
-      static_cast<const RSExportRecordType*>(EV->getType());
-  std::string TypeName = ERT->getElementName() + "."RS_TYPE_ITEM_CLASS_NAME;
-  const char *FieldPackerName = "fp";
+  std::string TypeName = GetTypeName(EV->getType());
+  std::string VarName = EV->getName();
 
+  genPrivateExportVariable(C, TypeName, VarName);
+  genSetExportVariable(C, TypeName, EV);
+  genGetExportVariable(C, TypeName, VarName);
+  return;
+}
+
+void RSReflection::genPrivateExportVariable(Context &C,
+                                            const std::string &TypeName,
+                                            const std::string &VarName) {
   C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
-             << EV->getName() << ";" << std::endl;
+             << VarName << ";" << std::endl;
+  return;
+}
 
-  // set_*()
+void RSReflection::genSetExportVariable(Context &C,
+                                        const std::string &TypeName,
+                                        const RSExportVar *EV) {
   if (!EV->isConst()) {
+    const char *FieldPackerName = "fp";
+    std::string VarName = EV->getName();
+    const RSExportType *ET = EV->getType();
     C.startFunction(Context::AM_Public,
                     false,
                     "void",
-                    "set_" + EV->getName(),
+                    "set_" + VarName,
                     1,
                     TypeName.c_str(), "v");
-    C.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;" << std::endl;
+    C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = v;" << std::endl;
 
-    if (genCreateFieldPacker(C, ERT, FieldPackerName))
-      genPackVarOfType(C, ERT, "v", FieldPackerName);
+    if (genCreateFieldPacker(C, ET, FieldPackerName))
+      genPackVarOfType(C, ET, "v", FieldPackerName);
 
     if (mRSContext->getTargetAPI() < SLANG_JB_TARGET_API) {
       // Legacy apps must use the old setVar() without Element/dim components.
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName()
+      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName
                  << ", " << FieldPackerName << ");" << std::endl;
     } else {
       // We only have support for one-dimensional array reflection today,
       // but the entry point (i.e. setVar()) takes an array of dimensions.
       C.indent() << "int []__dimArr = new int[1];" << std::endl;
-      C.indent() << "__dimArr[0] = 1;" << std::endl;
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << EV->getName() << ", "
+      C.indent() << "__dimArr[0] = " << ET->getSize() << ";" << std::endl;
+      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName << ", "
                  << FieldPackerName << ", " RS_ELEM_PREFIX
-                 << ERT->getElementName() << ", __dimArr);" << std::endl;
+                 << ET->getElementName() << ", __dimArr);" << std::endl;
     }
 
     C.endFunction();
   }
-
-  genGetExportVariable(C, TypeName.c_str(), EV->getName());
   return;
 }
 

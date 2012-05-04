@@ -239,6 +239,12 @@ class RSReflection {
   void genMatrixTypeExportVariable(Context &C, const RSExportVar *EV);
   void genConstantArrayTypeExportVariable(Context &C, const RSExportVar *EV);
   void genRecordTypeExportVariable(Context &C, const RSExportVar *EV);
+  void genPrivateExportVariable(Context &C,
+                                const std::string &TypeName,
+                                const std::string &VarName);
+  void genSetExportVariable(Context &C,
+                            const std::string &TypeName,
+                            const RSExportVar *EV);
   void genGetExportVariable(Context &C,
                             const std::string &TypeName,
                             const std::string &VarName);
