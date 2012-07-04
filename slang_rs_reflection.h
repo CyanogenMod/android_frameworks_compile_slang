@@ -105,7 +105,14 @@ class RSReflection {
     bool mUseStdout;
     mutable std::ofstream mOF;
 
+    // Generated RS Elements for type-checking code.
     std::set<std::string> mTypesToCheck;
+
+    // Generated FieldPackers for unsigned setters/validation.
+    std::set<std::string> mFieldPackerTypes;
+
+    bool addTypeNameForElement(const std::string &TypeName);
+    bool addTypeNameForFieldPacker(const std::string &TypeName);
 
     static const char *AccessModifierStr(AccessModifier AM);
 
@@ -264,6 +271,9 @@ class RSReflection {
 
   static void genTypeInstance(Context &C,
                               const RSExportType *ET);
+
+  static void genFieldPackerInstance(Context &C,
+                                     const RSExportType *ET);
 
   bool genTypeClass(Context &C,
                     const RSExportRecordType *ERT,

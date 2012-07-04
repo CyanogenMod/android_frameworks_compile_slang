@@ -310,6 +310,8 @@ class RSExportPrimitiveType : public RSExportType {
     return getRSReflectionType(EPT->getType());
   }
 
+  virtual unsigned getSize() const { return (GetSizeInBits(this) >> 3); }
+
   std::string getElementName() const {
     return getRSReflectionType(this)->rs_short_type;
   }
