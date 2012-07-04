@@ -27,10 +27,6 @@
 #include "slang_assert.h"
 #include "slang_rs_exportable.h"
 
-namespace clang {
-  class APValue;
-}
-
 namespace slang {
   class RSContext;
   class RSExportType;
@@ -41,6 +37,7 @@ class RSExportVar : public RSExportable {
   std::string mName;
   const RSExportType *mET;
   bool mIsConst;
+  bool mIsUnsigned;
 
   clang::Expr::EvalResult mInit;
 
@@ -56,6 +53,7 @@ class RSExportVar : public RSExportable {
   inline const std::string &getName() const { return mName; }
   inline const RSExportType *getType() const { return mET; }
   inline bool isConst() const { return mIsConst; }
+  inline bool isUnsigned() const { return mIsUnsigned; }
 
   inline const clang::APValue &getInit() const { return mInit.Val; }
 
