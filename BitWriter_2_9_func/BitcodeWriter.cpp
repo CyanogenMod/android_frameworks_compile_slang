@@ -154,7 +154,7 @@ static void WriteStringRecord(unsigned Code, StringRef Str,
 }
 
 // Emit information about parameter attributes.
-static void WriteAttributeTable(const ValueEnumerator &VE,
+static void WriteAttributeTable(const llvm_2_9_func::ValueEnumerator &VE,
                                 BitstreamWriter &Stream) {
   const std::vector<AttrListPtr> &Attrs = VE.getAttributes();
   if (Attrs.empty()) return;
@@ -189,8 +189,9 @@ static void WriteAttributeTable(const ValueEnumerator &VE,
 }
 
 /// WriteTypeTable - Write out the type table for a module.
-static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
-  const ValueEnumerator::TypeList &TypeList = VE.getTypes();
+static void WriteTypeTable(const llvm_2_9_func::ValueEnumerator &VE,
+                           BitstreamWriter &Stream) {
+  const llvm_2_9_func::ValueEnumerator::TypeList &TypeList = VE.getTypes();
 
   Stream.EnterSubblock(bitc::TYPE_BLOCK_ID_NEW, 4 /*count from # abbrevs */);
   SmallVector<uint64_t, 64> TypeVals;
@@ -382,7 +383,8 @@ static unsigned getEncodedVisibility(const GlobalValue *GV) {
 
 // Emit top-level description of module, including target triple, inline asm,
 // descriptors for global variables, and function prototype info.
-static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
+static void WriteModuleInfo(const Module *M,
+                            const llvm_2_9_func::ValueEnumerator &VE,
                             BitstreamWriter &Stream) {
   // Emit the list of dependent libraries for the Module.
   for (Module::lib_iterator I = M->lib_begin(), E = M->lib_end(); I != E; ++I)
@@ -550,7 +552,7 @@ static uint64_t GetOptimizationFlags(const Value *V) {
 }
 
 static void WriteMDNode(const MDNode *N,
-                        const ValueEnumerator &VE,
+                        const llvm_2_9_func::ValueEnumerator &VE,
                         BitstreamWriter &Stream,
                         SmallVector<uint64_t, 64> &Record) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
@@ -569,9 +571,9 @@ static void WriteMDNode(const MDNode *N,
 }
 
 static void WriteModuleMetadata(const Module *M,
-                                const ValueEnumerator &VE,
+                                const llvm_2_9_func::ValueEnumerator &VE,
                                 BitstreamWriter &Stream) {
-  const ValueEnumerator::ValueList &Vals = VE.getMDValues();
+  const llvm_2_9_func::ValueEnumerator::ValueList &Vals = VE.getMDValues();
   bool StartedMetadataBlock = false;
   unsigned MDSAbbrev = 0;
   SmallVector<uint64_t, 64> Record;
@@ -635,7 +637,7 @@ static void WriteModuleMetadata(const Module *M,
 }
 
 static void WriteFunctionLocalMetadata(const Function &F,
-                                       const ValueEnumerator &VE,
+                                       const llvm_2_9_func::ValueEnumerator &VE,
                                        BitstreamWriter &Stream) {
   bool StartedMetadataBlock = false;
   SmallVector<uint64_t, 64> Record;
@@ -655,7 +657,7 @@ static void WriteFunctionLocalMetadata(const Function &F,
 }
 
 static void WriteMetadataAttachment(const Function &F,
-                                    const ValueEnumerator &VE,
+                                    const llvm_2_9_func::ValueEnumerator &VE,
                                     BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::METADATA_ATTACHMENT_ID, 3);
 
@@ -712,7 +714,7 @@ static void WriteModuleMetadataStore(const Module *M, BitstreamWriter &Stream) {
 }
 
 static void WriteConstants(unsigned FirstVal, unsigned LastVal,
-                           const ValueEnumerator &VE,
+                           const llvm_2_9_func::ValueEnumerator &VE,
                            BitstreamWriter &Stream, bool isGlobal) {
   if (FirstVal == LastVal) return;
 
@@ -753,7 +755,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
 
   SmallVector<uint64_t, 64> Record;
 
-  const ValueEnumerator::ValueList &Vals = VE.getValues();
+  const llvm_2_9_func::ValueEnumerator::ValueList &Vals = VE.getValues();
   Type *LastTy = 0;
   for (unsigned i = FirstVal; i != LastVal; ++i) {
     const Value *V = Vals[i].first;
@@ -980,9 +982,9 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   Stream.ExitBlock();
 }
 
-static void WriteModuleConstants(const ValueEnumerator &VE,
+static void WriteModuleConstants(const llvm_2_9_func::ValueEnumerator &VE,
                                  BitstreamWriter &Stream) {
-  const ValueEnumerator::ValueList &Vals = VE.getValues();
+  const llvm_2_9_func::ValueEnumerator::ValueList &Vals = VE.getValues();
 
   // Find the first constant to emit, which is the first non-globalvalue value.
   // We know globalvalues have been emitted by WriteModuleInfo.
@@ -1004,7 +1006,7 @@ static void WriteModuleConstants(const ValueEnumerator &VE,
 /// type ID.
 static bool PushValueAndType(const Value *V, unsigned InstID,
                              SmallVector<unsigned, 64> &Vals,
-                             ValueEnumerator &VE) {
+                             llvm_2_9_func::ValueEnumerator &VE) {
   unsigned ValID = VE.getValueID(V);
   Vals.push_back(ValID);
   if (ValID >= InstID) {
@@ -1016,7 +1018,8 @@ static bool PushValueAndType(const Value *V, unsigned InstID,
 
 /// WriteInstruction - Emit an instruction to the specified stream.
 static void WriteInstruction(const Instruction &I, unsigned InstID,
-                             ValueEnumerator &VE, BitstreamWriter &Stream,
+                             llvm_2_9_func::ValueEnumerator &VE,
+                             BitstreamWriter &Stream,
                              SmallVector<unsigned, 64> &Vals) {
   unsigned Code = 0;
   unsigned AbbrevToUse = 0;
@@ -1304,7 +1307,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
 
 // Emit names for globals/functions etc.
 static void WriteValueSymbolTable(const ValueSymbolTable &VST,
-                                  const ValueEnumerator &VE,
+                                  const llvm_2_9_func::ValueEnumerator &VE,
                                   BitstreamWriter &Stream) {
   if (VST.empty()) return;
   Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 4);
@@ -1361,7 +1364,7 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
 }
 
 /// WriteFunction - Emit a function body to the module stream.
-static void WriteFunction(const Function &F, ValueEnumerator &VE,
+static void WriteFunction(const Function &F, llvm_2_9_func::ValueEnumerator &VE,
                           BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::FUNCTION_BLOCK_ID, 4);
   VE.incorporateFunction(F);
@@ -1433,7 +1436,8 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
 }
 
 // Emit blockinfo, which defines the standard abbreviations etc.
-static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
+static void WriteBlockInfo(const llvm_2_9_func::ValueEnumerator &VE,
+                           BitstreamWriter &Stream) {
   // We only want to emit block info records for blocks that have multiple
   // instances: CONSTANTS_BLOCK, FUNCTION_BLOCK and VALUE_SYMTAB_BLOCK.  Other
   // blocks can defined their abbrevs inline.
@@ -1606,7 +1610,7 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   }
 
   // Analyze the module, enumerating globals, functions, etc.
-  ValueEnumerator VE(M);
+  llvm_2_9_func::ValueEnumerator VE(M);
 
   // Emit blockinfo, which defines the standard abbreviations etc.
   WriteBlockInfo(VE, Stream);
