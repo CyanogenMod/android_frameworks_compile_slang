@@ -868,25 +868,14 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         AbbrevToUse = CString7Abbrev;
     } else if (const ConstantDataSequential *CDS = 
                   dyn_cast<ConstantDataSequential>(C)) {
-      Code = bitc::CST_CODE_DATA;
-      Type *EltTy = CDS->getType()->getElementType();
-      if (isa<IntegerType>(EltTy)) {
-        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i)
-          Record.push_back(CDS->getElementAsInteger(i));
-      } else if (EltTy->isFloatTy()) {
-        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
-          union { float F; uint32_t I; };
-          F = CDS->getElementAsFloat(i);
-          Record.push_back(I);
-        }
-      } else {
-        assert(EltTy->isDoubleTy() && "Unknown ConstantData element type");
-        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
-          union { double F; uint64_t I; };
-          F = CDS->getElementAsDouble(i);
-          Record.push_back(I);
-        }
-      }
+      // We must replace ConstantDataSequential's representation with the
+      // legacy ConstantArray/ConstantVector/ConstantStruct version.
+      // ValueEnumerator is similarly modified to mark the appropriate
+      // Constants as used (so they are emitted).
+      Code = bitc::CST_CODE_AGGREGATE;
+      for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i)
+        Record.push_back(VE.getValueID(CDS->getElementAsConstant(i)));
+      AbbrevToUse = AggregateAbbrev;
     } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(C) ||
                isa<ConstantVector>(C)) {
       Code = bitc::CST_CODE_AGGREGATE;
