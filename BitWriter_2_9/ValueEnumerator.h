@@ -32,8 +32,9 @@ class NamedMDNode;
 class AttrListPtr;
 class ValueSymbolTable;
 class MDSymbolTable;
+class raw_ostream;
 
-}  // end namespace llvm
+}  // end llvm namespace
 
 namespace llvm_2_9 {
 
@@ -86,6 +87,9 @@ private:
   void operator=(const ValueEnumerator &);   // DO NOT IMPLEMENT
 public:
   ValueEnumerator(const llvm::Module *M);
+
+  void dump() const;
+  void print(llvm::raw_ostream &OS, const ValueMapType &Map, const char *Name) const;
 
   unsigned getValueID(const llvm::Value *V) const;
 
