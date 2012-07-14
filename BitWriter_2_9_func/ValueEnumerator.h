@@ -33,39 +33,43 @@ class AttrListPtr;
 class ValueSymbolTable;
 class MDSymbolTable;
 
+}  // end llvm namespace
+
+namespace llvm_2_9_func {
+
 class ValueEnumerator {
 public:
-  typedef std::vector<Type*> TypeList;
+  typedef std::vector<llvm::Type*> TypeList;
 
   // For each value, we remember its Value* and occurrence frequency.
-  typedef std::vector<std::pair<const Value*, unsigned> > ValueList;
+  typedef std::vector<std::pair<const llvm::Value*, unsigned> > ValueList;
 private:
-  typedef DenseMap<Type*, unsigned> TypeMapType;
+  typedef llvm::DenseMap<llvm::Type*, unsigned> TypeMapType;
   TypeMapType TypeMap;
   TypeList Types;
 
-  typedef DenseMap<const Value*, unsigned> ValueMapType;
+  typedef llvm::DenseMap<const llvm::Value*, unsigned> ValueMapType;
   ValueMapType ValueMap;
   ValueList Values;
   ValueList MDValues;
-  SmallVector<const MDNode *, 8> FunctionLocalMDs;
+  llvm::SmallVector<const llvm::MDNode *, 8> FunctionLocalMDs;
   ValueMapType MDValueMap;
   
-  typedef DenseMap<void*, unsigned> AttributeMapType;
+  typedef llvm::DenseMap<void*, unsigned> AttributeMapType;
   AttributeMapType AttributeMap;
-  std::vector<AttrListPtr> Attributes;
+  std::vector<llvm::AttrListPtr> Attributes;
   
   /// GlobalBasicBlockIDs - This map memoizes the basic block ID's referenced by
   /// the "getGlobalBasicBlockID" method.
-  mutable DenseMap<const BasicBlock*, unsigned> GlobalBasicBlockIDs;
+  mutable llvm::DenseMap<const llvm::BasicBlock*, unsigned> GlobalBasicBlockIDs;
   
-  typedef DenseMap<const Instruction*, unsigned> InstructionMapType;
+  typedef llvm::DenseMap<const llvm::Instruction*, unsigned> InstructionMapType;
   InstructionMapType InstructionMap;
   unsigned InstructionCount;
 
   /// BasicBlocks - This contains all the basic blocks for the currently
   /// incorporated function.  Their reverse mapping is stored in ValueMap.
-  std::vector<const BasicBlock*> BasicBlocks;
+  std::vector<const llvm::BasicBlock*> BasicBlocks;
   
   /// When a function is incorporated, this is the size of the Values list
   /// before incorporation.
@@ -81,20 +85,20 @@ private:
   ValueEnumerator(const ValueEnumerator &);  // DO NOT IMPLEMENT
   void operator=(const ValueEnumerator &);   // DO NOT IMPLEMENT
 public:
-  ValueEnumerator(const Module *M);
+  ValueEnumerator(const llvm::Module *M);
 
-  unsigned getValueID(const Value *V) const;
+  unsigned getValueID(const llvm::Value *V) const;
 
-  unsigned getTypeID(Type *T) const {
+  unsigned getTypeID(llvm::Type *T) const {
     TypeMapType::const_iterator I = TypeMap.find(T);
     assert(I != TypeMap.end() && "Type not in ValueEnumerator!");
     return I->second-1;
   }
 
-  unsigned getInstructionID(const Instruction *I) const;
-  void setInstructionID(const Instruction *I);
+  unsigned getInstructionID(const llvm::Instruction *I) const;
+  void setInstructionID(const llvm::Instruction *I);
 
-  unsigned getAttributeID(const AttrListPtr &PAL) const {
+  unsigned getAttributeID(const llvm::AttrListPtr &PAL) const {
     if (PAL.isEmpty()) return 0;  // Null maps to zero.
     AttributeMapType::const_iterator I = AttributeMap.find(PAL.getRawPointer());
     assert(I != AttributeMap.end() && "Attribute not in ValueEnumerator!");
@@ -110,44 +114,44 @@ public:
   
   const ValueList &getValues() const { return Values; }
   const ValueList &getMDValues() const { return MDValues; }
-  const SmallVector<const MDNode *, 8> &getFunctionLocalMDValues() const { 
+  const llvm::SmallVector<const llvm::MDNode *, 8> &getFunctionLocalMDValues() const { 
     return FunctionLocalMDs;
   }
   const TypeList &getTypes() const { return Types; }
-  const std::vector<const BasicBlock*> &getBasicBlocks() const {
+  const std::vector<const llvm::BasicBlock*> &getBasicBlocks() const {
     return BasicBlocks; 
   }
-  const std::vector<AttrListPtr> &getAttributes() const {
+  const std::vector<llvm::AttrListPtr> &getAttributes() const {
     return Attributes;
   }
   
   /// getGlobalBasicBlockID - This returns the function-specific ID for the
   /// specified basic block.  This is relatively expensive information, so it
   /// should only be used by rare constructs such as address-of-label.
-  unsigned getGlobalBasicBlockID(const BasicBlock *BB) const;
+  unsigned getGlobalBasicBlockID(const llvm::BasicBlock *BB) const;
 
   /// incorporateFunction/purgeFunction - If you'd like to deal with a function,
   /// use these two methods to get its data into the ValueEnumerator!
   ///
-  void incorporateFunction(const Function &F);
+  void incorporateFunction(const llvm::Function &F);
   void purgeFunction();
 
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
     
-  void EnumerateMDNodeOperands(const MDNode *N);
-  void EnumerateMetadata(const Value *MD);
-  void EnumerateFunctionLocalMetadata(const MDNode *N);
-  void EnumerateNamedMDNode(const NamedMDNode *NMD);
-  void EnumerateValue(const Value *V);
-  void EnumerateType(Type *T);
-  void EnumerateOperandType(const Value *V);
-  void EnumerateAttributes(const AttrListPtr &PAL);
+  void EnumerateMDNodeOperands(const llvm::MDNode *N);
+  void EnumerateMetadata(const llvm::Value *MD);
+  void EnumerateFunctionLocalMetadata(const llvm::MDNode *N);
+  void EnumerateNamedMDNode(const llvm::NamedMDNode *NMD);
+  void EnumerateValue(const llvm::Value *V);
+  void EnumerateType(llvm::Type *T);
+  void EnumerateOperandType(const llvm::Value *V);
+  void EnumerateAttributes(const llvm::AttrListPtr &PAL);
   
-  void EnumerateValueSymbolTable(const ValueSymbolTable &ST);
-  void EnumerateNamedMetadata(const Module *M);
+  void EnumerateValueSymbolTable(const llvm::ValueSymbolTable &ST);
+  void EnumerateNamedMetadata(const llvm::Module *M);
 };
 
-} // End llvm namespace
+}  // End llvm_2_9_func namespace
 
 #endif
