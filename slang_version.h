@@ -41,7 +41,8 @@ namespace SlangVersion {
 enum {
   LEGACY = 0,
   ICS = 1400,
-  CURRENT = ICS
+  JB = 1600,
+  CURRENT = JB
 };
 }  // namespace SlangVersion
 
