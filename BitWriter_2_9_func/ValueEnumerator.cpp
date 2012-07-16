@@ -22,6 +22,8 @@
 #include <algorithm>
 using namespace llvm;
 
+namespace llvm_2_9_func {
+
 static bool isIntegerValue(const std::pair<const Value*, unsigned> &V) {
   return V.first->getType()->isIntegerTy();
 }
@@ -492,3 +494,4 @@ unsigned ValueEnumerator::getGlobalBasicBlockID(const BasicBlock *BB) const {
   return getGlobalBasicBlockID(BB);
 }
 
+}  // end llvm_2_9_func namespace
