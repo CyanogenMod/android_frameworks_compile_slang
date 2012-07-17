@@ -38,6 +38,10 @@ class raw_ostream;
 
 namespace llvm_2_9 {
 
+}  // end namespace llvm
+
+namespace llvm_2_9 {
+
 class ValueEnumerator {
 public:
   typedef std::vector<llvm::Type*> TypeList;
