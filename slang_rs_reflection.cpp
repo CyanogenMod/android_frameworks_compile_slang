@@ -59,6 +59,8 @@
 
 #define RS_ELEM_PREFIX                   "__"
 
+#define RS_FP_PREFIX                     "__rs_fp_"
+
 #define RS_EXPORT_FUNC_INDEX_PREFIX      "mExportFuncIdx_"
 #define RS_EXPORT_FOREACH_INDEX_PREFIX   "mExportForEachIdx_"
 
@@ -341,6 +343,7 @@ void RSReflection::genScriptClassConstructor(Context &C) {
     if (mRSContext->getTargetAPI() >= SLANG_JB_TARGET_API) {
       genTypeInstance(C, EV->getType());
     }
+    genFieldPackerInstance(C, EV->getType());
   }
 
   for (RSContext::const_export_foreach_iterator
@@ -367,6 +370,13 @@ void RSReflection::genScriptClassConstructor(Context &C) {
        I != E;
        I++) {
     C.indent() << "private Element " RS_ELEM_PREFIX << *I << ";" << std::endl;
+  }
+
+  for (std::set<std::string>::iterator I = C.mFieldPackerTypes.begin(),
+                                       E = C.mFieldPackerTypes.end();
+       I != E;
+       I++) {
+    C.indent() << "private FieldPacker " RS_FP_PREFIX << *I << ";" << std::endl;
   }
 
   return;
@@ -706,21 +716,36 @@ void RSReflection::genTypeInstance(Context &C,
     case RSExportType::ExportClassVector:
     case RSExportType::ExportClassConstantArray: {
       std::string TypeName = ET->getElementName();
-      if (C.mTypesToCheck.find(TypeName) == C.mTypesToCheck.end()) {
+      if (C.addTypeNameForElement(TypeName)) {
         C.indent() << RS_ELEM_PREFIX << TypeName << " = Element." << TypeName
                    << "(rs);" << std::endl;
-        C.mTypesToCheck.insert(TypeName);
       }
       break;
     }
 
     case RSExportType::ExportClassRecord: {
       std::string ClassName = ET->getElementName();
-      if (C.mTypesToCheck.find(ClassName) == C.mTypesToCheck.end()) {
+      if (C.addTypeNameForElement(ClassName)) {
         C.indent() << RS_ELEM_PREFIX << ClassName << " = " << ClassName <<
                       ".createElement(rs);" << std::endl;
-        C.mTypesToCheck.insert(ClassName);
       }
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
+void RSReflection::genFieldPackerInstance(Context &C,
+                                          const RSExportType *ET) {
+  switch (ET->getClass()) {
+    case RSExportType::ExportClassPrimitive:
+    case RSExportType::ExportClassVector:
+    case RSExportType::ExportClassConstantArray:
+    case RSExportType::ExportClassRecord: {
+      std::string TypeName = ET->getElementName();
+      C.addTypeNameForFieldPacker(TypeName);
       break;
     }
 
@@ -788,16 +813,44 @@ void RSReflection::genPrimitiveTypeExportVariable(
         RSExportPrimitiveType::DataTypeBoolean) << ";" << std::endl;
   } else {
     // set_*()
-    C.startFunction(Context::AM_Public,
+    // This must remain synchronized, since multiple Dalvik threads may
+    // be calling setters.
+    C.startFunction(Context::AM_PublicSynchronized,
                     false,
                     "void",
                     "set_" + VarName,
                     1,
                     TypeName.c_str(), "v");
-    C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = v;" << std::endl;
+    if (EV->isUnsigned()) {
+      // We create/cache a per-type FieldPacker. This allows us to reuse the
+      // validation logic (for catching negative inputs from Dalvik, as well
+      // as inputs that are too large to be represented in the unsigned type).
+      std::string ElemName = EPT->getElementName();
+      std::string FPName;
+      FPName = RS_FP_PREFIX + ElemName;
+      C.indent() << "if (" << FPName << "!= null) {"
+                 << std::endl;
+      C.incIndentLevel();
+      C.indent() << FPName << ".reset();" << std::endl;
+      C.decIndentLevel();
+      C.indent() << "} else {" << std::endl;
+      C.incIndentLevel();
+      C.indent() << FPName << " = new FieldPacker("
+                 << EPT->getSize() << ");" << std::endl;
+      C.decIndentLevel();
+      C.indent() << "}" << std::endl;
 
-    C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName
-               << ", v);" << std::endl;
+      genPackVarOfType(C, EPT, "v", FPName.c_str());
+      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName
+                 << ", " << FPName << ");" << std::endl;
+    } else {
+      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName
+                 << ", v);" << std::endl;
+    }
+
+    // Dalvik update comes last, since the input may be invalid (and hence
+    // throw an exception).
+    C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = v;" << std::endl;
 
     C.endFunction();
   }
@@ -874,7 +927,7 @@ void RSReflection::genMatrixTypeExportVariable(Context &C,
   // set_*()
   if (!EV->isConst()) {
     const char *FieldPackerName = "fp";
-    C.startFunction(Context::AM_Public,
+    C.startFunction(Context::AM_PublicSynchronized,
                     false,
                     "void",
                     "set_" + VarName,
@@ -939,7 +992,7 @@ void RSReflection::genSetExportVariable(Context &C,
     const char *FieldPackerName = "fp";
     std::string VarName = EV->getName();
     const RSExportType *ET = EV->getType();
-    C.startFunction(Context::AM_Public,
+    C.startFunction(Context::AM_PublicSynchronized,
                     false,
                     "void",
                     "set_" + VarName,
@@ -2120,6 +2173,26 @@ void RSReflection::Context::startFunction(AccessModifier AM,
 void RSReflection::Context::endFunction() {
   endBlock();
   return;
+}
+
+bool RSReflection::Context::addTypeNameForElement(
+    const std::string &TypeName) {
+  if (mTypesToCheck.find(TypeName) == mTypesToCheck.end()) {
+    mTypesToCheck.insert(TypeName);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool RSReflection::Context::addTypeNameForFieldPacker(
+    const std::string &TypeName) {
+  if (mFieldPackerTypes.find(TypeName) == mFieldPackerTypes.end()) {
+    mFieldPackerTypes.insert(TypeName);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 }  // namespace slang

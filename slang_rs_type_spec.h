@@ -26,21 +26,21 @@
     ENUM_RS_DATA_TYPE_CLASS(Record)
 
 #define PRIMITIVE_DATA_TYPE_ENUMS                         \
-    ENUM_PRIMITIVE_DATA_TYPE(Float16, NULL, 128)          \
-    ENUM_PRIMITIVE_DATA_TYPE(Float32, "float", 256)       \
-    ENUM_PRIMITIVE_DATA_TYPE(Float64, "double", 512)      \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed8, "char", 64)         \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed16, "short", 128)      \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed32, "int", 256)        \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed64, "long", 512)       \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned8, "uchar", 64)      \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned16, "ushort", 128)   \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned32, "uint", 256)     \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned64, "ulong", 512)    \
+    ENUM_PRIMITIVE_DATA_TYPE(Float16, NULL, 16)           \
+    ENUM_PRIMITIVE_DATA_TYPE(Float32, "float", 32)        \
+    ENUM_PRIMITIVE_DATA_TYPE(Float64, "double", 64)       \
+    ENUM_PRIMITIVE_DATA_TYPE(Signed8, "char", 8)          \
+    ENUM_PRIMITIVE_DATA_TYPE(Signed16, "short", 16)       \
+    ENUM_PRIMITIVE_DATA_TYPE(Signed32, "int", 32)         \
+    ENUM_PRIMITIVE_DATA_TYPE(Signed64, "long", 64)        \
+    ENUM_PRIMITIVE_DATA_TYPE(Unsigned8, "uchar", 8)       \
+    ENUM_PRIMITIVE_DATA_TYPE(Unsigned16, "ushort", 16)    \
+    ENUM_PRIMITIVE_DATA_TYPE(Unsigned32, "uint", 32)      \
+    ENUM_PRIMITIVE_DATA_TYPE(Unsigned64, "ulong", 64)     \
     ENUM_PRIMITIVE_DATA_TYPE(Boolean, "bool", 8)          \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned565, "u565", 128)    \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned5551, "u5551", 128)  \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned4444, "u4444", 128)  \
+    ENUM_PRIMITIVE_DATA_TYPE(Unsigned565, "u565", 16)     \
+    ENUM_PRIMITIVE_DATA_TYPE(Unsigned5551, "u5551", 16)   \
+    ENUM_PRIMITIVE_DATA_TYPE(Unsigned4444, "u4444", 16)   \
     PRIMITIVE_DATA_TYPE_RANGE(Float16, Unsigned4444)
 
 #define RS_MATRIX_DATA_TYPE_ENUMS                             \
