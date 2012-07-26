@@ -45,6 +45,7 @@ RSExportVar::RSExportVar(RSContext *Context,
       mName(VD->getName().data(), VD->getName().size()),
       mET(ET),
       mIsConst(false),
+      mIsUnsigned(false),
       mArraySize(0),
       mNumInits(0) {
   // mInit - Evaluate initializer expression
@@ -106,10 +107,13 @@ RSExportVar::RSExportVar(RSContext *Context,
     }
   }
 
-  // mIsConst - Is it a constant?
   clang::QualType QT = VD->getTypeSourceInfo()->getType();
   if (!QT.isNull()) {
     mIsConst = QT.isConstQualified();
+    mIsUnsigned = QT->hasUnsignedIntegerRepresentation();
+    if (QT == Context->getASTContext().BoolTy) {
+      mIsUnsigned = false;
+    }
   }
 
   return;
