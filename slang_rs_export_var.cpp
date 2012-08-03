@@ -16,6 +16,7 @@
 
 #include "slang_rs_export_var.h"
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
 
 #include "llvm/ADT/APSInt.h"
