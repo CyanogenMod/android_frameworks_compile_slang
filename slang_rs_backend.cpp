@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "clang/AST/ASTContext.h"
 #include "clang/Frontend/CodeGenOptions.h"
 
 #include "llvm/ADT/Twine.h"
@@ -28,11 +29,11 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
 
 #include "llvm/Support/DebugLoc.h"
-#include "llvm/Support/IRBuilder.h"
 
 #include "slang_assert.h"
 #include "slang_rs.h"

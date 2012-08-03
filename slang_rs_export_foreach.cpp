@@ -266,7 +266,7 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
                                    NULL,
                                    /* BitWidth = */ NULL,
                                    /* Mutable = */ false,
-                                   /* HasInit = */ false);
+                                   /* HasInit = */ clang::ICIS_NoInit);
       RD->addDecl(FD);
       RD->completeDefinition();
 
