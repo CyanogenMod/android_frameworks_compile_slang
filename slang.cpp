@@ -153,7 +153,6 @@ void Slang::GlobalInitialization() {
     // Please refer to include/clang/Basic/LangOptions.h to setup
     // the options.
     LangOpts.RTTI = 0;  // Turn off the RTTI information support
-    LangOpts.NeXTRuntime = 0;   // Turn off the NeXT runtime uses
     LangOpts.C99 = 1;
     LangOpts.Renderscript = 1;
     LangOpts.CharIsSigned = 1;  // Signed char is our default.
@@ -454,7 +453,10 @@ int Slang::compile() {
 }
 
 void Slang::setDebugMetadataEmission(bool EmitDebug) {
-  CodeGenOpts.DebugInfo = EmitDebug;
+  if (EmitDebug)
+    CodeGenOpts.DebugInfo = clang::CodeGenOptions::FullDebugInfo;
+  else
+    CodeGenOpts.DebugInfo = clang::CodeGenOptions::NoDebugInfo;
 }
 
 void Slang::setOptimizationLevel(llvm::CodeGenOpt::Level OptimizationLevel) {

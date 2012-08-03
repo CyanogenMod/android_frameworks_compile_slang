@@ -57,6 +57,7 @@ using clang::driver::ArgList;
 using clang::driver::InputArgList;
 using clang::driver::Option;
 using clang::driver::OptTable;
+using namespace clang::driver::options;
 
 // SaveStringInSet, ExpandArgsFromBuf and ExpandArgv are all copied from
 // $(CLANG_ROOT)/tools/driver/driver.cpp for processing argc/argv passed in
@@ -84,7 +85,7 @@ enum {
 static const OptTable::Info RSCCInfoTable[] = {
 #define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
-  { NAME, HELPTEXT, METAVAR, Option::KIND##Class, FLAGS, PARAM, \
+  { NAME, HELPTEXT, METAVAR, Option::KIND##Class, PARAM, FLAGS, \
     OPT_##GROUP, OPT_##ALIAS },
 #include "RSCCOptions.inc"
 };

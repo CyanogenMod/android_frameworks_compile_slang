@@ -19,6 +19,7 @@
 #include <list>
 #include <vector>
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/RecordLayout.h"
 
 #include "llvm/ADT/StringExtras.h"
@@ -1381,7 +1382,7 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
     clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
 
     // FIXME: All fields should be primitive type
-    slangAssert((*FI)->getKind() == clang::Decl::Field);
+    slangAssert(FI->getKind() == clang::Decl::Field);
     clang::FieldDecl *FD = *FI;
 
     if (FD->isBitField()) {
