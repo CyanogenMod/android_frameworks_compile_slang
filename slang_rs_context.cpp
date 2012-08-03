@@ -57,6 +57,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mTargetData(NULL),
       mLLVMContext(llvm::getGlobalContext()),
       mLicenseNote(NULL),
+      mRSPackageName("android.renderscript"),
       version(0),
       mMangleCtx(Ctx.createMangleContext()) {
   slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
@@ -282,6 +283,7 @@ bool RSContext::insertExportType(const llvm::StringRef &TypeName,
 
 bool RSContext::reflectToJava(const std::string &OutputPathBase,
                               const std::string &OutputPackageName,
+                              const std::string &RSPackageName,
                               const std::string &InputFileName,
                               const std::string &OutputBCFileName,
                               std::string *RealPackageName) {
@@ -306,8 +308,12 @@ bool RSContext::reflectToJava(const std::string &OutputPathBase,
   // Copy back the really applied package name
   RealPackageName->assign(PackageName);
 
+  if (!RSPackageName.empty()) {
+    mRSPackageName = RSPackageName;
+  }
+
   RSReflection *R = new RSReflection(this, mGeneratedFileNames);
-  bool ret = R->reflect(OutputPathBase, PackageName,
+  bool ret = R->reflect(OutputPathBase, PackageName, mRSPackageName,
                         InputFileName, OutputBCFileName);
   if (!ret)
     fprintf(stderr, "RSContext::reflectToJava : failed to do reflection "

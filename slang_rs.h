@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ class SlangRS : public Slang {
   // The package name that's really applied will be filled in RealPackageName.
   bool reflectToJava(const std::string &OutputPathBase,
                      const std::string &OutputPackageName,
+                     const std::string &RSPackageName,
                      std::string *RealPackageName);
 
   bool generateBitcodeAccessor(const std::string &OutputPathBase,
@@ -129,6 +130,10 @@ class SlangRS : public Slang {
   //                              line. This may override the package name
   //                              specified in the .rs using #pragma.
   //
+  // @RSPackageName - The RS package name supplied by the command line. This
+  //                  can override the default value of
+  //                  "android.renderscript" used by the normal APIs.
+  //
   bool compile(const std::list<std::pair<const char*, const char*> > &IOFiles,
                const std::list<std::pair<const char*, const char*> > &DepFiles,
                const std::vector<std::string> &IncludePaths,
@@ -138,7 +143,8 @@ class SlangRS : public Slang {
                unsigned int TargetAPI, bool EmitDebug,
                llvm::CodeGenOpt::Level OptimizationLevel,
                const std::string &JavaReflectionPathBase,
-               const std::string &JavaReflectionPackageName);
+               const std::string &JavaReflectionPackageName,
+               const std::string &RSPackageName);
 
   virtual void reset();
 

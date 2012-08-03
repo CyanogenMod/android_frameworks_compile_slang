@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,6 @@ class RSReflection {
    private:
     static const char *const ApacheLicenseNote;
 
-    static const char *const Import[];
-
     bool mVerbose;
 
     std::string mOutputPathBase;
@@ -58,6 +56,7 @@ class RSReflection {
     std::string mInputRSFile;
 
     std::string mPackageName;
+    std::string mRSPackageName;
     std::string mResourceId;
     std::string mPaddingPrefix;
 
@@ -119,6 +118,7 @@ class RSReflection {
     Context(const std::string &OutputPathBase,
             const std::string &InputRSFile,
             const std::string &PackageName,
+            const std::string &RSPackageName,
             const std::string &ResourceId,
             const std::string &PaddingPrefix,
             bool UseStdout)
@@ -126,6 +126,7 @@ class RSReflection {
           mOutputPathBase(OutputPathBase),
           mInputRSFile(InputRSFile),
           mPackageName(PackageName),
+          mRSPackageName(RSPackageName),
           mResourceId(ResourceId),
           mPaddingPrefix(PaddingPrefix),
           mLicenseNote(ApacheLicenseNote),
@@ -197,6 +198,9 @@ class RSReflection {
     void endBlock();
 
     inline const std::string &getPackageName() const { return mPackageName; }
+    inline const std::string &getRSPackageName() const {
+      return mRSPackageName;
+    }
     inline const std::string &getClassName() const { return mClassName; }
     inline const std::string &getResourceId() const { return mResourceId; }
 
@@ -330,6 +334,7 @@ class RSReflection {
 
   bool reflect(const std::string &OutputPathBase,
                const std::string &OutputPackageName,
+               const std::string &RSPackageName,
                const std::string &InputFileName,
                const std::string &OutputBCFileName);
 

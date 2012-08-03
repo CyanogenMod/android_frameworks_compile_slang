@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,6 +130,8 @@ class RSCCOptions {
   std::string mJavaReflectionPathBase;
 
   std::string mJavaReflectionPackageName;
+
+  std::string mRSPackageName;
 
   slang::BitCodeStorageType mBitcodeStorage;
 
@@ -262,6 +264,8 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
         Args->getLastArgValue(OPT_java_reflection_path_base);
     Opts.mJavaReflectionPackageName =
         Args->getLastArgValue(OPT_java_reflection_package_name);
+
+    Opts.mRSPackageName = Args->getLastArgValue(OPT_rs_package_name);
 
     llvm::StringRef BitcodeStorageValue =
         Args->getLastArgValue(OPT_bitcode_storage);
@@ -479,7 +483,8 @@ int main(int argc, const char **argv) {
                                          Opts.mDebugEmission,
                                          Opts.mOptimizationLevel,
                                          Opts.mJavaReflectionPathBase,
-                                         Opts.mJavaReflectionPackageName);
+                                         Opts.mJavaReflectionPackageName,
+                                         Opts.mRSPackageName);
 
   Compiler->reset();
 
