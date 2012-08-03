@@ -56,8 +56,8 @@ static_libraries_needed_by_slang := \
 	libLLVMCodeGen \
 	libLLVMScalarOpts \
 	libLLVMInstCombine \
-	libLLVMTransformUtils \
 	libLLVMInstrumentation \
+	libLLVMTransformUtils \
 	libLLVMipa \
 	libLLVMAnalysis \
 	libLLVMTarget \
@@ -94,6 +94,7 @@ LOCAL_CFLAGS += $(local_cflags_for_slang)
 TBLGEN_TABLES :=    \
 	AttrList.inc	\
 	Attrs.inc	\
+	CommentNodes.inc \
 	DeclNodes.inc	\
 	DiagnosticCommonKinds.inc	\
 	DiagnosticFrontendKinds.inc	\
@@ -200,6 +201,7 @@ LOCAL_CFLAGS += $(local_cflags_for_slang)
 TBLGEN_TABLES :=    \
 	AttrList.inc    \
 	Attrs.inc    \
+	CommentNodes.inc \
 	DeclNodes.inc    \
 	DiagnosticCommonKinds.inc   \
 	DiagnosticDriverKinds.inc	\
