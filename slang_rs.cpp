@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,9 +64,11 @@ namespace slang {
 
 bool SlangRS::reflectToJava(const std::string &OutputPathBase,
                             const std::string &OutputPackageName,
+                            const std::string &RSPackageName,
                             std::string *RealPackageName) {
   return mRSContext->reflectToJava(OutputPathBase,
                                    OutputPackageName,
+                                   RSPackageName,
                                    getInputFileName(),
                                    getOutputFileName(),
                                    RealPackageName);
@@ -270,7 +272,8 @@ bool SlangRS::compile(
     unsigned int TargetAPI, bool EmitDebug,
     llvm::CodeGenOpt::Level OptimizationLevel,
     const std::string &JavaReflectionPathBase,
-    const std::string &JavaReflectionPackageName) {
+    const std::string &JavaReflectionPackageName,
+    const std::string &RSPackageName) {
   if (IOFiles.empty())
     return true;
 
@@ -336,6 +339,7 @@ bool SlangRS::compile(
 
         if (!reflectToJava(JavaReflectionPathBase,
                            JavaReflectionPackageName,
+                           RSPackageName,
                            &RealPackageName)) {
           return false;
         }

@@ -1906,6 +1906,7 @@ void RSReflection::genAddPaddingToElementBuiler(Context &C,
 
 bool RSReflection::reflect(const std::string &OutputPathBase,
                            const std::string &OutputPackageName,
+                           const std::string &RSPackageName,
                            const std::string &InputFileName,
                            const std::string &OutputBCFileName) {
   Context *C = NULL;
@@ -1926,10 +1927,10 @@ bool RSReflection::reflect(const std::string &OutputPathBase,
 
   if (OutputPackageName.empty() || OutputPackageName == "-")
     C = new Context(OutputPathBase, InputFileName, "<Package Name>",
-                    ResourceId, PaddingPrefix, true);
+                    RSPackageName, ResourceId, PaddingPrefix, true);
   else
     C = new Context(OutputPathBase, InputFileName, OutputPackageName,
-                    ResourceId, PaddingPrefix, false);
+                    RSPackageName, ResourceId, PaddingPrefix, false);
 
   if (C != NULL) {
     std::string ErrorMsg, ScriptClassName;
@@ -1998,15 +1999,6 @@ const char *const RSReflection::Context::ApacheLicenseNote =
     " */\n"
     "\n";
 
-const char *const RSReflection::Context::Import[] = {
-  // Renderscript java class
-  "android.renderscript.*",
-  // Import R
-  "android.content.res.Resources",
-  // Import for debugging
-  // "android.util.Log",
-};
-
 bool RSReflection::Context::openClassFile(const std::string &ClassName,
                                           std::string &ErrorMsg) {
   if (!mUseStdout) {
@@ -2066,8 +2058,8 @@ bool RSReflection::Context::startClass(AccessModifier AM,
   out() << std::endl;
 
   // Imports
-  for (unsigned i = 0; i < (sizeof(Import) / sizeof(const char*)); i++)
-    out() << "import " << Import[i] << ";" << std::endl;
+  out() << "import " << mRSPackageName << ".*;" << std::endl;
+  out() << "import android.content.res.Resources;" << std::endl;
   out() << std::endl;
 
   // All reflected classes should be annotated as hidden, so that they won't

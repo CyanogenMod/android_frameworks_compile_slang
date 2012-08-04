@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,8 @@ class RSContext {
   std::string mReflectJavaPackageName;
   std::string mReflectJavaPathName;
 
+  std::string mRSPackageName;
+
   int version;
   llvm::OwningPtr<clang::MangleContext> mMangleCtx;
 
@@ -137,6 +139,14 @@ class RSContext {
   }
   inline const std::string &getReflectJavaPackageName() {
     return mReflectJavaPackageName;
+  }
+
+  inline void setRSPackageName(const std::string &S) {
+    mRSPackageName = S;
+    return;
+  }
+  inline const std::string &getRSPackageName() {
+    return mRSPackageName;
   }
 
   bool processExport();
@@ -207,6 +217,7 @@ class RSContext {
 
   bool reflectToJava(const std::string &OutputPathBase,
                      const std::string &OutputPackageName,
+                     const std::string &RSPackageName,
                      const std::string &InputFileName,
                      const std::string &OutputBCFileName,
                      std::string *RealPackageName);

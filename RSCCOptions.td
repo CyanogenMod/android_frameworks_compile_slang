@@ -83,6 +83,11 @@ def bitcode_storage : Separate<"-bitcode-storage">,
   MetaVarName<"<value>">, HelpText<"<value> should be 'ar' or 'jc'">;
 def _bitcode_storage : Separate<"-s">, Alias<bitcode_storage>;
 
+def rs_package_name : Separate<"-rs-package-name">,
+  MetaVarName<"<package_name>">,
+  HelpText<"package name for referencing RS classes">;
+def rs_package_name_EQ : Joined<"-rs-package-name=">, Alias<rs_package_name>;
+
 def W : Joined<"-W">;
 def w : Flag<"-w">, HelpText<"Suppress all warnings">;
 
