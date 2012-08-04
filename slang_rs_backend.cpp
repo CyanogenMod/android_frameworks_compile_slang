@@ -104,6 +104,20 @@ bool RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
   for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; I++) {
     clang::FunctionDecl *FD = llvm::dyn_cast<clang::FunctionDecl>(*I);
     if (FD && FD->isGlobal()) {
+      // Check that we don't have any array parameters being misintrepeted as
+      // kernel pointers due to the C type system's array to pointer decay.
+      size_t numParams = FD->getNumParams();
+      for (size_t i = 0; i < numParams; i++) {
+        const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
+        clang::QualType QT = PVD->getOriginalType();
+        if (QT->isArrayType()) {
+          mDiagEngine.Report(
+            clang::FullSourceLoc(PVD->getTypeSpecStartLoc(), mSourceMgr),
+            mDiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                        "exported function parameters may "
+                                        "not have array type: %0")) << QT;
+        }
+      }
       AnnotateFunction(FD);
     }
   }
