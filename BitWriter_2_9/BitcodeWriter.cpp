@@ -1166,10 +1166,31 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     }
     break;
   case Instruction::Switch:
-    Code = bitc::FUNC_CODE_INST_SWITCH;
-    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-      Vals.push_back(VE.getValueID(I.getOperand(i)));
+    {
+      Code = bitc::FUNC_CODE_INST_SWITCH;
+      SwitchInst &SI = cast<SwitchInst>(I);
+
+      Vals.push_back(VE.getTypeID(SI.getCondition()->getType()));
+      Vals.push_back(VE.getValueID(SI.getCondition()));
+      Vals.push_back(VE.getValueID(SI.getDefaultDest()));
+      for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
+           i != e; ++i) {
+        IntegersSubset& CaseRanges = i.getCaseValueEx();
+
+        if (CaseRanges.isSingleNumber()) {
+          Vals.push_back(VE.getValueID(CaseRanges.getSingleNumber(0).toConstantInt()));
+          Vals.push_back(VE.getValueID(i.getCaseSuccessor()));
+        } else if (CaseRanges.isSingleNumbersOnly()) {
+          for (unsigned ri = 0, rn = CaseRanges.getNumItems();
+               ri != rn; ++ri) {
+            Vals.push_back(VE.getValueID(CaseRanges.getSingleNumber(ri).toConstantInt()));
+            Vals.push_back(VE.getValueID(i.getCaseSuccessor()));
+          }
+        } else {
+          llvm_unreachable("Not single number?");
+        }
+      }
+    }
     break;
   case Instruction::IndirectBr:
     Code = bitc::FUNC_CODE_INST_INDIRECTBR;
