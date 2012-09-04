@@ -462,6 +462,15 @@ static bool ValidateVarDeclHelper(
       const clang::ExtVectorType *EVT =
           UNSAFE_CAST_TYPE(const clang::ExtVectorType, T);
       const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
+      if (TargetAPI < SLANG_ICS_TARGET_API &&
+          InCompositeType &&
+          EVT->getNumElements() == 3) {
+        clang::ASTContext &C = VD->getASTContext();
+        ReportTypeError(&C.getDiagnostics(), VD, NULL,
+                        "structs containing vectors of dimension 3 cannot "
+                        "be exported at this API level: '%0'");
+        return false;
+      }
       return ValidateVarDeclHelper(VD, ElementType, SPS, true, UnionDecl,
                                    TargetAPI);
     }
