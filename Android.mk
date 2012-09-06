@@ -36,6 +36,16 @@ endif
 local_cflags_for_slang += -DRS_VERSION=$(RS_VERSION)
 
 static_libraries_needed_by_slang := \
+	libclangParse \
+	libclangSema \
+	libclangAnalysis \
+	libclangCodeGen \
+	libclangAST \
+	libclangLex \
+	libclangEdit \
+	libclangFrontend \
+	libclangBasic \
+	libclangSerialization \
 	libLLVMLinker \
 	libLLVMipo \
 	libLLVMBitWriter \
@@ -43,14 +53,21 @@ static_libraries_needed_by_slang := \
 	libLLVMBitWriter_2_9_func \
 	libLLVMBitReader \
 	libLLVMARMCodeGen \
+	libLLVMARMAsmParser \
 	libLLVMARMAsmPrinter \
 	libLLVMARMInfo \
 	libLLVMARMDesc \
 	libLLVMX86CodeGen \
 	libLLVMX86Info \
 	libLLVMX86Desc \
+	libLLVMX86AsmParser \
 	libLLVMX86AsmPrinter \
 	libLLVMX86Utils \
+	libLLVMMipsCodeGen \
+	libLLVMMipsInfo \
+	libLLVMMipsDesc \
+	libLLVMMipsAsmParser \
+	libLLVMMipsAsmPrinter \
 	libLLVMAsmPrinter \
 	libLLVMSelectionDAG \
 	libLLVMCodeGen \
@@ -64,15 +81,8 @@ static_libraries_needed_by_slang := \
 	libLLVMMC \
 	libLLVMMCParser \
 	libLLVMCore \
-	libclangParse \
-	libclangSema \
-	libclangAnalysis \
-	libclangCodeGen \
-	libclangAST \
-	libclangLex \
-	libclangEdit \
-	libclangFrontend \
-	libclangBasic \
+	libLLVMArchive \
+	libLLVMAsmParser \
 	libLLVMSupport \
 	libLLVMVectorize
 
