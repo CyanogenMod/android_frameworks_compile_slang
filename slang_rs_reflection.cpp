@@ -61,6 +61,8 @@
 
 #define RS_FP_PREFIX                     "__rs_fp_"
 
+#define RS_RESOURCE_NAME                 "__rs_resource_name"
+
 #define RS_EXPORT_FUNC_INDEX_PREFIX      "mExportFuncIdx_"
 #define RS_EXPORT_FOREACH_INDEX_PREFIX   "mExportForEachIdx_"
 
@@ -304,7 +306,32 @@ bool RSReflection::genScriptClass(Context &C,
 }
 
 void RSReflection::genScriptClassConstructor(Context &C) {
+  // Provide a simple way to reference this object.
+  C.indent() << "private static final String " RS_RESOURCE_NAME " = \""
+             << C.getResourceId()
+             << "\";" << std::endl;
+
+  // Generate a simple constructor with only a single parameter (the rest
+  // can be inferred from information we already have).
   C.indent() << "// Constructor" << std::endl;
+  C.startFunction(Context::AM_Public,
+                  false,
+                  NULL,
+                  C.getClassName(),
+                  1,
+                  "RenderScript", "rs");
+  // Call alternate constructor with required parameters.
+  // Look up the proper raw bitcode resource id via the context.
+  C.indent() << "this(rs," << std::endl;
+  C.indent() << "     rs.getApplicationContext().getResources()," << std::endl;
+  C.indent() << "     rs.getApplicationContext().getResources()."
+                "getIdentifier(" << std::endl;
+  C.indent() << "         " RS_RESOURCE_NAME ", \"raw\"," << std::endl;
+  C.indent() << "         rs.getApplicationContext().getPackageName()));"
+             << std::endl;
+  C.endFunction();
+
+  // Alternate constructor (legacy) with 3 original parameters.
   C.startFunction(Context::AM_Public,
                   false,
                   NULL,
