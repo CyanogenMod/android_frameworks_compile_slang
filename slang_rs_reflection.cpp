@@ -648,11 +648,11 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
   // forEach_*()
   Context::ArgTy Args;
 
-  slangAssert(EF->getNumParameters() > 0);
+  slangAssert(EF->getNumParameters() > 0 || EF->hasReturn());
 
   if (EF->hasIn())
     Args.push_back(std::make_pair("Allocation", "ain"));
-  if (EF->hasOut())
+  if (EF->hasOut() || EF->hasReturn())
     Args.push_back(std::make_pair("Allocation", "aout"));
 
   const RSExportRecordType *ERT = EF->getParamPacketType();
@@ -682,7 +682,7 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
     genTypeCheck(C, OET, "aout");
   }
 
-  if (EF->hasIn() && EF->hasOut()) {
+  if (EF->hasIn() && (EF->hasOut() || EF->hasReturn())) {
     C.indent() << "// Verify dimensions" << std::endl;
     C.indent() << "Type tIn = ain.getType();" << std::endl;
     C.indent() << "Type tOut = aout.getType();" << std::endl;
@@ -711,7 +711,7 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
   else
     C.out() << ", null";
 
-  if (EF->hasOut())
+  if (EF->hasOut() || EF->hasReturn())
     C.out() << ", aout";
   else
     C.out() << ", null";
@@ -730,9 +730,13 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
 void RSReflection::genTypeInstanceFromPointer(Context &C,
                                               const RSExportType *ET) {
   if (ET->getClass() == RSExportType::ExportClassPointer) {
+    // For pointer parameters to original forEach kernels.
     const RSExportPointerType *EPT =
         static_cast<const RSExportPointerType*>(ET);
     genTypeInstance(C, EPT->getPointeeType());
+  } else {
+    // For handling pass-by-value kernel parameters.
+    genTypeInstance(C, ET);
   }
 }
 
