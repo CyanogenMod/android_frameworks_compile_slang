@@ -418,11 +418,13 @@ clang::Expr *ClearSingleRSObject(clang::ASTContext &C,
                                       NULL,
                                       clang::VK_RValue);
 
+  llvm::SmallVector<clang::Expr*, 1> ArgList;
+  ArgList.push_back(AddrRefRSVar);
+
   clang::CallExpr *RSClearObjectCall =
       new(C) clang::CallExpr(C,
                              RSClearObjectFP,
-                             &AddrRefRSVar,
-                             1,
+                             ArgList,
                              ClearObjectFD->getCallResultType(),
                              clang::VK_RValue,
                              Loc);
@@ -812,20 +814,19 @@ static clang::Stmt *CreateSingleRSSetObject(clang::ASTContext &C,
                                       NULL,
                                       clang::VK_RValue);
 
-  clang::Expr *ArgList[2];
-  ArgList[0] = new(C) clang::UnaryOperator(DstExpr,
-                                           clang::UO_AddrOf,
-                                           SetObjectFDArgType[0],
-                                           clang::VK_RValue,
-                                           clang::OK_Ordinary,
-                                           Loc);
-  ArgList[1] = SrcExpr;
+  llvm::SmallVector<clang::Expr*, 2> ArgList;
+  ArgList.push_back(new(C) clang::UnaryOperator(DstExpr,
+                                                clang::UO_AddrOf,
+                                                SetObjectFDArgType[0],
+                                                clang::VK_RValue,
+                                                clang::OK_Ordinary,
+                                                Loc));
+  ArgList.push_back(SrcExpr);
 
   clang::CallExpr *RSSetObjectCall =
       new(C) clang::CallExpr(C,
                              RSSetObjectFP,
                              ArgList,
-                             2,
                              SetObjectFD->getCallResultType(),
                              clang::VK_RValue,
                              Loc);
@@ -1217,20 +1218,19 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
                                  clang::VK_RValue,
                                  NULL);
 
-  clang::Expr *ArgList[2];
-  ArgList[0] = new(C) clang::UnaryOperator(RefRSVar,
-                                           clang::UO_AddrOf,
-                                           SetObjectFDArgType[0],
-                                           clang::VK_RValue,
-                                           clang::OK_Ordinary,
-                                           Loc);
-  ArgList[1] = InitExpr;
+  llvm::SmallVector<clang::Expr*, 2> ArgList;
+  ArgList.push_back(new(C) clang::UnaryOperator(RefRSVar,
+                                                clang::UO_AddrOf,
+                                                SetObjectFDArgType[0],
+                                                clang::VK_RValue,
+                                                clang::OK_Ordinary,
+                                                Loc));
+  ArgList.push_back(InitExpr);
 
   clang::CallExpr *RSSetObjectCall =
       new(C) clang::CallExpr(C,
                              RSSetObjectFP,
                              ArgList,
-                             2,
                              SetObjectFD->getCallResultType(),
                              clang::VK_RValue,
                              Loc);
@@ -1380,7 +1380,10 @@ clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
                                           NULL,
                                           clang::VK_RValue);
 
-      Res = new(C) clang::InitListExpr(C, Loc, &CastToNull, 1, Loc);
+      llvm::SmallVector<clang::Expr*, 1>InitList;
+      InitList.push_back(CastToNull);
+
+      Res = new(C) clang::InitListExpr(C, Loc, InitList, Loc);
       break;
     }
     case RSExportPrimitiveType::DataTypeRSMatrix2x2:
@@ -1410,19 +1413,22 @@ clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
         N = 3;
       else if (DT == RSExportPrimitiveType::DataTypeRSMatrix4x4)
         N = 4;
+      unsigned N_2 = N * N;
 
-      // Directly allocate 16 elements instead of dynamically allocate N*N
-      clang::Expr *InitVals[16];
-      for (unsigned i = 0; i < sizeof(InitVals) / sizeof(InitVals[0]); i++)
-        InitVals[i] = Float0Val;
+      // Assume we are going to be allocating 16 elements, since 4x4 is max.
+      llvm::SmallVector<clang::Expr*, 16> InitVals;
+      for (unsigned i = 0; i < N_2; i++)
+        InitVals.push_back(Float0Val);
       clang::Expr *InitExpr =
-          new(C) clang::InitListExpr(C, Loc, InitVals, N * N, Loc);
+          new(C) clang::InitListExpr(C, Loc, InitVals, Loc);
       InitExpr->setType(C.getConstantArrayType(FloatTy,
-                                               llvm::APInt(32, N * N),
+                                               llvm::APInt(32, N_2),
                                                clang::ArrayType::Normal,
                                                /* EltTypeQuals = */0));
+      llvm::SmallVector<clang::Expr*, 1> InitExprVec;
+      InitExprVec.push_back(InitExpr);
 
-      Res = new(C) clang::InitListExpr(C, Loc, &InitExpr, 1, Loc);
+      Res = new(C) clang::InitListExpr(C, Loc, InitExprVec, Loc);
       break;
     }
     case RSExportPrimitiveType::DataTypeUnknown:
