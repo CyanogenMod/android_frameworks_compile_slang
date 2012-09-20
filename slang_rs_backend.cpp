@@ -184,6 +184,16 @@ void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
     slangAssert(version == 1);
   }
 
+  if (mContext->getReflectJavaPackageName().empty()) {
+    mDiagEngine.Report(
+        mSourceMgr.getLocForEndOfFile(mSourceMgr.getMainFileID()),
+        mDiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "missing \"#pragma rs "
+                                    "java_package_name(com.foo.bar)\" "
+                                    "in source file"));
+    return;
+  }
+
   // Create a static global destructor if necessary (to handle RS object
   // runtime cleanup).
   clang::FunctionDecl *FD = mRefCount.CreateStaticGlobalDtor();
