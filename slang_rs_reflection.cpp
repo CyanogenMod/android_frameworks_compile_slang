@@ -852,10 +852,12 @@ void RSReflection::genPrimitiveTypeExportVariable(
                     "set_" + VarName,
                     1,
                     TypeName.c_str(), "v");
-    if (EV->isUnsigned()) {
+    if ((EPT->getSize() < 4) || EV->isUnsigned()) {
       // We create/cache a per-type FieldPacker. This allows us to reuse the
       // validation logic (for catching negative inputs from Dalvik, as well
       // as inputs that are too large to be represented in the unsigned type).
+      // Sub-integer types are also handled specially here, so that we don't
+      // overwrite bytes accidentally.
       std::string ElemName = EPT->getElementName();
       std::string FPName;
       FPName = RS_FP_PREFIX + ElemName;
