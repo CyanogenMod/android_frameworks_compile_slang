@@ -29,10 +29,6 @@
 #include "slang_rs_reflect_utils.h"
 #include "slang_version.h"
 
-namespace clang {
-  class FunctionDecl;
-}
-
 namespace slang {
   class RSContext;
   class RSExportRecordType;
@@ -45,6 +41,8 @@ class SlangRS : public Slang {
   bool mAllowRSPrefix;
 
   unsigned int mTargetAPI;
+
+  bool mIsFilterscript;
 
   // Custom diagnostic identifiers
   unsigned mDiagErrorInvalidOutputDepParameter;
@@ -77,6 +75,9 @@ class SlangRS : public Slang {
   // and is valid before compile() ends.
   bool checkODR(const char *CurInputFile);
 
+  // Returns true if this is a Filterscript file.
+  static bool isFilterscript(const char *Filename);
+
  protected:
   virtual void initDiagnostic();
   virtual void initPreprocessor();
@@ -90,11 +91,11 @@ class SlangRS : public Slang {
 
  public:
   static bool IsRSHeaderFile(const char *File);
-  // FIXME: Determine whether a function is in RS header (i.e., one of the RS
+  // FIXME: Determine whether a location is in RS header (i.e., one of the RS
   //        built-in APIs) should only need its names (we need a "list" of RS
   //        built-in APIs).
-  static bool IsFunctionInRSHeaderFile(const clang::FunctionDecl *FD,
-                                       const clang::SourceManager &SourceMgr);
+  static bool IsLocInRSHeaderFile(const clang::SourceLocation &Loc,
+                                  const clang::SourceManager &SourceMgr);
 
   SlangRS();
 

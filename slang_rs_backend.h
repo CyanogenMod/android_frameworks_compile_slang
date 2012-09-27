@@ -19,6 +19,7 @@
 
 #include "slang_backend.h"
 #include "slang_pragma_recorder.h"
+#include "slang_rs_check_ast.h"
 #include "slang_rs_object_ref_count.h"
 
 namespace llvm {
@@ -47,6 +48,8 @@ class RSBackend : public Backend {
 
   bool mAllowRSPrefix;
 
+  bool mIsFilterscript;
+
   llvm::NamedMDNode *mExportVarMetadata;
   llvm::NamedMDNode *mExportFuncMetadata;
   llvm::NamedMDNode *mExportForEachNameMetadata;
@@ -56,6 +59,8 @@ class RSBackend : public Backend {
   llvm::NamedMDNode *mRSObjectSlotsMetadata;
 
   RSObjectRefCount mRefCount;
+
+  RSCheckAST mASTChecker;
 
   void AnnotateFunction(clang::FunctionDecl *FD);
 
@@ -79,7 +84,8 @@ class RSBackend : public Backend {
             llvm::raw_ostream *OS,
             Slang::OutputType OT,
             clang::SourceManager &SourceMgr,
-            bool AllowRSPrefix);
+            bool AllowRSPrefix,
+            bool IsFilterscript);
 
   virtual ~RSBackend();
 };
