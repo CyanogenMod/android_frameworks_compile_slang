@@ -105,14 +105,18 @@ void RSReflectionBase::startFile(const string &filename) {
   write("");
 }
 
+// remove path plus .rs from filename to generate class name
 string RSReflectionBase::stripRS(const string &s) const {
-  size_t pos = s.rfind(".rs");
+  string tmp(s);
+  size_t pos = tmp.rfind(".rs");
   if(pos != string::npos) {
-    string tmp(s);
     tmp.erase(pos);
-    return tmp;
   }
-  return s;
+  pos = tmp.rfind("/");
+  if (pos != string::npos) {
+    tmp.erase(0, pos+1);
+  }
+  return tmp;
 }
 
 void RSReflectionBase::write(const std::string &t) {
@@ -134,7 +138,7 @@ void RSReflectionBase::decIndent() {
 }
 
 bool RSReflectionBase::writeFile(const string &filename, const vector< string > &txt) {
-  FILE *pfin = fopen(filename.c_str(), "wt");
+  FILE *pfin = fopen((mOutputPath + filename).c_str(), "wt");
   if (pfin == NULL) {
     fprintf(stderr, "Error: could not write file %s\n", filename.c_str());
     return false;

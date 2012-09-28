@@ -65,7 +65,7 @@ protected:
 
     std::string stripRS(const std::string &s) const;
 
-    static bool writeFile(const std::string &filename, const std::vector< std::string > &txt);
+    bool writeFile(const std::string &filename, const std::vector< std::string > &txt);
 
 
 private:

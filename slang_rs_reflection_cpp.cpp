@@ -67,11 +67,11 @@ bool RSReflectionCpp::reflect(const string &OutputPathBase,
     mText.clear();
 
 
-    RSReflectionBase::writeFile(mClassName + ".h", header);
-    RSReflectionBase::writeFile(mClassName + ".cpp", cpp);
+    writeFile(mClassName + ".h", header);
+    writeFile(mClassName + ".cpp", cpp);
 
 
-    return false;
+    return true;
 }
 
 typedef std::vector<std::pair<std::string, std::string> > ArgTy;
