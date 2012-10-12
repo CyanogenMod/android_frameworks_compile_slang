@@ -666,18 +666,39 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
     }
   }
 
+  const RSExportType *IET = EF->getInType();
+  const RSExportType *OET = EF->getOutType();
+
+  if (mRSContext->getTargetAPI() >= SLANG_JB_MR1_TARGET_API) {
+      int signature = 0;
+      C.startFunction(Context::AM_Public,
+                      false,
+                      "Script.KernelID",
+                      "getKernelID_" + EF->getName(),
+                      0);
+
+      if (IET)
+          signature |= 1;
+      if (OET)
+          signature |= 2;
+
+      //TODO: add element checking
+      C.indent() << "return createKernelID(" << RS_EXPORT_FOREACH_INDEX_PREFIX
+                 << EF->getName() << ", " << signature << ", null, null);"
+                 << std::endl;
+
+      C.endFunction();
+  }
+
   C.startFunction(Context::AM_Public,
                   false,
                   "void",
                   "forEach_" + EF->getName(),
                   Args);
 
-  const RSExportType *IET = EF->getInType();
   if (IET) {
     genTypeCheck(C, IET, "ain");
   }
-
-  const RSExportType *OET = EF->getOutType();
   if (OET) {
     genTypeCheck(C, OET, "aout");
   }
@@ -1067,6 +1088,19 @@ void RSReflection::genGetExportVariable(Context &C,
   C.indent() << "return "RS_EXPORT_VAR_PREFIX << VarName << ";" << std::endl;
 
   C.endFunction();
+  if (mRSContext->getTargetAPI() >= SLANG_JB_MR1_TARGET_API) {
+      C.startFunction(Context::AM_Public,
+                      false,
+                      "Script.FieldID",
+                      "getFieldID_" + VarName,
+                      0);
+
+      C.indent() << "return createFieldID(" << RS_EXPORT_VAR_INDEX_PREFIX
+                 << VarName << ", null);" << std::endl;
+
+      C.endFunction();
+  }
+
   return;
 }
 
