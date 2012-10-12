@@ -11,3 +11,11 @@ static union u2 {
     rs_font f;
 } myUnion2;
 
+
+void foo() {
+    union iu {
+        rs_font f;
+        int i;
+    } v;
+    (void) v;
+}

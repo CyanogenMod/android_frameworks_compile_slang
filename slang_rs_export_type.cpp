@@ -89,7 +89,7 @@ static const clang::Type *TypeExportableHelper(
     const clang::RecordDecl *TopLevelRecord);
 
 static void ReportTypeError(clang::DiagnosticsEngine *DiagEngine,
-                            const clang::VarDecl *VD,
+                            const clang::NamedDecl *ND,
                             const clang::RecordDecl *TopLevelRecord,
                             const char *Message,
                             unsigned int TargetAPI = 0) {
@@ -107,11 +107,11 @@ static void ReportTypeError(clang::DiagnosticsEngine *DiagEngine,
       clang::FullSourceLoc(TopLevelRecord->getLocation(), SM),
       DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message))
       << TopLevelRecord->getName() << TargetAPI;
-  } else if (VD) {
+  } else if (ND) {
     DiagEngine->Report(
-      clang::FullSourceLoc(VD->getLocation(), SM),
+      clang::FullSourceLoc(ND->getLocation(), SM),
       DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message))
-      << VD->getName() << TargetAPI;
+      << ND->getName() << TargetAPI;
   } else {
     slangAssert(false && "Variables should be validated before exporting");
   }
@@ -337,7 +337,7 @@ static bool ValidateRSObjectInVarDecl(clang::VarDecl *VD,
     // Only if we are already in a composite type (like an array or structure).
     if (InCompositeType) {
       // Only if we are actually exported (i.e. non-static).
-      if (VD->getLinkage() == clang::ExternalLinkage) {
+      if (VD->hasLinkage() && (VD->getLinkage() == clang::ExternalLinkage)) {
         // Only if we are not a pointer to an object.
         const clang::Type *T = GET_CANONICAL_TYPE(VD->getType().getTypePtr());
         if (T->getTypeClass() != clang::Type::Pointer) {
@@ -355,25 +355,30 @@ static bool ValidateRSObjectInVarDecl(clang::VarDecl *VD,
   return true;
 }
 
-// Helper function for ValidateVarDecl(). We do a recursive descent on the
+// Helper function for ValidateType(). We do a recursive descent on the
 // type hierarchy to ensure that we can properly export/handle the
 // declaration.
 // \return true if the variable declaration is valid,
 //         false if it is invalid (along with proper diagnostics).
 //
-// VD - top-level variable declaration that we are validating.
-// T - sub-type of VD's type that we are validating.
+// C - ASTContext (for diagnostics + builtin types).
+// T - sub-type that we are validating.
+// ND - (optional) top-level named declaration that we are validating.
 // SPS - set of types we have already seen/validated.
 // InCompositeType - true if we are within an outer composite type.
 // UnionDecl - set if we are in a sub-type of a union.
 // TargetAPI - target SDK API level.
-static bool ValidateVarDeclHelper(
-    clang::VarDecl *VD,
+// IsFilterscript - whether or not we are compiling for Filterscript
+static bool ValidateTypeHelper(
+    clang::ASTContext &C,
     const clang::Type *&T,
+    clang::NamedDecl *ND,
+    clang::SourceLocation Loc,
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
     bool InCompositeType,
     clang::RecordDecl *UnionDecl,
-    unsigned int TargetAPI) {
+    unsigned int TargetAPI,
+    bool IsFilterscript) {
   if ((T = GET_CANONICAL_TYPE(T)) == NULL)
     return true;
 
@@ -383,7 +388,8 @@ static bool ValidateVarDeclHelper(
   switch (T->getTypeClass()) {
     case clang::Type::Record: {
       if (RSExportPrimitiveType::IsRSObjectType(T)) {
-        if (!ValidateRSObjectInVarDecl(VD, InCompositeType, TargetAPI)) {
+        clang::VarDecl *VD = (ND ? llvm::dyn_cast<clang::VarDecl>(ND) : NULL);
+        if (VD && !ValidateRSObjectInVarDecl(VD, InCompositeType, TargetAPI)) {
           return false;
         }
       }
@@ -393,8 +399,7 @@ static bool ValidateVarDeclHelper(
         if (!UnionDecl) {
           return true;
         } else if (RSExportPrimitiveType::IsRSObjectType(T)) {
-          clang::ASTContext &C = VD->getASTContext();
-          ReportTypeError(&C.getDiagnostics(), VD, UnionDecl,
+          ReportTypeError(&C.getDiagnostics(), NULL, UnionDecl,
               "unions containing RS object types are not allowed");
           return false;
         }
@@ -437,7 +442,8 @@ static bool ValidateVarDeclHelper(
         const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
         FT = GET_CANONICAL_TYPE(FT);
 
-        if (!ValidateVarDeclHelper(VD, FT, SPS, true, UnionDecl, TargetAPI)) {
+        if (!ValidateTypeHelper(C, FT, ND, Loc, SPS, true, UnionDecl,
+                                TargetAPI, IsFilterscript)) {
           return false;
         }
       }
@@ -446,16 +452,58 @@ static bool ValidateVarDeclHelper(
     }
 
     case clang::Type::Builtin: {
+      if (IsFilterscript) {
+        clang::QualType QT = T->getCanonicalTypeInternal();
+        if (QT == C.DoubleTy ||
+            QT == C.LongDoubleTy ||
+            QT == C.LongTy ||
+            QT == C.LongLongTy) {
+          clang::DiagnosticsEngine &DiagEngine = C.getDiagnostics();
+          if (ND) {
+            DiagEngine.Report(
+              clang::FullSourceLoc(Loc, C.getSourceManager()),
+              DiagEngine.getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "Builtin types > 32 bits in size are forbidden in "
+                "Filterscript: '%0'")) << ND->getName();
+          } else {
+            DiagEngine.Report(
+              clang::FullSourceLoc(Loc, C.getSourceManager()),
+              DiagEngine.getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "Builtin types > 32 bits in size are forbidden in "
+                "Filterscript"));
+          }
+          return false;
+        }
+      }
       break;
     }
 
     case clang::Type::Pointer: {
+      if (IsFilterscript) {
+        if (ND) {
+          clang::DiagnosticsEngine &DiagEngine = C.getDiagnostics();
+          DiagEngine.Report(
+            clang::FullSourceLoc(Loc, C.getSourceManager()),
+            DiagEngine.getCustomDiagID(
+              clang::DiagnosticsEngine::Error,
+              "Pointers are forbidden in Filterscript: '%0'")) << ND->getName();
+          return false;
+        } else {
+          // TODO(srhines): Find a better way to handle expressions (i.e. no
+          // NamedDecl) involving pointers in FS that should be allowed.
+          // An example would be calls to library functions like
+          // rsMatrixMultiply() that take rs_matrixNxN * types.
+        }
+      }
+
       const clang::PointerType *PT =
         UNSAFE_CAST_TYPE(const clang::PointerType, T);
       const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
 
-      return ValidateVarDeclHelper(VD, PointeeType, SPS, InCompositeType,
-                                   UnionDecl, TargetAPI);
+      return ValidateTypeHelper(C, PointeeType, ND, Loc, SPS, InCompositeType,
+                                UnionDecl, TargetAPI, IsFilterscript);
     }
 
     case clang::Type::ExtVector: {
@@ -465,22 +513,21 @@ static bool ValidateVarDeclHelper(
       if (TargetAPI < SLANG_ICS_TARGET_API &&
           InCompositeType &&
           EVT->getNumElements() == 3) {
-        clang::ASTContext &C = VD->getASTContext();
-        ReportTypeError(&C.getDiagnostics(), VD, NULL,
+        ReportTypeError(&C.getDiagnostics(), ND, NULL,
                         "structs containing vectors of dimension 3 cannot "
                         "be exported at this API level: '%0'");
         return false;
       }
-      return ValidateVarDeclHelper(VD, ElementType, SPS, true, UnionDecl,
-                                   TargetAPI);
+      return ValidateTypeHelper(C, ElementType, ND, Loc, SPS, true, UnionDecl,
+                                TargetAPI, IsFilterscript);
     }
 
     case clang::Type::ConstantArray: {
       const clang::ConstantArrayType *CAT =
           UNSAFE_CAST_TYPE(const clang::ConstantArrayType, T);
       const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
-      return ValidateVarDeclHelper(VD, ElementType, SPS, true, UnionDecl,
-                                   TargetAPI);
+      return ValidateTypeHelper(C, ElementType, ND, Loc, SPS, true, UnionDecl,
+                                TargetAPI, IsFilterscript);
     }
 
     default: {
@@ -523,12 +570,22 @@ bool RSExportType::NormalizeType(const clang::Type *&T,
   return true;
 }
 
-bool RSExportType::ValidateVarDecl(clang::VarDecl *VD, unsigned int TargetAPI) {
-  const clang::Type *T = VD->getType().getTypePtr();
+bool RSExportType::ValidateType(clang::ASTContext &C, clang::QualType QT,
+    clang::NamedDecl *ND, clang::SourceLocation Loc, unsigned int TargetAPI,
+    bool IsFilterscript) {
+  const clang::Type *T = QT.getTypePtr();
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  return ValidateVarDeclHelper(VD, T, SPS, false, NULL, TargetAPI);
+  return ValidateTypeHelper(C, T, ND, Loc, SPS, false, NULL, TargetAPI,
+                            IsFilterscript);
+  return true;
+}
+
+bool RSExportType::ValidateVarDecl(clang::VarDecl *VD, unsigned int TargetAPI,
+                                   bool IsFilterscript) {
+  return ValidateType(VD->getASTContext(), VD->getType(), VD,
+                      VD->getLocation(), TargetAPI, IsFilterscript);
 }
 
 const clang::Type

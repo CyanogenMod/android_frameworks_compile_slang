@@ -75,6 +75,8 @@ def ExecTest(dirname):
                 '-I ../../../../../external/clang/lib/Headers/')
   base_args = cmd_string.split()
   rs_files = glob.glob('*.rs')
+  fs_files = glob.glob('*.fs')
+  rs_files += fs_files;
   rs_files.sort()
 
   # Extra command line arguments can be placed as // comments at the start of

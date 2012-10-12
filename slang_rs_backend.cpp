@@ -54,25 +54,29 @@ RSBackend::RSBackend(RSContext *Context,
                      llvm::raw_ostream *OS,
                      Slang::OutputType OT,
                      clang::SourceManager &SourceMgr,
-                     bool AllowRSPrefix)
+                     bool AllowRSPrefix,
+                     bool IsFilterscript)
   : Backend(DiagEngine, CodeGenOpts, TargetOpts, Pragmas, OS, OT),
     mContext(Context),
     mSourceMgr(SourceMgr),
     mAllowRSPrefix(AllowRSPrefix),
+    mIsFilterscript(IsFilterscript),
     mExportVarMetadata(NULL),
     mExportFuncMetadata(NULL),
     mExportForEachNameMetadata(NULL),
     mExportForEachSignatureMetadata(NULL),
     mExportTypeMetadata(NULL),
     mRSObjectSlotsMetadata(NULL),
-    mRefCount(mContext->getASTContext()) {
+    mRefCount(mContext->getASTContext()),
+    mASTChecker(mContext->getASTContext(), mContext->getTargetAPI(),
+                IsFilterscript) {
 }
 
 // 1) Add zero initialization of local RS object types
 void RSBackend::AnnotateFunction(clang::FunctionDecl *FD) {
   if (FD &&
       FD->hasBody() &&
-      !SlangRS::IsFunctionInRSHeaderFile(FD, mSourceMgr)) {
+      !SlangRS::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr)) {
     mRefCount.Init();
     mRefCount.Visit(FD->getBody());
   }
@@ -90,7 +94,7 @@ bool RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
         continue;
       if (!FD->getName().startswith("rs"))  // Check prefix
         continue;
-      if (!SlangRS::IsFunctionInRSHeaderFile(FD, mSourceMgr))
+      if (!SlangRS::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr))
         mDiagEngine.Report(
           clang::FullSourceLoc(FD->getLocation(), mSourceMgr),
           mDiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
@@ -125,51 +129,17 @@ bool RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
   return Backend::HandleTopLevelDecl(D);
 }
 
-namespace {
-
-static bool ValidateVarDecl(clang::VarDecl *VD, unsigned int TargetAPI) {
-  if (!VD) {
-    return true;
-  }
-
-  clang::ASTContext &C = VD->getASTContext();
-  const clang::Type *T = VD->getType().getTypePtr();
-  bool valid = true;
-
-  if (VD->getLinkage() == clang::ExternalLinkage) {
-    llvm::StringRef TypeName;
-    if (!RSExportType::NormalizeType(T, TypeName, &C.getDiagnostics(), VD)) {
-      valid = false;
-    }
-  }
-  valid &= RSExportType::ValidateVarDecl(VD, TargetAPI);
-
-  return valid;
-}
-
-static bool ValidateASTContext(clang::ASTContext &C, unsigned int TargetAPI) {
-  bool valid = true;
-  clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
-  for (clang::DeclContext::decl_iterator DI = TUDecl->decls_begin(),
-          DE = TUDecl->decls_end();
-       DI != DE;
-       DI++) {
-    clang::VarDecl *VD = llvm::dyn_cast<clang::VarDecl>(*DI);
-    if (VD && !ValidateVarDecl(VD, TargetAPI)) {
-      valid = false;
-    }
-  }
-
-  return valid;
-}
-
-}  // namespace
 
 void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
   clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
 
-  if (!ValidateASTContext(C, getTargetAPI())) {
+  // If we have an invalid RS/FS AST, don't check further.
+  if (!mASTChecker.Validate()) {
     return;
+  }
+
+  if (mIsFilterscript) {
+    mContext->addPragma("rs_fp_relaxed", "");
   }
 
   int version = mContext->getVersion();

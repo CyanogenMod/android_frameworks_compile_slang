@@ -40,6 +40,8 @@
 
 namespace slang {
 
+#define FS_SUFFIX  "fs"
+
 #define RS_HEADER_SUFFIX  "rsh"
 
 /* RS_HEADER_ENTRY(name) */
@@ -61,6 +63,15 @@ namespace slang {
   RS_HEADER_ENTRY(rs_time) \
   RS_HEADER_ENTRY(rs_types) \
 
+// Returns true if \p Filename ends in ".fs".
+bool SlangRS::isFilterscript(const char *Filename) {
+  const char *c = strrchr(Filename, '.');
+  if (c && !strncmp(FS_SUFFIX, c + 1, strlen(FS_SUFFIX) + 1)) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 bool SlangRS::reflectToJava(const std::string &OutputPathBase,
                             const std::string &OutputPackageName,
@@ -233,7 +244,8 @@ clang::ASTConsumer
                          OS,
                          OT,
                          getSourceManager(),
-                         mAllowRSPrefix);
+                         mAllowRSPrefix,
+                         mIsFilterscript);
 }
 
 bool SlangRS::IsRSHeaderFile(const char *File) {
@@ -245,9 +257,9 @@ ENUM_RS_HEADER()
   return false;
 }
 
-bool SlangRS::IsFunctionInRSHeaderFile(const clang::FunctionDecl *FD,
-                                       const clang::SourceManager &SourceMgr) {
-  clang::FullSourceLoc FSL(FD->getLocStart(), SourceMgr);
+bool SlangRS::IsLocInRSHeaderFile(const clang::SourceLocation &Loc,
+                                  const clang::SourceManager &SourceMgr) {
+  clang::FullSourceLoc FSL(Loc, SourceMgr);
   clang::PresumedLoc PLoc = SourceMgr.getPresumedLoc(FSL);
 
   const char *Filename = PLoc.getFilename();
@@ -259,7 +271,8 @@ bool SlangRS::IsFunctionInRSHeaderFile(const clang::FunctionDecl *FD,
 }
 
 SlangRS::SlangRS()
-  : Slang(), mRSContext(NULL), mAllowRSPrefix(false), mTargetAPI(0) {
+  : Slang(), mRSContext(NULL), mAllowRSPrefix(false), mTargetAPI(0),
+    mIsFilterscript(false) {
 }
 
 bool SlangRS::compile(
@@ -328,6 +341,8 @@ bool SlangRS::compile(
       mRSContext->setReflectJavaPackageName(
           JavaReflectionPackageName);
     }
+
+    mIsFilterscript = isFilterscript(InputFile);
 
     if (Slang::compile() > 0)
       return false;

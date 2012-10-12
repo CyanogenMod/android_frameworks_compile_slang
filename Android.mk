@@ -231,6 +231,7 @@ LOCAL_SRC_FILES :=	\
 	llvm-rs-cc.cpp	\
 	slang_rs.cpp	\
 	slang_rs_ast_replace.cpp	\
+	slang_rs_check_ast.cpp	\
 	slang_rs_context.cpp	\
 	slang_rs_pragma_handler.cpp	\
 	slang_rs_backend.cpp	\
