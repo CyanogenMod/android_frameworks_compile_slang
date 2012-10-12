@@ -157,9 +157,18 @@ class RSExportType : public RSExportable {
                             clang::DiagnosticsEngine *Diags,
                             const clang::VarDecl *VD);
 
+  // This function checks whether the specified type can be handled by RS/FS.
+  // If it cannot, this function returns false. Otherwise it returns true.
+  // Filterscript has additional restrictions on supported types.
+  static bool ValidateType(clang::ASTContext &C, clang::QualType QT,
+                           clang::NamedDecl *ND, clang::SourceLocation Loc,
+                           unsigned int TargetAPI, bool IsFilterscript);
+
   // This function ensures that the VarDecl can be properly handled by RS.
   // If it cannot, this function returns false. Otherwise it returns true.
-  static bool ValidateVarDecl(clang::VarDecl *VD, unsigned int TargetAPI);
+  // Filterscript has additional restrictions on supported types.
+  static bool ValidateVarDecl(clang::VarDecl *VD, unsigned int TargetAPI,
+                              bool IsFilterscript);
 
   // @T may not be normalized
   static RSExportType *Create(RSContext *Context, const clang::Type *T);
