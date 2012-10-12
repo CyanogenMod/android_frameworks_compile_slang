@@ -324,6 +324,11 @@ bool SlangRS::compile(
     if (!setOutput(OutputFile))
       return false;
 
+    if (!JavaReflectionPackageName.empty()) {
+      mRSContext->setReflectJavaPackageName(
+          JavaReflectionPackageName);
+    }
+
     if (Slang::compile() > 0)
       return false;
 
