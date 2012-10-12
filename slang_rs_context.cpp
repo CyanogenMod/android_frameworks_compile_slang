@@ -293,17 +293,7 @@ bool RSContext::reflectToJava(const std::string &OutputPathBase,
   const std::string &PackageName =
       ((OutputPackageName.empty()) ? mReflectJavaPackageName :
                                      OutputPackageName);
-  if (PackageName.empty()) {
-    clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
-    const clang::SourceManager *SM = getSourceManager();
-    DiagEngine->Report(
-        SM->getLocForEndOfFile(SM->getMainFileID()),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "missing \"#pragma rs "
-                                    "java_package_name(com.foo.bar)\" "
-                                    "in source file"));
-    return false;
-  }
+  slangAssert(!PackageName.empty());
 
   // Copy back the really applied package name
   RealPackageName->assign(PackageName);
