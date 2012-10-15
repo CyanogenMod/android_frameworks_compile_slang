@@ -259,6 +259,8 @@ class RSReflection {
   void genGetExportVariable(Context &C,
                             const std::string &TypeName,
                             const std::string &VarName);
+  void genGetFieldID(Context &C,
+                     const std::string &VarName);
 
   void genExportFunction(Context &C,
                          const RSExportFunc *EF);

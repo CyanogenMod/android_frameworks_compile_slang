@@ -910,6 +910,7 @@ void RSReflection::genPrimitiveTypeExportVariable(
   }
 
   genGetExportVariable(C, TypeName, VarName);
+  genGetFieldID(C, VarName);
   return;
 }
 
@@ -964,6 +965,7 @@ void RSReflection::genVectorTypeExportVariable(Context &C,
   genPrivateExportVariable(C, TypeName, VarName);
   genSetExportVariable(C, TypeName, EV);
   genGetExportVariable(C, TypeName, VarName);
+  genGetFieldID(C, VarName);
   return;
 }
 
@@ -998,6 +1000,7 @@ void RSReflection::genMatrixTypeExportVariable(Context &C,
   }
 
   genGetExportVariable(C, TypeName, VarName);
+  genGetFieldID(C, VarName);
   return;
 }
 
@@ -1014,6 +1017,7 @@ void RSReflection::genConstantArrayTypeExportVariable(
   genPrivateExportVariable(C, TypeName, VarName);
   genSetExportVariable(C, TypeName, EV);
   genGetExportVariable(C, TypeName, VarName);
+  genGetFieldID(C, VarName);
   return;
 }
 
@@ -1028,6 +1032,7 @@ void RSReflection::genRecordTypeExportVariable(Context &C,
   genPrivateExportVariable(C, TypeName, VarName);
   genSetExportVariable(C, TypeName, EV);
   genGetExportVariable(C, TypeName, VarName);
+  genGetFieldID(C, VarName);
   return;
 }
 
@@ -1088,20 +1093,22 @@ void RSReflection::genGetExportVariable(Context &C,
   C.indent() << "return "RS_EXPORT_VAR_PREFIX << VarName << ";" << std::endl;
 
   C.endFunction();
+}
+
+void RSReflection::genGetFieldID(Context &C, const std::string &VarName) {
+  // We only generate getFieldID_*() for non-Pointer (bind) types.
   if (mRSContext->getTargetAPI() >= SLANG_JB_MR1_TARGET_API) {
-      C.startFunction(Context::AM_Public,
-                      false,
-                      "Script.FieldID",
-                      "getFieldID_" + VarName,
-                      0);
+    C.startFunction(Context::AM_Public,
+                    false,
+                    "Script.FieldID",
+                    "getFieldID_" + VarName,
+                    0);
 
-      C.indent() << "return createFieldID(" << RS_EXPORT_VAR_INDEX_PREFIX
-                 << VarName << ", null);" << std::endl;
+    C.indent() << "return createFieldID(" << RS_EXPORT_VAR_INDEX_PREFIX
+               << VarName << ", null);" << std::endl;
 
-      C.endFunction();
+    C.endFunction();
   }
-
-  return;
 }
 
 /******************* Methods to generate script class /end *******************/
