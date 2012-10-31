@@ -240,7 +240,7 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
 
     write(mClassName + "::" + mClassName +
           "(android::renderscriptCpp::RenderScript *rs, const char *cacheDir, size_t cacheDirLength) :");
-    write("        ScriptC(rs, __txt, sizeof(__txt), \"" + mInputFileName +
+    write("        ScriptC(rs, __txt, sizeof(__txt), \"" + mClassName +
           "\", 4, cacheDir, cacheDirLength) {");
     incIndent();
     //...
