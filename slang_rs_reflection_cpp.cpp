@@ -85,7 +85,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
     startFile(mClassName + ".h");
 
     write("");
-    write("#include \"ScriptC.h\"");
+    write("#include \"RenderScript.h\"");
     write("");
 
     // Imports
@@ -116,7 +116,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
     write("public:");
     incIndent();
-    write(mClassName + "(android::renderscriptCpp::RenderScript *rs," +
+    write(mClassName + "(android::sp<android::renderscriptCpp::RS> rs," +
             " const char *cacheDir, size_t cacheDirLength);");
     write("virtual ~" + mClassName + "();");
     write("");
@@ -239,7 +239,7 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
     //out() << std::endl;
 
     write(mClassName + "::" + mClassName +
-          "(android::renderscriptCpp::RenderScript *rs, const char *cacheDir, size_t cacheDirLength) :");
+          "(android::sp<android::renderscriptCpp::RS> rs, const char *cacheDir, size_t cacheDirLength) :");
     write("        ScriptC(rs, __txt, sizeof(__txt), \"" + mClassName +
           "\", 4, cacheDir, cacheDirLength) {");
     incIndent();
