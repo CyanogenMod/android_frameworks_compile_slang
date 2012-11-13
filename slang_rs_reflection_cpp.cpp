@@ -163,7 +163,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
         stringstream tmp;
         tmp << "void forEach_" << ef->getName() << "(";
-        if(ef->hasIn() && ef->hasOut()) {
+        if(ef->hasIn() && (ef->hasOut() || ef->hasReturn())) {
             tmp << "android::sp<const android::renderscriptCpp::Allocation> ain";
             tmp << ", android::sp<const android::renderscriptCpp::Allocation> aout";
         } else if(ef->hasIn()) {
@@ -265,7 +265,7 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
 
         stringstream tmp;
         tmp << "void " << mClassName << "::forEach_" << ef->getName() << "(";
-        if(ef->hasIn() && ef->hasOut()) {
+        if(ef->hasIn() && (ef->hasOut() || ef->hasReturn())) {
             tmp << "android::sp<const android::renderscriptCpp::Allocation> ain";
             tmp << ", android::sp<const android::renderscriptCpp::Allocation> aout";
         } else if(ef->hasIn()) {
@@ -278,7 +278,7 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
         tmp.str("");
 
         tmp << "    forEach(" << slot << ", ";
-        if(ef->hasIn() && ef->hasOut()) {
+        if(ef->hasIn() && (ef->hasOut() || ef->hasReturn())) {
             tmp << "ain, aout, NULL, 0);";
         } else if(ef->hasIn()) {
             tmp << "ain, NULL, 0);";
