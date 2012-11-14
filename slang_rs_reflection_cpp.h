@@ -22,27 +22,23 @@
 namespace slang {
 
 class RSReflectionCpp : public RSReflectionBase {
-protected:
+ public:
+  explicit RSReflectionCpp(const RSContext *);
+  virtual ~RSReflectionCpp();
+
+  bool reflect(const std::string &OutputPathBase,
+               const std::string &InputFileName,
+               const std::string &OutputBCFileName);
 
 
-public:
-    RSReflectionCpp(const RSContext *);
-    virtual ~RSReflectionCpp();
+ private:
+  bool makeHeader(const std::string &baseClass);
+  bool makeImpl(const std::string &baseClass);
+  void makeFunctionSignature(std::stringstream &ss, bool isDefinition,
+                             const RSExportFunc *ef);
+  bool writeBC();
 
-    bool reflect(const std::string &OutputPathBase,
-                 const std::string &InputFileName,
-                 const std::string &OutputBCFileName);
-
-
-private:
-    bool makeHeader(const std::string &baseClass);
-    bool makeImpl(const std::string &baseClass);
-    void makeFunctionSignature(std::stringstream &ss, bool isDefinition,
-                               const RSExportFunc *ef);
-    bool writeBC();
-
-    bool startScriptHeader();
-
+  bool startScriptHeader();
 };  // class RSReflection
 
 }   // namespace slang
