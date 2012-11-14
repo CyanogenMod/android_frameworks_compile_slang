@@ -37,6 +37,8 @@ public:
 private:
     bool makeHeader(const std::string &baseClass);
     bool makeImpl(const std::string &baseClass);
+    void makeFunctionSignature(std::stringstream &ss, bool isDefinition,
+                               const RSExportFunc *ef);
     bool writeBC();
 
     bool startScriptHeader();

@@ -86,6 +86,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
     write("");
     write("#include \"RenderScript.h\"");
+    write("using namespace android::renderscriptCpp;");
     write("");
 
     // Imports
@@ -135,7 +136,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
             write(string("void set_") + ev->getName() + "(" + rtd.type->c_name + " v) {");
             stringstream tmp;
             tmp << slot;
-            write(string("    setVar(") + tmp.str() + ", v);");
+            write(string("    setVar(") + tmp.str() + ", &v, sizeof(v));");
             write(string("    __") + ev->getName() + " = v;");
             write("}");
         }
@@ -187,10 +188,14 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
 
     // Reflect export function
-    for (RSContext::const_export_func_iterator I = mRSContext->export_funcs_begin(),
-           E = mRSContext->export_funcs_end(); I != E; I++) {
+    for (RSContext::const_export_func_iterator
+            I = mRSContext->export_funcs_begin(),
+            E = mRSContext->export_funcs_end(); I != E; I++) {
+        const RSExportFunc *ef = *I;
 
-        //genExportFunction(C, *I);
+        stringstream ss;
+        makeFunctionSignature(ss, false, ef);
+        write(ss);
     }
 
     decIndent();
@@ -238,10 +243,15 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
         //out() << "import " << Import[i] << ";" << std::endl;
     //out() << std::endl;
 
-    write(mClassName + "::" + mClassName +
-          "(android::sp<android::renderscriptCpp::RS> rs, const char *cacheDir, size_t cacheDirLength) :");
-    write("        ScriptC(rs, __txt, sizeof(__txt), \"" + mClassName +
-          "\", 4, cacheDir, cacheDirLength) {");
+    write("\n");
+    stringstream ss;
+    ss << mClassName << "::" << mClassName
+       << "(android::sp<android::renderscriptCpp::RS> rs, "
+          "const char *cacheDir, size_t cacheDirLength) :\n"
+       << "        ScriptC(rs, __txt, sizeof(__txt), \""
+       << mClassName << "\", " << mClassName.length()
+       << ", cacheDir, cacheDirLength) {";
+    write(ss);
     incIndent();
     //...
     decIndent();
@@ -291,19 +301,64 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
         write("");
     }
 
-
-    // Reflect export function
     slot = 0;
+    // Reflect export function
     for (RSContext::const_export_func_iterator I = mRSContext->export_funcs_begin(),
            E = mRSContext->export_funcs_end(); I != E; I++) {
 
-        //genExportFunction(C, *I);
+        const RSExportFunc *ef = *I;
+
+        stringstream ss;
+        makeFunctionSignature(ss, true, ef);
+        write(ss);
+        ss.str("");
+
+        ss << "    invoke(" << slot << ", NULL, 0);";
+        write(ss);
+
+        write("}");
+        write("");
+
+        slot++;
     }
 
     decIndent();
     return true;
 }
 
+
+void RSReflectionCpp::makeFunctionSignature(
+        std::stringstream &ss,
+        bool isDefinition,
+        const RSExportFunc *ef) {
+    ss << "void ";
+    if (isDefinition) {
+        ss << mClassName << "::";
+    }
+    ss << "invoke_" << ef->getName() << "(";
+
+    if(ef->getParamPacketType()) {
+        bool FirstArg = true;
+        for(RSExportFunc::const_param_iterator i = ef->params_begin(),
+                 e = ef->params_end(); i != e; i++) {
+
+            RSReflectionTypeData rtd;
+            (*i)->getType()->convertToRTD(&rtd);
+            if (!FirstArg) {
+                ss << ", ";
+            } else {
+                FirstArg = false;
+            }
+            ss << rtd.type->c_name << " " << (*i)->getName();
+        }
+    }
+
+    if (isDefinition) {
+        ss << ") {";
+    } else {
+        ss << ");";
+    }
+}
 
 
 }
