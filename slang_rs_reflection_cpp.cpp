@@ -133,9 +133,9 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
             " v) {");
       stringstream tmp;
       tmp << slot;
-          write(string("    setVar(") + tmp.str() + ", &v, sizeof(v));");
-          write(string("    __") + ev->getName() + " = v;");
-          write("}");
+      write(string("    setVar(") + tmp.str() + ", &v, sizeof(v));");
+      write(string("    __") + ev->getName() + " = v;");
+      write("}");
     }
     write(string(rtd.type->c_name) + " get_" + ev->getName() + "() const {");
     if (ev->isConst()) {
@@ -178,7 +178,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
         tmp << rtd.type->c_name << " " << (*i)->getName();
       }
     }
-    tmp << ") const;";
+    tmp << ");";
     write(tmp);
   }
 
@@ -280,7 +280,7 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
     } else {
       tmp << "android::sp<const android::renderscriptCpp::Allocation> aout";
     }
-    tmp << ") const {";
+    tmp << ") {";
     write(tmp);
     tmp.str("");
 
@@ -309,8 +309,30 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
     makeFunctionSignature(ss, true, ef);
     write(ss);
     ss.str("");
+    const RSExportRecordType *params = ef->getParamPacketType();
+    size_t param_len = 0;
+    if (params) {
+      param_len = RSExportType::GetTypeAllocSize(params);
+      ss << "    FieldPacker __fp(" << param_len << ");";
+      write(ss);
+      for (RSExportFunc::const_param_iterator i = ef->params_begin(),
+           e = ef->params_end(); i != e; i++) {
+        RSReflectionTypeData rtd;
+        (*i)->getType()->convertToRTD(&rtd);
+        ss.str("");
+        ss << "    __fp.add(" << (*i)->getName() << ");";
+        write(ss);
+      }
 
-    ss << "    invoke(" << slot << ", NULL, 0);";
+    }
+
+    ss.str("");
+    ss << "    invoke(" << slot;
+    if (params) {
+      ss << ", __fp.getData(), " << param_len << ");";
+    } else {
+      ss << ", NULL, 0);";
+    }
     write(ss);
 
     write("}");
