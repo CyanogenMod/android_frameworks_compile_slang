@@ -56,11 +56,11 @@ bool RSReflectionCpp::reflect(const string &OutputPathBase,
   mOutputBCFileName = OutputBCFileName;
   mClassName = string("ScriptC_") + stripRS(InputFileName);
 
-  makeHeader("android::renderscriptCpp::ScriptC");
+  makeHeader("android::RSC::ScriptC");
   std::vector< std::string > header(mText);
   mText.clear();
 
-  makeImpl("android::renderscriptCpp::ScriptC");
+  makeImpl("android::RSC::ScriptC");
   std::vector< std::string > cpp(mText);
   mText.clear();
 
@@ -84,7 +84,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
   write("");
   write("#include \"RenderScript.h\"");
-  write("using namespace android::renderscriptCpp;");
+  write("using namespace android::RSC;");
   write("");
 
   // Imports
@@ -114,7 +114,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
   write("public:");
   incIndent();
-  write(mClassName + "(android::sp<android::renderscriptCpp::RS> rs," +
+  write(mClassName + "(android::sp<android::RSC::RS> rs," +
           " const char *cacheDir, size_t cacheDirLength);");
   write("virtual ~" + mClassName + "();");
   write("");
@@ -162,12 +162,12 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
     stringstream tmp;
     tmp << "void forEach_" << ef->getName() << "(";
     if (ef->hasIn() && (ef->hasOut() || ef->hasReturn())) {
-      tmp << "android::sp<const android::renderscriptCpp::Allocation> ain";
-      tmp << ", android::sp<const android::renderscriptCpp::Allocation> aout";
+      tmp << "android::sp<const android::RSC::Allocation> ain";
+      tmp << ", android::sp<const android::RSC::Allocation> aout";
     } else if (ef->hasIn()) {
-      tmp << "android::sp<const android::renderscriptCpp::Allocation> ain";
+      tmp << "android::sp<const android::RSC::Allocation> ain";
     } else {
-      tmp << "android::sp<const android::renderscriptCpp::Allocation> aout";
+      tmp << "android::sp<const android::RSC::Allocation> aout";
     }
 
     if (ef->getParamPacketType()) {
@@ -243,7 +243,7 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
   write("\n");
   stringstream ss;
   ss << mClassName << "::" << mClassName
-     << "(android::sp<android::renderscriptCpp::RS> rs, "
+     << "(android::sp<android::RSC::RS> rs, "
         "const char *cacheDir, size_t cacheDirLength) :\n"
      << "        ScriptC(rs, __txt, sizeof(__txt), \""
      << mClassName << "\", " << mClassName.length()
@@ -273,12 +273,12 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
     stringstream tmp;
     tmp << "void " << mClassName << "::forEach_" << ef->getName() << "(";
     if (ef->hasIn() && (ef->hasOut() || ef->hasReturn())) {
-      tmp << "android::sp<const android::renderscriptCpp::Allocation> ain";
-      tmp << ", android::sp<const android::renderscriptCpp::Allocation> aout";
+      tmp << "android::sp<const android::RSC::Allocation> ain";
+      tmp << ", android::sp<const android::RSC::Allocation> aout";
     } else if (ef->hasIn()) {
-      tmp << "android::sp<const android::renderscriptCpp::Allocation> ain";
+      tmp << "android::sp<const android::RSC::Allocation> ain";
     } else {
-      tmp << "android::sp<const android::renderscriptCpp::Allocation> aout";
+      tmp << "android::sp<const android::RSC::Allocation> aout";
     }
     tmp << ") {";
     write(tmp);
