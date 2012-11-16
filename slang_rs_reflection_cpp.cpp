@@ -41,8 +41,76 @@ using namespace std;
 
 namespace slang {
 
+#define RS_TYPE_ITEM_CLASS_NAME          "Item"
+
+static const char *GetMatrixTypeName(const RSExportMatrixType *EMT) {
+  static const char *MatrixTypeCNameMap[] = {
+    "rs_matrix2x2",
+    "rs_matrix3x3",
+    "rs_matrix4x4",
+  };
+  unsigned Dim = EMT->getDim();
+
+  if ((Dim - 2) < (sizeof(MatrixTypeCNameMap) / sizeof(const char*)))
+    return MatrixTypeCNameMap[ EMT->getDim() - 2 ];
+
+  slangAssert(false && "GetMatrixTypeName : Unsupported matrix dimension");
+  return NULL;
+}
+
+
+static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
+  switch (ET->getClass()) {
+    case RSExportType::ExportClassPrimitive: {
+      return RSExportPrimitiveType::getRSReflectionType(
+          static_cast<const RSExportPrimitiveType*>(ET))->c_name;
+    }
+    case RSExportType::ExportClassPointer: {
+      const RSExportType *PointeeType =
+          static_cast<const RSExportPointerType*>(ET)->getPointeeType();
+
+      if (PointeeType->getClass() != RSExportType::ExportClassRecord)
+        return "android::sp<android::RSC::Allocation>";
+      else
+        return PointeeType->getElementName();
+    }
+    case RSExportType::ExportClassVector: {
+      const RSExportVectorType *EVT =
+          static_cast<const RSExportVectorType*>(ET);
+      std::stringstream VecName;
+      VecName << EVT->getRSReflectionType(EVT)->rs_c_vector_prefix
+              << EVT->getNumElement();
+      return VecName.str();
+    }
+    case RSExportType::ExportClassMatrix: {
+      return GetMatrixTypeName(static_cast<const RSExportMatrixType*>(ET));
+    }
+    case RSExportType::ExportClassConstantArray: {
+      // TODO: Fix this for C arrays!
+      const RSExportConstantArrayType* CAT =
+          static_cast<const RSExportConstantArrayType*>(ET);
+      std::string ElementTypeName = GetTypeName(CAT->getElementType());
+      if (Brackets) {
+        ElementTypeName.append("[]");
+      }
+      return ElementTypeName;
+    }
+    case RSExportType::ExportClassRecord: {
+      // TODO: Fix for C structs!
+      return ET->getElementName() + "." RS_TYPE_ITEM_CLASS_NAME;
+    }
+    default: {
+      slangAssert(false && "Unknown class of type");
+    }
+  }
+
+  return "";
+}
+
+
 RSReflectionCpp::RSReflectionCpp(const RSContext *con)
     : RSReflectionBase(con) {
+  clear();
 }
 
 RSReflectionCpp::~RSReflectionCpp() {
@@ -71,8 +139,6 @@ bool RSReflectionCpp::reflect(const string &OutputPathBase,
 
   return true;
 }
-
-typedef std::vector<std::pair<std::string, std::string> > ArgTy;
 
 
 #define RS_TYPE_CLASS_NAME_PREFIX        "ScriptField_"
@@ -107,7 +173,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
     RSReflectionTypeData rtd;
     ev->getType()->convertToRTD(&rtd);
     if (!ev->isConst()) {
-      write(string(rtd.type->c_name) + " __" + ev->getName() + ";");
+      write(GetTypeName(ev->getType()) + " __" + ev->getName() + ";");
     }
   }
   decIndent();
@@ -124,29 +190,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
   slot = 0;
   for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
          E = mRSContext->export_vars_end(); I != E; I++, slot++) {
-    const RSExportVar *ev = *I;
-    RSReflectionTypeData rtd;
-    ev->getType()->convertToRTD(&rtd);
-
-    if (!ev->isConst()) {
-      write(string("void set_") + ev->getName() + "(" + rtd.type->c_name +
-            " v) {");
-      stringstream tmp;
-      tmp << slot;
-      write(string("    setVar(") + tmp.str() + ", &v, sizeof(v));");
-      write(string("    __") + ev->getName() + " = v;");
-      write("}");
-    }
-    write(string(rtd.type->c_name) + " get_" + ev->getName() + "() const {");
-    if (ev->isConst()) {
-      const clang::APValue &val = ev->getInit();
-      bool isBool = !strcmp(rtd.type->c_name, "bool");
-      write(string("    return ") + genInitValue(val, isBool) + ";");
-    } else {
-      write(string("    return __") + ev->getName() + ";");
-    }
-    write("}");
-    write("");
+    genExportVariable(*I);
   }
 
   // Reflect export for each functions
@@ -159,27 +203,32 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
       continue;
     }
 
-    stringstream tmp;
-    tmp << "void forEach_" << ef->getName() << "(";
-    if (ef->hasIn() && (ef->hasOut() || ef->hasReturn())) {
-      tmp << "android::sp<const android::RSC::Allocation> ain";
-      tmp << ", android::sp<const android::RSC::Allocation> aout";
-    } else if (ef->hasIn()) {
-      tmp << "android::sp<const android::RSC::Allocation> ain";
-    } else {
-      tmp << "android::sp<const android::RSC::Allocation> aout";
+    ArgTy Args;
+    stringstream ss;
+    ss << "void forEach_" << ef->getName() << "(";
+
+    if (ef->hasIn()) {
+      Args.push_back(std::make_pair(
+          "android::sp<const android::RSC::Allocation>", "ain"));
     }
 
-    if (ef->getParamPacketType()) {
+    if (ef->hasOut() || ef->hasReturn()) {
+      Args.push_back(std::make_pair(
+          "android::sp<const android::RSC::Allocation>", "aout"));
+    }
+
+    const RSExportRecordType *ERT = ef->getParamPacketType();
+    if (ERT) {
       for (RSExportForEach::const_param_iterator i = ef->params_begin(),
            e = ef->params_end(); i != e; i++) {
         RSReflectionTypeData rtd;
         (*i)->getType()->convertToRTD(&rtd);
-        tmp << rtd.type->c_name << " " << (*i)->getName();
+        Args.push_back(std::make_pair(rtd.type->c_name, (*i)->getName()));
       }
     }
-    tmp << ");";
-    write(tmp);
+    makeArgs(ss, Args);
+    ss << ");";
+    write(ss);
   }
 
 
@@ -227,7 +276,7 @@ bool RSReflectionCpp::writeBC() {
 }
 
 bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
-  startFile(mClassName + ".h");
+  startFile(mClassName + ".cpp");
 
   write("");
   write("#include \"" + mClassName + ".h\"");
@@ -243,9 +292,9 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
   write("\n");
   stringstream ss;
   ss << mClassName << "::" << mClassName
-     << "(android::sp<android::RSC::RS> rs, "
-        "const char *cacheDir, size_t cacheDirLength) :\n"
-     << "        ScriptC(rs, __txt, sizeof(__txt), \""
+     << "(android::sp<android::RSC::RS> rs, const char *cacheDir, "
+        "size_t cacheDirLength) :\n"
+        "        ScriptC(rs, __txt, sizeof(__txt), \""
      << mClassName << "\", " << mClassName.length()
      << ", cacheDir, cacheDirLength) {";
   write(ss);
@@ -271,27 +320,55 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
     }
 
     stringstream tmp;
+    ArgTy Args;
     tmp << "void " << mClassName << "::forEach_" << ef->getName() << "(";
-    if (ef->hasIn() && (ef->hasOut() || ef->hasReturn())) {
-      tmp << "android::sp<const android::RSC::Allocation> ain";
-      tmp << ", android::sp<const android::RSC::Allocation> aout";
-    } else if (ef->hasIn()) {
-      tmp << "android::sp<const android::RSC::Allocation> ain";
-    } else {
-      tmp << "android::sp<const android::RSC::Allocation> aout";
+
+    if (ef->hasIn()) {
+      Args.push_back(std::make_pair(
+          "android::sp<const android::RSC::Allocation>", "ain"));
     }
+
+    if (ef->hasOut() || ef->hasReturn()) {
+      Args.push_back(std::make_pair(
+          "android::sp<const android::RSC::Allocation>", "aout"));
+    }
+
+    const RSExportRecordType *ERT = ef->getParamPacketType();
+    if (ERT) {
+      for (RSExportForEach::const_param_iterator i = ef->params_begin(),
+           e = ef->params_end(); i != e; i++) {
+        RSReflectionTypeData rtd;
+        (*i)->getType()->convertToRTD(&rtd);
+        Args.push_back(std::make_pair(rtd.type->c_name, (*i)->getName()));
+      }
+    }
+    makeArgs(tmp, Args);
+
     tmp << ") {";
     write(tmp);
     tmp.str("");
 
-    tmp << "    forEach(" << slot << ", ";
-    if (ef->hasIn() && (ef->hasOut() || ef->hasReturn())) {
-      tmp << "ain, aout, NULL, 0);";
-    } else if (ef->hasIn()) {
-      tmp << "ain, NULL, 0);";
-    } else {
-      tmp << "aout, NULL, 0);";
+    std::string FieldPackerName = ef->getName() + "_fp";
+    if (ERT) {
+      if (genCreateFieldPacker(ERT, FieldPackerName.c_str())) {
+        genPackVarOfType(ERT, NULL, FieldPackerName.c_str());
+      }
     }
+    tmp << "    forEach(" << slot << ", ";
+
+    if (ef->hasIn()) {
+      tmp << "ain, ";
+    } else {
+      tmp << "NULL, ";
+    }
+
+    if (ef->hasOut() || ef->hasReturn()) {
+      tmp << "aout, ";
+    } else {
+      tmp << "NULL, ";
+    }
+
+    tmp << "NULL, 0);";
     write(tmp);
 
     write("}");
@@ -313,17 +390,9 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
     size_t param_len = 0;
     if (params) {
       param_len = RSExportType::GetTypeAllocSize(params);
-      ss << "    FieldPacker __fp(" << param_len << ");";
-      write(ss);
-      for (RSExportFunc::const_param_iterator i = ef->params_begin(),
-           e = ef->params_end(); i != e; i++) {
-        RSReflectionTypeData rtd;
-        (*i)->getType()->convertToRTD(&rtd);
-        ss.str("");
-        ss << "    __fp.add(" << (*i)->getName() << ");";
-        write(ss);
+      if (genCreateFieldPacker(params, "__fp")) {
+        genPackVarOfType(params, NULL, "__fp");
       }
-
     }
 
     ss.str("");
@@ -343,6 +412,118 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
 
   decIndent();
   return true;
+}
+
+void RSReflectionCpp::genExportVariable(const RSExportVar *EV) {
+  const RSExportType *ET = EV->getType();
+
+  switch (ET->getClass()) {
+    case RSExportType::ExportClassPrimitive: {
+      genPrimitiveTypeExportVariable(EV);
+      break;
+    }
+    case RSExportType::ExportClassPointer: {
+      genPointerTypeExportVariable(EV);
+      break;
+    }
+    case RSExportType::ExportClassVector: {
+      genVectorTypeExportVariable(EV);
+      break;
+    }
+    case RSExportType::ExportClassMatrix: {
+      genMatrixTypeExportVariable(EV);
+      break;
+    }
+    case RSExportType::ExportClassConstantArray: {
+      genConstantArrayTypeExportVariable(EV);
+      break;
+    }
+    case RSExportType::ExportClassRecord: {
+      genRecordTypeExportVariable(EV);
+      break;
+    }
+    default: {
+      slangAssert(false && "Unknown class of type");
+    }
+  }
+}
+
+
+void RSReflectionCpp::genPrimitiveTypeExportVariable(const RSExportVar *EV) {
+  RSReflectionTypeData rtd;
+  EV->getType()->convertToRTD(&rtd);
+
+  if (!EV->isConst()) {
+    write(string("void set_") + EV->getName() + "(" + rtd.type->c_name +
+          " v) {");
+    stringstream tmp;
+    tmp << getNextExportVarSlot();
+    write(string("    setVar(") + tmp.str() + ", &v, sizeof(v));");
+    write(string("    __") + EV->getName() + " = v;");
+    write("}");
+  }
+  write(string(rtd.type->c_name) + " get_" + EV->getName() + "() const {");
+  if (EV->isConst()) {
+    const clang::APValue &val = EV->getInit();
+    bool isBool = !strcmp(rtd.type->c_name, "bool");
+    write(string("    return ") + genInitValue(val, isBool) + ";");
+  } else {
+    write(string("    return __") + EV->getName() + ";");
+  }
+  write("}");
+  write("");
+}
+
+void RSReflectionCpp::genPointerTypeExportVariable(const RSExportVar *EV) {
+  const RSExportType *ET = EV->getType();
+
+  slangAssert((ET->getClass() == RSExportType::ExportClassPointer) &&
+              "Variable should be type of pointer here");
+
+  std::string TypeName = GetTypeName(ET);
+  std::string VarName = EV->getName();
+
+  RSReflectionTypeData rtd;
+  EV->getType()->convertToRTD(&rtd);
+  uint32_t slot = getNextExportVarSlot();
+
+  if (!EV->isConst()) {
+    write(string("void bind_") + VarName + "(" + TypeName +
+          " v) {");
+    stringstream tmp;
+    tmp << slot;
+    write(string("    bindAllocation(v, ") + tmp.str() + ");");
+    write(string("    __") + VarName + " = v;");
+    write("}");
+  }
+  write(TypeName + " get_" + VarName + "() const {");
+  if (EV->isConst()) {
+    const clang::APValue &val = EV->getInit();
+    bool isBool = !strcmp(TypeName.c_str(), "bool");
+    write(string("    return ") + genInitValue(val, isBool) + ";");
+  } else {
+    write(string("    return __") + VarName + ";");
+  }
+  write("}");
+  write("");
+
+}
+
+void RSReflectionCpp::genVectorTypeExportVariable(const RSExportVar *EV) {
+  slangAssert(false);
+}
+
+void RSReflectionCpp::genMatrixTypeExportVariable(const RSExportVar *EV) {
+  slangAssert(false);
+}
+
+void RSReflectionCpp::genConstantArrayTypeExportVariable(
+    const RSExportVar *EV) {
+  slangAssert(false);
+}
+
+void RSReflectionCpp::genRecordTypeExportVariable(const RSExportVar *EV) {
+  slangAssert(false);
 }
 
 
@@ -375,6 +556,138 @@ void RSReflectionCpp::makeFunctionSignature(
     ss << ") {";
   } else {
     ss << ");";
+  }
+}
+
+void RSReflectionCpp::makeArgs(std::stringstream &ss, const ArgTy& Args) {
+  bool FirstArg = true;
+
+  for (ArgTy::const_iterator I = Args.begin(), E = Args.end(); I != E; I++) {
+    if (!FirstArg) {
+      ss << ", ";
+    } else {
+      FirstArg = false;
+    }
+
+    ss << I->first << " " << I->second;
+  }
+}
+
+bool RSReflectionCpp::genCreateFieldPacker(const RSExportType *ET,
+                                           const char *FieldPackerName) {
+  size_t AllocSize = RSExportType::GetTypeAllocSize(ET);
+
+  if (AllocSize > 0) {
+    std::stringstream ss;
+    ss << "    FieldPacker " << FieldPackerName << "("
+       << AllocSize << ");";
+    write(ss);
+    return true;
+  }
+
+  return false;
+}
+
+void RSReflectionCpp::genPackVarOfType(const RSExportType *ET,
+                                       const char *VarName,
+                                       const char *FieldPackerName) {
+  std::stringstream ss;
+  switch (ET->getClass()) {
+    case RSExportType::ExportClassPrimitive:
+    case RSExportType::ExportClassVector:
+    case RSExportType::ExportClassPointer:
+    case RSExportType::ExportClassMatrix: {
+      RSReflectionTypeData rtd;
+      ET->convertToRTD(&rtd);
+      ss << "    " << FieldPackerName << ".add(" << VarName << ");";
+      write(ss);
+      break;
+    }
+    case RSExportType::ExportClassConstantArray: {
+      /*const RSExportConstantArrayType *ECAT =
+          static_cast<const RSExportConstantArrayType *>(ET);
+
+      // TODO(zonr): more elegant way. Currently, we obtain the unique index
+      //             variable (this method involves recursive call which means
+      //             we may have more than one level loop, therefore we can't
+      //             always use the same index variable name here) name given
+      //             in the for-loop from counting the '.' in @VarName.
+      unsigned Level = 0;
+      size_t LastDotPos = 0;
+      std::string ElementVarName(VarName);
+
+      while (LastDotPos != std::string::npos) {
+        LastDotPos = ElementVarName.find_first_of('.', LastDotPos + 1);
+        Level++;
+      }
+      std::string IndexVarName("ct");
+      IndexVarName.append(llvm::utostr_32(Level));
+
+      C.indent() << "for (int " << IndexVarName << " = 0; " <<
+                          IndexVarName << " < " << ECAT->getSize() << "; " <<
+                          IndexVarName << "++)";
+      C.startBlock();
+
+      ElementVarName.append("[" + IndexVarName + "]");
+      genPackVarOfType(C, ECAT->getElementType(), ElementVarName.c_str(),
+                       FieldPackerName);
+
+      C.endBlock();*/
+      break;
+    }
+    case RSExportType::ExportClassRecord: {
+      const RSExportRecordType *ERT =
+          static_cast<const RSExportRecordType*>(ET);
+      // Relative pos from now on in field packer
+      unsigned Pos = 0;
+
+      for (RSExportRecordType::const_field_iterator I = ERT->fields_begin(),
+               E = ERT->fields_end();
+           I != E;
+           I++) {
+        const RSExportRecordType::Field *F = *I;
+        std::string FieldName;
+        size_t FieldOffset = F->getOffsetInParent();
+        size_t FieldStoreSize = RSExportType::GetTypeStoreSize(F->getType());
+        size_t FieldAllocSize = RSExportType::GetTypeAllocSize(F->getType());
+
+        if (VarName != NULL)
+          FieldName = VarName + ("." + F->getName());
+        else
+          FieldName = F->getName();
+
+        if (FieldOffset > Pos) {
+          ss.str("");
+          ss << "    " << FieldPackerName << ".skip("
+             << (FieldOffset - Pos) << ");";
+          write(ss);
+        }
+
+        genPackVarOfType(F->getType(), FieldName.c_str(), FieldPackerName);
+
+        // There is padding in the field type
+        if (FieldAllocSize > FieldStoreSize) {
+          ss.str("");
+          ss << "    " << FieldPackerName << ".skip("
+             << (FieldAllocSize - FieldStoreSize) << ");";
+          write(ss);
+        }
+
+        Pos = FieldOffset + FieldAllocSize;
+      }
+
+      // There maybe some padding after the struct
+      if (RSExportType::GetTypeAllocSize(ERT) > Pos) {
+        ss.str("");
+        ss << "    " << FieldPackerName << ".skip("
+           << RSExportType::GetTypeAllocSize(ERT) - Pos << ");";
+        write(ss);
+      }
+      break;
+    }
+    default: {
+      slangAssert(false && "Unknown class of type");
+    }
   }
 }
 

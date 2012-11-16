@@ -1221,7 +1221,7 @@ void RSReflection::genPackVarOfType(Context &C,
                        << (FieldAllocSize - FieldStoreSize)
                        << ");" << std::endl;
 
-          Pos = FieldOffset + FieldAllocSize;
+        Pos = FieldOffset + FieldAllocSize;
       }
 
       // There maybe some padding after the struct

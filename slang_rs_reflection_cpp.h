@@ -32,6 +32,28 @@ class RSReflectionCpp : public RSReflectionBase {
 
 
  private:
+  unsigned int mNextExportVarSlot;
+  unsigned int mNextExportFuncSlot;
+  unsigned int mNextExportForEachSlot;
+
+  inline void clear() {
+    mNextExportVarSlot = 0;
+    mNextExportFuncSlot = 0;
+    mNextExportForEachSlot = 0;
+  }
+
+  inline unsigned int getNextExportVarSlot() {
+    return mNextExportVarSlot++;
+  }
+
+  inline unsigned int getNextExportFuncSlot() {
+    return mNextExportFuncSlot++;
+  }
+
+  inline unsigned int getNextExportForEachSlot() {
+    return mNextExportForEachSlot++;
+  }
+
   bool makeHeader(const std::string &baseClass);
   bool makeImpl(const std::string &baseClass);
   void makeFunctionSignature(std::stringstream &ss, bool isDefinition,
@@ -39,7 +61,29 @@ class RSReflectionCpp : public RSReflectionBase {
   bool writeBC();
 
   bool startScriptHeader();
-};  // class RSReflection
+
+  // Produce an argument string of the form "T1 t, T2 u, T3 v".
+  void makeArgs(std::stringstream &ss, const ArgTy& Args);
+
+  // Write out code for an export variable.
+  void genExportVariable(const RSExportVar *EV);
+
+  void genPrimitiveTypeExportVariable(const RSExportVar *EV);
+  void genPointerTypeExportVariable(const RSExportVar *EV);
+  void genVectorTypeExportVariable(const RSExportVar *EV);
+  void genMatrixTypeExportVariable(const RSExportVar *EV);
+  void genConstantArrayTypeExportVariable(const RSExportVar *EV);
+  void genRecordTypeExportVariable(const RSExportVar *EV);
+
+  // Write out a local FieldPacker (if necessary).
+  bool genCreateFieldPacker(const RSExportType *T,
+                            const char *FieldPackerName);
+
+  // Populate (write) the FieldPacker with add() operations.
+  void genPackVarOfType(const RSExportType *ET,
+                        const char *VarName,
+                        const char *FieldPackerName);
+};  // class RSReflectionCpp
 
 }   // namespace slang
 
