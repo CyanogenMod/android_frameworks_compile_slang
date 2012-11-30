@@ -512,7 +512,9 @@ static bool ValidateTypeHelper(
       const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
       if (TargetAPI < SLANG_ICS_TARGET_API &&
           InCompositeType &&
-          EVT->getNumElements() == 3) {
+          EVT->getNumElements() == 3 &&
+          ND &&
+          ND->getLinkage() == clang::ExternalLinkage) {
         ReportTypeError(&C.getDiagnostics(), ND, NULL,
                         "structs containing vectors of dimension 3 cannot "
                         "be exported at this API level: '%0'");
