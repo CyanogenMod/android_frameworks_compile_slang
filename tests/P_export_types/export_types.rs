@@ -28,5 +28,6 @@ rs_program_raster program_raster;
 rs_program_store program_store;
 rs_font font;
 
-
+float *fp;
+int *ip;
 

@@ -71,6 +71,8 @@ protected:
 private:
 
 public:
+    typedef std::vector<std::pair<std::string, std::string> > ArgTy;
+
     virtual ~RSReflectionBase();
 
     static std::string genInitValue(const clang::APValue &Val, bool asBool=false);
