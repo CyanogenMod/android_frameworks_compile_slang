@@ -114,11 +114,12 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     return false;
   }
 
+  clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
   if (RSExportForEach::isSpecialRSFunc(mTargetAPI, FD)) {
     // Do not reflect specialized functions like init, dtor, or graphics root.
     return RSExportForEach::validateSpecialFuncDecl(mTargetAPI,
-                                                    getDiagnostics(), FD);
-  } else if (RSExportForEach::isRSForEachFunc(mTargetAPI, FD)) {
+                                                    DiagEngine, FD);
+  } else if (RSExportForEach::isRSForEachFunc(mTargetAPI, DiagEngine, FD)) {
     RSExportForEach *EFE = RSExportForEach::Create(this, FD);
     if (EFE == NULL)
       return false;

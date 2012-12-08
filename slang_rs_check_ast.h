@@ -34,12 +34,14 @@ class RSCheckAST : public clang::StmtVisitor<RSCheckAST> {
   bool mValid;
   unsigned int mTargetAPI;
   bool mIsFilterscript;
+  bool mInKernel;
 
  public:
   explicit RSCheckAST(clang::ASTContext &Con, unsigned int TargetAPI,
                       bool IsFilterscript)
       : C(Con), mDiagEngine(Con.getDiagnostics()), mSM(C.getSourceManager()),
-        mValid(true), mTargetAPI(TargetAPI), mIsFilterscript(IsFilterscript) {
+        mValid(true), mTargetAPI(TargetAPI), mIsFilterscript(IsFilterscript),
+        mInKernel(false) {
     return;
   }
 
