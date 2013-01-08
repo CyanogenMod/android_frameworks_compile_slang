@@ -907,8 +907,15 @@ bool RSExportPrimitiveType::IsStructureTypeWithRSObject(const clang::Type *T) {
   if (!RT) {
     return false;
   }
+
   const clang::RecordDecl *RD = RT->getDecl();
-  RD = RD->getDefinition();
+  if (RD) {
+    RD = RD->getDefinition();
+  }
+  if (!RD) {
+    return false;
+  }
+
   for (clang::RecordDecl::field_iterator FI = RD->field_begin(),
          FE = RD->field_end();
        FI != FE;

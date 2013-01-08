@@ -4,6 +4,10 @@
 rs_font globalAlloc;
 rs_font globalAlloc2;
 
+struct hasMatrix {
+    rs_matrix3x3 m;
+} ghm;
+
 static void foo() {
 
     rs_font fontUninit;
@@ -17,6 +21,8 @@ static void foo() {
 }
 
 void singleStmt() {
+    struct hasMatrix h = ghm;
+    ghm = h;
     globalAlloc = globalAlloc2;
 }
 

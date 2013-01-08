@@ -680,6 +680,7 @@ static clang::Stmt *ClearStructRSObject(
               RSExportPrimitiveType::DataTypeUnknown);
 
   unsigned FieldsToDestroy = CountRSObjectTypes(C, BaseType, Loc);
+  slangAssert(FieldsToDestroy != 0);
 
   unsigned StmtCount = 0;
   clang::Stmt **StmtArray = new clang::Stmt*[FieldsToDestroy];
@@ -1092,7 +1093,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
     }
   }
 
-  slangAssert(StmtCount > 0 && StmtCount < FieldsToSet);
+  slangAssert(StmtCount < FieldsToSet);
 
   // We still need to actually do the overall struct copy. For simplicity,
   // we just do a straight-up assignment (which will still preserve all
@@ -1467,8 +1468,14 @@ void RSObjectRefCount::VisitDeclStmt(clang::DeclStmt *DS) {
           RSExportPrimitiveType::DataTypeUnknown;
       clang::Expr *InitExpr = NULL;
       if (InitializeRSObject(VD, &DT, &InitExpr)) {
-        getCurrentScope()->addRSObject(VD);
+        // We need to zero-init all RS object types (including matrices), ...
         getCurrentScope()->AppendRSObjectInit(VD, DS, DT, InitExpr);
+        // ... but, only add to the list of RS objects if we have some
+        // non-matrix RS object fields.
+        if (CountRSObjectTypes(mCtx, VD->getType().getTypePtr(),
+                               VD->getLocation())) {
+          getCurrentScope()->addRSObject(VD);
+        }
       }
     }
   }
