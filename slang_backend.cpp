@@ -57,6 +57,7 @@
 #include "slang_assert.h"
 #include "BitWriter_2_9/ReaderWriter_2_9.h"
 #include "BitWriter_2_9_func/ReaderWriter_2_9_func.h"
+#include "BitWriter_3_2/ReaderWriter_3_2.h"
 
 namespace slang {
 
@@ -367,7 +368,10 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
               TargetAPI > SLANG_MAXIMUM_TARGET_API) {
             slangAssert(false && "Invalid target API value");
           }
-          BCEmitPM->add(llvm::createBitcodeWriterPass(Bitcode));
+          // Switch to the 3.2 BitcodeWriter by default, and don't use
+          // LLVM's included BitcodeWriter at all (for now).
+          BCEmitPM->add(llvm_3_2::createBitcodeWriterPass(Bitcode));
+          //BCEmitPM->add(llvm::createBitcodeWriterPass(Bitcode));
           break;
         }
       }
