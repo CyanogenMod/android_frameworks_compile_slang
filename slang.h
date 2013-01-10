@@ -21,10 +21,13 @@
 #include <string>
 #include <vector>
 
+// Terrible workaround for TargetOptions.h not using llvm::RefCountedBase!
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+using llvm::RefCountedBase;
+
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Lex/ModuleLoader.h"
 
-#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 
@@ -50,7 +53,6 @@ namespace clang {
   class Preprocessor;
   class SourceManager;
   class TargetInfo;
-  class TargetOptions;
 }  // namespace clang
 
 namespace slang {
@@ -89,7 +91,7 @@ class Slang : public clang::ModuleLoader {
   DiagnosticBuffer *mDiagClient;
 
   // The target being compiled for
-  clang::TargetOptions mTargetOpts;
+  llvm::IntrusiveRefCntPtr<clang::TargetOptions> mTargetOpts;
   llvm::OwningPtr<clang::TargetInfo> mTarget;
   void createTarget(std::string const &Triple, std::string const &CPU,
                     std::vector<std::string> const &Features);
@@ -150,7 +152,7 @@ class Slang : public clang::ModuleLoader {
   clang::ASTContext &getASTContext() { return *mASTContext; }
 
   inline clang::TargetOptions const &getTargetOptions() const
-    { return mTargetOpts; }
+    { return *mTargetOpts.getPtr(); }
 
   virtual void initDiagnostic() {}
   virtual void initPreprocessor() {}
@@ -173,10 +175,11 @@ class Slang : public clang::ModuleLoader {
             clang::DiagnosticsEngine *DiagEngine,
             DiagnosticBuffer *DiagClient);
 
-  virtual clang::Module *loadModule(clang::SourceLocation ImportLoc,
-                                    clang::ModuleIdPath Path,
-                                    clang::Module::NameVisibilityKind VK,
-                                    bool IsInclusionDirective);
+  virtual clang::ModuleLoadResult loadModule(
+      clang::SourceLocation ImportLoc,
+      clang::ModuleIdPath Path,
+      clang::Module::NameVisibilityKind VK,
+      bool IsInclusionDirective);
 
   bool setInputSource(llvm::StringRef InputFile, const char *Text,
                       size_t TextLength);

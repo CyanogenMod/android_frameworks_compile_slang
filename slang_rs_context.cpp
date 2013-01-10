@@ -27,8 +27,8 @@
 #include "clang/Basic/Linkage.h"
 #include "clang/Basic/TargetInfo.h"
 
-#include "llvm/LLVMContext.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/DataLayout.h"
 
 #include "slang.h"
 #include "slang_assert.h"
@@ -54,7 +54,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mPragmas(Pragmas),
       mTargetAPI(TargetAPI),
       mGeneratedFileNames(GeneratedFileNames),
-      mTargetData(NULL),
+      mDataLayout(NULL),
       mLLVMContext(llvm::getGlobalContext()),
       mLicenseNote(NULL),
       mRSPackageName("android.renderscript"),
@@ -78,7 +78,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
   PP.AddPragmaHandler(RSPragmaHandler::CreatePragmaVersionHandler(this));
 
   // Prepare target data
-  mTargetData = new llvm::TargetData(Target.getTargetDescription());
+  mDataLayout = new llvm::DataLayout(Target.getTargetDescription());
 
   return;
 }
@@ -153,7 +153,7 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
   clang::DeclContext::lookup_const_result R = TUDecl->lookup(II);
   RSExportType *ET = NULL;
 
-  for (clang::DeclContext::lookup_const_iterator I = R.first, E = R.second;
+  for (clang::DeclContext::lookup_const_iterator I = R.begin(), E = R.end();
        I != E;
        I++) {
     clang::NamedDecl *const ND = *I;
@@ -315,7 +315,7 @@ bool RSContext::reflectToJava(const std::string &OutputPathBase,
 
 RSContext::~RSContext() {
   delete mLicenseNote;
-  delete mTargetData;
+  delete mDataLayout;
   for (ExportableList::iterator I = mExportables.begin(),
           E = mExportables.end();
        I != E;

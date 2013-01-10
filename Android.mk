@@ -43,8 +43,8 @@ static_libraries_needed_by_slang := \
 	libclangAnalysis \
 	libclangCodeGen \
 	libclangAST \
-	libclangLex \
 	libclangEdit \
+	libclangLex \
 	libclangFrontend \
 	libclangBasic \
 	libclangSerialization \

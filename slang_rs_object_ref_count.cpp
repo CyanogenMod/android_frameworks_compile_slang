@@ -106,11 +106,8 @@ static clang::CompoundStmt* BuildCompoundStmt(clang::ASTContext &C,
   }
   slangAssert(CompoundStmtCount == NewStmtCount);
 
-  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(C,
-                                                       CompoundStmtList,
-                                                       CompoundStmtCount,
-                                                       Loc,
-                                                       Loc);
+  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(
+      C, llvm::makeArrayRef(CompoundStmtList, CompoundStmtCount), Loc, Loc);
 
   delete [] CompoundStmtList;
 
@@ -535,7 +532,8 @@ static clang::Stmt *ClearArrayRSObject(
                                    C.IntTy,
                                    clang::VK_RValue,
                                    clang::OK_Ordinary,
-                                   Loc);
+                                   Loc,
+                                   false);
 
   // Cond -> "rsIntIter < NumArrayElements"
   clang::Expr *NumArrayElementsExpr = clang::IntegerLiteral::Create(C,
@@ -548,7 +546,8 @@ static clang::Stmt *ClearArrayRSObject(
                                    C.IntTy,
                                    clang::VK_RValue,
                                    clang::OK_Ordinary,
-                                   Loc);
+                                   Loc,
+                                   false);
 
   // Inc -> "rsIntIter++"
   clang::UnaryOperator *Inc =
@@ -606,8 +605,8 @@ static clang::Stmt *ClearArrayRSObject(
   StmtArray[StmtCtr++] = DestructorLoop;
   slangAssert(StmtCtr == 2);
 
-  clang::CompoundStmt *CS =
-      new(C) clang::CompoundStmt(C, StmtArray, StmtCtr, Loc, Loc);
+  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(
+      C, llvm::makeArrayRef(StmtArray, StmtCtr), Loc, Loc);
 
   return CS;
 }
@@ -773,8 +772,8 @@ static clang::Stmt *ClearStructRSObject(
   }
 
   slangAssert(StmtCount > 0);
-  clang::CompoundStmt *CS =
-      new(C) clang::CompoundStmt(C, StmtArray, StmtCount, Loc, Loc);
+  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(
+      C, llvm::makeArrayRef(StmtArray, StmtCount), Loc, Loc);
 
   delete [] StmtArray;
 
@@ -1100,11 +1099,12 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
   // the proper RS object reference counts).
   clang::BinaryOperator *CopyStruct =
       new(C) clang::BinaryOperator(LHS, RHS, clang::BO_Assign, QT,
-                                   clang::VK_RValue, clang::OK_Ordinary, Loc);
+                                   clang::VK_RValue, clang::OK_Ordinary, Loc,
+                                   false);
   StmtArray[StmtCount++] = CopyStruct;
 
-  clang::CompoundStmt *CS =
-      new(C) clang::CompoundStmt(C, StmtArray, StmtCount, Loc, Loc);
+  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(
+      C, llvm::makeArrayRef(StmtArray, StmtCount), Loc, Loc);
 
   delete [] StmtArray;
 

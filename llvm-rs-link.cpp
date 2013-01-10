@@ -24,9 +24,9 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 
 #include "llvm/Linker.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Metadata.h"
-#include "llvm/Module.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/IR/Module.h"
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -39,7 +39,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
-#include "llvm/Target/TargetData.h"
+#include "llvm/IR/DataLayout.h"
 
 #include "slang_rs_metadata.h"
 
@@ -220,8 +220,8 @@ bool OptimizeModule(Module *M) {
 
   const std::string &ModuleDataLayout = M->getDataLayout();
   if (!ModuleDataLayout.empty())
-    if (llvm::TargetData *TD = new llvm::TargetData(ModuleDataLayout))
-      Passes.add(TD);
+    if (llvm::DataLayout *DL = new llvm::DataLayout(ModuleDataLayout))
+      Passes.add(DL);
 
   // Some symbols must not be internalized
   std::vector<const char *> ExportList;

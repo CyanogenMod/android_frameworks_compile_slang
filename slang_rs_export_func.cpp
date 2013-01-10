@@ -21,8 +21,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 
-#include "llvm/DerivedTypes.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DerivedTypes.h"
 
 #include "slang_assert.h"
 #include "slang_rs_context.h"
@@ -141,7 +141,7 @@ RSExportFunc::checkParameterPacketType(llvm::StructType *ParamTy) const {
     return false;
 
   const llvm::StructLayout *ParamTySL =
-      getRSContext()->getTargetData()->getStructLayout(ParamTy);
+      getRSContext()->getDataLayout()->getStructLayout(ParamTy);
 
   unsigned Index = 0;
   for (RSExportRecordType::const_field_iterator FI = ERT->fields_begin(),
@@ -164,7 +164,7 @@ RSExportFunc::checkParameterPacketType(llvm::StructType *ParamTy) const {
 
     // Check size
     size_t T1Size = RSExportType::GetTypeAllocSize(F->getType());
-    size_t T2Size = getRSContext()->getTargetData()->getTypeAllocSize(T2);
+    size_t T2Size = getRSContext()->getDataLayout()->getTypeAllocSize(T2);
 
     if (T1Size != T2Size)
       return false;

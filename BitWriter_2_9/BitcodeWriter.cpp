@@ -12,21 +12,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReaderWriter_2_9.h"
+#include "ValueEnumerator.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
-#include "ValueEnumerator.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/InlineAsm.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#include "llvm/Operator.h"
-#include "llvm/ValueSymbolTable.h"
-#include "llvm/ADT/Triple.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/InlineAsm.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Operator.h"
+#include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cctype>
 #include <map>
 using namespace llvm;
@@ -134,18 +134,19 @@ static void WriteStringRecord(unsigned Code, StringRef Str,
 // Emit information about parameter attributes.
 static void WriteAttributeTable(const llvm_2_9::ValueEnumerator &VE,
                                 BitstreamWriter &Stream) {
-  const std::vector<AttrListPtr> &Attrs = VE.getAttributes();
+  const std::vector<AttributeSet> &Attrs = VE.getAttributes();
   if (Attrs.empty()) return;
 
   Stream.EnterSubblock(bitc::PARAMATTR_BLOCK_ID, 3);
 
   SmallVector<uint64_t, 64> Record;
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
-    const AttrListPtr &A = Attrs[i];
+    const AttributeSet &A = Attrs[i];
     for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
       const AttributeWithIndex &PAWI = A.getSlot(i);
       Record.push_back(PAWI.Index);
-
+      Record.push_back(Attribute::encodeLLVMAttributesForBitcode(PAWI.Attrs));
+#if 0
       // FIXME: remove in LLVM 3.0
       // Store the alignment in the bitcode as a 16-bit raw value instead of a
       // 5-bit log2 encoded value. Shift the bits above the alignment up by
@@ -157,6 +158,7 @@ static void WriteAttributeTable(const llvm_2_9::ValueEnumerator &VE,
       FauxAttr |= (PAWI.Attrs.Raw() & (0x3FFull << 21)) << 11;
 
       Record.push_back(FauxAttr);
+#endif
     }
 
     Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);
@@ -433,10 +435,6 @@ static unsigned getEncodedVisibility(const GlobalValue *GV) {
 static void WriteModuleInfo(const Module *M,
                             const llvm_2_9::ValueEnumerator &VE,
                             BitstreamWriter &Stream) {
-  // Emit the list of dependent libraries for the Module.
-  for (Module::lib_iterator I = M->lib_begin(), E = M->lib_end(); I != E; ++I)
-    WriteStringRecord(bitc::MODULE_CODE_DEPLIB, *I, 0/*TODO*/, Stream);
-
   // Emit various pieces of data attached to a module.
   if (!M->getTargetTriple().empty())
     WriteStringRecord(bitc::MODULE_CODE_TRIPLE, M->getTargetTriple(),
@@ -907,12 +905,12 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         if (isCStrChar6)
           isCStrChar6 = BitCodeAbbrevOp::isChar6(V);
       }
-      
+
       if (isCStrChar6)
         AbbrevToUse = CString6Abbrev;
       else if (isCStr7)
         AbbrevToUse = CString7Abbrev;
-    } else if (const ConstantDataSequential *CDS = 
+    } else if (const ConstantDataSequential *CDS =
                   dyn_cast<ConstantDataSequential>(C)) {
       // We must replace ConstantDataSequential's representation with the
       // legacy ConstantArray/ConstantVector/ConstantStruct version.

@@ -19,11 +19,11 @@
 #include <string>
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/TypeLoc.h"
 
-#include "llvm/DerivedTypes.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/IR/DerivedTypes.h"
 
 #include "slang_assert.h"
 #include "slang_rs_context.h"

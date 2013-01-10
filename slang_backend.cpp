@@ -41,13 +41,13 @@
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/Metadata.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Metadata.h"
 
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
-#include "llvm/Target/TargetData.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -64,7 +64,7 @@ namespace slang {
 void Backend::CreateFunctionPasses() {
   if (!mPerFunctionPasses) {
     mPerFunctionPasses = new llvm::FunctionPassManager(mpModule);
-    mPerFunctionPasses->add(new llvm::TargetData(mpModule));
+    mPerFunctionPasses->add(new llvm::DataLayout(mpModule));
 
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
@@ -76,7 +76,7 @@ void Backend::CreateFunctionPasses() {
 void Backend::CreateModulePasses() {
   if (!mPerModulePasses) {
     mPerModulePasses = new llvm::PassManager();
-    mPerModulePasses->add(new llvm::TargetData(mpModule));
+    mPerModulePasses->add(new llvm::DataLayout(mpModule));
 
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
@@ -109,7 +109,7 @@ bool Backend::CreateCodeGenPasses() {
     return true;
   } else {
     mCodeGenPasses = new llvm::FunctionPassManager(mpModule);
-    mCodeGenPasses->add(new llvm::TargetData(mpModule));
+    mCodeGenPasses->add(new llvm::DataLayout(mpModule));
   }
 
   // Create the TargetMachine for generating code.

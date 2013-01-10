@@ -292,8 +292,10 @@ void RSPragmaHandler::handleIntegerParamPragma(
   PP.LexUnexpandedToken(PragmaToken);
 
   if (PragmaToken.is(clang::tok::numeric_constant)) {
-    clang::NumericLiteralParser NumericLiteral(PragmaToken.getLiteralData(),
-        PragmaToken.getLiteralData() + PragmaToken.getLength(),
+    llvm::SmallString<128> SpellingBuffer;
+    SpellingBuffer.resize(PragmaToken.getLength() + 1);
+    llvm::StringRef TokSpelling = PP.getSpelling(PragmaToken, SpellingBuffer);
+    clang::NumericLiteralParser NumericLiteral(TokSpelling,
         PragmaToken.getLocation(), PP);
     if (NumericLiteral.hadError) {
       // Diagnostics will be generated automatically
