@@ -43,7 +43,7 @@
 #define RS_SCRIPT_CLASS_NAME_PREFIX      "ScriptC_"
 #define RS_SCRIPT_CLASS_SUPER_CLASS_NAME "ScriptC"
 
-#define RS_TYPE_CLASS_SUPER_CLASS_NAME   "android.renderscript.Script.FieldBase"
+#define RS_TYPE_CLASS_SUPER_CLASS_NAME   ".Script.FieldBase"
 
 #define RS_TYPE_ITEM_CLASS_NAME          "Item"
 
@@ -1320,11 +1320,13 @@ bool RSReflection::genTypeClass(Context &C,
                                 const RSExportRecordType *ERT,
                                 std::string &ErrorMsg) {
   std::string ClassName = ERT->getElementName();
+  std::string superClassName = C.getRSPackageName();
+  superClassName += RS_TYPE_CLASS_SUPER_CLASS_NAME;
 
   if (!C.startClass(Context::AM_Public,
                     false,
                     ClassName,
-                    RS_TYPE_CLASS_SUPER_CLASS_NAME,
+                    superClassName.c_str(),
                     ErrorMsg))
     return false;
 
