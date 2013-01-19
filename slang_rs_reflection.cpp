@@ -1351,7 +1351,10 @@ bool RSReflection::genTypeClass(Context &C,
   genTypeClassComponentSetter(C, ERT);
   genTypeClassComponentGetter(C, ERT);
   genTypeClassCopyAll(C, ERT);
-  genTypeClassResize(C);
+  if (!mRSContext->isCompatLib()) {
+    // Skip the resize method if we are targeting a compatibility library.
+    genTypeClassResize(C);
+  }
 
   C.endClass();
 
