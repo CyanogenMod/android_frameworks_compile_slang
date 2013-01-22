@@ -85,6 +85,9 @@ class RSContext {
   std::string mRSPackageName;
 
   int version;
+
+  bool mIsCompatLib;
+
   llvm::OwningPtr<clang::MangleContext> mMangleCtx;
 
   bool processExportVar(const clang::VarDecl *VD);
@@ -227,6 +230,8 @@ class RSContext {
     version = v;
     return;
   }
+
+  bool isCompatLib() const { return mIsCompatLib; }
 
   void addPragma(const std::string &T, const std::string &V) {
     mPragmas->push_back(make_pair(T, V));

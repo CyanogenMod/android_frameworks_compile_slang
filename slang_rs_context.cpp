@@ -59,6 +59,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mLicenseNote(NULL),
       mRSPackageName("android.renderscript"),
       version(0),
+      mIsCompatLib(false),
       mMangleCtx(Ctx.createMangleContext()) {
   slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
 
@@ -301,6 +302,12 @@ bool RSContext::reflectToJava(const std::string &OutputPathBase,
 
   if (!RSPackageName.empty()) {
     mRSPackageName = RSPackageName;
+  }
+
+  // If we are not targeting the actual Android Renderscript classes,
+  // we should reflect code that works with the compatibility library.
+  if (mRSPackageName.compare("android.renderscript") != 0) {
+    mIsCompatLib = true;
   }
 
   RSReflection *R = new RSReflection(this, mGeneratedFileNames);
