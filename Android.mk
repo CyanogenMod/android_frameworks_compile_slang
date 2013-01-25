@@ -159,31 +159,6 @@ LOCAL_SRC_FILES := slang-data.c
 
 include $(BUILD_HOST_EXECUTABLE)
 
-# Executable llvm-rs-link for host
-# ========================================================
-include $(CLEAR_VARS)
-include $(CLEAR_TBLGEN_VARS)
-
-include $(LLVM_ROOT_PATH)/llvm.mk
-
-LOCAL_MODULE := llvm-rs-link
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE_CLASS := EXECUTABLES
-
-LOCAL_SRC_FILES :=	\
-	llvm-rs-link.cpp
-
-LOCAL_STATIC_LIBRARIES :=	\
-	librslib libslang \
-	$(static_libraries_needed_by_slang)
-
-LOCAL_LDLIBS := -ldl -lpthread
-
-include $(LLVM_HOST_BUILD_MK)
-include $(LLVM_GEN_INTRINSICS_MK)
-include $(BUILD_HOST_EXECUTABLE)
-
 # Executable rs-spec-gen for host
 # ========================================================
 include $(CLEAR_VARS)
