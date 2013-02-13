@@ -690,6 +690,37 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
       C.endFunction();
   }
 
+  if (mRSContext->getTargetAPI() >= SLANG_JB_MR2_TARGET_API) {
+    C.startFunction(Context::AM_Public,
+                    false,
+                    "void",
+                    "forEach_" + EF->getName(),
+                    Args);
+
+    C.indent() << "forEach_" << EF->getName();
+    C.out() << "(";
+
+    if (EF->hasIn()) {
+      C.out() << "ain, ";
+    }
+
+    if (EF->hasOut() || EF->hasReturn()) {
+      C.out() << "aout, ";
+    }
+
+    if (EF->hasUsrData()) {
+      C.out() << Args.back().second << ", ";
+    }
+
+    // No clipped bounds to pass in.
+    C.out() << "null);" << std::endl;
+
+    C.endFunction();
+
+    // Add the clipped kernel parameters to the Args list.
+    Args.push_back(std::make_pair("Script.LaunchOptions", "sc"));
+  }
+
   C.startFunction(Context::AM_Public,
                   false,
                   "void",
@@ -742,7 +773,11 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
   else
     C.out() << ", null";
 
-  C.out() << ");" << std::endl;
+  if (mRSContext->getTargetAPI() >= SLANG_JB_MR2_TARGET_API) {
+    C.out() << ", sc);" << std::endl;
+  } else {
+    C.out() << ");" << std::endl;
+  }
 
   C.endFunction();
   return;

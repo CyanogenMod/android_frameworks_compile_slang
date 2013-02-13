@@ -45,7 +45,8 @@ enum {
   ICS = 1400,
   JB = 1600,
   JB_MR1 = 1700,
-  CURRENT = JB_MR1
+  JB_MR2 = 1800,
+  CURRENT = JB_MR2
 };
 }  // namespace SlangVersion
 
