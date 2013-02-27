@@ -38,56 +38,9 @@ endif
 local_cflags_for_slang += -DRS_VERSION=$(RS_VERSION)
 
 static_libraries_needed_by_slang := \
-	libclangParse \
-	libclangSema \
-	libclangAnalysis \
-	libclangCodeGen \
-	libclangAST \
-	libclangEdit \
-	libclangLex \
-	libclangFrontend \
-	libclangBasic \
-	libclangSerialization \
-	libLLVMLinker \
-	libLLVMipo \
-	libLLVMBitWriter \
 	libLLVMBitWriter_2_9 \
 	libLLVMBitWriter_2_9_func \
-	libLLVMBitWriter_3_2 \
-	libLLVMBitReader \
-	libLLVMARMCodeGen \
-	libLLVMARMAsmParser \
-	libLLVMARMAsmPrinter \
-	libLLVMARMInfo \
-	libLLVMARMDesc \
-	libLLVMX86CodeGen \
-	libLLVMX86Info \
-	libLLVMX86Desc \
-	libLLVMX86AsmParser \
-	libLLVMX86AsmPrinter \
-	libLLVMX86Utils \
-	libLLVMMipsCodeGen \
-	libLLVMMipsInfo \
-	libLLVMMipsDesc \
-	libLLVMMipsAsmParser \
-	libLLVMMipsAsmPrinter \
-	libLLVMAsmPrinter \
-	libLLVMSelectionDAG \
-	libLLVMCodeGen \
-	libLLVMScalarOpts \
-	libLLVMInstCombine \
-	libLLVMInstrumentation \
-	libLLVMTransformUtils \
-	libLLVMipa \
-	libLLVMAnalysis \
-	libLLVMTarget \
-	libLLVMMC \
-	libLLVMMCParser \
-	libLLVMCore \
-	libLLVMArchive \
-	libLLVMAsmParser \
-	libLLVMSupport \
-	libLLVMVectorize
+	libLLVMBitWriter_3_2
 
 # Static library libslang for host
 # ========================================================
@@ -226,8 +179,12 @@ LOCAL_SRC_FILES :=	\
 	slang_rs_reflect_utils.cpp
 
 LOCAL_STATIC_LIBRARIES :=	\
-	libclangDriver libslang \
+	libslang \
 	$(static_libraries_needed_by_slang)
+
+LOCAL_SHARED_LIBRARIES := \
+	libclang \
+	libLLVM
 
 ifeq ($(HOST_OS),windows)
   LOCAL_LDLIBS := -limagehlp -lpsapi
