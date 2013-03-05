@@ -165,24 +165,8 @@ static void WriteAttributeTable(const llvm_2_9_func::ValueEnumerator &VE,
   SmallVector<uint64_t, 64> Record;
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
     const AttributeSet &A = Attrs[i];
-    for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
-      const AttributeWithIndex &PAWI = A.getSlot(i);
-      Record.push_back(PAWI.Index);
-      Record.push_back(Attribute::encodeLLVMAttributesForBitcode(PAWI.Attrs));
-#if 0
-      // FIXME: remove in LLVM 3.0
-      // Store the alignment in the bitcode as a 16-bit raw value instead of a
-      // 5-bit log2 encoded value. Shift the bits above the alignment up by
-      // 11 bits.
-      uint64_t FauxAttr = PAWI.Attrs.Raw() & 0xffff;
-      if (PAWI.Attrs & Attribute::Alignment)
-        FauxAttr |= (1ull<<16)<<
-            (((PAWI.Attrs & Attribute::Alignment).Raw()-1) >> 16);
-      FauxAttr |= (PAWI.Attrs.Raw() & (0x3FFull << 21)) << 11;
-
-      Record.push_back(FauxAttr);
-#endif
-    }
+    for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i)
+      Record.push_back(VE.getAttributeGroupID(A.getSlotAttributes(i)));
 
     Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);
     Record.clear();
@@ -1109,7 +1093,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::Br:
     {
       Code = bitc::FUNC_CODE_INST_BR;
-      BranchInst &II = cast<BranchInst>(I);
+      const BranchInst &II = cast<BranchInst>(I);
       Vals.push_back(VE.getValueID(II.getSuccessor(0)));
       if (II.isConditional()) {
         Vals.push_back(VE.getValueID(II.getSuccessor(1)));
@@ -1120,14 +1104,14 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::Switch:
     {
       Code = bitc::FUNC_CODE_INST_SWITCH;
-      SwitchInst &SI = cast<SwitchInst>(I);
+      const SwitchInst &SI = cast<SwitchInst>(I);
 
       Vals.push_back(VE.getTypeID(SI.getCondition()->getType()));
       Vals.push_back(VE.getValueID(SI.getCondition()));
       Vals.push_back(VE.getValueID(SI.getDefaultDest()));
-      for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
+      for (SwitchInst::ConstCaseIt i = SI.case_begin(), e = SI.case_end();
            i != e; ++i) {
-        IntegersSubset& CaseRanges = i.getCaseValueEx();
+        const IntegersSubset& CaseRanges = i.getCaseValueEx();
 
         if (CaseRanges.isSingleNumber()) {
           Vals.push_back(VE.getValueID(CaseRanges.getSingleNumber(0).toConstantInt()));

@@ -56,7 +56,11 @@ private:
   llvm::SmallVector<const llvm::MDNode *, 8> FunctionLocalMDs;
   ValueMapType MDValueMap;
 
-  typedef llvm::DenseMap<void*, unsigned> AttributeMapType;
+  typedef llvm::DenseMap<llvm::AttributeSet, unsigned> AttributeGroupMapType;
+  AttributeGroupMapType AttributeGroupMap;
+  std::vector<llvm::AttributeSet> AttributeGroups;
+
+  typedef llvm::DenseMap<llvm::AttributeSet, unsigned> AttributeMapType;
   AttributeMapType AttributeMap;
   std::vector<llvm::AttributeSet> Attribute;
 
@@ -102,10 +106,17 @@ public:
   unsigned getInstructionID(const llvm::Instruction *I) const;
   void setInstructionID(const llvm::Instruction *I);
 
-  unsigned getAttributeID(const llvm::AttributeSet &PAL) const {
+  unsigned getAttributeID(llvm::AttributeSet PAL) const {
     if (PAL.isEmpty()) return 0;  // Null maps to zero.
-    AttributeMapType::const_iterator I = AttributeMap.find(PAL.getRawPointer());
+    AttributeMapType::const_iterator I = AttributeMap.find(PAL);
     assert(I != AttributeMap.end() && "Attribute not in ValueEnumerator!");
+    return I->second;
+  }
+
+  unsigned getAttributeGroupID(llvm::AttributeSet PAL) const {
+    if (PAL.isEmpty()) return 0;  // Null maps to zero.
+    AttributeGroupMapType::const_iterator I = AttributeGroupMap.find(PAL);
+    assert(I != AttributeGroupMap.end() && "Attribute not in ValueEnumerator!");
     return I->second;
   }
 
@@ -127,6 +138,9 @@ public:
   }
   const std::vector<llvm::AttributeSet> &getAttributes() const {
     return Attribute;
+  }
+  const std::vector<llvm::AttributeSet> &getAttributeGroups() const {
+    return AttributeGroups;
   }
 
   /// getGlobalBasicBlockID - This returns the function-specific ID for the
@@ -150,7 +164,7 @@ private:
   void EnumerateValue(const llvm::Value *V);
   void EnumerateType(llvm::Type *T);
   void EnumerateOperandType(const llvm::Value *V);
-  void EnumerateAttributes(const llvm::AttributeSet &PAL);
+  void EnumerateAttributes(llvm::AttributeSet PAL);
 
   void EnumerateValueSymbolTable(const llvm::ValueSymbolTable &ST);
   void EnumerateNamedMetadata(const llvm::Module *M);

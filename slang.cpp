@@ -54,8 +54,8 @@
 #include "llvm/Linker.h"
 
 // Force linking all passes/vmcore stuffs to libslang.so
+#include "llvm/LinkAllIR.h"
 #include "llvm/LinkAllPasses.h"
-#include "llvm/LinkAllVMCore.h"
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -230,7 +230,6 @@ void Slang::createPreprocessor() {
             mFileMgr->getDirectory(mIncludePaths[i])) {
       SearchList.push_back(clang::DirectoryLookup(DE,
                                                   clang::SrcMgr::C_System,
-                                                  false,
                                                   false));
     }
   }

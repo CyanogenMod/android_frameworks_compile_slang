@@ -174,11 +174,8 @@ static void WriteAttributeTable(const llvm_3_2::ValueEnumerator &VE,
   SmallVector<uint64_t, 64> Record;
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
     const AttributeSet &A = Attrs[i];
-    for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
-      const AttributeWithIndex &PAWI = A.getSlot(i);
-      Record.push_back(PAWI.Index);
-      Record.push_back(Attribute::encodeLLVMAttributesForBitcode(PAWI.Attrs));
-    }
+    for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i)
+      Record.push_back(VE.getAttributeGroupID(A.getSlotAttributes(i)));
 
     Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);
     Record.clear();
@@ -259,16 +256,16 @@ static void WriteTypeTable(const llvm_3_2::ValueEnumerator &VE,
 
     switch (T->getTypeID()) {
     default: llvm_unreachable("Unknown type!");
-    case Type::VoidTyID:      Code = bitc::TYPE_CODE_VOID;   break;
-    case Type::HalfTyID:      Code = bitc::TYPE_CODE_HALF;   break;
-    case Type::FloatTyID:     Code = bitc::TYPE_CODE_FLOAT;  break;
-    case Type::DoubleTyID:    Code = bitc::TYPE_CODE_DOUBLE; break;
-    case Type::X86_FP80TyID:  Code = bitc::TYPE_CODE_X86_FP80; break;
-    case Type::FP128TyID:     Code = bitc::TYPE_CODE_FP128; break;
+    case Type::VoidTyID:      Code = bitc::TYPE_CODE_VOID;      break;
+    case Type::HalfTyID:      Code = bitc::TYPE_CODE_HALF;      break;
+    case Type::FloatTyID:     Code = bitc::TYPE_CODE_FLOAT;     break;
+    case Type::DoubleTyID:    Code = bitc::TYPE_CODE_DOUBLE;    break;
+    case Type::X86_FP80TyID:  Code = bitc::TYPE_CODE_X86_FP80;  break;
+    case Type::FP128TyID:     Code = bitc::TYPE_CODE_FP128;     break;
     case Type::PPC_FP128TyID: Code = bitc::TYPE_CODE_PPC_FP128; break;
-    case Type::LabelTyID:     Code = bitc::TYPE_CODE_LABEL;  break;
-    case Type::MetadataTyID:  Code = bitc::TYPE_CODE_METADATA; break;
-    case Type::X86_MMXTyID:   Code = bitc::TYPE_CODE_X86_MMX; break;
+    case Type::LabelTyID:     Code = bitc::TYPE_CODE_LABEL;     break;
+    case Type::MetadataTyID:  Code = bitc::TYPE_CODE_METADATA;  break;
+    case Type::X86_MMXTyID:   Code = bitc::TYPE_CODE_X86_MMX;   break;
     case Type::IntegerTyID:
       // INTEGER: [width]
       Code = bitc::TYPE_CODE_INTEGER;
@@ -494,10 +491,11 @@ static void WriteModuleInfo(const Module *M,
     Vals.push_back(GV->hasSection() ? SectionMap[GV->getSection()] : 0);
     if (GV->isThreadLocal() ||
         GV->getVisibility() != GlobalValue::DefaultVisibility ||
-        GV->hasUnnamedAddr()) {
+        GV->hasUnnamedAddr() || GV->isExternallyInitialized()) {
       Vals.push_back(getEncodedVisibility(GV));
       Vals.push_back(getEncodedThreadLocalMode(GV));
       Vals.push_back(GV->hasUnnamedAddr());
+      Vals.push_back(GV->isExternallyInitialized());
     } else {
       AbbrevToUse = SimpleGVarAbbrev;
     }
@@ -553,6 +551,21 @@ static uint64_t GetOptimizationFlags(const Value *V) {
                dyn_cast<PossiblyExactOperator>(V)) {
     if (PEO->isExact())
       Flags |= 1 << bitc::PEO_EXACT;
+  } else if (const FPMathOperator *FPMO =
+             dyn_cast<const FPMathOperator>(V)) {
+    // FIXME(srhines): We don't handle fast math in llvm-rs-cc today.
+    if (false) {
+      if (FPMO->hasUnsafeAlgebra())
+        Flags |= FastMathFlags::UnsafeAlgebra;
+      if (FPMO->hasNoNaNs())
+        Flags |= FastMathFlags::NoNaNs;
+      if (FPMO->hasNoInfs())
+        Flags |= FastMathFlags::NoInfs;
+      if (FPMO->hasNoSignedZeros())
+        Flags |= FastMathFlags::NoSignedZeros;
+      if (FPMO->hasAllowReciprocal())
+        Flags |= FastMathFlags::AllowReciprocal;
+    }
   }
 
   return Flags;
@@ -1142,7 +1155,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::Br:
     {
       Code = bitc::FUNC_CODE_INST_BR;
-      BranchInst &II = cast<BranchInst>(I);
+      const BranchInst &II = cast<BranchInst>(I);
       Vals.push_back(VE.getValueID(II.getSuccessor(0)));
       if (II.isConditional()) {
         Vals.push_back(VE.getValueID(II.getSuccessor(1)));
@@ -1157,7 +1170,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       SmallVector<uint64_t, 128> Vals64;
 
       Code = bitc::FUNC_CODE_INST_SWITCH;
-      SwitchInst &SI = cast<SwitchInst>(I);
+      const SwitchInst &SI = cast<SwitchInst>(I);
 
       uint32_t SwitchRecordHeader = SI.hash() | (SWITCH_INST_MAGIC << 16);
       Vals64.push_back(SwitchRecordHeader);
@@ -1166,9 +1179,9 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Vals64.push_back(VE.getValueID(SI.getCondition()));
       Vals64.push_back(VE.getValueID(SI.getDefaultDest()));
       Vals64.push_back(SI.getNumCases());
-      for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
+      for (SwitchInst::ConstCaseIt i = SI.case_begin(), e = SI.case_end();
            i != e; ++i) {
-        IntegersSubset& CaseRanges = i.getCaseValueEx();
+        const IntegersSubset& CaseRanges = i.getCaseValueEx();
         unsigned Code, Abbrev; // will unused.
 
         if (CaseRanges.isSingleNumber()) {

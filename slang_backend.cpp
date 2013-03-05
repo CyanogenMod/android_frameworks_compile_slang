@@ -223,7 +223,8 @@ Backend::Backend(clang::DiagnosticsEngine *DiagEngine,
       mPragmas(Pragmas) {
   FormattedOutStream.setStream(*mpOS,
                                llvm::formatted_raw_ostream::PRESERVE_STREAM);
-  mGen = CreateLLVMCodeGen(mDiagEngine, "", mCodeGenOpts, mLLVMContext);
+  mGen = CreateLLVMCodeGen(mDiagEngine, "", mCodeGenOpts,
+                           mTargetOpts, mLLVMContext);
   return;
 }
 

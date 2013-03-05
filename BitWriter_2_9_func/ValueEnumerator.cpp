@@ -26,8 +26,8 @@ using namespace llvm;
 
 namespace llvm_2_9_func {
 
-static bool isIntegerValue(const std::pair<const Value*, unsigned> &V) {
-  return V.first->getType()->isIntegerTy();
+static bool isIntOrIntVectorValue(const std::pair<const Value*, unsigned> &V) {
+  return V.first->getType()->isIntOrIntVectorTy();
 }
 
 /// ValueEnumerator - Enumerate module-level information.
@@ -194,10 +194,11 @@ void ValueEnumerator::OptimizeConstants(unsigned CstStart, unsigned CstEnd) {
   CstSortPredicate P(*this);
   std::stable_sort(Values.begin()+CstStart, Values.begin()+CstEnd, P);
 
-  // Ensure that integer constants are at the start of the constant pool.  This
-  // is important so that GEP structure indices come before gep constant exprs.
+  // Ensure that integer and vector of integer constants are at the start of the
+  // constant pool.  This is important so that GEP structure indices come before
+  // gep constant exprs.
   std::partition(Values.begin()+CstStart, Values.begin()+CstEnd,
-                 isIntegerValue);
+                 isIntOrIntVectorValue);
 
   // Rebuild the modified portion of ValueMap.
   for (; CstStart != CstEnd; ++CstStart)
@@ -429,14 +430,25 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
     EnumerateMetadata(V);
 }
 
-void ValueEnumerator::EnumerateAttributes(const AttributeSet &PAL) {
+void ValueEnumerator::EnumerateAttributes(AttributeSet PAL) {
   if (PAL.isEmpty()) return;  // null is always 0.
+
   // Do a lookup.
-  unsigned &Entry = AttributeMap[PAL.getRawPointer()];
+  unsigned &Entry = AttributeMap[PAL];
   if (Entry == 0) {
     // Never saw this before, add it.
     Attribute.push_back(PAL);
     Entry = Attribute.size();
+  }
+
+  // Do lookups for all attribute groups.
+  for (unsigned i = 0, e = PAL.getNumSlots(); i != e; ++i) {
+    AttributeSet AS = PAL.getSlotAttributes(i);
+    unsigned &Entry = AttributeGroupMap[AS];
+    if (Entry == 0) {
+      AttributeGroups.push_back(AS);
+      Entry = AttributeGroups.size();
+    }
   }
 }
 

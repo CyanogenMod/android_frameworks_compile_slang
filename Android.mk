@@ -60,6 +60,7 @@ LOCAL_CFLAGS += $(local_cflags_for_slang)
 TBLGEN_TABLES :=    \
 	AttrList.inc	\
 	Attrs.inc	\
+	CommentCommandList.inc \
 	CommentNodes.inc \
 	DeclNodes.inc	\
 	DiagnosticCommonKinds.inc	\
@@ -142,6 +143,7 @@ LOCAL_CFLAGS += $(local_cflags_for_slang)
 TBLGEN_TABLES :=    \
 	AttrList.inc    \
 	Attrs.inc    \
+	CommentCommandList.inc \
 	CommentNodes.inc \
 	DeclNodes.inc    \
 	DiagnosticCommonKinds.inc   \
