@@ -1533,7 +1533,8 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
   clang::IdentifierInfo &II = mCtx.Idents.get(SR);
   clang::DeclarationName N(&II);
   clang::FunctionProtoType::ExtProtoInfo EPI;
-  clang::QualType T = mCtx.getFunctionType(mCtx.VoidTy, NULL, 0, EPI);
+  clang::QualType T = mCtx.getFunctionType(mCtx.VoidTy,
+      llvm::ArrayRef<clang::QualType>(), EPI);
   clang::FunctionDecl *FD = NULL;
 
   // Generate rsClearObject() call chains for every global variable
