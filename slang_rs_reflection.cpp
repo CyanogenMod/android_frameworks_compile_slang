@@ -263,6 +263,17 @@ static std::string GetBuiltinElementConstruct(const RSExportType *ET) {
   return "";
 }
 
+// Replace all instances of "\" with "\\" in a single string to prevent
+// formatting errors due to unicode.
+static std::string SanitizeString(std::string s) {
+  size_t p = 0;
+  while ( ( p = s.find('\\', p)) != std::string::npos) {
+    s.replace(p, 1, "\\\\");
+    p+=2;
+  }
+  return s;
+}
+
 
 /********************** Methods to generate script class **********************/
 bool RSReflection::genScriptClass(Context &C,
@@ -2096,7 +2107,7 @@ bool RSReflection::reflect(const std::string &OutputPathBase,
 /************************** RSReflection::Context **************************/
 const char *const RSReflection::Context::ApacheLicenseNote =
     "/*\n"
-    " * Copyright (C) 2011-2012 The Android Open Source Project\n"
+    " * Copyright (C) 2011-2013 The Android Open Source Project\n"
     " *\n"
     " * Licensed under the Apache License, Version 2.0 (the \"License\");\n"
     " * you may not use this file except in compliance with the License.\n"
@@ -2163,7 +2174,8 @@ bool RSReflection::Context::startClass(AccessModifier AM,
   // Notice of generated file
   out() << "/*" << std::endl;
   out() << " * This file is auto-generated. DO NOT MODIFY!" << std::endl;
-  out() << " * The source Renderscript file: " << mInputRSFile << std::endl;
+  out() << " * The source Renderscript file: "
+        << SanitizeString(mInputRSFile) << std::endl;
   out() << " */" << std::endl;
 
   // Package
