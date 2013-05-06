@@ -153,7 +153,8 @@ class SlangRS : public Slang {
 
   virtual void makeModuleVisible(clang::Module *Mod,
                                  clang::Module::NameVisibilityKind Visibility,
-                                 clang::SourceLocation ImportLoc) { }
+                                 clang::SourceLocation ImportLoc,
+                                 bool Complain = false) { }
 };
 }  // namespace slang
 

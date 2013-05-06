@@ -165,7 +165,8 @@ void Slang::GlobalInitialization() {
   }
 }
 
-void Slang::LLVMErrorHandler(void *UserData, const std::string &Message) {
+void Slang::LLVMErrorHandler(void *UserData, const std::string &Message,
+                             bool GenCrashDialog) {
   clang::DiagnosticsEngine* DiagEngine =
     static_cast<clang::DiagnosticsEngine *>(UserData);
 
