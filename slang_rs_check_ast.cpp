@@ -129,6 +129,32 @@ void RSCheckAST::VisitDeclStmt(clang::DeclStmt *DS) {
 }
 
 
+void RSCheckAST::VisitCastExpr(clang::CastExpr *CE) {
+  if (CE->getCastKind() == clang::CK_BitCast) {
+    clang::QualType QT = CE->getType();
+    const clang::Type *T = QT.getTypePtr();
+    if (T->isVectorType()) {
+      clang::DiagnosticsEngine &DiagEngine = C.getDiagnostics();
+      if (llvm::isa<clang::ImplicitCastExpr>(CE)) {
+        DiagEngine.Report(
+          clang::FullSourceLoc(CE->getExprLoc(),
+                               DiagEngine.getSourceManager()),
+          DiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                     "invalid implicit vector cast"));
+      } else {
+        DiagEngine.Report(
+          clang::FullSourceLoc(CE->getExprLoc(),
+                               DiagEngine.getSourceManager()),
+          DiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                     "invalid vector cast"));
+      }
+      mValid = false;
+    }
+  }
+  Visit(CE->getSubExpr());
+}
+
+
 void RSCheckAST::VisitExpr(clang::Expr *E) {
   // This is where FS checks for code using pointer and/or 64-bit expressions
   // (i.e. things like casts).

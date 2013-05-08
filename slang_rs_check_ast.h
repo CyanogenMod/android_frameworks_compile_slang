@@ -47,6 +47,8 @@ class RSCheckAST : public clang::StmtVisitor<RSCheckAST> {
 
   void VisitStmt(clang::Stmt *S);
 
+  void VisitCastExpr(clang::CastExpr *CE);
+
   void VisitExpr(clang::Expr *E);
 
   void VisitDeclStmt(clang::DeclStmt *DS);
