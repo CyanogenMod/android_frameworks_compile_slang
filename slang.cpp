@@ -157,6 +157,7 @@ void Slang::GlobalInitialization() {
     LangOpts.RTTI = 0;  // Turn off the RTTI information support
     LangOpts.C99 = 1;
     LangOpts.Renderscript = 1;
+    LangOpts.LaxVectorConversions = 0;  // Do not bitcast vectors!
     LangOpts.CharIsSigned = 1;  // Signed char is our default.
 
     CodeGenOpts.OptimizationLevel = 3;

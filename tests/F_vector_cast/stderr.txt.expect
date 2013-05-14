@@ -1,5 +1,5 @@
+vector_cast.rs:8:11: error: can't convert between vector values of different size ('float2' and 'int2')
+vector_cast.rs:15:11: error: can't convert between vector values of different size ('int3' and 'float3')
 vector_cast.rs:7:9: error: invalid vector cast
-vector_cast.rs:8:13: error: invalid implicit vector cast
 vector_cast.rs:14:9: error: invalid vector cast
-vector_cast.rs:15:13: error: invalid implicit vector cast
 vector_cast.rs:21:9: error: invalid vector cast
