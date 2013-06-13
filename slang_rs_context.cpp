@@ -234,7 +234,7 @@ bool RSContext::processExport() {
        DI++) {
     if (DI->getKind() == clang::Decl::Var) {
       clang::VarDecl *VD = (clang::VarDecl*) (*DI);
-      if (VD->getLinkage() == clang::ExternalLinkage) {
+      if (VD->getFormalLinkage() == clang::ExternalLinkage) {
         if (!processExportVar(VD)) {
           valid = false;
         }
@@ -242,7 +242,7 @@ bool RSContext::processExport() {
     } else if (DI->getKind() == clang::Decl::Function) {
       // Export functions
       clang::FunctionDecl *FD = (clang::FunctionDecl*) (*DI);
-      if (FD->getLinkage() == clang::ExternalLinkage) {
+      if (FD->getFormalLinkage() == clang::ExternalLinkage) {
         if (!processExportFunc(FD)) {
           valid = false;
         }

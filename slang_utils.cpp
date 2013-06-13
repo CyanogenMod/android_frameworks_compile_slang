@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 
 namespace slang {
 

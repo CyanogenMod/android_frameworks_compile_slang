@@ -82,7 +82,7 @@ void RSCheckAST::ValidateVarDecl(clang::VarDecl *VD) {
 
   clang::QualType QT = VD->getType();
 
-  if (VD->getLinkage() == clang::ExternalLinkage) {
+  if (VD->getFormalLinkage() == clang::ExternalLinkage) {
     llvm::StringRef TypeName;
     const clang::Type *T = QT.getTypePtr();
     if (!RSExportType::NormalizeType(T, TypeName, &mDiagEngine, VD)) {
