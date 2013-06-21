@@ -33,11 +33,7 @@
 #include <map>
 using namespace llvm;
 
-static cl::opt<bool>
-EnablePreserveUseListOrdering("enable-bc-uselist-preserve",
-                              cl::desc("Turn on experimental support for "
-                                       "use-list order preservation."),
-                              cl::init(false), cl::Hidden);
+static bool EnablePreserveUseListOrdering = false;
 
 /// These are manifest constants used by the bitcode writer. They do not need to
 /// be kept in sync with the reader, but need to be consistent within this file.
