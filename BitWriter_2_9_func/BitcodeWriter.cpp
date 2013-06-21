@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReaderWriter_2_9_func.h"
+#include "legacy_bitcode.h"
 #include "ValueEnumerator.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
@@ -165,10 +166,13 @@ static void WriteAttributeTable(const llvm_2_9_func::ValueEnumerator &VE,
   SmallVector<uint64_t, 64> Record;
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
     const AttributeSet &A = Attrs[i];
-    for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i)
-      Record.push_back(VE.getAttributeGroupID(A.getSlotAttributes(i)));
+    for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
+      Record.push_back(A.getSlotIndex(i));
+      Record.push_back(encodeLLVMAttributesForBitcode(A, A.getSlotIndex(i)));
+    }
 
-    Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);
+    // This needs to use the 3.2 entry type
+    Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY_OLD, Record);
     Record.clear();
   }
 
