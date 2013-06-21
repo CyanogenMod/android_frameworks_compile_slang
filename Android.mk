@@ -127,6 +127,27 @@ LOCAL_SRC_FILES :=	\
 
 include $(BUILD_HOST_EXECUTABLE)
 
+# ========================================================
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := llvm-rs-as
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_MODULE_CLASS := EXECUTABLES
+
+LOCAL_SRC_FILES :=	\
+	llvm-rs-as.cpp
+
+LOCAL_CFLAGS += $(local_cflags_for_slang)
+LOCAL_STATIC_LIBRARIES :=	\
+	libslang \
+	$(static_libraries_needed_by_slang)
+LOCAL_SHARED_LIBRARIES := \
+	libLLVM
+
+include $(CLANG_HOST_BUILD_MK)
+include $(BUILD_HOST_EXECUTABLE)
+
 # Executable llvm-rs-cc for host
 # ========================================================
 include $(CLEAR_VARS)
