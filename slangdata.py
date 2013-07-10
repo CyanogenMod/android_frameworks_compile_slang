@@ -33,7 +33,7 @@ def PrintHeader(var_name):
  * prefixing for you.\n\
  */\n\
 .globl _%s\n\
-  .section .rodata,\n\
+  .section .rodata,\"\"\n\
   .align 8\n\
 _%s:\n\
 #else\n\
