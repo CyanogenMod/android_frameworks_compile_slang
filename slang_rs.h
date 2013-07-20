@@ -62,11 +62,8 @@ class SlangRS : public Slang {
   typedef llvm::StringMap<ReflectedDefinitionTy> ReflectedDefinitionListTy;
   ReflectedDefinitionListTy ReflectedDefinitions;
 
-  // The package name that's really applied will be filled in RealPackageName.
   bool reflectToJava(const std::string &OutputPathBase,
-                     const std::string &OutputPackageName,
-                     const std::string &RSPackageName,
-                     std::string *RealPackageName);
+                     const std::string &RSPackageName);
 
   bool generateBitcodeAccessor(const std::string &OutputPathBase,
                                const std::string &PackageName);

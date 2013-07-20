@@ -219,11 +219,9 @@ class RSContext {
   bool insertExportType(const llvm::StringRef &TypeName, RSExportType *Type);
 
   bool reflectToJava(const std::string &OutputPathBase,
-                     const std::string &OutputPackageName,
                      const std::string &RSPackageName,
                      const std::string &InputFileName,
-                     const std::string &OutputBCFileName,
-                     std::string *RealPackageName);
+                     const std::string &OutputBCFileName);
 
   int getVersion() const { return version; }
   void setVersion(int v) {

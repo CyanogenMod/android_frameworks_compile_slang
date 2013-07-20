@@ -60,7 +60,8 @@ static const char *const gApacheLicenseNote =
 "\n";
 
 
-RSReflectionBase::RSReflectionBase(const RSContext *con) {
+RSReflectionBase::RSReflectionBase(const RSContext *con)
+  : mVerbose(true) {
   mRSContext = con;
   mLicenseNote = gApacheLicenseNote;
 
