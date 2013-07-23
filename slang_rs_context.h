@@ -140,7 +140,7 @@ class RSContext {
     mReflectJavaPackageName = S;
     return;
   }
-  inline const std::string &getReflectJavaPackageName() {
+  inline const std::string &getReflectJavaPackageName() const {
     return mReflectJavaPackageName;
   }
 
@@ -148,7 +148,7 @@ class RSContext {
     mRSPackageName = S;
     return;
   }
-  inline const std::string &getRSPackageName() {
+  inline const std::string &getRSPackageName() const {
     return mRSPackageName;
   }
 

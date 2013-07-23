@@ -180,8 +180,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
   write("public:");
   incIndent();
-  write(mClassName + "(android::sp<android::RSC::RS> rs," +
-          " const char *cacheDir, size_t cacheDirLength);");
+  write(mClassName + "(android::sp<android::RSC::RS> rs);");
   write("virtual ~" + mClassName + "();");
   write("");
 
@@ -291,12 +290,12 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
 
   write("\n");
   stringstream ss;
+  const std::string &packageName = mRSContext->getReflectJavaPackageName();
   ss << mClassName << "::" << mClassName
-     << "(android::sp<android::RSC::RS> rs, const char *cacheDir, "
-        "size_t cacheDirLength) :\n"
+     << "(android::sp<android::RSC::RS> rs):\n"
         "        ScriptC(rs, __txt, sizeof(__txt), \""
      << mClassName << "\", " << mClassName.length()
-     << ", cacheDir, cacheDirLength) {";
+     << ", \"/data/data/" << packageName << "/app\", sizeof(\"" << packageName << "\")) {";
   write(ss);
   incIndent();
   //...
