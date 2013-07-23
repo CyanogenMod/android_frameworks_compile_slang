@@ -64,6 +64,11 @@ class RSBackend : public Backend {
 
   void AnnotateFunction(clang::FunctionDecl *FD);
 
+  void dumpExportVarInfo(llvm::Module *M);
+  void dumpExportFunctionInfo(llvm::Module *M);
+  void dumpExportForEachInfo(llvm::Module *M);
+  void dumpExportTypeInfo(llvm::Module *M);
+
  protected:
   virtual unsigned int getTargetAPI() const {
     return mContext->getTargetAPI();
