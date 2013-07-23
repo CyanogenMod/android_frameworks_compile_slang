@@ -494,11 +494,6 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
     return;
   }
 
-  // Write optimization level
-  llvm::SmallVector<llvm::Value*, 1> OptimizationOption;
-  OptimizationOption.push_back(llvm::ConstantInt::get(
-    mLLVMContext, llvm::APInt(32, mCodeGenOpts.OptimizationLevel)));
-
   if (mContext->hasExportVar())
     dumpExportVarInfo(M);
 
