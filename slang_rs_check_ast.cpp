@@ -18,6 +18,7 @@
 
 #include "slang_assert.h"
 #include "slang_rs.h"
+#include "slang_rs_export_foreach.h"
 #include "slang_rs_export_type.h"
 
 namespace slang {
@@ -40,37 +41,37 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
     return;
   }
 
-  if (!mIsFilterscript) {
-    // No additional validation for non-Filterscript functions.
-    if (clang::Stmt *Body = FD->getBody()) {
-      Visit(Body);
-    }
-    return;
-  }
+  if (mIsFilterscript) {
+    // Validate parameters for Filterscript.
+    size_t numParams = FD->getNumParams();
 
-  size_t numParams = FD->getNumParams();
+    clang::QualType resultType = FD->getResultType().getCanonicalType();
 
-  clang::QualType resultType = FD->getResultType().getCanonicalType();
-
-  // We use FD as our NamedDecl in the case of a bad return type.
-  if (!RSExportType::ValidateType(C, resultType, FD,
-                                  FD->getLocStart(), mTargetAPI,
-                                  mIsFilterscript)) {
-    mValid = false;
-  }
-
-  for (size_t i = 0; i < numParams; i++) {
-    clang::ParmVarDecl *PVD = FD->getParamDecl(i);
-    clang::QualType QT = PVD->getType().getCanonicalType();
-    if (!RSExportType::ValidateType(C, QT, PVD, PVD->getLocStart(),
-                                    mTargetAPI, mIsFilterscript)) {
+    // We use FD as our NamedDecl in the case of a bad return type.
+    if (!RSExportType::ValidateType(C, resultType, FD,
+                                    FD->getLocStart(), mTargetAPI,
+                                    mIsFilterscript)) {
       mValid = false;
     }
+
+    for (size_t i = 0; i < numParams; i++) {
+      clang::ParmVarDecl *PVD = FD->getParamDecl(i);
+      clang::QualType QT = PVD->getType().getCanonicalType();
+      if (!RSExportType::ValidateType(C, QT, PVD, PVD->getLocStart(),
+                                      mTargetAPI, mIsFilterscript)) {
+        mValid = false;
+      }
+    }
   }
+
+  bool saveKernel = mInKernel;
+  mInKernel = RSExportForEach::isRSForEachFunc(mTargetAPI, &mDiagEngine, FD);
 
   if (clang::Stmt *Body = FD->getBody()) {
     Visit(Body);
   }
+
+  mInKernel = saveKernel;
 }
 
 
@@ -79,11 +80,25 @@ void RSCheckAST::ValidateVarDecl(clang::VarDecl *VD) {
     return;
   }
 
-  const clang::Type *T = VD->getType().getTypePtr();
+  clang::QualType QT = VD->getType();
 
   if (VD->getLinkage() == clang::ExternalLinkage) {
     llvm::StringRef TypeName;
+    const clang::Type *T = QT.getTypePtr();
     if (!RSExportType::NormalizeType(T, TypeName, &mDiagEngine, VD)) {
+      mValid = false;
+    }
+  }
+
+  // We don't allow static (non-const) variables within kernels.
+  if (mInKernel && VD->isStaticLocal()) {
+    if (!QT.isConstQualified()) {
+      mDiagEngine.Report(
+        clang::FullSourceLoc(VD->getLocation(), mSM),
+        mDiagEngine.getCustomDiagID(
+          clang::DiagnosticsEngine::Error,
+          "Non-const static variables are not allowed in kernels: '%0'"))
+          << VD->getName();
       mValid = false;
     }
   }

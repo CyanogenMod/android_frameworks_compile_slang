@@ -27,7 +27,7 @@
 #include "clang/Driver/Option.h"
 #include "clang/Driver/OptTable.h"
 
-#include "clang/Frontend/DiagnosticOptions.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 
@@ -75,19 +75,31 @@ static void ExpandArgv(int argc, const char **argv,
 
 enum {
   OPT_INVALID = 0,  // This is not an option ID.
-#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+#define PREFIX(NAME, VALUE)
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR) OPT_##ID,
 #include "RSCCOptions.inc"
   LastOption
 #undef OPTION
+#undef PREFIX
 };
 
-static const OptTable::Info RSCCInfoTable[] = {
-#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
-               HELPTEXT, METAVAR)   \
-  { NAME, HELPTEXT, METAVAR, Option::KIND##Class, PARAM, FLAGS, \
-    OPT_##GROUP, OPT_##ALIAS },
+#define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+               HELPTEXT, METAVAR)
 #include "RSCCOptions.inc"
+#undef OPTION
+#undef PREFIX
+
+static const OptTable::Info RSCCInfoTable[] = {
+#define PREFIX(NAME, VALUE)
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+               HELPTEXT, METAVAR)   \
+  { PREFIX, NAME, HELPTEXT, METAVAR, OPT_##ID, Option::KIND##Class, PARAM, \
+    FLAGS, OPT_##GROUP, OPT_##ALIAS },
+#include "RSCCOptions.inc"
+#undef OPTION
+#undef PREFIX
 };
 
 class RSCCOptTable : public OptTable {
@@ -202,7 +214,7 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
         it != ie; ++it) {
       const Arg *A = *it;
       if (A->getOption().getKind() == Option::InputClass)
-        Inputs.push_back(A->getValue(*Args));
+        Inputs.push_back(A->getValue());
     }
 
     Opts.mIncludePaths = Args->getAllArgValues(OPT_I);
@@ -280,6 +292,10 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
 
     if (Args->hasArg(OPT_reflect_cpp)) {
       Opts.mBitcodeStorage = slang::BCST_CPP_CODE;
+      // mJavaReflectionPathBase isn't set for C++ reflected builds
+      // set it to mOutputDir so we can use the path sanely from
+      // RSReflectionBase later on
+      Opts.mJavaReflectionPathBase = Opts.mOutputDir;
     }
 
     Opts.mOutputDepDir =
@@ -399,7 +415,9 @@ int main(int argc, const char **argv) {
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagIDs(
     new clang::DiagnosticIDs());
 
-  clang::DiagnosticsEngine DiagEngine(DiagIDs, DiagClient, true);
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
+    new clang::DiagnosticOptions());
+  clang::DiagnosticsEngine DiagEngine(DiagIDs, &*DiagOpts, DiagClient, true);
 
   slang::Slang::GlobalInitialization();
 

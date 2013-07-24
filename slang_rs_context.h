@@ -33,7 +33,7 @@
 
 namespace llvm {
   class LLVMContext;
-  class TargetData;
+  class DataLayout;
 }   // namespace llvm
 
 namespace clang {
@@ -71,7 +71,7 @@ class RSContext {
   unsigned int mTargetAPI;
   std::vector<std::string> *mGeneratedFileNames;
 
-  llvm::TargetData *mTargetData;
+  llvm::DataLayout *mDataLayout;
   llvm::LLVMContext &mLLVMContext;
 
   ExportableList mExportables;
@@ -85,6 +85,9 @@ class RSContext {
   std::string mRSPackageName;
 
   int version;
+
+  bool mIsCompatLib;
+
   llvm::OwningPtr<clang::MangleContext> mMangleCtx;
 
   bool processExportVar(const clang::VarDecl *VD);
@@ -111,7 +114,7 @@ class RSContext {
   inline clang::MangleContext &getMangleContext() const {
     return *mMangleCtx;
   }
-  inline const llvm::TargetData *getTargetData() const { return mTargetData; }
+  inline const llvm::DataLayout *getDataLayout() const { return mDataLayout; }
   inline llvm::LLVMContext &getLLVMContext() const { return mLLVMContext; }
   inline const clang::SourceManager *getSourceManager() const {
     return &mPP.getSourceManager();
@@ -227,6 +230,8 @@ class RSContext {
     version = v;
     return;
   }
+
+  bool isCompatLib() const { return mIsCompatLib; }
 
   void addPragma(const std::string &T, const std::string &V) {
     mPragmas->push_back(make_pair(T, V));

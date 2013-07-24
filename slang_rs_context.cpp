@@ -27,8 +27,8 @@
 #include "clang/Basic/Linkage.h"
 #include "clang/Basic/TargetInfo.h"
 
-#include "llvm/LLVMContext.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/DataLayout.h"
 
 #include "slang.h"
 #include "slang_assert.h"
@@ -54,11 +54,12 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mPragmas(Pragmas),
       mTargetAPI(TargetAPI),
       mGeneratedFileNames(GeneratedFileNames),
-      mTargetData(NULL),
+      mDataLayout(NULL),
       mLLVMContext(llvm::getGlobalContext()),
       mLicenseNote(NULL),
       mRSPackageName("android.renderscript"),
       version(0),
+      mIsCompatLib(false),
       mMangleCtx(Ctx.createMangleContext()) {
   slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
 
@@ -78,7 +79,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
   PP.AddPragmaHandler(RSPragmaHandler::CreatePragmaVersionHandler(this));
 
   // Prepare target data
-  mTargetData = new llvm::TargetData(Target.getTargetDescription());
+  mDataLayout = new llvm::DataLayout(Target.getTargetDescription());
 
   return;
 }
@@ -114,11 +115,12 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     return false;
   }
 
+  clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
   if (RSExportForEach::isSpecialRSFunc(mTargetAPI, FD)) {
     // Do not reflect specialized functions like init, dtor, or graphics root.
     return RSExportForEach::validateSpecialFuncDecl(mTargetAPI,
-                                                    getDiagnostics(), FD);
-  } else if (RSExportForEach::isRSForEachFunc(mTargetAPI, FD)) {
+                                                    DiagEngine, FD);
+  } else if (RSExportForEach::isRSForEachFunc(mTargetAPI, DiagEngine, FD)) {
     RSExportForEach *EFE = RSExportForEach::Create(this, FD);
     if (EFE == NULL)
       return false;
@@ -152,7 +154,7 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
   clang::DeclContext::lookup_const_result R = TUDecl->lookup(II);
   RSExportType *ET = NULL;
 
-  for (clang::DeclContext::lookup_const_iterator I = R.first, E = R.second;
+  for (clang::DeclContext::lookup_const_iterator I = R.begin(), E = R.end();
        I != E;
        I++) {
     clang::NamedDecl *const ND = *I;
@@ -302,6 +304,12 @@ bool RSContext::reflectToJava(const std::string &OutputPathBase,
     mRSPackageName = RSPackageName;
   }
 
+  // If we are not targeting the actual Android Renderscript classes,
+  // we should reflect code that works with the compatibility library.
+  if (mRSPackageName.compare("android.renderscript") != 0) {
+    mIsCompatLib = true;
+  }
+
   RSReflection *R = new RSReflection(this, mGeneratedFileNames);
   bool ret = R->reflect(OutputPathBase, PackageName, mRSPackageName,
                         InputFileName, OutputBCFileName);
@@ -314,7 +322,7 @@ bool RSContext::reflectToJava(const std::string &OutputPathBase,
 
 RSContext::~RSContext() {
   delete mLicenseNote;
-  delete mTargetData;
+  delete mDataLayout;
   for (ExportableList::iterator I = mExportables.begin(),
           E = mExportables.end();
        I != E;

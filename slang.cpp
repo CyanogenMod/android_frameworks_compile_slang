@@ -25,6 +25,7 @@
 #include "clang/AST/ASTContext.h"
 
 #include "clang/Basic/DiagnosticIDs.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/LangOptions.h"
@@ -33,14 +34,15 @@
 #include "clang/Basic/TargetOptions.h"
 
 #include "clang/Frontend/CodeGenOptions.h"
-#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/HeaderSearchOptions.h"
 
 #include "clang/Parse/ParseAST.h"
 
@@ -52,8 +54,8 @@
 #include "llvm/Linker.h"
 
 // Force linking all passes/vmcore stuffs to libslang.so
+#include "llvm/LinkAllIR.h"
 #include "llvm/LinkAllPasses.h"
-#include "llvm/LinkAllVMCore.h"
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -84,7 +86,7 @@ struct ForceSlangLinking {
 
     // llvm-rs-cc need this.
     new clang::TextDiagnosticPrinter(llvm::errs(),
-                                     clang::DiagnosticOptions());
+                                     new clang::DiagnosticOptions());
   }
 } ForceSlangLinking;
 
@@ -174,18 +176,18 @@ void Slang::LLVMErrorHandler(void *UserData, const std::string &Message) {
 void Slang::createTarget(const std::string &Triple, const std::string &CPU,
                          const std::vector<std::string> &Features) {
   if (!Triple.empty())
-    mTargetOpts.Triple = Triple;
+    mTargetOpts->Triple = Triple;
   else
-    mTargetOpts.Triple = DEFAULT_TARGET_TRIPLE_STRING;
+    mTargetOpts->Triple = DEFAULT_TARGET_TRIPLE_STRING;
 
   if (!CPU.empty())
-    mTargetOpts.CPU = CPU;
+    mTargetOpts->CPU = CPU;
 
   if (!Features.empty())
-    mTargetOpts.Features = Features;
+    mTargetOpts->FeaturesAsWritten = Features;
 
   mTarget.reset(clang::TargetInfo::CreateTargetInfo(*mDiagEngine,
-                                                    mTargetOpts));
+                                                    mTargetOpts.getPtr()));
 }
 
 void Slang::createFileManager() {
@@ -199,12 +201,18 @@ void Slang::createSourceManager() {
 
 void Slang::createPreprocessor() {
   // Default only search header file in current dir
-  clang::HeaderSearch *HeaderInfo = new clang::HeaderSearch(*mFileMgr,
+  llvm::IntrusiveRefCntPtr<clang::HeaderSearchOptions> HSOpts =
+      new clang::HeaderSearchOptions();
+  clang::HeaderSearch *HeaderInfo = new clang::HeaderSearch(HSOpts,
+                                                            *mFileMgr,
                                                             *mDiagEngine,
                                                             LangOpts,
                                                             mTarget.get());
 
-  mPP.reset(new clang::Preprocessor(*mDiagEngine,
+  llvm::IntrusiveRefCntPtr<clang::PreprocessorOptions> PPOpts =
+      new clang::PreprocessorOptions();
+  mPP.reset(new clang::Preprocessor(PPOpts,
+                                    *mDiagEngine,
                                     LangOpts,
                                     mTarget.get(),
                                     *mSourceMgr,
@@ -222,7 +230,6 @@ void Slang::createPreprocessor() {
             mFileMgr->getDirectory(mIncludePaths[i])) {
       SearchList.push_back(clang::DirectoryLookup(DE,
                                                   clang::SrcMgr::C_System,
-                                                  false,
                                                   false));
     }
   }
@@ -249,11 +256,12 @@ void Slang::createASTContext() {
 clang::ASTConsumer *
 Slang::createBackend(const clang::CodeGenOptions& CodeGenOpts,
                      llvm::raw_ostream *OS, OutputType OT) {
-  return new Backend(mDiagEngine, CodeGenOpts, mTargetOpts,
+  return new Backend(mDiagEngine, CodeGenOpts, getTargetOptions(),
                      &mPragmas, OS, OT);
 }
 
 Slang::Slang() : mInitialized(false), mDiagClient(NULL), mOT(OT_Default) {
+  mTargetOpts = new clang::TargetOptions();
   GlobalInitialization();
 }
 
@@ -277,12 +285,13 @@ void Slang::init(const std::string &Triple, const std::string &CPU,
   mInitialized = true;
 }
 
-clang::Module *Slang::loadModule(clang::SourceLocation ImportLoc,
-                                 clang::ModuleIdPath Path,
-                                 clang::Module::NameVisibilityKind Visibility,
-                                 bool IsInclusionDirective) {
+clang::ModuleLoadResult Slang::loadModule(
+    clang::SourceLocation ImportLoc,
+    clang::ModuleIdPath Path,
+    clang::Module::NameVisibilityKind Visibility,
+    bool IsInclusionDirective) {
   slangAssert(0 && "Not implemented");
-  return NULL;
+  return clang::ModuleLoadResult();
 }
 
 bool Slang::setInputSource(llvm::StringRef InputFile,
@@ -454,9 +463,9 @@ int Slang::compile() {
 
 void Slang::setDebugMetadataEmission(bool EmitDebug) {
   if (EmitDebug)
-    CodeGenOpts.DebugInfo = clang::CodeGenOptions::FullDebugInfo;
+    CodeGenOpts.setDebugInfo(clang::CodeGenOptions::FullDebugInfo);
   else
-    CodeGenOpts.DebugInfo = clang::CodeGenOptions::NoDebugInfo;
+    CodeGenOpts.setDebugInfo(clang::CodeGenOptions::NoDebugInfo);
 }
 
 void Slang::setOptimizationLevel(llvm::CodeGenOpt::Level OptimizationLevel) {

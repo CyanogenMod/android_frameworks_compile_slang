@@ -36,7 +36,7 @@ class raw_ostream;
 
 }  // end llvm namespace
 
-namespace llvm_2_9_func {
+namespace llvm_3_2 {
 
 class ValueEnumerator {
 public:
@@ -170,6 +170,6 @@ private:
   void EnumerateNamedMetadata(const llvm::Module *M);
 };
 
-}  // End llvm_2_9_func namespace
+}  // End llvm_3_2 namespace
 
 #endif

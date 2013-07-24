@@ -19,11 +19,11 @@
 #include <string>
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/TypeLoc.h"
 
-#include "llvm/DerivedTypes.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/IR/DerivedTypes.h"
 
 #include "slang_assert.h"
 #include "slang_rs_context.h"
@@ -516,9 +516,26 @@ bool RSExportForEach::isGraphicsRootRSFunc(int targetAPI,
 }
 
 bool RSExportForEach::isRSForEachFunc(int targetAPI,
+    clang::DiagnosticsEngine *DiagEngine,
     const clang::FunctionDecl *FD) {
+  slangAssert(DiagEngine && FD);
+  bool hasKernelAttr = FD->hasAttr<clang::KernelAttr>();
+
+  if (FD->getStorageClass() == clang::SC_Static) {
+    if (hasKernelAttr) {
+      DiagEngine->Report(
+        clang::FullSourceLoc(FD->getLocation(),
+                             DiagEngine->getSourceManager()),
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "Invalid use of attribute kernel with "
+                                    "static function declaration: %0"))
+        << FD->getName();
+    }
+    return false;
+  }
+
   // Anything tagged as a kernel is definitely used with ForEach.
-  if (FD->hasAttr<clang::KernelAttr>()) {
+  if (hasKernelAttr) {
     return true;
   }
 

@@ -24,7 +24,7 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace llvm_2_9 {
+namespace llvm_3_2 {
 
 static bool isIntOrIntVectorValue(const std::pair<const Value*, unsigned> &V) {
   return V.first->getType()->isIntOrIntVectorTy();
@@ -343,16 +343,6 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
       Values.push_back(std::make_pair(V, 1U));
       ValueMap[V] = Values.size();
       return;
-    } else if (const ConstantDataSequential *CDS =
-               dyn_cast<ConstantDataSequential>(C)) {
-      // For our legacy handling of the new ConstantDataSequential type, we
-      // need to enumerate the individual elements, as well as mark the
-      // outer constant as used.
-      for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i)
-        EnumerateValue(CDS->getElementAsConstant(i));
-      Values.push_back(std::make_pair(V, 1U));
-      ValueMap[V] = Values.size();
-      return;
     }
   }
 
@@ -550,4 +540,4 @@ unsigned ValueEnumerator::getGlobalBasicBlockID(const BasicBlock *BB) const {
   return getGlobalBasicBlockID(BB);
 }
 
-} // end llvm_2_9 namespace
+}  // end llvm_3_2 namespace

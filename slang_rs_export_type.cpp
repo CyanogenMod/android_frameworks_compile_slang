@@ -20,15 +20,13 @@
 #include <vector>
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/RecordLayout.h"
 
 #include "llvm/ADT/StringExtras.h"
-
-#include "llvm/DerivedTypes.h"
-
-#include "llvm/Target/TargetData.h"
-
-#include "llvm/Type.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Type.h"
 
 #include "slang_assert.h"
 #include "slang_rs_context.h"
@@ -798,7 +796,7 @@ RSExportType *RSExportType::CreateFromDecl(RSContext *Context,
 }
 
 size_t RSExportType::GetTypeStoreSize(const RSExportType *ET) {
-  return ET->getRSContext()->getTargetData()->getTypeStoreSize(
+  return ET->getRSContext()->getDataLayout()->getTypeStoreSize(
       ET->getLLVMType());
 }
 
@@ -806,7 +804,7 @@ size_t RSExportType::GetTypeAllocSize(const RSExportType *ET) {
   if (ET->getClass() == RSExportType::ExportClassRecord)
     return static_cast<const RSExportRecordType*>(ET)->getAllocSize();
   else
-    return ET->getRSContext()->getTargetData()->getTypeAllocSize(
+    return ET->getRSContext()->getDataLayout()->getTypeAllocSize(
         ET->getLLVMType());
 }
 
@@ -907,8 +905,15 @@ bool RSExportPrimitiveType::IsStructureTypeWithRSObject(const clang::Type *T) {
   if (!RT) {
     return false;
   }
+
   const clang::RecordDecl *RD = RT->getDecl();
-  RD = RD->getDefinition();
+  if (RD) {
+    RD = RD->getDefinition();
+  }
+  if (!RD) {
+    return false;
+  }
+
   for (clang::RecordDecl::field_iterator FI = RD->field_begin(),
          FE = RD->field_end();
        FI != FE;

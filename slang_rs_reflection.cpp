@@ -43,7 +43,7 @@
 #define RS_SCRIPT_CLASS_NAME_PREFIX      "ScriptC_"
 #define RS_SCRIPT_CLASS_SUPER_CLASS_NAME "ScriptC"
 
-#define RS_TYPE_CLASS_SUPER_CLASS_NAME   "android.renderscript.Script.FieldBase"
+#define RS_TYPE_CLASS_SUPER_CLASS_NAME   ".Script.FieldBase"
 
 #define RS_TYPE_ITEM_CLASS_NAME          "Item"
 
@@ -261,6 +261,17 @@ static std::string GetBuiltinElementConstruct(const RSExportType *ET) {
   // RSExportType::ExportClassPointer can't be generated in a struct.
 
   return "";
+}
+
+// Replace all instances of "\" with "\\" in a single string to prevent
+// formatting errors due to unicode.
+static std::string SanitizeString(std::string s) {
+  size_t p = 0;
+  while ( ( p = s.find('\\', p)) != std::string::npos) {
+    s.replace(p, 1, "\\\\");
+    p+=2;
+  }
+  return s;
 }
 
 
@@ -690,6 +701,37 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
       C.endFunction();
   }
 
+  if (mRSContext->getTargetAPI() >= SLANG_JB_MR2_TARGET_API) {
+    C.startFunction(Context::AM_Public,
+                    false,
+                    "void",
+                    "forEach_" + EF->getName(),
+                    Args);
+
+    C.indent() << "forEach_" << EF->getName();
+    C.out() << "(";
+
+    if (EF->hasIn()) {
+      C.out() << "ain, ";
+    }
+
+    if (EF->hasOut() || EF->hasReturn()) {
+      C.out() << "aout, ";
+    }
+
+    if (EF->hasUsrData()) {
+      C.out() << Args.back().second << ", ";
+    }
+
+    // No clipped bounds to pass in.
+    C.out() << "null);" << std::endl;
+
+    C.endFunction();
+
+    // Add the clipped kernel parameters to the Args list.
+    Args.push_back(std::make_pair("Script.LaunchOptions", "sc"));
+  }
+
   C.startFunction(Context::AM_Public,
                   false,
                   "void",
@@ -742,7 +784,11 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
   else
     C.out() << ", null";
 
-  C.out() << ");" << std::endl;
+  if (mRSContext->getTargetAPI() >= SLANG_JB_MR2_TARGET_API) {
+    C.out() << ", sc);" << std::endl;
+  } else {
+    C.out() << ");" << std::endl;
+  }
 
   C.endFunction();
   return;
@@ -1221,7 +1267,7 @@ void RSReflection::genPackVarOfType(Context &C,
                        << (FieldAllocSize - FieldStoreSize)
                        << ");" << std::endl;
 
-          Pos = FieldOffset + FieldAllocSize;
+        Pos = FieldOffset + FieldAllocSize;
       }
 
       // There maybe some padding after the struct
@@ -1320,11 +1366,13 @@ bool RSReflection::genTypeClass(Context &C,
                                 const RSExportRecordType *ERT,
                                 std::string &ErrorMsg) {
   std::string ClassName = ERT->getElementName();
+  std::string superClassName = C.getRSPackageName();
+  superClassName += RS_TYPE_CLASS_SUPER_CLASS_NAME;
 
   if (!C.startClass(Context::AM_Public,
                     false,
                     ClassName,
-                    RS_TYPE_CLASS_SUPER_CLASS_NAME,
+                    superClassName.c_str(),
                     ErrorMsg))
     return false;
 
@@ -1349,7 +1397,10 @@ bool RSReflection::genTypeClass(Context &C,
   genTypeClassComponentSetter(C, ERT);
   genTypeClassComponentGetter(C, ERT);
   genTypeClassCopyAll(C, ERT);
-  genTypeClassResize(C);
+  if (!mRSContext->isCompatLib()) {
+    // Skip the resize method if we are targeting a compatibility library.
+    genTypeClassResize(C);
+  }
 
   C.endClass();
 
@@ -2056,7 +2107,7 @@ bool RSReflection::reflect(const std::string &OutputPathBase,
 /************************** RSReflection::Context **************************/
 const char *const RSReflection::Context::ApacheLicenseNote =
     "/*\n"
-    " * Copyright (C) 2011-2012 The Android Open Source Project\n"
+    " * Copyright (C) 2011-2013 The Android Open Source Project\n"
     " *\n"
     " * Licensed under the Apache License, Version 2.0 (the \"License\");\n"
     " * you may not use this file except in compliance with the License.\n"
@@ -2123,7 +2174,8 @@ bool RSReflection::Context::startClass(AccessModifier AM,
   // Notice of generated file
   out() << "/*" << std::endl;
   out() << " * This file is auto-generated. DO NOT MODIFY!" << std::endl;
-  out() << " * The source Renderscript file: " << mInputRSFile << std::endl;
+  out() << " * The source Renderscript file: "
+        << SanitizeString(mInputRSFile) << std::endl;
   out() << " */" << std::endl;
 
   // Package

@@ -22,26 +22,68 @@
 namespace slang {
 
 class RSReflectionCpp : public RSReflectionBase {
-protected:
+ public:
+  explicit RSReflectionCpp(const RSContext *);
+  virtual ~RSReflectionCpp();
+
+  bool reflect(const std::string &OutputPathBase,
+               const std::string &InputFileName,
+               const std::string &OutputBCFileName);
 
 
-public:
-    RSReflectionCpp(const RSContext *);
-    virtual ~RSReflectionCpp();
+ private:
+  unsigned int mNextExportVarSlot;
+  unsigned int mNextExportFuncSlot;
+  unsigned int mNextExportForEachSlot;
 
-    bool reflect(const std::string &OutputPathBase,
-                 const std::string &InputFileName,
-                 const std::string &OutputBCFileName);
+  inline void clear() {
+    mNextExportVarSlot = 0;
+    mNextExportFuncSlot = 0;
+    mNextExportForEachSlot = 0;
+  }
 
+  inline unsigned int getNextExportVarSlot() {
+    return mNextExportVarSlot++;
+  }
 
-private:
-    bool makeHeader(const std::string &baseClass);
-    bool makeImpl(const std::string &baseClass);
-    bool writeBC();
+  inline unsigned int getNextExportFuncSlot() {
+    return mNextExportFuncSlot++;
+  }
 
-    bool startScriptHeader();
+  inline unsigned int getNextExportForEachSlot() {
+    return mNextExportForEachSlot++;
+  }
 
-};  // class RSReflection
+  bool makeHeader(const std::string &baseClass);
+  bool makeImpl(const std::string &baseClass);
+  void makeFunctionSignature(std::stringstream &ss, bool isDefinition,
+                             const RSExportFunc *ef);
+  bool writeBC();
+
+  bool startScriptHeader();
+
+  // Produce an argument string of the form "T1 t, T2 u, T3 v".
+  void makeArgs(std::stringstream &ss, const ArgTy& Args);
+
+  // Write out code for an export variable.
+  void genExportVariable(const RSExportVar *EV);
+
+  void genPrimitiveTypeExportVariable(const RSExportVar *EV);
+  void genPointerTypeExportVariable(const RSExportVar *EV);
+  void genVectorTypeExportVariable(const RSExportVar *EV);
+  void genMatrixTypeExportVariable(const RSExportVar *EV);
+  void genConstantArrayTypeExportVariable(const RSExportVar *EV);
+  void genRecordTypeExportVariable(const RSExportVar *EV);
+
+  // Write out a local FieldPacker (if necessary).
+  bool genCreateFieldPacker(const RSExportType *T,
+                            const char *FieldPackerName);
+
+  // Populate (write) the FieldPacker with add() operations.
+  void genPackVarOfType(const RSExportType *ET,
+                        const char *VarName,
+                        const char *FieldPackerName);
+};  // class RSReflectionCpp
 
 }   // namespace slang
 

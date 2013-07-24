@@ -20,7 +20,9 @@ ifeq ($(TARGET_BUILD_APPS),)
 LOCAL_PATH := $(call my-dir)
 
 local_cflags_for_slang := -Wno-sign-promo -Wall -Wno-unused-parameter -Werror
-ifneq ($(TARGET_BUILD_VARIANT),eng)
+ifeq ($(TARGET_BUILD_VARIANT),eng)
+local_cflags_for_slang += -O0
+else
 local_cflags_for_slang += -D__DISABLE_ASSERTS
 endif
 local_cflags_for_slang += -DTARGET_BUILD_VARIANT=$(TARGET_BUILD_VARIANT)
@@ -40,55 +42,9 @@ endif
 local_cflags_for_slang += -DRS_VERSION=$(RS_VERSION)
 
 static_libraries_needed_by_slang := \
-	libclangParse \
-	libclangSema \
-	libclangAnalysis \
-	libclangCodeGen \
-	libclangAST \
-	libclangLex \
-	libclangEdit \
-	libclangFrontend \
-	libclangBasic \
-	libclangSerialization \
-	libLLVMLinker \
-	libLLVMipo \
-	libLLVMBitWriter \
 	libLLVMBitWriter_2_9 \
 	libLLVMBitWriter_2_9_func \
-	libLLVMBitReader \
-	libLLVMARMCodeGen \
-	libLLVMARMAsmParser \
-	libLLVMARMAsmPrinter \
-	libLLVMARMInfo \
-	libLLVMARMDesc \
-	libLLVMX86CodeGen \
-	libLLVMX86Info \
-	libLLVMX86Desc \
-	libLLVMX86AsmParser \
-	libLLVMX86AsmPrinter \
-	libLLVMX86Utils \
-	libLLVMMipsCodeGen \
-	libLLVMMipsInfo \
-	libLLVMMipsDesc \
-	libLLVMMipsAsmParser \
-	libLLVMMipsAsmPrinter \
-	libLLVMAsmPrinter \
-	libLLVMSelectionDAG \
-	libLLVMCodeGen \
-	libLLVMScalarOpts \
-	libLLVMInstCombine \
-	libLLVMInstrumentation \
-	libLLVMTransformUtils \
-	libLLVMipa \
-	libLLVMAnalysis \
-	libLLVMTarget \
-	libLLVMMC \
-	libLLVMMCParser \
-	libLLVMCore \
-	libLLVMArchive \
-	libLLVMAsmParser \
-	libLLVMSupport \
-	libLLVMVectorize
+	libLLVMBitWriter_3_2
 
 # Static library libslang for host
 # ========================================================
@@ -108,6 +64,7 @@ LOCAL_CFLAGS += $(local_cflags_for_slang)
 TBLGEN_TABLES :=    \
 	AttrList.inc	\
 	Attrs.inc	\
+	CommentCommandList.inc \
 	CommentNodes.inc \
 	DeclNodes.inc	\
 	DiagnosticCommonKinds.inc	\
@@ -160,31 +117,6 @@ LOCAL_SRC_FILES := slang-data.c
 
 include $(BUILD_HOST_EXECUTABLE)
 
-# Executable llvm-rs-link for host
-# ========================================================
-include $(CLEAR_VARS)
-include $(CLEAR_TBLGEN_VARS)
-
-include $(LLVM_ROOT_PATH)/llvm.mk
-
-LOCAL_MODULE := llvm-rs-link
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE_CLASS := EXECUTABLES
-
-LOCAL_SRC_FILES :=	\
-	llvm-rs-link.cpp
-
-LOCAL_STATIC_LIBRARIES :=	\
-	librslib libslang \
-	$(static_libraries_needed_by_slang)
-
-LOCAL_LDLIBS := -ldl -lpthread
-
-include $(LLVM_HOST_BUILD_MK)
-include $(LLVM_GEN_INTRINSICS_MK)
-include $(BUILD_HOST_EXECUTABLE)
-
 # Executable rs-spec-gen for host
 # ========================================================
 include $(CLEAR_VARS)
@@ -215,6 +147,7 @@ LOCAL_CFLAGS += $(local_cflags_for_slang)
 TBLGEN_TABLES :=    \
 	AttrList.inc    \
 	Attrs.inc    \
+	CommentCommandList.inc \
 	CommentNodes.inc \
 	DeclNodes.inc    \
 	DiagnosticCommonKinds.inc   \
@@ -252,8 +185,12 @@ LOCAL_SRC_FILES :=	\
 	slang_rs_reflect_utils.cpp
 
 LOCAL_STATIC_LIBRARIES :=	\
-	libclangDriver libslang \
+	libslang \
 	$(static_libraries_needed_by_slang)
+
+LOCAL_SHARED_LIBRARIES := \
+	libclang \
+	libLLVM
 
 ifeq ($(HOST_OS),windows)
   LOCAL_LDLIBS := -limagehlp -lpsapi

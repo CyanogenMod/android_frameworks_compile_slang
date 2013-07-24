@@ -150,6 +150,10 @@ class SlangRS : public Slang {
   virtual void reset();
 
   virtual ~SlangRS();
+
+  virtual void makeModuleVisible(clang::Module *Mod,
+                                 clang::Module::NameVisibilityKind Visibility,
+                                 clang::SourceLocation ImportLoc) { }
 };
 }  // namespace slang
 

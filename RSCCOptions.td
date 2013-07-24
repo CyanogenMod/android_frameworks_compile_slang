@@ -27,69 +27,69 @@ include "clang/Driver/OptParser.td"
 // Target Options
 //===----------------------------------------------------------------------===//
 
-def target_api : Separate<"-target-api">,
+def target_api : Separate<["-"], "target-api">,
   HelpText<"Specify target API level (e.g. 14)">;
-def target_api_EQ : Joined<"-target-api=">, Alias<target_api>;
+def target_api_EQ : Joined<["-"], "target-api=">, Alias<target_api>;
 
 //===----------------------------------------------------------------------===//
 // Header Search Options
 //===----------------------------------------------------------------------===//
 
-def I : JoinedOrSeparate<"-I">, MetaVarName<"<directory>">,
+def I : JoinedOrSeparate<["-"], "I">, MetaVarName<"<directory>">,
   HelpText<"Add directory to include search path">;
-def _I : Separate<"include-path">, MetaVarName<"<directory>">, Alias<I>;
+def _I : Separate<["-", "--"], "include-path">, MetaVarName<"<directory>">, Alias<I>;
 
 //===----------------------------------------------------------------------===//
 // Frontend Options
 //===----------------------------------------------------------------------===//
 
-def o : Separate<"-o">, MetaVarName<"<directory>">,
+def o : Separate<["-"], "o">, MetaVarName<"<directory>">,
   HelpText<"Specify output directory">;
 
 def Output_Type_Group : OptionGroup<"<output type group>">;
 let Group = Output_Type_Group in {
 
-def emit_asm : Flag<"-emit-asm">,
+def emit_asm : Flag<["-"], "emit-asm">,
   HelpText<"Emit target assembly files">;
-def _emit_asm : Flag<"-S">, Alias<emit_asm>;
-def emit_llvm : Flag<"-emit-llvm">,
+def _emit_asm : Flag<["-"], "S">, Alias<emit_asm>;
+def emit_llvm : Flag<["-"], "emit-llvm">,
   HelpText<"Build ASTs then convert to LLVM, emit .ll file">;
-def emit_bc : Flag<"-emit-bc">,
+def emit_bc : Flag<["-"], "emit-bc">,
   HelpText<"Build ASTs then convert to LLVM, emit .bc file">;
-def emit_nothing : Flag<"-emit-nothing">,
+def emit_nothing : Flag<["-"], "emit-nothing">,
   HelpText<"Build ASTs then convert to LLVM, but emit nothing">;
 }
 
-def emit_g : Flag<"-g">,
+def emit_g : Flag<["-"], "g">,
   HelpText<"Emit LLVM Debug Metadata">;
 
-def optimization_level : Separate<"-O">, MetaVarName<"<optimization-level>">,
+def optimization_level : Separate<["-"], "O">, MetaVarName<"<optimization-level>">,
   HelpText<"<optimization-level> can be one of '0' or '3' (default)">;
 
-def allow_rs_prefix : Flag<"-allow-rs-prefix">,
+def allow_rs_prefix : Flag<["-"], "allow-rs-prefix">,
   HelpText<"Allow user-defined function prefixed with 'rs'">;
 
-def java_reflection_path_base : Separate<"-java-reflection-path-base">,
+def java_reflection_path_base : Separate<["-"], "java-reflection-path-base">,
   MetaVarName<"<directory>">,
   HelpText<"Base directory for output reflected Java files">;
-def _java_reflection_path_base : Separate<"-p">,
+def _java_reflection_path_base : Separate<["-"], "p">,
   Alias<java_reflection_path_base>;
-def java_reflection_package_name : Separate<"-java-reflection-package-name">,
+def java_reflection_package_name : Separate<["-"], "java-reflection-package-name">,
   HelpText<"Specify the package name that reflected Java files belong to">;
-def _java_reflection_package_name : Separate<"-j">,
+def _java_reflection_package_name : Separate<["-"], "j">,
   Alias<java_reflection_package_name>;
 
-def bitcode_storage : Separate<"-bitcode-storage">,
+def bitcode_storage : Separate<["-"], "bitcode-storage">,
   MetaVarName<"<value>">, HelpText<"<value> should be 'ar' or 'jc'">;
-def _bitcode_storage : Separate<"-s">, Alias<bitcode_storage>;
+def _bitcode_storage : Separate<["-"], "s">, Alias<bitcode_storage>;
 
-def rs_package_name : Separate<"-rs-package-name">,
+def rs_package_name : Separate<["-"], "rs-package-name">,
   MetaVarName<"<package_name>">,
   HelpText<"package name for referencing RS classes">;
-def rs_package_name_EQ : Joined<"-rs-package-name=">, Alias<rs_package_name>;
+def rs_package_name_EQ : Joined<["-"], "rs-package-name=">, Alias<rs_package_name>;
 
-def W : Joined<"-W">;
-def w : Flag<"-w">, HelpText<"Suppress all warnings">;
+def W : Joined<["-"], "W">;
+def w : Flag<["-"], "w">, HelpText<"Suppress all warnings">;
 
 //===----------------------------------------------------------------------===//
 // Dependency Output Options
@@ -98,39 +98,39 @@ def w : Flag<"-w">, HelpText<"Suppress all warnings">;
 def M_Group : OptionGroup<"M group>">;
 let Group = M_Group in {
 
-  def MD : Flag<"-MD">;
+  def MD : Flag<["-"], "MD">, HelpText<"Emit .d dependency files">;
 
-  def M : Flag<"-M">;
-  def emit_dep : Flag<"-emit-dep">, Alias<M>;
+  def M : Flag<["-"], "M">;
+  def emit_dep : Flag<["-"], "emit-dep">, Alias<M>;
 }
 
-def output_dep_dir : Separate<"-output-dep-dir">, MetaVarName<"<directory>">,
+def output_dep_dir : Separate<["-"], "output-dep-dir">, MetaVarName<"<directory>">,
   HelpText<"Specify output directory for dependencies output">;
-def _output_dep_dir : Separate<"-d">, Alias<output_dep_dir>;
+def _output_dep_dir : Separate<["-"], "d">, Alias<output_dep_dir>;
 
-def additional_dep_target: Separate<"-additional-dep-target">,
+def additional_dep_target: Separate<["-"], "additional-dep-target">,
   HelpText<"Additional targets to show up in dependencies output">;
-def _additional_dep_target : Separate<"-a">, Alias<additional_dep_target>;
+def _additional_dep_target : Separate<["-"], "a">, Alias<additional_dep_target>;
 
 //===----------------------------------------------------------------------===//
 // Reflection Options
 //===----------------------------------------------------------------------===//
 
-def reflect_cpp : Flag<"-reflect-c++">,
+def reflect_cpp : Flag<["-"], "reflect-c++">,
   HelpText<"Reflect C++ classes">;
 
 //===----------------------------------------------------------------------===//
 // Misc Options
 //===----------------------------------------------------------------------===//
 
-def help : Flag<"-help">,
+def help : Flag<["-"], "help">,
   HelpText<"Print this help text">;
-def _help : Flag<"--help">, Alias<help>;
-def __help : Flag<"-h">, Alias<help>;
+def _help : Flag<["--"], "help">, Alias<help>;
+def __help : Flag<["-"], "h">, Alias<help>;
 
-def version : Flag<"-version">,
+def version : Flag<["-"], "version">,
   HelpText<"Print the assembler version">;
-def _version : Flag<"--version">, Alias<version>;
+def _version : Flag<["--"], "version">, Alias<version>;
 
 // Compatible with old slang
-def no_link : Flag<"-no-link">;  // currently no effect
+def no_link : Flag<["-"], "no-link">;  // currently no effect

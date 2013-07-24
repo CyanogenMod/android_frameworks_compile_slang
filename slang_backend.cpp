@@ -41,13 +41,13 @@
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/Metadata.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Metadata.h"
 
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
-#include "llvm/Target/TargetData.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -57,13 +57,14 @@
 #include "slang_assert.h"
 #include "BitWriter_2_9/ReaderWriter_2_9.h"
 #include "BitWriter_2_9_func/ReaderWriter_2_9_func.h"
+#include "BitWriter_3_2/ReaderWriter_3_2.h"
 
 namespace slang {
 
 void Backend::CreateFunctionPasses() {
   if (!mPerFunctionPasses) {
     mPerFunctionPasses = new llvm::FunctionPassManager(mpModule);
-    mPerFunctionPasses->add(new llvm::TargetData(mpModule));
+    mPerFunctionPasses->add(new llvm::DataLayout(mpModule));
 
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
@@ -75,7 +76,7 @@ void Backend::CreateFunctionPasses() {
 void Backend::CreateModulePasses() {
   if (!mPerModulePasses) {
     mPerModulePasses = new llvm::PassManager();
-    mPerModulePasses->add(new llvm::TargetData(mpModule));
+    mPerModulePasses->add(new llvm::DataLayout(mpModule));
 
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
@@ -108,7 +109,7 @@ bool Backend::CreateCodeGenPasses() {
     return true;
   } else {
     mCodeGenPasses = new llvm::FunctionPassManager(mpModule);
-    mCodeGenPasses->add(new llvm::TargetData(mpModule));
+    mCodeGenPasses->add(new llvm::DataLayout(mpModule));
   }
 
   // Create the TargetMachine for generating code.
@@ -222,7 +223,8 @@ Backend::Backend(clang::DiagnosticsEngine *DiagEngine,
       mPragmas(Pragmas) {
   FormattedOutStream.setStream(*mpOS,
                                llvm::formatted_raw_ostream::PRESERVE_STREAM);
-  mGen = CreateLLVMCodeGen(mDiagEngine, "", mCodeGenOpts, mLLVMContext);
+  mGen = CreateLLVMCodeGen(mDiagEngine, "", mCodeGenOpts,
+                           mTargetOpts, mLLVMContext);
   return;
 }
 
@@ -367,7 +369,10 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
               TargetAPI > SLANG_MAXIMUM_TARGET_API) {
             slangAssert(false && "Invalid target API value");
           }
-          BCEmitPM->add(llvm::createBitcodeWriterPass(Bitcode));
+          // Switch to the 3.2 BitcodeWriter by default, and don't use
+          // LLVM's included BitcodeWriter at all (for now).
+          BCEmitPM->add(llvm_3_2::createBitcodeWriterPass(Bitcode));
+          //BCEmitPM->add(llvm::createBitcodeWriterPass(Bitcode));
           break;
         }
       }

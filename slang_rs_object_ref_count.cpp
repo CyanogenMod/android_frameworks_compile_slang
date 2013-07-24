@@ -106,11 +106,8 @@ static clang::CompoundStmt* BuildCompoundStmt(clang::ASTContext &C,
   }
   slangAssert(CompoundStmtCount == NewStmtCount);
 
-  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(C,
-                                                       CompoundStmtList,
-                                                       CompoundStmtCount,
-                                                       Loc,
-                                                       Loc);
+  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(
+      C, llvm::makeArrayRef(CompoundStmtList, CompoundStmtCount), Loc, Loc);
 
   delete [] CompoundStmtList;
 
@@ -535,7 +532,8 @@ static clang::Stmt *ClearArrayRSObject(
                                    C.IntTy,
                                    clang::VK_RValue,
                                    clang::OK_Ordinary,
-                                   Loc);
+                                   Loc,
+                                   false);
 
   // Cond -> "rsIntIter < NumArrayElements"
   clang::Expr *NumArrayElementsExpr = clang::IntegerLiteral::Create(C,
@@ -548,7 +546,8 @@ static clang::Stmt *ClearArrayRSObject(
                                    C.IntTy,
                                    clang::VK_RValue,
                                    clang::OK_Ordinary,
-                                   Loc);
+                                   Loc,
+                                   false);
 
   // Inc -> "rsIntIter++"
   clang::UnaryOperator *Inc =
@@ -606,8 +605,8 @@ static clang::Stmt *ClearArrayRSObject(
   StmtArray[StmtCtr++] = DestructorLoop;
   slangAssert(StmtCtr == 2);
 
-  clang::CompoundStmt *CS =
-      new(C) clang::CompoundStmt(C, StmtArray, StmtCtr, Loc, Loc);
+  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(
+      C, llvm::makeArrayRef(StmtArray, StmtCtr), Loc, Loc);
 
   return CS;
 }
@@ -680,6 +679,7 @@ static clang::Stmt *ClearStructRSObject(
               RSExportPrimitiveType::DataTypeUnknown);
 
   unsigned FieldsToDestroy = CountRSObjectTypes(C, BaseType, Loc);
+  slangAssert(FieldsToDestroy != 0);
 
   unsigned StmtCount = 0;
   clang::Stmt **StmtArray = new clang::Stmt*[FieldsToDestroy];
@@ -772,8 +772,8 @@ static clang::Stmt *ClearStructRSObject(
   }
 
   slangAssert(StmtCount > 0);
-  clang::CompoundStmt *CS =
-      new(C) clang::CompoundStmt(C, StmtArray, StmtCount, Loc, Loc);
+  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(
+      C, llvm::makeArrayRef(StmtArray, StmtCount), Loc, Loc);
 
   delete [] StmtArray;
 
@@ -1092,18 +1092,19 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
     }
   }
 
-  slangAssert(StmtCount > 0 && StmtCount < FieldsToSet);
+  slangAssert(StmtCount < FieldsToSet);
 
   // We still need to actually do the overall struct copy. For simplicity,
   // we just do a straight-up assignment (which will still preserve all
   // the proper RS object reference counts).
   clang::BinaryOperator *CopyStruct =
       new(C) clang::BinaryOperator(LHS, RHS, clang::BO_Assign, QT,
-                                   clang::VK_RValue, clang::OK_Ordinary, Loc);
+                                   clang::VK_RValue, clang::OK_Ordinary, Loc,
+                                   false);
   StmtArray[StmtCount++] = CopyStruct;
 
-  clang::CompoundStmt *CS =
-      new(C) clang::CompoundStmt(C, StmtArray, StmtCount, Loc, Loc);
+  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(
+      C, llvm::makeArrayRef(StmtArray, StmtCount), Loc, Loc);
 
   delete [] StmtArray;
 
@@ -1467,8 +1468,14 @@ void RSObjectRefCount::VisitDeclStmt(clang::DeclStmt *DS) {
           RSExportPrimitiveType::DataTypeUnknown;
       clang::Expr *InitExpr = NULL;
       if (InitializeRSObject(VD, &DT, &InitExpr)) {
-        getCurrentScope()->addRSObject(VD);
+        // We need to zero-init all RS object types (including matrices), ...
         getCurrentScope()->AppendRSObjectInit(VD, DS, DT, InitExpr);
+        // ... but, only add to the list of RS objects if we have some
+        // non-matrix RS object fields.
+        if (CountRSObjectTypes(mCtx, VD->getType().getTypePtr(),
+                               VD->getLocation())) {
+          getCurrentScope()->addRSObject(VD);
+        }
       }
     }
   }
@@ -1526,7 +1533,8 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
   clang::IdentifierInfo &II = mCtx.Idents.get(SR);
   clang::DeclarationName N(&II);
   clang::FunctionProtoType::ExtProtoInfo EPI;
-  clang::QualType T = mCtx.getFunctionType(mCtx.VoidTy, NULL, 0, EPI);
+  clang::QualType T = mCtx.getFunctionType(mCtx.VoidTy,
+      llvm::ArrayRef<clang::QualType>(), EPI);
   clang::FunctionDecl *FD = NULL;
 
   // Generate rsClearObject() call chains for every global variable

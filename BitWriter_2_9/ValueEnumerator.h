@@ -16,7 +16,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Attributes.h"
+#include "llvm/IR/Attributes.h"
 #include <vector>
 
 namespace llvm {
@@ -29,7 +29,7 @@ class Function;
 class Module;
 class MDNode;
 class NamedMDNode;
-class AttrListPtr;
+class AttributeSet;
 class ValueSymbolTable;
 class MDSymbolTable;
 class raw_ostream;
@@ -55,15 +55,19 @@ private:
   ValueList MDValues;
   llvm::SmallVector<const llvm::MDNode *, 8> FunctionLocalMDs;
   ValueMapType MDValueMap;
-  
-  typedef llvm::DenseMap<void*, unsigned> AttributeMapType;
+
+  typedef llvm::DenseMap<llvm::AttributeSet, unsigned> AttributeGroupMapType;
+  AttributeGroupMapType AttributeGroupMap;
+  std::vector<llvm::AttributeSet> AttributeGroups;
+
+  typedef llvm::DenseMap<llvm::AttributeSet, unsigned> AttributeMapType;
   AttributeMapType AttributeMap;
-  std::vector<llvm::AttrListPtr> Attributes;
-  
+  std::vector<llvm::AttributeSet> Attribute;
+
   /// GlobalBasicBlockIDs - This map memoizes the basic block ID's referenced by
   /// the "getGlobalBasicBlockID" method.
   mutable llvm::DenseMap<const llvm::BasicBlock*, unsigned> GlobalBasicBlockIDs;
-  
+
   typedef llvm::DenseMap<const llvm::Instruction*, unsigned> InstructionMapType;
   InstructionMapType InstructionMap;
   unsigned InstructionCount;
@@ -71,7 +75,7 @@ private:
   /// BasicBlocks - This contains all the basic blocks for the currently
   /// incorporated function.  Their reverse mapping is stored in ValueMap.
   std::vector<const llvm::BasicBlock*> BasicBlocks;
-  
+
   /// When a function is incorporated, this is the size of the Values list
   /// before incorporation.
   unsigned NumModuleValues;
@@ -82,7 +86,7 @@ private:
 
   unsigned FirstFuncConstantID;
   unsigned FirstInstID;
-  
+
   ValueEnumerator(const ValueEnumerator &);  // DO NOT IMPLEMENT
   void operator=(const ValueEnumerator &);   // DO NOT IMPLEMENT
 public:
@@ -102,10 +106,17 @@ public:
   unsigned getInstructionID(const llvm::Instruction *I) const;
   void setInstructionID(const llvm::Instruction *I);
 
-  unsigned getAttributeID(const llvm::AttrListPtr &PAL) const {
+  unsigned getAttributeID(llvm::AttributeSet PAL) const {
     if (PAL.isEmpty()) return 0;  // Null maps to zero.
-    AttributeMapType::const_iterator I = AttributeMap.find(PAL.getRawPointer());
+    AttributeMapType::const_iterator I = AttributeMap.find(PAL);
     assert(I != AttributeMap.end() && "Attribute not in ValueEnumerator!");
+    return I->second;
+  }
+
+  unsigned getAttributeGroupID(llvm::AttributeSet PAL) const {
+    if (PAL.isEmpty()) return 0;  // Null maps to zero.
+    AttributeGroupMapType::const_iterator I = AttributeGroupMap.find(PAL);
+    assert(I != AttributeGroupMap.end() && "Attribute not in ValueEnumerator!");
     return I->second;
   }
 
@@ -115,20 +126,23 @@ public:
     Start = FirstFuncConstantID;
     End = FirstInstID;
   }
-  
+
   const ValueList &getValues() const { return Values; }
   const ValueList &getMDValues() const { return MDValues; }
-  const llvm::SmallVector<const llvm::MDNode *, 8> &getFunctionLocalMDValues() const { 
+  const llvm::SmallVector<const llvm::MDNode *, 8> &getFunctionLocalMDValues() const {
     return FunctionLocalMDs;
   }
   const TypeList &getTypes() const { return Types; }
   const std::vector<const llvm::BasicBlock*> &getBasicBlocks() const {
-    return BasicBlocks; 
+    return BasicBlocks;
   }
-  const std::vector<llvm::AttrListPtr> &getAttributes() const {
-    return Attributes;
+  const std::vector<llvm::AttributeSet> &getAttributes() const {
+    return Attribute;
   }
-  
+  const std::vector<llvm::AttributeSet> &getAttributeGroups() const {
+    return AttributeGroups;
+  }
+
   /// getGlobalBasicBlockID - This returns the function-specific ID for the
   /// specified basic block.  This is relatively expensive information, so it
   /// should only be used by rare constructs such as address-of-label.
@@ -142,7 +156,7 @@ public:
 
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
-    
+
   void EnumerateMDNodeOperands(const llvm::MDNode *N);
   void EnumerateMetadata(const llvm::Value *MD);
   void EnumerateFunctionLocalMetadata(const llvm::MDNode *N);
@@ -150,8 +164,8 @@ private:
   void EnumerateValue(const llvm::Value *V);
   void EnumerateType(llvm::Type *T);
   void EnumerateOperandType(const llvm::Value *V);
-  void EnumerateAttributes(const llvm::AttrListPtr &PAL);
-  
+  void EnumerateAttributes(llvm::AttributeSet PAL);
+
   void EnumerateValueSymbolTable(const llvm::ValueSymbolTable &ST);
   void EnumerateNamedMetadata(const llvm::Module *M);
 };

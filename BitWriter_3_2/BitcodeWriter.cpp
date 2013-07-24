@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ReaderWriter_2_9_func.h"
+#include "ReaderWriter_3_2.h"
 #include "ValueEnumerator.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
@@ -23,6 +23,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/ValueSymbolTable.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Program.h"
@@ -30,6 +31,12 @@
 #include <cctype>
 #include <map>
 using namespace llvm;
+
+static cl::opt<bool>
+EnablePreserveUseListOrdering("enable-bc-uselist-preserve",
+                              cl::desc("Turn on experimental support for "
+                                       "use-list order preservation."),
+                              cl::init(false), cl::Hidden);
 
 /// These are manifest constants used by the bitcode writer. They do not need to
 /// be kept in sync with the reader, but need to be consistent within this file.
@@ -55,9 +62,11 @@ enum {
   FUNCTION_INST_CAST_ABBREV,
   FUNCTION_INST_RET_VOID_ABBREV,
   FUNCTION_INST_RET_VAL_ABBREV,
-  FUNCTION_INST_UNREACHABLE_ABBREV
-};
+  FUNCTION_INST_UNREACHABLE_ABBREV,
 
+  // SwitchInst Magic
+  SWITCH_INST_MAGIC = 0x4B5 // May 2012 => 1205 => Hex
+};
 
 static unsigned GetEncodedCastOpcode(unsigned Opcode) {
   switch (Opcode) {
@@ -120,7 +129,6 @@ static unsigned GetEncodedRMWOperation(AtomicRMWInst::BinOp Op) {
 
 static unsigned GetEncodedOrdering(AtomicOrdering Ordering) {
   switch (Ordering) {
-  default: llvm_unreachable("Unknown atomic ordering");
   case NotAtomic: return bitc::ORDERING_NOTATOMIC;
   case Unordered: return bitc::ORDERING_UNORDERED;
   case Monotonic: return bitc::ORDERING_MONOTONIC;
@@ -129,14 +137,15 @@ static unsigned GetEncodedOrdering(AtomicOrdering Ordering) {
   case AcquireRelease: return bitc::ORDERING_ACQREL;
   case SequentiallyConsistent: return bitc::ORDERING_SEQCST;
   }
+  llvm_unreachable("Invalid ordering");
 }
 
 static unsigned GetEncodedSynchScope(SynchronizationScope SynchScope) {
   switch (SynchScope) {
-  default: llvm_unreachable("Unknown synchronization scope");
   case SingleThread: return bitc::SYNCHSCOPE_SINGLETHREAD;
   case CrossThread: return bitc::SYNCHSCOPE_CROSSTHREAD;
   }
+  llvm_unreachable("Invalid synch scope");
 }
 
 static void WriteStringRecord(unsigned Code, StringRef Str,
@@ -155,7 +164,7 @@ static void WriteStringRecord(unsigned Code, StringRef Str,
 }
 
 // Emit information about parameter attributes.
-static void WriteAttributeTable(const llvm_2_9_func::ValueEnumerator &VE,
+static void WriteAttributeTable(const llvm_3_2::ValueEnumerator &VE,
                                 BitstreamWriter &Stream) {
   const std::vector<AttributeSet> &Attrs = VE.getAttributes();
   if (Attrs.empty()) return;
@@ -176,29 +185,29 @@ static void WriteAttributeTable(const llvm_2_9_func::ValueEnumerator &VE,
 }
 
 /// WriteTypeTable - Write out the type table for a module.
-static void WriteTypeTable(const llvm_2_9_func::ValueEnumerator &VE,
+static void WriteTypeTable(const llvm_3_2::ValueEnumerator &VE,
                            BitstreamWriter &Stream) {
-  const llvm_2_9_func::ValueEnumerator::TypeList &TypeList = VE.getTypes();
+  const llvm_3_2::ValueEnumerator::TypeList &TypeList = VE.getTypes();
 
   Stream.EnterSubblock(bitc::TYPE_BLOCK_ID_NEW, 4 /*count from # abbrevs */);
   SmallVector<uint64_t, 64> TypeVals;
 
+  uint64_t NumBits = Log2_32_Ceil(VE.getTypes().size()+1);
+
   // Abbrev for TYPE_CODE_POINTER.
   BitCodeAbbrev *Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_POINTER));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
-                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, NumBits));
   Abbv->Add(BitCodeAbbrevOp(0));  // Addrspace = 0
   unsigned PtrAbbrev = Stream.EmitAbbrev(Abbv);
 
   // Abbrev for TYPE_CODE_FUNCTION.
   Abbv = new BitCodeAbbrev();
-  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_FUNCTION_OLD));
+  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_FUNCTION));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));  // isvararg
-  Abbv->Add(BitCodeAbbrevOp(0));  // FIXME: DEAD value, remove in LLVM 3.0
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
-                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, NumBits));
+
   unsigned FunctionAbbrev = Stream.EmitAbbrev(Abbv);
 
   // Abbrev for TYPE_CODE_STRUCT_ANON.
@@ -206,8 +215,8 @@ static void WriteTypeTable(const llvm_2_9_func::ValueEnumerator &VE,
   Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_STRUCT_ANON));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));  // ispacked
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
-                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, NumBits));
+
   unsigned StructAnonAbbrev = Stream.EmitAbbrev(Abbv);
 
   // Abbrev for TYPE_CODE_STRUCT_NAME.
@@ -222,16 +231,16 @@ static void WriteTypeTable(const llvm_2_9_func::ValueEnumerator &VE,
   Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_STRUCT_NAMED));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));  // ispacked
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
-                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, NumBits));
+
   unsigned StructNamedAbbrev = Stream.EmitAbbrev(Abbv);
 
   // Abbrev for TYPE_CODE_ARRAY.
   Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_ARRAY));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));   // size
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
-                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, NumBits));
+
   unsigned ArrayAbbrev = Stream.EmitAbbrev(Abbv);
 
   // Emit an entry count so the reader can reserve space.
@@ -247,15 +256,16 @@ static void WriteTypeTable(const llvm_2_9_func::ValueEnumerator &VE,
 
     switch (T->getTypeID()) {
     default: llvm_unreachable("Unknown type!");
-    case Type::VoidTyID:      Code = bitc::TYPE_CODE_VOID;   break;
-    case Type::FloatTyID:     Code = bitc::TYPE_CODE_FLOAT;  break;
-    case Type::DoubleTyID:    Code = bitc::TYPE_CODE_DOUBLE; break;
-    case Type::X86_FP80TyID:  Code = bitc::TYPE_CODE_X86_FP80; break;
-    case Type::FP128TyID:     Code = bitc::TYPE_CODE_FP128; break;
+    case Type::VoidTyID:      Code = bitc::TYPE_CODE_VOID;      break;
+    case Type::HalfTyID:      Code = bitc::TYPE_CODE_HALF;      break;
+    case Type::FloatTyID:     Code = bitc::TYPE_CODE_FLOAT;     break;
+    case Type::DoubleTyID:    Code = bitc::TYPE_CODE_DOUBLE;    break;
+    case Type::X86_FP80TyID:  Code = bitc::TYPE_CODE_X86_FP80;  break;
+    case Type::FP128TyID:     Code = bitc::TYPE_CODE_FP128;     break;
     case Type::PPC_FP128TyID: Code = bitc::TYPE_CODE_PPC_FP128; break;
-    case Type::LabelTyID:     Code = bitc::TYPE_CODE_LABEL;  break;
-    case Type::MetadataTyID:  Code = bitc::TYPE_CODE_METADATA; break;
-    case Type::X86_MMXTyID:   Code = bitc::TYPE_CODE_X86_MMX; break;
+    case Type::LabelTyID:     Code = bitc::TYPE_CODE_LABEL;     break;
+    case Type::MetadataTyID:  Code = bitc::TYPE_CODE_METADATA;  break;
+    case Type::X86_MMXTyID:   Code = bitc::TYPE_CODE_X86_MMX;   break;
     case Type::IntegerTyID:
       // INTEGER: [width]
       Code = bitc::TYPE_CODE_INTEGER;
@@ -273,10 +283,9 @@ static void WriteTypeTable(const llvm_2_9_func::ValueEnumerator &VE,
     }
     case Type::FunctionTyID: {
       FunctionType *FT = cast<FunctionType>(T);
-      // FUNCTION: [isvararg, attrid, retty, paramty x N]
-      Code = bitc::TYPE_CODE_FUNCTION_OLD;
+      // FUNCTION: [isvararg, retty, paramty x N]
+      Code = bitc::TYPE_CODE_FUNCTION;
       TypeVals.push_back(FT->isVarArg());
-      TypeVals.push_back(0);  // FIXME: DEAD: remove in llvm 3.0
       TypeVals.push_back(VE.getTypeID(FT->getReturnType()));
       for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i)
         TypeVals.push_back(VE.getTypeID(FT->getParamType(i)));
@@ -291,7 +300,7 @@ static void WriteTypeTable(const llvm_2_9_func::ValueEnumerator &VE,
       for (StructType::element_iterator I = ST->element_begin(),
            E = ST->element_end(); I != E; ++I)
         TypeVals.push_back(VE.getTypeID(*I));
-      
+
       if (ST->isLiteral()) {
         Code = bitc::TYPE_CODE_STRUCT_ANON;
         AbbrevToUse = StructAnonAbbrev;
@@ -361,17 +370,28 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
 
 static unsigned getEncodedVisibility(const GlobalValue *GV) {
   switch (GV->getVisibility()) {
-  default: llvm_unreachable("Invalid visibility!");
   case GlobalValue::DefaultVisibility:   return 0;
   case GlobalValue::HiddenVisibility:    return 1;
   case GlobalValue::ProtectedVisibility: return 2;
   }
+  llvm_unreachable("Invalid visibility");
+}
+
+static unsigned getEncodedThreadLocalMode(const GlobalVariable *GV) {
+  switch (GV->getThreadLocalMode()) {
+    case GlobalVariable::NotThreadLocal:         return 0;
+    case GlobalVariable::GeneralDynamicTLSModel: return 1;
+    case GlobalVariable::LocalDynamicTLSModel:   return 2;
+    case GlobalVariable::InitialExecTLSModel:    return 3;
+    case GlobalVariable::LocalExecTLSModel:      return 4;
+  }
+  llvm_unreachable("Invalid TLS model");
 }
 
 // Emit top-level description of module, including target triple, inline asm,
 // descriptors for global variables, and function prototype info.
 static void WriteModuleInfo(const Module *M,
-                            const llvm_2_9_func::ValueEnumerator &VE,
+                            const llvm_3_2::ValueEnumerator &VE,
                             BitstreamWriter &Stream) {
   // Emit various pieces of data attached to a module.
   if (!M->getTargetTriple().empty())
@@ -394,14 +414,15 @@ static void WriteModuleInfo(const Module *M,
        GV != E; ++GV) {
     MaxAlignment = std::max(MaxAlignment, GV->getAlignment());
     MaxGlobalType = std::max(MaxGlobalType, VE.getTypeID(GV->getType()));
-
-    if (!GV->hasSection()) continue;
-    // Give section names unique ID's.
-    unsigned &Entry = SectionMap[GV->getSection()];
-    if (Entry != 0) continue;
-    WriteStringRecord(bitc::MODULE_CODE_SECTIONNAME, GV->getSection(),
-                      0/*TODO*/, Stream);
-    Entry = SectionMap.size();
+    if (GV->hasSection()) {
+      // Give section names unique ID's.
+      unsigned &Entry = SectionMap[GV->getSection()];
+      if (!Entry) {
+        WriteStringRecord(bitc::MODULE_CODE_SECTIONNAME, GV->getSection(),
+                          0/*TODO*/, Stream);
+        Entry = SectionMap.size();
+      }
+    }
   }
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F) {
     MaxAlignment = std::max(MaxAlignment, F->getAlignment());
@@ -470,10 +491,11 @@ static void WriteModuleInfo(const Module *M,
     Vals.push_back(GV->hasSection() ? SectionMap[GV->getSection()] : 0);
     if (GV->isThreadLocal() ||
         GV->getVisibility() != GlobalValue::DefaultVisibility ||
-        GV->hasUnnamedAddr()) {
+        GV->hasUnnamedAddr() || GV->isExternallyInitialized()) {
       Vals.push_back(getEncodedVisibility(GV));
-      Vals.push_back(GV->isThreadLocal());
+      Vals.push_back(getEncodedThreadLocalMode(GV));
       Vals.push_back(GV->hasUnnamedAddr());
+      Vals.push_back(GV->isExternallyInitialized());
     } else {
       AbbrevToUse = SimpleGVarAbbrev;
     }
@@ -484,8 +506,8 @@ static void WriteModuleInfo(const Module *M,
 
   // Emit the function proto information.
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F) {
-    // FUNCTION:  [type, callingconv, isproto, paramattr,
-    //             linkage, alignment, section, visibility, gc, unnamed_addr]
+    // FUNCTION:  [type, callingconv, isproto, linkage, paramattrs, alignment,
+    //             section, visibility, gc, unnamed_addr]
     Vals.push_back(VE.getTypeID(F->getType()));
     Vals.push_back(F->getCallingConv());
     Vals.push_back(F->isDeclaration());
@@ -505,6 +527,7 @@ static void WriteModuleInfo(const Module *M,
   // Emit the alias information.
   for (Module::const_alias_iterator AI = M->alias_begin(), E = M->alias_end();
        AI != E; ++AI) {
+    // ALIAS: [alias type, aliasee val#, linkage, visibility]
     Vals.push_back(VE.getTypeID(AI->getType()));
     Vals.push_back(VE.getValueID(AI->getAliasee()));
     Vals.push_back(getEncodedLinkage(AI));
@@ -528,13 +551,28 @@ static uint64_t GetOptimizationFlags(const Value *V) {
                dyn_cast<PossiblyExactOperator>(V)) {
     if (PEO->isExact())
       Flags |= 1 << bitc::PEO_EXACT;
+  } else if (const FPMathOperator *FPMO =
+             dyn_cast<const FPMathOperator>(V)) {
+    // FIXME(srhines): We don't handle fast math in llvm-rs-cc today.
+    if (false) {
+      if (FPMO->hasUnsafeAlgebra())
+        Flags |= FastMathFlags::UnsafeAlgebra;
+      if (FPMO->hasNoNaNs())
+        Flags |= FastMathFlags::NoNaNs;
+      if (FPMO->hasNoInfs())
+        Flags |= FastMathFlags::NoInfs;
+      if (FPMO->hasNoSignedZeros())
+        Flags |= FastMathFlags::NoSignedZeros;
+      if (FPMO->hasAllowReciprocal())
+        Flags |= FastMathFlags::AllowReciprocal;
+    }
   }
 
   return Flags;
 }
 
 static void WriteMDNode(const MDNode *N,
-                        const llvm_2_9_func::ValueEnumerator &VE,
+                        const llvm_3_2::ValueEnumerator &VE,
                         BitstreamWriter &Stream,
                         SmallVector<uint64_t, 64> &Record) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
@@ -553,9 +591,9 @@ static void WriteMDNode(const MDNode *N,
 }
 
 static void WriteModuleMetadata(const Module *M,
-                                const llvm_2_9_func::ValueEnumerator &VE,
+                                const llvm_3_2::ValueEnumerator &VE,
                                 BitstreamWriter &Stream) {
-  const llvm_2_9_func::ValueEnumerator::ValueList &Vals = VE.getMDValues();
+  const llvm_3_2::ValueEnumerator::ValueList &Vals = VE.getMDValues();
   bool StartedMetadataBlock = false;
   unsigned MDSAbbrev = 0;
   SmallVector<uint64_t, 64> Record;
@@ -619,7 +657,7 @@ static void WriteModuleMetadata(const Module *M,
 }
 
 static void WriteFunctionLocalMetadata(const Function &F,
-                                       const llvm_2_9_func::ValueEnumerator &VE,
+                                       const llvm_3_2::ValueEnumerator &VE,
                                        BitstreamWriter &Stream) {
   bool StartedMetadataBlock = false;
   SmallVector<uint64_t, 64> Record;
@@ -639,7 +677,7 @@ static void WriteFunctionLocalMetadata(const Function &F,
 }
 
 static void WriteMetadataAttachment(const Function &F,
-                                    const llvm_2_9_func::ValueEnumerator &VE,
+                                    const llvm_3_2::ValueEnumerator &VE,
                                     BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::METADATA_ATTACHMENT_ID, 3);
 
@@ -695,8 +733,43 @@ static void WriteModuleMetadataStore(const Module *M, BitstreamWriter &Stream) {
   Stream.ExitBlock();
 }
 
+static void EmitAPInt(SmallVectorImpl<uint64_t> &Vals,
+                      unsigned &Code, unsigned &AbbrevToUse, const APInt &Val,
+                      bool EmitSizeForWideNumbers = false
+                      ) {
+  if (Val.getBitWidth() <= 64) {
+    uint64_t V = Val.getSExtValue();
+    if ((int64_t)V >= 0)
+      Vals.push_back(V << 1);
+    else
+      Vals.push_back((-V << 1) | 1);
+    Code = bitc::CST_CODE_INTEGER;
+    AbbrevToUse = CONSTANTS_INTEGER_ABBREV;
+  } else {
+    // Wide integers, > 64 bits in size.
+    // We have an arbitrary precision integer value to write whose
+    // bit width is > 64. However, in canonical unsigned integer
+    // format it is likely that the high bits are going to be zero.
+    // So, we only write the number of active words.
+    unsigned NWords = Val.getActiveWords();
+
+    if (EmitSizeForWideNumbers)
+      Vals.push_back(NWords);
+
+    const uint64_t *RawWords = Val.getRawData();
+    for (unsigned i = 0; i != NWords; ++i) {
+      int64_t V = RawWords[i];
+      if (V >= 0)
+        Vals.push_back(V << 1);
+      else
+        Vals.push_back((-V << 1) | 1);
+    }
+    Code = bitc::CST_CODE_WIDE_INTEGER;
+  }
+}
+
 static void WriteConstants(unsigned FirstVal, unsigned LastVal,
-                           const llvm_2_9_func::ValueEnumerator &VE,
+                           const llvm_3_2::ValueEnumerator &VE,
                            BitstreamWriter &Stream, bool isGlobal) {
   if (FirstVal == LastVal) return;
 
@@ -737,7 +810,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
 
   SmallVector<uint64_t, 64> Record;
 
-  const llvm_2_9_func::ValueEnumerator::ValueList &Vals = VE.getValues();
+  const llvm_3_2::ValueEnumerator::ValueList &Vals = VE.getValues();
   Type *LastTy = 0;
   for (unsigned i = FirstVal; i != LastVal; ++i) {
     const Value *V = Vals[i].first;
@@ -752,7 +825,8 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
 
     if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
       Record.push_back(unsigned(IA->hasSideEffects()) |
-                       unsigned(IA->isAlignStack()) << 1);
+                       unsigned(IA->isAlignStack()) << 1 |
+                       unsigned(IA->getDialect()&1) << 2);
 
       // Add the asm string.
       const std::string &AsmStr = IA->getAsmString();
@@ -777,34 +851,11 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     } else if (isa<UndefValue>(C)) {
       Code = bitc::CST_CODE_UNDEF;
     } else if (const ConstantInt *IV = dyn_cast<ConstantInt>(C)) {
-      if (IV->getBitWidth() <= 64) {
-        uint64_t V = IV->getSExtValue();
-        if ((int64_t)V >= 0)
-          Record.push_back(V << 1);
-        else
-          Record.push_back((-V << 1) | 1);
-        Code = bitc::CST_CODE_INTEGER;
-        AbbrevToUse = CONSTANTS_INTEGER_ABBREV;
-      } else {                             // Wide integers, > 64 bits in size.
-        // We have an arbitrary precision integer value to write whose
-        // bit width is > 64. However, in canonical unsigned integer
-        // format it is likely that the high bits are going to be zero.
-        // So, we only write the number of active words.
-        unsigned NWords = IV->getValue().getActiveWords();
-        const uint64_t *RawWords = IV->getValue().getRawData();
-        for (unsigned i = 0; i != NWords; ++i) {
-          int64_t V = RawWords[i];
-          if (V >= 0)
-            Record.push_back(V << 1);
-          else
-            Record.push_back((-V << 1) | 1);
-        }
-        Code = bitc::CST_CODE_WIDE_INTEGER;
-      }
+      EmitAPInt(Record, Code, AbbrevToUse, IV->getValue());
     } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       Code = bitc::CST_CODE_FLOAT;
       Type *Ty = CFP->getType();
-      if (Ty->isFloatTy() || Ty->isDoubleTy()) {
+      if (Ty->isHalfTy() || Ty->isFloatTy() || Ty->isDoubleTy()) {
         Record.push_back(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
       } else if (Ty->isX86_FP80Ty()) {
         // api needed to prevent premature destruction
@@ -850,14 +901,25 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         AbbrevToUse = CString7Abbrev;
     } else if (const ConstantDataSequential *CDS =
                   dyn_cast<ConstantDataSequential>(C)) {
-      // We must replace ConstantDataSequential's representation with the
-      // legacy ConstantArray/ConstantVector/ConstantStruct version.
-      // ValueEnumerator is similarly modified to mark the appropriate
-      // Constants as used (so they are emitted).
-      Code = bitc::CST_CODE_AGGREGATE;
-      for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i)
-        Record.push_back(VE.getValueID(CDS->getElementAsConstant(i)));
-      AbbrevToUse = AggregateAbbrev;
+      Code = bitc::CST_CODE_DATA;
+      Type *EltTy = CDS->getType()->getElementType();
+      if (isa<IntegerType>(EltTy)) {
+        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i)
+          Record.push_back(CDS->getElementAsInteger(i));
+      } else if (EltTy->isFloatTy()) {
+        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
+          union { float F; uint32_t I; };
+          F = CDS->getElementAsFloat(i);
+          Record.push_back(I);
+        }
+      } else {
+        assert(EltTy->isDoubleTy() && "Unknown ConstantData element type");
+        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
+          union { double F; uint64_t I; };
+          F = CDS->getElementAsDouble(i);
+          Record.push_back(I);
+        }
+      }
     } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(C) ||
                isa<ConstantVector>(C)) {
       Code = bitc::CST_CODE_AGGREGATE;
@@ -953,9 +1015,9 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   Stream.ExitBlock();
 }
 
-static void WriteModuleConstants(const llvm_2_9_func::ValueEnumerator &VE,
+static void WriteModuleConstants(const llvm_3_2::ValueEnumerator &VE,
                                  BitstreamWriter &Stream) {
-  const llvm_2_9_func::ValueEnumerator::ValueList &Vals = VE.getValues();
+  const llvm_3_2::ValueEnumerator::ValueList &Vals = VE.getValues();
 
   // Find the first constant to emit, which is the first non-globalvalue value.
   // We know globalvalues have been emitted by WriteModuleInfo.
@@ -977,7 +1039,7 @@ static void WriteModuleConstants(const llvm_2_9_func::ValueEnumerator &VE,
 /// type ID.
 static bool PushValueAndType(const Value *V, unsigned InstID,
                              SmallVector<unsigned, 64> &Vals,
-                             llvm_2_9_func::ValueEnumerator &VE) {
+                             llvm_3_2::ValueEnumerator &VE) {
   unsigned ValID = VE.getValueID(V);
   Vals.push_back(ValID);
   if (ValID >= InstID) {
@@ -989,7 +1051,7 @@ static bool PushValueAndType(const Value *V, unsigned InstID,
 
 /// WriteInstruction - Emit an instruction to the specified stream.
 static void WriteInstruction(const Instruction &I, unsigned InstID,
-                             llvm_2_9_func::ValueEnumerator &VE,
+                             llvm_3_2::ValueEnumerator &VE,
                              BitstreamWriter &Stream,
                              SmallVector<unsigned, 64> &Vals) {
   unsigned Code = 0;
@@ -1103,29 +1165,63 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     break;
   case Instruction::Switch:
     {
+      // Redefine Vals, since here we need to use 64 bit values
+      // explicitly to store large APInt numbers.
+      SmallVector<uint64_t, 128> Vals64;
+
       Code = bitc::FUNC_CODE_INST_SWITCH;
       const SwitchInst &SI = cast<SwitchInst>(I);
 
-      Vals.push_back(VE.getTypeID(SI.getCondition()->getType()));
-      Vals.push_back(VE.getValueID(SI.getCondition()));
-      Vals.push_back(VE.getValueID(SI.getDefaultDest()));
+      uint32_t SwitchRecordHeader = SI.hash() | (SWITCH_INST_MAGIC << 16);
+      Vals64.push_back(SwitchRecordHeader);
+
+      Vals64.push_back(VE.getTypeID(SI.getCondition()->getType()));
+      Vals64.push_back(VE.getValueID(SI.getCondition()));
+      Vals64.push_back(VE.getValueID(SI.getDefaultDest()));
+      Vals64.push_back(SI.getNumCases());
       for (SwitchInst::ConstCaseIt i = SI.case_begin(), e = SI.case_end();
            i != e; ++i) {
         const IntegersSubset& CaseRanges = i.getCaseValueEx();
+        unsigned Code, Abbrev; // will unused.
 
         if (CaseRanges.isSingleNumber()) {
-          Vals.push_back(VE.getValueID(CaseRanges.getSingleNumber(0).toConstantInt()));
-          Vals.push_back(VE.getValueID(i.getCaseSuccessor()));
-        } else if (CaseRanges.isSingleNumbersOnly()) {
-          for (unsigned ri = 0, rn = CaseRanges.getNumItems();
-               ri != rn; ++ri) {
-            Vals.push_back(VE.getValueID(CaseRanges.getSingleNumber(ri).toConstantInt()));
-            Vals.push_back(VE.getValueID(i.getCaseSuccessor()));
-          }
+          Vals64.push_back(1/*NumItems = 1*/);
+          Vals64.push_back(true/*IsSingleNumber = true*/);
+          EmitAPInt(Vals64, Code, Abbrev, CaseRanges.getSingleNumber(0), true);
         } else {
-          llvm_unreachable("Not single number?");
+
+          Vals64.push_back(CaseRanges.getNumItems());
+
+          if (CaseRanges.isSingleNumbersOnly()) {
+            for (unsigned ri = 0, rn = CaseRanges.getNumItems();
+                 ri != rn; ++ri) {
+
+              Vals64.push_back(true/*IsSingleNumber = true*/);
+
+              EmitAPInt(Vals64, Code, Abbrev,
+                        CaseRanges.getSingleNumber(ri), true);
+            }
+          } else
+            for (unsigned ri = 0, rn = CaseRanges.getNumItems();
+                 ri != rn; ++ri) {
+              IntegersSubset::Range r = CaseRanges.getItem(ri);
+              bool IsSingleNumber = CaseRanges.isSingleNumber(ri);
+
+              Vals64.push_back(IsSingleNumber);
+
+              EmitAPInt(Vals64, Code, Abbrev, r.getLow(), true);
+              if (!IsSingleNumber)
+                EmitAPInt(Vals64, Code, Abbrev, r.getHigh(), true);
+            }
         }
+        Vals64.push_back(VE.getValueID(i.getCaseSuccessor()));
       }
+
+      Stream.EmitRecord(Code, Vals64, AbbrevToUse);
+
+      // Also do expected action - clear external Vals collection:
+      Vals.clear();
+      return;
     }
     break;
   case Instruction::IndirectBr:
@@ -1299,7 +1395,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
 
 // Emit names for globals/functions etc.
 static void WriteValueSymbolTable(const ValueSymbolTable &VST,
-                                  const llvm_2_9_func::ValueEnumerator &VE,
+                                  const llvm_3_2::ValueEnumerator &VE,
                                   BitstreamWriter &Stream) {
   if (VST.empty()) return;
   Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 4);
@@ -1356,7 +1452,7 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
 }
 
 /// WriteFunction - Emit a function body to the module stream.
-static void WriteFunction(const Function &F, llvm_2_9_func::ValueEnumerator &VE,
+static void WriteFunction(const Function &F, llvm_3_2::ValueEnumerator &VE,
                           BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::FUNCTION_BLOCK_ID, 4);
   VE.incorporateFunction(F);
@@ -1428,7 +1524,7 @@ static void WriteFunction(const Function &F, llvm_2_9_func::ValueEnumerator &VE,
 }
 
 // Emit blockinfo, which defines the standard abbreviations etc.
-static void WriteBlockInfo(const llvm_2_9_func::ValueEnumerator &VE,
+static void WriteBlockInfo(const llvm_3_2::ValueEnumerator &VE,
                            BitstreamWriter &Stream) {
   // We only want to emit block info records for blocks that have multiple
   // instances: CONSTANTS_BLOCK, FUNCTION_BLOCK and VALUE_SYMTAB_BLOCK.  Other
@@ -1589,6 +1685,103 @@ static void WriteBlockInfo(const llvm_2_9_func::ValueEnumerator &VE,
   Stream.ExitBlock();
 }
 
+// Sort the Users based on the order in which the reader parses the bitcode
+// file.
+static bool bitcodereader_order(const User *lhs, const User *rhs) {
+  // TODO: Implement.
+  return true;
+}
+
+static void WriteUseList(const Value *V, const llvm_3_2::ValueEnumerator &VE,
+                         BitstreamWriter &Stream) {
+
+  // One or zero uses can't get out of order.
+  if (V->use_empty() || V->hasNUses(1))
+    return;
+
+  // Make a copy of the in-memory use-list for sorting.
+  unsigned UseListSize = std::distance(V->use_begin(), V->use_end());
+  SmallVector<const User*, 8> UseList;
+  UseList.reserve(UseListSize);
+  for (Value::const_use_iterator I = V->use_begin(), E = V->use_end();
+       I != E; ++I) {
+    const User *U = *I;
+    UseList.push_back(U);
+  }
+
+  // Sort the copy based on the order read by the BitcodeReader.
+  std::sort(UseList.begin(), UseList.end(), bitcodereader_order);
+
+  // TODO: Generate a diff between the BitcodeWriter in-memory use-list and the
+  // sorted list (i.e., the expected BitcodeReader in-memory use-list).
+
+  // TODO: Emit the USELIST_CODE_ENTRYs.
+}
+
+static void WriteFunctionUseList(const Function *F,
+                                 llvm_3_2::ValueEnumerator &VE,
+                                 BitstreamWriter &Stream) {
+  VE.incorporateFunction(*F);
+
+  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
+       AI != AE; ++AI)
+    WriteUseList(AI, VE, Stream);
+  for (Function::const_iterator BB = F->begin(), FE = F->end(); BB != FE;
+       ++BB) {
+    WriteUseList(BB, VE, Stream);
+    for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end(); II != IE;
+         ++II) {
+      WriteUseList(II, VE, Stream);
+      for (User::const_op_iterator OI = II->op_begin(), E = II->op_end();
+           OI != E; ++OI) {
+        if ((isa<Constant>(*OI) && !isa<GlobalValue>(*OI)) ||
+            isa<InlineAsm>(*OI))
+          WriteUseList(*OI, VE, Stream);
+      }
+    }
+  }
+  VE.purgeFunction();
+}
+
+// Emit use-lists.
+static void WriteModuleUseLists(const Module *M, llvm_3_2::ValueEnumerator &VE,
+                                BitstreamWriter &Stream) {
+  Stream.EnterSubblock(bitc::USELIST_BLOCK_ID, 3);
+
+  // XXX: this modifies the module, but in a way that should never change the
+  // behavior of any pass or codegen in LLVM. The problem is that GVs may
+  // contain entries in the use_list that do not exist in the Module and are
+  // not stored in the .bc file.
+  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
+       I != E; ++I)
+    I->removeDeadConstantUsers();
+
+  // Write the global variables.
+  for (Module::const_global_iterator GI = M->global_begin(),
+         GE = M->global_end(); GI != GE; ++GI) {
+    WriteUseList(GI, VE, Stream);
+
+    // Write the global variable initializers.
+    if (GI->hasInitializer())
+      WriteUseList(GI->getInitializer(), VE, Stream);
+  }
+
+  // Write the functions.
+  for (Module::const_iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI) {
+    WriteUseList(FI, VE, Stream);
+    if (!FI->isDeclaration())
+      WriteFunctionUseList(FI, VE, Stream);
+  }
+
+  // Write the aliases.
+  for (Module::const_alias_iterator AI = M->alias_begin(), AE = M->alias_end();
+       AI != AE; ++AI) {
+    WriteUseList(AI, VE, Stream);
+    WriteUseList(AI->getAliasee(), VE, Stream);
+  }
+
+  Stream.ExitBlock();
+}
 
 /// WriteModule - Emit the specified module to the bitstream.
 static void WriteModule(const Module *M, BitstreamWriter &Stream) {
@@ -1602,7 +1795,7 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   }
 
   // Analyze the module, enumerating globals, functions, etc.
-  llvm_2_9_func::ValueEnumerator VE(M);
+  llvm_3_2::ValueEnumerator VE(M);
 
   // Emit blockinfo, which defines the standard abbreviations etc.
   WriteBlockInfo(VE, Stream);
@@ -1623,16 +1816,20 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   // Emit metadata.
   WriteModuleMetadata(M, VE, Stream);
 
-  // Emit function bodies.
-  for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F)
-    if (!F->isDeclaration())
-      WriteFunction(*F, VE, Stream);
-
   // Emit metadata.
   WriteModuleMetadataStore(M, Stream);
 
   // Emit names for globals/functions etc.
   WriteValueSymbolTable(M->getValueSymbolTable(), VE, Stream);
+
+  // Emit use-lists.
+  if (EnablePreserveUseListOrdering)
+    WriteModuleUseLists(M, VE, Stream);
+
+  // Emit function bodies.
+  for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F)
+    if (!F->isDeclaration())
+      WriteFunction(*F, VE, Stream);
 
   Stream.ExitBlock();
 }
@@ -1712,7 +1909,7 @@ static void EmitDarwinBCHeaderAndTrailer(SmallVectorImpl<char> &Buffer,
 
 /// WriteBitcodeToFile - Write the specified module to the specified output
 /// stream.
-void llvm_2_9_func::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
+void llvm_3_2::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
   SmallVector<char, 1024> Buffer;
   Buffer.reserve(256*1024);
 

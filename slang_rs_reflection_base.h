@@ -65,12 +65,14 @@ protected:
 
     std::string stripRS(const std::string &s) const;
 
-    static bool writeFile(const std::string &filename, const std::vector< std::string > &txt);
+    bool writeFile(const std::string &filename, const std::vector< std::string > &txt);
 
 
 private:
 
 public:
+    typedef std::vector<std::pair<std::string, std::string> > ArgTy;
+
     virtual ~RSReflectionBase();
 
     static std::string genInitValue(const clang::APValue &Val, bool asBool=false);
