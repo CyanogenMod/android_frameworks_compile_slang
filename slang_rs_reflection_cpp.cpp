@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, The Android Open Source Project
+ * Copyright 2013, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
           static_cast<const RSExportPointerType*>(ET)->getPointeeType();
 
       if (PointeeType->getClass() != RSExportType::ExportClassRecord)
-        return "android::sp<android::RSC::Allocation>";
+        return "android::RSC::sp<android::RSC::Allocation>";
       else
         return PointeeType->getElementName();
     }
@@ -180,7 +180,7 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
   write("public:");
   incIndent();
-  write(mClassName + "(android::sp<android::RSC::RS> rs);");
+  write(mClassName + "(android::RSC::sp<android::RSC::RS> rs);");
   write("virtual ~" + mClassName + "();");
   write("");
 
@@ -208,12 +208,12 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
     if (ef->hasIn()) {
       Args.push_back(std::make_pair(
-          "android::sp<const android::RSC::Allocation>", "ain"));
+          "android::RSC::sp<const android::RSC::Allocation>", "ain"));
     }
 
     if (ef->hasOut() || ef->hasReturn()) {
       Args.push_back(std::make_pair(
-          "android::sp<const android::RSC::Allocation>", "aout"));
+          "android::RSC::sp<const android::RSC::Allocation>", "aout"));
     }
 
     const RSExportRecordType *ERT = ef->getParamPacketType();
@@ -292,9 +292,9 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
   stringstream ss;
   const std::string &packageName = mRSContext->getReflectJavaPackageName();
   ss << mClassName << "::" << mClassName
-     << "(android::sp<android::RSC::RS> rs):\n"
+     << "(android::RSC::sp<android::RSC::RS> rs):\n"
         "        ScriptC(rs, __txt, sizeof(__txt), \""
-     << mClassName << "\", " << mClassName.length()
+     << stripRS(mInputFileName) << "\", " << stripRS(mInputFileName).length()
      << ", \"/data/data/" << packageName << "/app\", sizeof(\"" << packageName << "\")) {";
   write(ss);
   incIndent();
@@ -324,12 +324,12 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
 
     if (ef->hasIn()) {
       Args.push_back(std::make_pair(
-          "android::sp<const android::RSC::Allocation>", "ain"));
+          "android::RSC::sp<const android::RSC::Allocation>", "ain"));
     }
 
     if (ef->hasOut() || ef->hasReturn()) {
       Args.push_back(std::make_pair(
-          "android::sp<const android::RSC::Allocation>", "aout"));
+          "android::RSC::sp<const android::RSC::Allocation>", "aout"));
     }
 
     const RSExportRecordType *ERT = ef->getParamPacketType();
