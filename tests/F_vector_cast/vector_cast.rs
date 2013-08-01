@@ -21,3 +21,13 @@ void c2uc() {
     u = (uchar4) c;
 }
 
+uchar4 bar(uchar4 u) {
+    return u;
+}
+
+void c2uc_bar() {
+    char4 c;
+    uchar4 u;
+    u = bar((uchar4) c);
+}
+
