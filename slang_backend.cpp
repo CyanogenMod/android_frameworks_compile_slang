@@ -81,7 +81,6 @@ void Backend::CreateModulePasses() {
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
     PMBuilder.SizeLevel = mCodeGenOpts.OptimizeSize;
-    PMBuilder.SizeLevel = mCodeGenOpts.OptimizeSize;
     if (mCodeGenOpts.UnitAtATime) {
       PMBuilder.DisableUnitAtATime = 0;
     } else {
