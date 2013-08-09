@@ -21,7 +21,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the common option parsing interfaces.
-include "clang/Driver/OptParser.td"
+include "llvm/Option/OptParser.td"
 
 //===----------------------------------------------------------------------===//
 // Target Options
