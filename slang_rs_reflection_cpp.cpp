@@ -43,6 +43,8 @@ namespace slang {
 
 #define RS_TYPE_ITEM_CLASS_NAME          "Item"
 
+#define RS_ELEM_PREFIX "__rs_elem_"
+
 static const char *GetMatrixTypeName(const RSExportMatrixType *EMT) {
   static const char *MatrixTypeCNameMap[] = {
     "rs_matrix2x2",
@@ -170,12 +172,32 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
   for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
          E = mRSContext->export_vars_end(); I != E; I++, slot++) {
     const RSExportVar *ev = *I;
-    RSReflectionTypeData rtd;
-    ev->getType()->convertToRTD(&rtd);
     if (!ev->isConst()) {
       write(GetTypeName(ev->getType()) + " __" + ev->getName() + ";");
     }
   }
+  for (RSContext::const_export_foreach_iterator
+           I = mRSContext->export_foreach_begin(),
+           E = mRSContext->export_foreach_end(); I != E; I++) {
+    const RSExportForEach *EF = *I;
+    const RSExportType *IET = EF->getInType();
+    const RSExportType *OET = EF->getOutType();
+    if (IET) {
+      genTypeInstanceFromPointer(IET);
+    }
+    if (OET) {
+      genTypeInstanceFromPointer(OET);
+    }
+  }
+
+  for (std::set<std::string>::iterator I = mTypesToCheck.begin(),
+                                       E = mTypesToCheck.end();
+       I != E;
+       I++) {
+    write("android::RSC::sp<const android::RSC::Element> " RS_ELEM_PREFIX
+          + *I + ";");
+  }
+
   decIndent();
 
   write("public:");
@@ -298,7 +320,12 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
      << ", \"/data/data/" << packageName << "/app\", sizeof(\"" << packageName << "\")) {";
   write(ss);
   incIndent();
-  //...
+  for (std::set<std::string>::iterator I = mTypesToCheck.begin(),
+                                       E = mTypesToCheck.end();
+       I != E;
+       I++) {
+    write(RS_ELEM_PREFIX + *I + " = android::RSC::Element::" + *I + "(mRS);");
+  }
   decIndent();
   write("}");
   write("");
@@ -347,6 +374,19 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
     write(tmp);
     tmp.str("");
 
+    const RSExportType *IET = ef->getInType();
+    const RSExportType *OET = ef->getOutType();
+
+    incIndent();
+    if (IET) {
+      genTypeCheck(IET, "ain");
+    }
+
+    if (OET) {
+      genTypeCheck(OET, "aout");
+    }
+    decIndent();
+
     std::string FieldPackerName = ef->getName() + "_fp";
     if (ERT) {
       if (genCreateFieldPacker(ERT, FieldPackerName.c_str())) {
@@ -367,6 +407,7 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
       tmp << "NULL, ";
     }
 
+    // FIXME (no support for usrData with C++ kernels)
     tmp << "NULL, 0);";
     write(tmp);
 
@@ -596,8 +637,6 @@ void RSReflectionCpp::genPackVarOfType(const RSExportType *ET,
     case RSExportType::ExportClassVector:
     case RSExportType::ExportClassPointer:
     case RSExportType::ExportClassMatrix: {
-      RSReflectionTypeData rtd;
-      ET->convertToRTD(&rtd);
       ss << "    " << FieldPackerName << ".add(" << VarName << ");";
       write(ss);
       break;
@@ -689,5 +728,80 @@ void RSReflectionCpp::genPackVarOfType(const RSExportType *ET,
     }
   }
 }
+
+
+void RSReflectionCpp::genTypeCheck(const RSExportType *ET,
+                                   const char *VarName) {
+  stringstream tmp;
+  tmp << "// Type check for " << VarName;
+  write(tmp);
+  tmp.str("");
+
+  if (ET->getClass() == RSExportType::ExportClassPointer) {
+    const RSExportPointerType *EPT =
+        static_cast<const RSExportPointerType*>(ET);
+    ET = EPT->getPointeeType();
+  }
+
+  std::string TypeName;
+  switch (ET->getClass()) {
+    case RSExportType::ExportClassPrimitive:
+    case RSExportType::ExportClassVector:
+    case RSExportType::ExportClassRecord: {
+      TypeName = ET->getElementName();
+      break;
+    }
+
+    default:
+      break;
+  }
+
+  if (!TypeName.empty()) {
+    //tmp << "// TypeName: " << TypeName;
+    tmp << "if (!" << VarName
+        << "->getType()->getElement()->isCompatible("
+        << RS_ELEM_PREFIX
+        << TypeName << ")) {";
+    write(tmp);
+
+    incIndent();
+    write("mRS->throwError(RS_ERROR_RUNTIME_ERROR, "
+          "\"Incompatible type\");");
+    write("return;");
+    decIndent();
+
+    write("}");
+  }
+}
+
+void RSReflectionCpp::genTypeInstanceFromPointer(const RSExportType *ET) {
+  if (ET->getClass() == RSExportType::ExportClassPointer) {
+    // For pointer parameters to original forEach kernels.
+    const RSExportPointerType *EPT =
+        static_cast<const RSExportPointerType*>(ET);
+    genTypeInstance(EPT->getPointeeType());
+  } else {
+    // For handling pass-by-value kernel parameters.
+    genTypeInstance(ET);
+  }
+}
+
+void RSReflectionCpp::genTypeInstance(const RSExportType *ET) {
+  switch (ET->getClass()) {
+    case RSExportType::ExportClassPrimitive:
+    case RSExportType::ExportClassVector:
+    case RSExportType::ExportClassConstantArray:
+    case RSExportType::ExportClassRecord: {
+      std::string TypeName = ET->getElementName();
+      addTypeNameForElement(TypeName);
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
+
 
 }  // namespace slang

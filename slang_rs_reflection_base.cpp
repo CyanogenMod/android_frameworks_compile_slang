@@ -194,5 +194,14 @@ string RSReflectionBase::genInitValue(const clang::APValue &Val, bool asBool) {
   return tmp.str();
 }
 
+bool RSReflectionBase::addTypeNameForElement(
+    const std::string &TypeName) {
+  if (mTypesToCheck.find(TypeName) == mTypesToCheck.end()) {
+    mTypesToCheck.insert(TypeName);
+    return true;
+  } else {
+    return false;
+  }
+}
 
 }
