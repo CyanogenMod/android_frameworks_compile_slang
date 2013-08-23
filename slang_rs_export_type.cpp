@@ -592,11 +592,7 @@ bool RSExportType::ValidateVarDecl(clang::VarDecl *VD, unsigned int TargetAPI,
 const clang::Type
 *RSExportType::GetTypeOfDecl(const clang::DeclaratorDecl *DD) {
   if (DD) {
-    clang::QualType T;
-    if (DD->getTypeSourceInfo())
-      T = DD->getTypeSourceInfo()->getType();
-    else
-      T = DD->getType();
+    clang::QualType T = DD->getType();
 
     if (T.isNull())
       return NULL;

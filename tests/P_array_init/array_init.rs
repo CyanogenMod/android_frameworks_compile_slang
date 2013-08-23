@@ -14,3 +14,9 @@ long la[2] = {13, 21};
 long long lla[4] = {34};
 bool ba[3] = {true, false};
 
+// Clang should implicitly promote this type to have a constant size of 3.
+char implicitArray[] = { 'a', 'b', 'c' };
+
+// Clang should implicitly promote this type to have a constant size of 1.
+// Note that this creates a warning.
+char implicitArrayUninit[];
