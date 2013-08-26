@@ -19,6 +19,9 @@
 
 #include "slang_rs_reflection_base.h"
 
+#include <set>
+#include <string>
+
 namespace slang {
 
 class RSReflectionCpp : public RSReflectionBase {
@@ -40,6 +43,7 @@ class RSReflectionCpp : public RSReflectionBase {
     mNextExportVarSlot = 0;
     mNextExportFuncSlot = 0;
     mNextExportForEachSlot = 0;
+    mTypesToCheck.clear();
   }
 
   inline unsigned int getNextExportVarSlot() {
@@ -83,6 +87,14 @@ class RSReflectionCpp : public RSReflectionBase {
   void genPackVarOfType(const RSExportType *ET,
                         const char *VarName,
                         const char *FieldPackerName);
+
+  // Generate a runtime type check for VarName.
+  void genTypeCheck(const RSExportType *ET, const char *VarName);
+
+  // Generate a type instance for a given forEach argument type.
+  void genTypeInstanceFromPointer(const RSExportType *ET);
+  void genTypeInstance(const RSExportType *ET);
+
 };  // class RSReflectionCpp
 
 }   // namespace slang

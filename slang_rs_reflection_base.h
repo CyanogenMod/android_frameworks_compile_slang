@@ -39,7 +39,8 @@ class RSReflectionBase {
 protected:
     const RSContext *mRSContext;
 
-
+    // Generated RS Elements for type-checking code.
+    std::set<std::string> mTypesToCheck;
 
     RSReflectionBase(const RSContext *);
 
@@ -67,6 +68,7 @@ protected:
 
     bool writeFile(const std::string &filename, const std::vector< std::string > &txt);
 
+    bool addTypeNameForElement(const std::string &TypeName);
 
 private:
 
