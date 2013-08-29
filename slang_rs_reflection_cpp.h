@@ -22,6 +22,8 @@
 #include <set>
 #include <string>
 
+#define RS_EXPORT_VAR_PREFIX             "mExportVar_"
+
 namespace slang {
 
 class RSReflectionCpp : public RSReflectionBase {
@@ -65,6 +67,17 @@ class RSReflectionCpp : public RSReflectionBase {
   bool writeBC();
 
   bool startScriptHeader();
+
+
+  // Write out code for an export variable initialization.
+  void genInitExportVariable(const RSExportType *ET,
+                             const std::string &VarName,
+                             const clang::APValue &Val);
+  void genZeroInitExportVariable(const std::string &VarName);
+  void genInitBoolExportVariable(const std::string &VarName,
+                                 const clang::APValue &Val);
+  void genInitPrimitiveExportVariable(const std::string &VarName,
+                                      const clang::APValue &Val);
 
   // Produce an argument string of the form "T1 t, T2 u, T3 v".
   void makeArgs(std::stringstream &ss, const ArgTy& Args);
