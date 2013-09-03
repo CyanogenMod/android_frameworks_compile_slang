@@ -70,6 +70,8 @@ protected:
 
     bool addTypeNameForElement(const std::string &TypeName);
 
+    static const char *getVectorAccessor(unsigned index);
+
 private:
 
 public:
