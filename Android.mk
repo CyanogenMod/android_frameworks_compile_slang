@@ -131,6 +131,27 @@ LOCAL_SRC_FILES :=	\
 
 include $(BUILD_HOST_EXECUTABLE)
 
+# ========================================================
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := llvm-rs-as
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_MODULE_CLASS := EXECUTABLES
+
+LOCAL_SRC_FILES :=	\
+	llvm-rs-as.cpp
+
+LOCAL_CFLAGS += $(local_cflags_for_slang)
+LOCAL_STATIC_LIBRARIES :=	\
+	libslang \
+	$(static_libraries_needed_by_slang)
+LOCAL_SHARED_LIBRARIES := \
+	libLLVM
+
+include $(CLANG_HOST_BUILD_MK)
+include $(BUILD_HOST_EXECUTABLE)
+
 # Executable llvm-rs-cc for host
 # ========================================================
 include $(CLEAR_VARS)
@@ -201,9 +222,9 @@ endif
 # For build RSCCOptions.inc from RSCCOptions.td
 intermediates := $(call local-intermediates-dir)
 LOCAL_GENERATED_SOURCES += $(intermediates)/RSCCOptions.inc
-$(intermediates)/RSCCOptions.inc: $(LOCAL_PATH)/RSCCOptions.td $(CLANG_ROOT_PATH)/include/clang/Driver/OptParser.td $(CLANG_TBLGEN)
+$(intermediates)/RSCCOptions.inc: $(LOCAL_PATH)/RSCCOptions.td $(LLVM_ROOT_PATH)/include/llvm/Option/OptParser.td $(TBLGEN)
 	@echo "Building Renderscript compiler (llvm-rs-cc) Option tables with tblgen"
-	$(call transform-host-clang-td-to-out,opt-parser-defs)
+	$(call transform-host-td-to-out,opt-parser-defs)
 
 include frameworks/compile/slang/RSSpec.mk
 include $(CLANG_HOST_BUILD_MK)

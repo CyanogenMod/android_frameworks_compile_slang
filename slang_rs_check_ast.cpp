@@ -36,6 +36,117 @@ void RSCheckAST::VisitStmt(clang::Stmt *S) {
   }
 }
 
+void RSCheckAST::WarnOnSetElementAt(clang::CallExpr *E) {
+  clang::FunctionDecl *Decl;
+  clang::DiagnosticsEngine &DiagEngine = C.getDiagnostics();
+  Decl = clang::dyn_cast_or_null<clang::FunctionDecl>(E->getCalleeDecl());
+
+  if (!Decl || Decl->getNameAsString() != std::string("rsSetElementAt")) {
+    return;
+  }
+
+  clang::Expr *Expr;
+  clang::ImplicitCastExpr *ImplCast;
+  Expr = E->getArg(1);
+  ImplCast = clang::dyn_cast_or_null<clang::ImplicitCastExpr>(Expr);
+
+  if (!ImplCast) {
+    return;
+  }
+
+  const clang::Type *Ty;
+  const clang::VectorType *VectorTy;
+  const clang::BuiltinType *ElementTy;
+  Ty = ImplCast->getSubExpr()->getType()->getPointeeType()
+    ->getUnqualifiedDesugaredType();
+  VectorTy = clang::dyn_cast_or_null<clang::VectorType>(Ty);
+
+  if (VectorTy) {
+    ElementTy = clang::dyn_cast_or_null<clang::BuiltinType>(
+      VectorTy->getElementType()->getUnqualifiedDesugaredType());
+  } else {
+    ElementTy = clang::dyn_cast_or_null<clang::BuiltinType>(
+      Ty->getUnqualifiedDesugaredType());
+  }
+
+  if (!ElementTy) {
+    return;
+  }
+
+  // We only support vectors with 2, 3 or 4 elements.
+  if (VectorTy) {
+    switch (VectorTy->getNumElements()) {
+    default:
+      return;
+    case 2:
+    case 3:
+    case 4:
+      break;
+    }
+  }
+
+  const char *Name;
+
+  switch (ElementTy->getKind()) {
+    case clang::BuiltinType::Float:
+      Name = "float";
+      break;
+    case clang::BuiltinType::Double:
+      Name = "double";
+      break;
+    case clang::BuiltinType::Char_S:
+      Name = "char";
+      break;
+    case clang::BuiltinType::Short:
+      Name = "short";
+      break;
+    case clang::BuiltinType::Int:
+      Name = "int";
+      break;
+    case clang::BuiltinType::Long:
+      Name = "long";
+      break;
+    case clang::BuiltinType::UChar:
+      Name = "uchar";
+      break;
+    case clang::BuiltinType::UShort:
+      Name = "ushort";
+      break;
+    case clang::BuiltinType::UInt:
+      Name = "uint";
+      break;
+    case clang::BuiltinType::ULong:
+      Name = "ulong";
+      break;
+    default:
+      return;
+  }
+
+  clang::DiagnosticBuilder DiagBuilder =  DiagEngine.Report(
+    clang::FullSourceLoc(E->getLocStart(), mSM),
+    mDiagEngine.getCustomDiagID( clang::DiagnosticsEngine::Warning,
+    "untyped rsSetElementAt() can reduce performance. "
+    "Use rsSetElementAt_%0%1() instead."));
+  DiagBuilder << Name;
+
+  if (VectorTy) {
+    DiagBuilder << VectorTy->getNumElements();
+  } else {
+    DiagBuilder << "";
+  }
+
+  return;
+}
+
+void RSCheckAST::VisitCallExpr(clang::CallExpr *E) {
+  WarnOnSetElementAt(E);
+
+  for (clang::CallExpr::arg_iterator AI = E->arg_begin(), AE = E->arg_end();
+       AI != AE; ++AI) {
+    Visit(*AI);
+  }
+}
+
 void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
   if (!FD) {
     return;
@@ -82,7 +193,7 @@ void RSCheckAST::ValidateVarDecl(clang::VarDecl *VD) {
 
   clang::QualType QT = VD->getType();
 
-  if (VD->getLinkage() == clang::ExternalLinkage) {
+  if (VD->getFormalLinkage() == clang::ExternalLinkage) {
     llvm::StringRef TypeName;
     const clang::Type *T = QT.getTypePtr();
     if (!RSExportType::NormalizeType(T, TypeName, &mDiagEngine, VD)) {
@@ -126,6 +237,32 @@ void RSCheckAST::VisitDeclStmt(clang::DeclStmt *DS) {
       }
     }
   }
+}
+
+
+void RSCheckAST::VisitCastExpr(clang::CastExpr *CE) {
+  if (CE->getCastKind() == clang::CK_BitCast) {
+    clang::QualType QT = CE->getType();
+    const clang::Type *T = QT.getTypePtr();
+    if (T->isVectorType()) {
+      clang::DiagnosticsEngine &DiagEngine = C.getDiagnostics();
+      if (llvm::isa<clang::ImplicitCastExpr>(CE)) {
+        DiagEngine.Report(
+          clang::FullSourceLoc(CE->getExprLoc(),
+                               DiagEngine.getSourceManager()),
+          DiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                     "invalid implicit vector cast"));
+      } else {
+        DiagEngine.Report(
+          clang::FullSourceLoc(CE->getExprLoc(),
+                               DiagEngine.getSourceManager()),
+          DiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                     "invalid vector cast"));
+      }
+      mValid = false;
+    }
+  }
+  Visit(CE->getSubExpr());
 }
 
 

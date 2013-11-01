@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReaderWriter_3_2.h"
+#include "legacy_bitcode.h"
 #include "ValueEnumerator.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
@@ -32,11 +33,7 @@
 #include <map>
 using namespace llvm;
 
-static cl::opt<bool>
-EnablePreserveUseListOrdering("enable-bc-uselist-preserve",
-                              cl::desc("Turn on experimental support for "
-                                       "use-list order preservation."),
-                              cl::init(false), cl::Hidden);
+static bool EnablePreserveUseListOrdering = false;
 
 /// These are manifest constants used by the bitcode writer. They do not need to
 /// be kept in sync with the reader, but need to be consistent within this file.
@@ -174,10 +171,13 @@ static void WriteAttributeTable(const llvm_3_2::ValueEnumerator &VE,
   SmallVector<uint64_t, 64> Record;
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
     const AttributeSet &A = Attrs[i];
-    for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i)
-      Record.push_back(VE.getAttributeGroupID(A.getSlotAttributes(i)));
+    for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
+      Record.push_back(A.getSlotIndex(i));
+      Record.push_back(encodeLLVMAttributesForBitcode(A, A.getSlotIndex(i)));
+    }
 
-    Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);
+    // This needs to use the 3.2 entry type
+    Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY_OLD, Record);
     Record.clear();
   }
 

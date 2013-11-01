@@ -234,7 +234,7 @@ bool RSContext::processExport() {
        DI++) {
     if (DI->getKind() == clang::Decl::Var) {
       clang::VarDecl *VD = (clang::VarDecl*) (*DI);
-      if (VD->getLinkage() == clang::ExternalLinkage) {
+      if (VD->getFormalLinkage() == clang::ExternalLinkage) {
         if (!processExportVar(VD)) {
           valid = false;
         }
@@ -242,7 +242,7 @@ bool RSContext::processExport() {
     } else if (DI->getKind() == clang::Decl::Function) {
       // Export functions
       clang::FunctionDecl *FD = (clang::FunctionDecl*) (*DI);
-      if (FD->getLinkage() == clang::ExternalLinkage) {
+      if (FD->getFormalLinkage() == clang::ExternalLinkage) {
         if (!processExportFunc(FD)) {
           valid = false;
         }
@@ -284,22 +284,9 @@ bool RSContext::insertExportType(const llvm::StringRef &TypeName,
 }
 
 bool RSContext::reflectToJava(const std::string &OutputPathBase,
-                              const std::string &OutputPackageName,
                               const std::string &RSPackageName,
                               const std::string &InputFileName,
-                              const std::string &OutputBCFileName,
-                              std::string *RealPackageName) {
-  if (RealPackageName != NULL)
-    RealPackageName->clear();
-
-  const std::string &PackageName =
-      ((OutputPackageName.empty()) ? mReflectJavaPackageName :
-                                     OutputPackageName);
-  slangAssert(!PackageName.empty());
-
-  // Copy back the really applied package name
-  RealPackageName->assign(PackageName);
-
+                              const std::string &OutputBCFileName) {
   if (!RSPackageName.empty()) {
     mRSPackageName = RSPackageName;
   }
@@ -311,7 +298,7 @@ bool RSContext::reflectToJava(const std::string &OutputPathBase,
   }
 
   RSReflection *R = new RSReflection(this, mGeneratedFileNames);
-  bool ret = R->reflect(OutputPathBase, PackageName, mRSPackageName,
+  bool ret = R->reflect(OutputPathBase, mReflectJavaPackageName, mRSPackageName,
                         InputFileName, OutputBCFileName);
   if (!ret)
     fprintf(stderr, "RSContext::reflectToJava : failed to do reflection "

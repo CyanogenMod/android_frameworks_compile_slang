@@ -21,11 +21,8 @@
 #include <utility>
 #include <vector>
 
-#include "clang/Driver/Arg.h"
-#include "clang/Driver/ArgList.h"
 #include "clang/Driver/DriverDiagnostic.h"
-#include "clang/Driver/Option.h"
-#include "clang/Driver/OptTable.h"
+#include "clang/Driver/Options.h"
 
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
@@ -35,6 +32,10 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
 
+#include "llvm/Option/Arg.h"
+#include "llvm/Option/ArgList.h"
+#include "llvm/Option/Option.h"
+#include "llvm/Option/OptTable.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -49,15 +50,13 @@
 #include "slang_rs.h"
 #include "slang_rs_reflect_utils.h"
 
-// Class under clang::driver used are enumerated here.
-using clang::driver::arg_iterator;
 using clang::driver::options::DriverOption;
-using clang::driver::Arg;
-using clang::driver::ArgList;
-using clang::driver::InputArgList;
-using clang::driver::Option;
-using clang::driver::OptTable;
-using namespace clang::driver::options;
+using llvm::opt::arg_iterator;
+using llvm::opt::Arg;
+using llvm::opt::ArgList;
+using llvm::opt::InputArgList;
+using llvm::opt::Option;
+using llvm::opt::OptTable;
 
 // SaveStringInSet, ExpandArgsFromBuf and ExpandArgv are all copied from
 // $(CLANG_ROOT)/tools/driver/driver.cpp for processing argc/argv passed in
@@ -76,7 +75,7 @@ static void ExpandArgv(int argc, const char **argv,
 enum {
   OPT_INVALID = 0,  // This is not an option ID.
 #define PREFIX(NAME, VALUE)
-#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELPTEXT, METAVAR) OPT_##ID,
 #include "RSCCOptions.inc"
   LastOption
@@ -85,7 +84,7 @@ enum {
 };
 
 #define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
-#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)
 #include "RSCCOptions.inc"
 #undef OPTION
@@ -93,10 +92,10 @@ enum {
 
 static const OptTable::Info RSCCInfoTable[] = {
 #define PREFIX(NAME, VALUE)
-#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
   { PREFIX, NAME, HELPTEXT, METAVAR, OPT_##ID, Option::KIND##Class, PARAM, \
-    FLAGS, OPT_##GROUP, OPT_##ALIAS },
+    FLAGS, OPT_##GROUP, OPT_##ALIAS, ALIASARGS },
 #include "RSCCOptions.inc"
 #undef OPTION
 #undef PREFIX
@@ -307,16 +306,18 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
     Opts.mShowVersion = Args->hasArg(OPT_version);
     Opts.mDebugEmission = Args->hasArg(OPT_emit_g);
 
-    size_t OptLevel = Args->getLastArgIntValue(OPT_optimization_level,
-                                               3,
-                                               DiagEngine);
+    size_t OptLevel = clang::getLastArgIntValue(*Args,
+                                                OPT_optimization_level,
+                                                3,
+                                                DiagEngine);
 
     Opts.mOptimizationLevel = OptLevel == 0 ? llvm::CodeGenOpt::None
                                             : llvm::CodeGenOpt::Aggressive;
 
-    Opts.mTargetAPI = Args->getLastArgIntValue(OPT_target_api,
-                                               RS_VERSION,
-                                               DiagEngine);
+    Opts.mTargetAPI = clang::getLastArgIntValue(*Args,
+                                                OPT_target_api,
+                                                RS_VERSION,
+                                                DiagEngine);
   }
 
   return;

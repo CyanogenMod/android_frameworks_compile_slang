@@ -140,7 +140,7 @@ class RSContext {
     mReflectJavaPackageName = S;
     return;
   }
-  inline const std::string &getReflectJavaPackageName() {
+  inline const std::string &getReflectJavaPackageName() const {
     return mReflectJavaPackageName;
   }
 
@@ -148,7 +148,7 @@ class RSContext {
     mRSPackageName = S;
     return;
   }
-  inline const std::string &getRSPackageName() {
+  inline const std::string &getRSPackageName() const {
     return mRSPackageName;
   }
 
@@ -219,11 +219,9 @@ class RSContext {
   bool insertExportType(const llvm::StringRef &TypeName, RSExportType *Type);
 
   bool reflectToJava(const std::string &OutputPathBase,
-                     const std::string &OutputPackageName,
                      const std::string &RSPackageName,
                      const std::string &InputFileName,
-                     const std::string &OutputBCFileName,
-                     std::string *RealPackageName);
+                     const std::string &OutputBCFileName);
 
   int getVersion() const { return version; }
   void setVersion(int v) {

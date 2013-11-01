@@ -19,6 +19,11 @@
 
 #include "slang_rs_reflection_base.h"
 
+#include <set>
+#include <string>
+
+#define RS_EXPORT_VAR_PREFIX             "mExportVar_"
+
 namespace slang {
 
 class RSReflectionCpp : public RSReflectionBase {
@@ -40,6 +45,7 @@ class RSReflectionCpp : public RSReflectionBase {
     mNextExportVarSlot = 0;
     mNextExportFuncSlot = 0;
     mNextExportForEachSlot = 0;
+    mTypesToCheck.clear();
   }
 
   inline unsigned int getNextExportVarSlot() {
@@ -62,6 +68,17 @@ class RSReflectionCpp : public RSReflectionBase {
 
   bool startScriptHeader();
 
+
+  // Write out code for an export variable initialization.
+  void genInitExportVariable(const RSExportType *ET,
+                             const std::string &VarName,
+                             const clang::APValue &Val);
+  void genZeroInitExportVariable(const std::string &VarName);
+  void genInitBoolExportVariable(const std::string &VarName,
+                                 const clang::APValue &Val);
+  void genInitPrimitiveExportVariable(const std::string &VarName,
+                                      const clang::APValue &Val);
+
   // Produce an argument string of the form "T1 t, T2 u, T3 v".
   void makeArgs(std::stringstream &ss, const ArgTy& Args);
 
@@ -83,6 +100,14 @@ class RSReflectionCpp : public RSReflectionBase {
   void genPackVarOfType(const RSExportType *ET,
                         const char *VarName,
                         const char *FieldPackerName);
+
+  // Generate a runtime type check for VarName.
+  void genTypeCheck(const RSExportType *ET, const char *VarName);
+
+  // Generate a type instance for a given forEach argument type.
+  void genTypeInstanceFromPointer(const RSExportType *ET);
+  void genTypeInstance(const RSExportType *ET);
+
 };  // class RSReflectionCpp
 
 }   // namespace slang

@@ -499,7 +499,6 @@ static clang::Stmt *ClearArrayRSObject(
                              &II,
                              C.IntTy,
                              C.getTrivialTypeSourceInfo(C.IntTy),
-                             clang::SC_None,
                              clang::SC_None);
   clang::Decl *IID = (clang::Decl *)IIVD;
 
@@ -1547,7 +1546,8 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
       if (CountRSObjectTypes(mCtx, VD->getType().getTypePtr(), loc)) {
         if (!FD) {
           // Only create FD if we are going to use it.
-          FD = clang::FunctionDecl::Create(mCtx, DC, loc, loc, N, T, NULL);
+          FD = clang::FunctionDecl::Create(mCtx, DC, loc, loc, N, T, NULL,
+                                           clang::SC_None);
         }
         // Make sure to create any helpers within the function's DeclContext,
         // not the one associated with the global translation unit.

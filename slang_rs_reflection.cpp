@@ -424,10 +424,10 @@ void RSReflection::genInitBoolExportVariable(Context &C,
                                              const std::string &VarName,
                                              const clang::APValue &Val) {
   slangAssert(!Val.isUninit() && "Not a valid initializer");
+  slangAssert((Val.getKind() == clang::APValue::Int)
+              && "Bool type has wrong initial APValue");
 
   C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
-  slangAssert((Val.getKind() == clang::APValue::Int) &&
-              "Bool type has wrong initial APValue");
 
   C.out() << ((Val.getInt().getSExtValue() == 0) ? "false" : "true")
           << ";" << std::endl;

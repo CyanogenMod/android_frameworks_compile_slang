@@ -3,8 +3,6 @@ LOCAL_PATH:= $(call my-dir)
 LLVM_ROOT_PATH := $(LOCAL_PATH)/../../../../external/llvm
 include $(LLVM_ROOT_PATH)/llvm.mk
 
-LOCAL_CFLAGS += $(local_cflags_for_slang)
-
 bitcode_writer_2_9_SRC_FILES :=	\
 	BitcodeWriter.cpp	\
 	BitcodeWriterPass.cpp	\
@@ -13,6 +11,9 @@ bitcode_writer_2_9_SRC_FILES :=	\
 # For the host
 # =====================================================
 include $(CLEAR_VARS)
+
+LOCAL_CFLAGS += $(local_cflags_for_slang)
+LOCAL_C_INCLUDES += frameworks/compile/slang
 
 LOCAL_SRC_FILES := $(bitcode_writer_2_9_SRC_FILES)
 

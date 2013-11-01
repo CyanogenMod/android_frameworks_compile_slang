@@ -2,6 +2,14 @@
 #pragma version(1)
 #pragma rs java_package_name(foo)
 
+//int2 i2;
+
+int i1 = 5;
+bool bt = true;
+bool bf = false;
+int2 i2 = 2;
+int3 i3 = {1, 2, 3};
+
 int __attribute__((kernel)) root(uint32_t ain) {
   return 0;
 }

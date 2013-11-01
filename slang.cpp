@@ -117,7 +117,7 @@ const llvm::StringRef Slang::PragmaMetadataName = "#pragma";
 
 static inline llvm::tool_output_file *
 OpenOutputFile(const char *OutputFile,
-               unsigned Flags,
+               llvm::sys::fs::OpenFlags Flags,
                std::string* Error,
                clang::DiagnosticsEngine *DiagEngine) {
   slangAssert((OutputFile != NULL) && (Error != NULL) &&
@@ -157,6 +157,7 @@ void Slang::GlobalInitialization() {
     LangOpts.RTTI = 0;  // Turn off the RTTI information support
     LangOpts.C99 = 1;
     LangOpts.Renderscript = 1;
+    LangOpts.LaxVectorConversions = 0;  // Do not bitcast vectors!
     LangOpts.CharIsSigned = 1;  // Signed char is our default.
 
     CodeGenOpts.OptimizationLevel = 3;
@@ -165,7 +166,8 @@ void Slang::GlobalInitialization() {
   }
 }
 
-void Slang::LLVMErrorHandler(void *UserData, const std::string &Message) {
+void Slang::LLVMErrorHandler(void *UserData, const std::string &Message,
+                             bool GenCrashDialog) {
   clang::DiagnosticsEngine* DiagEngine =
     static_cast<clang::DiagnosticsEngine *>(UserData);
 
@@ -332,7 +334,6 @@ bool Slang::setInputSource(llvm::StringRef InputFile) {
 }
 
 bool Slang::setOutput(const char *OutputFile) {
-  llvm::sys::Path OutputFilePath(OutputFile);
   std::string Error;
   llvm::tool_output_file *OS = NULL;
 
@@ -340,7 +341,8 @@ bool Slang::setOutput(const char *OutputFile) {
     case OT_Dependency:
     case OT_Assembly:
     case OT_LLVMAssembly: {
-      OS = OpenOutputFile(OutputFile, 0, &Error, mDiagEngine);
+      OS = OpenOutputFile(OutputFile, llvm::sys::fs::F_None, &Error,
+          mDiagEngine);
       break;
     }
     case OT_Nothing: {
@@ -348,7 +350,7 @@ bool Slang::setOutput(const char *OutputFile) {
     }
     case OT_Object:
     case OT_Bitcode: {
-      OS = OpenOutputFile(OutputFile, llvm::raw_fd_ostream::F_Binary,
+      OS = OpenOutputFile(OutputFile, llvm::sys::fs::F_Binary,
                           &Error, mDiagEngine);
       break;
     }
@@ -368,10 +370,10 @@ bool Slang::setOutput(const char *OutputFile) {
 }
 
 bool Slang::setDepOutput(const char *OutputFile) {
-  llvm::sys::Path OutputFilePath(OutputFile);
   std::string Error;
 
-  mDOS.reset(OpenOutputFile(OutputFile, 0, &Error, mDiagEngine));
+  mDOS.reset(
+      OpenOutputFile(OutputFile, llvm::sys::fs::F_None, &Error, mDiagEngine));
   if (!Error.empty() || (mDOS.get() == NULL))
     return false;
 

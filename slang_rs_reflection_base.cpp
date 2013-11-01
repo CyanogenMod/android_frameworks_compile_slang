@@ -20,6 +20,7 @@
 #include <cctype>
 
 #include <algorithm>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -60,7 +61,8 @@ static const char *const gApacheLicenseNote =
 "\n";
 
 
-RSReflectionBase::RSReflectionBase(const RSContext *con) {
+RSReflectionBase::RSReflectionBase(const RSContext *con)
+  : mVerbose(true) {
   mRSContext = con;
   mLicenseNote = gApacheLicenseNote;
 
@@ -160,6 +162,7 @@ string RSReflectionBase::genInitValue(const clang::APValue &Val, bool asBool) {
       if(asBool) {
         tmp << ((api.getSExtValue() == 0) ? "false" : "true");
       } else {
+        // TODO: Handle unsigned possibly for C++ API.
         tmp << api.getSExtValue();
         if (api.getBitWidth() > 32) {
           tmp << "L";
@@ -170,10 +173,15 @@ string RSReflectionBase::genInitValue(const clang::APValue &Val, bool asBool) {
 
     case clang::APValue::Float: {
       llvm::APFloat apf = Val.getFloat();
+      llvm::SmallString<30> s;
+      apf.toString(s);
+      tmp << s.c_str();
       if (&apf.getSemantics() == &llvm::APFloat::IEEEsingle) {
-        tmp << apf.convertToFloat() << "f";
-      } else {
-        tmp << apf.convertToDouble();
+        if (s.count('.') == 0) {
+          tmp << ".f";
+        } else {
+          tmp << "f";
+        }
       }
       break;
     }
@@ -193,5 +201,28 @@ string RSReflectionBase::genInitValue(const clang::APValue &Val, bool asBool) {
   return tmp.str();
 }
 
+bool RSReflectionBase::addTypeNameForElement(
+    const std::string &TypeName) {
+  if (mTypesToCheck.find(TypeName) == mTypesToCheck.end()) {
+    mTypesToCheck.insert(TypeName);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+const char *RSReflectionBase::getVectorAccessor(unsigned Index) {
+  static const char *VectorAccessorMap[] = {
+    /* 0 */ "x",
+    /* 1 */ "y",
+    /* 2 */ "z",
+    /* 3 */ "w",
+  };
+
+  slangAssert((Index < (sizeof(VectorAccessorMap) / sizeof(const char*))) &&
+              "Out-of-bound index to access vector member");
+
+  return VectorAccessorMap[Index];
+}
 
 }

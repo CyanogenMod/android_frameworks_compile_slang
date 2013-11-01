@@ -63,7 +63,8 @@ class Slang : public clang::ModuleLoader {
 
   static bool GlobalInitialized;
 
-  static void LLVMErrorHandler(void *UserData, const std::string &Message);
+  static void LLVMErrorHandler(void *UserData, const std::string &Message,
+                               bool GenCrashDialog);
 
  public:
   enum OutputType {

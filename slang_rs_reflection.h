@@ -242,7 +242,6 @@ class RSReflection {
                                     const RSExportType *ET,
                                     const std::string &VarName,
                                     const clang::APValue &Val);
-  static void genInitValue(Context &C, const clang::APValue &Val);
   void genExportVariable(Context &C, const RSExportVar *EV);
   void genPrimitiveTypeExportVariable(Context &C, const RSExportVar *EV);
   void genPointerTypeExportVariable(Context &C, const RSExportVar *EV);

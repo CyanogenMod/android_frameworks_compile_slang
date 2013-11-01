@@ -21,7 +21,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the common option parsing interfaces.
-include "clang/Driver/OptParser.td"
+include "llvm/Option/OptParser.td"
 
 //===----------------------------------------------------------------------===//
 // Target Options
@@ -63,7 +63,7 @@ def emit_nothing : Flag<["-"], "emit-nothing">,
 def emit_g : Flag<["-"], "g">,
   HelpText<"Emit LLVM Debug Metadata">;
 
-def optimization_level : Separate<["-"], "O">, MetaVarName<"<optimization-level>">,
+def optimization_level : JoinedOrSeparate<["-"], "O">, MetaVarName<"<optimization-level>">,
   HelpText<"<optimization-level> can be one of '0' or '3' (default)">;
 
 def allow_rs_prefix : Flag<["-"], "allow-rs-prefix">,

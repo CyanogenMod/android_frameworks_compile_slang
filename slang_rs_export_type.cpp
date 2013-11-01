@@ -335,7 +335,8 @@ static bool ValidateRSObjectInVarDecl(clang::VarDecl *VD,
     // Only if we are already in a composite type (like an array or structure).
     if (InCompositeType) {
       // Only if we are actually exported (i.e. non-static).
-      if (VD->hasLinkage() && (VD->getLinkage() == clang::ExternalLinkage)) {
+      if (VD->hasLinkage() &&
+          (VD->getFormalLinkage() == clang::ExternalLinkage)) {
         // Only if we are not a pointer to an object.
         const clang::Type *T = GET_CANONICAL_TYPE(VD->getType().getTypePtr());
         if (T->getTypeClass() != clang::Type::Pointer) {
@@ -512,7 +513,7 @@ static bool ValidateTypeHelper(
           InCompositeType &&
           EVT->getNumElements() == 3 &&
           ND &&
-          ND->getLinkage() == clang::ExternalLinkage) {
+          ND->getFormalLinkage() == clang::ExternalLinkage) {
         ReportTypeError(&C.getDiagnostics(), ND, NULL,
                         "structs containing vectors of dimension 3 cannot "
                         "be exported at this API level: '%0'");
@@ -591,11 +592,7 @@ bool RSExportType::ValidateVarDecl(clang::VarDecl *VD, unsigned int TargetAPI,
 const clang::Type
 *RSExportType::GetTypeOfDecl(const clang::DeclaratorDecl *DD) {
   if (DD) {
-    clang::QualType T;
-    if (DD->getTypeSourceInfo())
-      T = DD->getTypeSourceInfo()->getType();
-    else
-      T = DD->getType();
+    clang::QualType T = DD->getType();
 
     if (T.isNull())
       return NULL;

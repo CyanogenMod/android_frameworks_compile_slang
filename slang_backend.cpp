@@ -94,7 +94,6 @@ void Backend::CreateModulePasses() {
       PMBuilder.DisableUnrollLoops = 1;
     }
 
-    PMBuilder.DisableSimplifyLibCalls = false;
     PMBuilder.populateModulePassManager(*mPerModulePasses);
   }
   return;

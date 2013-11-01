@@ -74,15 +74,11 @@ bool SlangRS::isFilterscript(const char *Filename) {
 }
 
 bool SlangRS::reflectToJava(const std::string &OutputPathBase,
-                            const std::string &OutputPackageName,
-                            const std::string &RSPackageName,
-                            std::string *RealPackageName) {
+                            const std::string &RSPackageName) {
   return mRSContext->reflectToJava(OutputPathBase,
-                                   OutputPackageName,
                                    RSPackageName,
                                    getInputFileName(),
-                                   getOutputFileName(),
-                                   RealPackageName);
+                                   getOutputFileName());
 }
 
 bool SlangRS::generateBitcodeAccessor(const std::string &OutputPathBase,
@@ -337,15 +333,16 @@ bool SlangRS::compile(
     if (!setOutput(OutputFile))
       return false;
 
-    if (!JavaReflectionPackageName.empty()) {
-      mRSContext->setReflectJavaPackageName(
-          JavaReflectionPackageName);
-    }
-
     mIsFilterscript = isFilterscript(InputFile);
 
     if (Slang::compile() > 0)
       return false;
+
+    if (!JavaReflectionPackageName.empty()) {
+      mRSContext->setReflectJavaPackageName(JavaReflectionPackageName);
+    }
+    const std::string &RealPackageName =
+        mRSContext->getReflectJavaPackageName();
 
     if (OutputType != Slang::OT_Dependency) {
 
@@ -357,10 +354,7 @@ bool SlangRS::compile(
           }
       } else {
 
-        if (!reflectToJava(JavaReflectionPathBase,
-                           JavaReflectionPackageName,
-                           RSPackageName,
-                           &RealPackageName)) {
+        if (!reflectToJava(JavaReflectionPathBase, RSPackageName)) {
           return false;
         }
 

@@ -36,6 +36,14 @@ class RSCheckAST : public clang::StmtVisitor<RSCheckAST> {
   bool mIsFilterscript;
   bool mInKernel;
 
+  /// @brief Emit warnings for inapproriate uses of rsSetElementAt
+  ///
+  /// We warn in case generic rsSetElementAt() is used even though the user
+  /// could have used a typed rsSetElementAt_<type>() call. Typed calls
+  /// allow more aggressive optimization (e.g. due to better alias analysis
+  /// results). Hence, we want to steer the users to use them.
+  void WarnOnSetElementAt(clang::CallExpr*);
+
  public:
   explicit RSCheckAST(clang::ASTContext &Con, unsigned int TargetAPI,
                       bool IsFilterscript)
@@ -46,6 +54,10 @@ class RSCheckAST : public clang::StmtVisitor<RSCheckAST> {
   }
 
   void VisitStmt(clang::Stmt *S);
+
+  void VisitCallExpr(clang::CallExpr *CE);
+
+  void VisitCastExpr(clang::CastExpr *CE);
 
   void VisitExpr(clang::Expr *E);
 
