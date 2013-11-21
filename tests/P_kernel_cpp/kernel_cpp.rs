@@ -10,6 +10,12 @@ bool bf = false;
 int2 i2 = 2;
 int3 i3 = {1, 2, 3};
 
+rs_allocation alloc;
+rs_element elem;
+rs_type type;
+rs_script script;
+rs_sampler sampler;
+
 int __attribute__((kernel)) root(uint32_t ain) {
   return 0;
 }
