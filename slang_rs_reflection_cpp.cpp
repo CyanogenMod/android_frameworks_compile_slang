@@ -64,8 +64,14 @@ static const char *GetMatrixTypeName(const RSExportMatrixType *EMT) {
 static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
   switch (ET->getClass()) {
     case RSExportType::ExportClassPrimitive: {
-      return RSExportPrimitiveType::getRSReflectionType(
-          static_cast<const RSExportPrimitiveType*>(ET))->c_name;
+      const RSExportPrimitiveType *EPT =
+          static_cast<const RSExportPrimitiveType*>(ET);
+      if (EPT->isRSObjectType()) {
+        return std::string("android::RSC::sp<const android::RSC::") +
+            RSExportPrimitiveType::getRSReflectionType(EPT)->c_name + ">";
+      } else {
+        return RSExportPrimitiveType::getRSReflectionType(EPT)->c_name;
+      }
     }
     case RSExportType::ExportClassPointer: {
       const RSExportType *PointeeType =
@@ -516,21 +522,29 @@ void RSReflectionCpp::genExportVariable(const RSExportVar *EV) {
 
 void RSReflectionCpp::genPrimitiveTypeExportVariable(const RSExportVar *EV) {
   RSReflectionTypeData rtd;
-  EV->getType()->convertToRTD(&rtd);
+  const RSExportPrimitiveType *EPT =
+      static_cast<const RSExportPrimitiveType *>(EV->getType());
+  EPT->convertToRTD(&rtd);
+  std::string TypeName = GetTypeName(EPT, false);
 
   if (!EV->isConst()) {
-    write(string("void set_") + EV->getName() + "(" + rtd.type->c_name +
+    write(string("void set_") + EV->getName() + "(" + TypeName.c_str() +
           " v) {");
     stringstream tmp;
-    tmp << getNextExportVarSlot();
-    write(string("    setVar(") + tmp.str() + ", &v, sizeof(v));");
+    tmp << getNextExportVarSlot() << ", ";
+    if (EPT->isRSObjectType()) {
+      tmp << "v);";
+    } else {
+      tmp << "&v, sizeof(v));";
+    }
+    write(string("    setVar(") + tmp.str());
     write(string("    " RS_EXPORT_VAR_PREFIX) + EV->getName() + " = v;");
     write("}");
   }
-  write(string(rtd.type->c_name) + " get_" + EV->getName() + "() const {");
+  write(TypeName + " get_" + EV->getName() + "() const {");
   if (EV->isConst()) {
     const clang::APValue &val = EV->getInit();
-    bool isBool = !strcmp(rtd.type->c_name, "bool");
+    bool isBool = !strcmp(TypeName.c_str(), "bool");
     write(string("    return ") + genInitValue(val, isBool) + ";");
   } else {
     write(string("    return " RS_EXPORT_VAR_PREFIX) + EV->getName() + ";");
