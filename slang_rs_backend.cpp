@@ -68,8 +68,7 @@ RSBackend::RSBackend(RSContext *Context,
     mExportTypeMetadata(NULL),
     mRSObjectSlotsMetadata(NULL),
     mRefCount(mContext->getASTContext()),
-    mASTChecker(mContext->getASTContext(), mContext->getTargetAPI(),
-                IsFilterscript) {
+    mASTChecker(Context, Context->getTargetAPI(), IsFilterscript) {
 }
 
 // 1) Add zero initialization of local RS object types
