@@ -38,7 +38,6 @@ void RSCheckAST::VisitStmt(clang::Stmt *S) {
 
 void RSCheckAST::WarnOnSetElementAt(clang::CallExpr *E) {
   clang::FunctionDecl *Decl;
-  clang::DiagnosticsEngine &DiagEngine = C.getDiagnostics();
   Decl = clang::dyn_cast_or_null<clang::FunctionDecl>(E->getCalleeDecl());
 
   if (!Decl || Decl->getNameAsString() != std::string("rsSetElementAt")) {
@@ -122,7 +121,7 @@ void RSCheckAST::WarnOnSetElementAt(clang::CallExpr *E) {
       return;
   }
 
-  clang::DiagnosticBuilder DiagBuilder =  DiagEngine.Report(
+  clang::DiagnosticBuilder DiagBuilder =  mDiagEngine.Report(
     clang::FullSourceLoc(E->getLocStart(), mSM),
     mDiagEngine.getCustomDiagID( clang::DiagnosticsEngine::Warning,
     "untyped rsSetElementAt() can reduce performance. "
@@ -196,7 +195,7 @@ void RSCheckAST::ValidateVarDecl(clang::VarDecl *VD) {
   if (VD->getFormalLinkage() == clang::ExternalLinkage) {
     llvm::StringRef TypeName;
     const clang::Type *T = QT.getTypePtr();
-    if (!RSExportType::NormalizeType(T, TypeName, &mDiagEngine, VD)) {
+    if (!RSExportType::NormalizeType(T, TypeName, Context, VD)) {
       mValid = false;
     }
   }
@@ -245,19 +244,18 @@ void RSCheckAST::VisitCastExpr(clang::CastExpr *CE) {
     clang::QualType QT = CE->getType();
     const clang::Type *T = QT.getTypePtr();
     if (T->isVectorType()) {
-      clang::DiagnosticsEngine &DiagEngine = C.getDiagnostics();
       if (llvm::isa<clang::ImplicitCastExpr>(CE)) {
-        DiagEngine.Report(
+        mDiagEngine.Report(
           clang::FullSourceLoc(CE->getExprLoc(),
-                               DiagEngine.getSourceManager()),
-          DiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                               mDiagEngine.getSourceManager()),
+          mDiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
                                      "invalid implicit vector cast"));
       } else {
-        DiagEngine.Report(
+        mDiagEngine.Report(
           clang::FullSourceLoc(CE->getExprLoc(),
-                               DiagEngine.getSourceManager()),
-          DiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                     "invalid vector cast"));
+                               mDiagEngine.getSourceManager()),
+          mDiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                      "invalid vector cast"));
       }
       mValid = false;
     }

@@ -82,7 +82,7 @@ static RSReflectionType gReflectionTypes[] = {
 static const clang::Type *TypeExportableHelper(
     const clang::Type *T,
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
-    clang::DiagnosticsEngine *DiagEngine,
+    slang::RSContext *Context,
     const clang::VarDecl *VD,
     const clang::RecordDecl *TopLevelRecord);
 
@@ -118,11 +118,15 @@ static void ReportTypeError(clang::DiagnosticsEngine *DiagEngine,
 static const clang::Type *ConstantArrayTypeExportableHelper(
     const clang::ConstantArrayType *CAT,
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
-    clang::DiagnosticsEngine *DiagEngine,
+    slang::RSContext *Context,
     const clang::VarDecl *VD,
     const clang::RecordDecl *TopLevelRecord) {
   // Check element type
   const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
+  clang::DiagnosticsEngine *DiagEngine = NULL;
+  if (Context) {
+    DiagEngine = Context->getDiagnostics();
+  }
   if (ElementType->isArrayType()) {
     ReportTypeError(DiagEngine, VD, TopLevelRecord,
                     "multidimensional arrays cannot be exported: '%0'");
@@ -146,7 +150,7 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
     }
   }
 
-  if (TypeExportableHelper(ElementType, SPS, DiagEngine, VD,
+  if (TypeExportableHelper(ElementType, SPS, Context, VD,
                            TopLevelRecord) == NULL) {
     return NULL;
   } else {
@@ -157,9 +161,13 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
 static const clang::Type *TypeExportableHelper(
     clang::Type const *T,
     llvm::SmallPtrSet<clang::Type const *, 8> &SPS,
-    clang::DiagnosticsEngine *DiagEngine,
+    slang::RSContext *Context,
     clang::VarDecl const *VD,
     clang::RecordDecl const *TopLevelRecord) {
+  clang::DiagnosticsEngine *DiagEngine = NULL;
+  if (Context) {
+    DiagEngine = Context->getDiagnostics();
+  }
   // Normalize first
   if ((T = GET_CANONICAL_TYPE(T)) == NULL)
     return NULL;
@@ -233,7 +241,7 @@ static const clang::Type *TypeExportableHelper(
         const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
         FT = GET_CANONICAL_TYPE(FT);
 
-        if (!TypeExportableHelper(FT, SPS, DiagEngine, VD, TopLevelRecord)) {
+        if (!TypeExportableHelper(FT, SPS, Context, VD, TopLevelRecord)) {
           return NULL;
         }
 
@@ -276,7 +284,7 @@ static const clang::Type *TypeExportableHelper(
       // We don't support pointer with array-type pointee or unsupported pointee
       // type
       if (PointeeType->isArrayType() ||
-          (TypeExportableHelper(PointeeType, SPS, DiagEngine, VD,
+          (TypeExportableHelper(PointeeType, SPS, Context, VD,
                                 TopLevelRecord) == NULL))
         return NULL;
       else
@@ -293,7 +301,7 @@ static const clang::Type *TypeExportableHelper(
       const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
 
       if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
-          (TypeExportableHelper(ElementType, SPS, DiagEngine, VD,
+          (TypeExportableHelper(ElementType, SPS, Context, VD,
                                 TopLevelRecord) == NULL))
         return NULL;
       else
@@ -303,10 +311,16 @@ static const clang::Type *TypeExportableHelper(
       const clang::ConstantArrayType *CAT =
           UNSAFE_CAST_TYPE(const clang::ConstantArrayType, T);
 
-      return ConstantArrayTypeExportableHelper(CAT, SPS, DiagEngine, VD,
+      return ConstantArrayTypeExportableHelper(CAT, SPS, Context, VD,
                                                TopLevelRecord);
     }
+    case clang::Type::Enum: {
+      // FIXME: We currently convert enums to integers, rather than reflecting
+      // a more complete (and nicer type-safe Java version).
+      return Context->getASTContext().IntTy.getTypePtr();
+    }
     default: {
+      slangAssert(false && "Unknown type cannot be validated");
       return NULL;
     }
   }
@@ -320,12 +334,12 @@ static const clang::Type *TypeExportableHelper(
 // highest struct (in the case of a nested hierarchy) for detecting other
 // types that cannot be exported (mostly pointers within a struct).
 static const clang::Type *TypeExportable(const clang::Type *T,
-                                         clang::DiagnosticsEngine *DiagEngine,
+                                         slang::RSContext *Context,
                                          const clang::VarDecl *VD) {
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  return TypeExportableHelper(T, SPS, DiagEngine, VD, NULL);
+  return TypeExportableHelper(T, SPS, Context, VD, NULL);
 }
 
 static bool ValidateRSObjectInVarDecl(clang::VarDecl *VD,
@@ -544,26 +558,25 @@ static bool ValidateTypeHelper(
 /****************************** RSExportType ******************************/
 bool RSExportType::NormalizeType(const clang::Type *&T,
                                  llvm::StringRef &TypeName,
-                                 clang::DiagnosticsEngine *DiagEngine,
+                                 RSContext *Context,
                                  const clang::VarDecl *VD) {
-  if ((T = TypeExportable(T, DiagEngine, VD)) == NULL) {
+  if ((T = TypeExportable(T, Context, VD)) == NULL) {
     return false;
   }
   // Get type name
   TypeName = RSExportType::GetTypeName(T);
-  if (TypeName.empty()) {
-    if (DiagEngine) {
-      if (VD) {
-        DiagEngine->Report(
-          clang::FullSourceLoc(VD->getLocation(),
-                               DiagEngine->getSourceManager()),
-          DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                      "anonymous types cannot be exported"));
-      } else {
-        DiagEngine->Report(
-          DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                      "anonymous types cannot be exported"));
-      }
+  if (Context && TypeName.empty()) {
+    clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
+    if (VD) {
+      DiagEngine->Report(
+        clang::FullSourceLoc(VD->getLocation(),
+                             DiagEngine->getSourceManager()),
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "anonymous types cannot be exported"));
+    } else {
+      DiagEngine->Report(
+        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                    "anonymous types cannot be exported"));
     }
     return false;
   }
@@ -780,7 +793,7 @@ RSExportType *RSExportType::Create(RSContext *Context,
 
 RSExportType *RSExportType::Create(RSContext *Context, const clang::Type *T) {
   llvm::StringRef TypeName;
-  if (NormalizeType(T, TypeName, Context->getDiagnostics(), NULL)) {
+  if (NormalizeType(T, TypeName, Context, NULL)) {
     return Create(Context, T, TypeName);
   } else {
     return NULL;
@@ -1030,7 +1043,7 @@ RSExportPrimitiveType
 RSExportPrimitiveType *RSExportPrimitiveType::Create(RSContext *Context,
                                                      const clang::Type *T) {
   llvm::StringRef TypeName;
-  if (RSExportType::NormalizeType(T, TypeName, Context->getDiagnostics(), NULL)
+  if (RSExportType::NormalizeType(T, TypeName, Context, NULL)
       && IsPrimitiveType(T)) {
     return Create(Context, T, TypeName);
   } else {
