@@ -69,8 +69,7 @@ RSExportType *RSExportElement::Create(RSContext *Context,
 
   slangAssert(EI != NULL && "Element info not found");
 
-  if (!RSExportType::NormalizeType(T, TypeName, Context->getDiagnostics(),
-                                   NULL))
+  if (!RSExportType::NormalizeType(T, TypeName, Context, NULL))
     return NULL;
 
   switch (T->getTypeClass()) {
