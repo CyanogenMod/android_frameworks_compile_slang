@@ -1165,63 +1165,29 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     break;
   case Instruction::Switch:
     {
-      // Redefine Vals, since here we need to use 64 bit values
-      // explicitly to store large APInt numbers.
-      SmallVector<uint64_t, 128> Vals64;
-
       Code = bitc::FUNC_CODE_INST_SWITCH;
       const SwitchInst &SI = cast<SwitchInst>(I);
 
-      uint32_t SwitchRecordHeader = SI.hash() | (SWITCH_INST_MAGIC << 16);
-      Vals64.push_back(SwitchRecordHeader);
-
-      Vals64.push_back(VE.getTypeID(SI.getCondition()->getType()));
-      Vals64.push_back(VE.getValueID(SI.getCondition()));
-      Vals64.push_back(VE.getValueID(SI.getDefaultDest()));
-      Vals64.push_back(SI.getNumCases());
+      Vals.push_back(VE.getTypeID(SI.getCondition()->getType()));
+      Vals.push_back(VE.getValueID(SI.getCondition()));
+      Vals.push_back(VE.getValueID(SI.getDefaultDest()));
       for (SwitchInst::ConstCaseIt i = SI.case_begin(), e = SI.case_end();
            i != e; ++i) {
         const IntegersSubset& CaseRanges = i.getCaseValueEx();
-        unsigned Code, Abbrev; // will unused.
 
         if (CaseRanges.isSingleNumber()) {
-          Vals64.push_back(1/*NumItems = 1*/);
-          Vals64.push_back(true/*IsSingleNumber = true*/);
-          EmitAPInt(Vals64, Code, Abbrev, CaseRanges.getSingleNumber(0), true);
+          Vals.push_back(VE.getValueID(CaseRanges.getSingleNumber(0).toConstantInt()));
+          Vals.push_back(VE.getValueID(i.getCaseSuccessor()));
+        } else if (CaseRanges.isSingleNumbersOnly()) {
+          for (unsigned ri = 0, rn = CaseRanges.getNumItems();
+               ri != rn; ++ri) {
+            Vals.push_back(VE.getValueID(CaseRanges.getSingleNumber(ri).toConstantInt()));
+            Vals.push_back(VE.getValueID(i.getCaseSuccessor()));
+          }
         } else {
-
-          Vals64.push_back(CaseRanges.getNumItems());
-
-          if (CaseRanges.isSingleNumbersOnly()) {
-            for (unsigned ri = 0, rn = CaseRanges.getNumItems();
-                 ri != rn; ++ri) {
-
-              Vals64.push_back(true/*IsSingleNumber = true*/);
-
-              EmitAPInt(Vals64, Code, Abbrev,
-                        CaseRanges.getSingleNumber(ri), true);
-            }
-          } else
-            for (unsigned ri = 0, rn = CaseRanges.getNumItems();
-                 ri != rn; ++ri) {
-              IntegersSubset::Range r = CaseRanges.getItem(ri);
-              bool IsSingleNumber = CaseRanges.isSingleNumber(ri);
-
-              Vals64.push_back(IsSingleNumber);
-
-              EmitAPInt(Vals64, Code, Abbrev, r.getLow(), true);
-              if (!IsSingleNumber)
-                EmitAPInt(Vals64, Code, Abbrev, r.getHigh(), true);
-            }
+          llvm_unreachable("Not single number?");
         }
-        Vals64.push_back(VE.getValueID(i.getCaseSuccessor()));
       }
-
-      Stream.EmitRecord(Code, Vals64, AbbrevToUse);
-
-      // Also do expected action - clear external Vals collection:
-      Vals.clear();
-      return;
     }
     break;
   case Instruction::IndirectBr:
