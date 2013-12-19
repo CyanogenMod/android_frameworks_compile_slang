@@ -32,6 +32,7 @@ enum SlangTargetAPI {
   SLANG_JB_TARGET_API = 16,
   SLANG_JB_MR1_TARGET_API = 17,
   SLANG_JB_MR2_TARGET_API = 18,
+  SLANG_KK_TARGET_API = 19,
   SLANG_MAXIMUM_TARGET_API = RS_VERSION
 };
 // Note that RS_VERSION is defined at build time (see Android.mk for details).
@@ -46,8 +47,8 @@ enum {
   JB = 1600,
   JB_MR1 = 1700,
   JB_MR2 = 1800,
-  KLP = 1900,
-  CURRENT = KLP
+  KK = 1900,
+  CURRENT = KK
 };
 }  // namespace SlangVersion
 
