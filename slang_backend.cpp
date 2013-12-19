@@ -55,6 +55,7 @@
 #include "llvm/MC/SubtargetFeature.h"
 
 #include "slang_assert.h"
+#include "strip_unknown_attributes.h"
 #include "BitWriter_2_9/ReaderWriter_2_9.h"
 #include "BitWriter_2_9_func/ReaderWriter_2_9_func.h"
 #include "BitWriter_3_2/ReaderWriter_3_2.h"
@@ -94,6 +95,8 @@ void Backend::CreateModulePasses() {
     }
 
     PMBuilder.populateModulePassManager(*mPerModulePasses);
+    // Add a pass to strip off unknown/unsupported attributes.
+    mPerModulePasses->add(createStripUnknownAttributesPass());
   }
   return;
 }
