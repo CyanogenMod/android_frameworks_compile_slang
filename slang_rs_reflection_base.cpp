@@ -111,6 +111,9 @@ void RSReflectionBase::startFile(const string &filename) {
 string RSReflectionBase::stripRS(const string &s) const {
   string tmp(s);
   size_t pos = tmp.rfind(".rs");
+  if (pos == string::npos) {
+    pos = tmp.rfind(".fs");
+  }
   if(pos != string::npos) {
     tmp.erase(pos);
   }
