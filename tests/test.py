@@ -177,7 +177,7 @@ def Usage():
          '  -h, --help          Help message\n'
          '  -n, --no-cleanup    Don\'t clean up after running tests\n'
          '  -u, --update-cts    Update CTS test versions\n'
-         '  -v, --verbose       Verbose output\n'
+         '  -v, --verbose       Verbose output.  Enter multiple -v to get more verbose.\n'
         ) % (sys.argv[0]),
   return
 
