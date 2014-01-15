@@ -57,7 +57,6 @@ bool RSExportForEach::validateAndConstructParams(
     RSContext *Context, const clang::FunctionDecl *FD) {
   slangAssert(Context && FD);
   bool valid = true;
-  clang::ASTContext &C = Context->getASTContext();
   clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
 
   numParams = FD->getNumParams();
@@ -77,17 +76,28 @@ bool RSExportForEach::validateAndConstructParams(
   }
 
   mResultType = FD->getResultType().getCanonicalType();
-  // Compute kernel functions are required to return a void type or
-  // be marked explicitly as a kernel. In the case of
-  // "__attribute__((kernel))", we handle validation differently.
+  // Compute kernel functions are defined differently when the
+  // "__attribute__((kernel))" is set.
   if (FD->hasAttr<clang::KernelAttr>()) {
-    return validateAndConstructKernelParams(Context, FD);
+    valid |= validateAndConstructKernelParams(Context, FD);
+  } else {
+    valid |= validateAndConstructOldStyleParams(Context, FD);
   }
+  valid |= setSignatureMetadata(Context, FD);
+  return valid;
+}
 
+bool RSExportForEach::validateAndConstructOldStyleParams(RSContext *Context,
+    const clang::FunctionDecl *FD) {
+  slangAssert(Context && FD);
   // If numParams is 0, we already marked this as a graphics root().
   slangAssert(numParams > 0);
 
-  // Compute kernel functions of this type are required to return a void type.
+  bool valid = true;
+  clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
+
+  // Compute kernel functions of this style are required to return a void type.
+  clang::ASTContext &C = Context->getASTContext();
   if (mResultType != C.VoidTy) {
     DiagEngine->Report(
       clang::FullSourceLoc(FD->getLocation(), DiagEngine->getSourceManager()),
@@ -194,36 +204,6 @@ bool RSExportForEach::validateAndConstructParams(
     i++;
   }
 
-  mSignatureMetadata = 0;
-  if (valid) {
-    // Set up the bitwise metadata encoding for runtime argument passing.
-    mSignatureMetadata |= (mIn ?       0x01 : 0);
-    mSignatureMetadata |= (mOut ?      0x02 : 0);
-    mSignatureMetadata |= (mUsrData ?  0x04 : 0);
-    mSignatureMetadata |= (mX ?        0x08 : 0);
-    mSignatureMetadata |= (mY ?        0x10 : 0);
-  }
-
-  if (Context->getTargetAPI() < SLANG_ICS_TARGET_API) {
-    // APIs before ICS cannot skip between parameters. It is ok, however, for
-    // them to omit further parameters (i.e. skipping X is ok if you skip Y).
-    if (mSignatureMetadata != 0x1f &&  // In, Out, UsrData, X, Y
-        mSignatureMetadata != 0x0f &&  // In, Out, UsrData, X
-        mSignatureMetadata != 0x07 &&  // In, Out, UsrData
-        mSignatureMetadata != 0x03 &&  // In, Out
-        mSignatureMetadata != 0x01) {  // In
-      DiagEngine->Report(
-        clang::FullSourceLoc(FD->getLocation(),
-                             DiagEngine->getSourceManager()),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "Compute kernel %0() targeting SDK levels "
-                                    "%1-%2 may not skip parameters"))
-        << FD->getName() << SLANG_MINIMUM_TARGET_API
-        << (SLANG_ICS_TARGET_API - 1);
-      valid = false;
-    }
-  }
-
   return valid;
 }
 
@@ -249,10 +229,10 @@ bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
   }
 
   // Denote that we are indeed a pass-by-value kernel.
-  mKernel = true;
+  mIsKernelStyle = true;
 
   if (mResultType != C.VoidTy) {
-    mReturn = true;
+    mHasReturnType = true;
   }
 
   if (mResultType->isPointerType()) {
@@ -304,7 +284,7 @@ bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
   }
 
   // Check that we have at least one allocation to use for dimensions.
-  if (valid && !mIn && !mReturn) {
+  if (valid && !mIn && !mHasReturnType) {
     DiagEngine->Report(
       clang::FullSourceLoc(FD->getLocation(),
                            DiagEngine->getSourceManager()),
@@ -369,23 +349,53 @@ bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
 
     i++;  // advance parameter pointer
   }
-
-  mSignatureMetadata = 0;
-  if (valid) {
-    // Set up the bitwise metadata encoding for runtime argument passing.
-    mSignatureMetadata |= (mIn ?       0x01 : 0);
-    slangAssert(mOut == NULL);
-    mSignatureMetadata |= (mReturn ?   0x02 : 0);
-    slangAssert(mUsrData == NULL);
-    mSignatureMetadata |= (mUsrData ?  0x04 : 0);
-    mSignatureMetadata |= (mX ?        0x08 : 0);
-    mSignatureMetadata |= (mY ?        0x10 : 0);
-    mSignatureMetadata |= (mKernel ?   0x20 : 0);  // pass-by-value
-  }
-
   return valid;
 }
 
+bool RSExportForEach::setSignatureMetadata(RSContext *Context,
+                                           const clang::FunctionDecl *FD) {
+  mSignatureMetadata = 0;
+  bool valid = true;
+
+  if (mIsKernelStyle) {
+    slangAssert(mOut == NULL);
+    slangAssert(mUsrData == NULL);
+  } else {
+    slangAssert(!mHasReturnType);
+  }
+
+  // Set up the bitwise metadata encoding for runtime argument passing.
+  // TODO: If this bit field is re-used from C++ code, define the values in a header.
+  const bool HasOut = mOut || mHasReturnType;
+  mSignatureMetadata |= (mIn ?            0x01 : 0);
+  mSignatureMetadata |= (HasOut ?         0x02 : 0);
+  mSignatureMetadata |= (mUsrData ?       0x04 : 0);
+  mSignatureMetadata |= (mX ?             0x08 : 0);
+  mSignatureMetadata |= (mY ?             0x10 : 0);
+  mSignatureMetadata |= (mIsKernelStyle ? 0x20 : 0);  // pass-by-value
+
+  if (Context->getTargetAPI() < SLANG_ICS_TARGET_API) {
+    // APIs before ICS cannot skip between parameters. It is ok, however, for
+    // them to omit further parameters (i.e. skipping X is ok if you skip Y).
+    if (mSignatureMetadata != 0x1f &&  // In, Out, UsrData, X, Y
+        mSignatureMetadata != 0x0f &&  // In, Out, UsrData, X
+        mSignatureMetadata != 0x07 &&  // In, Out, UsrData
+        mSignatureMetadata != 0x03 &&  // In, Out
+        mSignatureMetadata != 0x01) {  // In
+      clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
+      DiagEngine->Report(clang::FullSourceLoc(FD->getLocation(),
+                                              DiagEngine->getSourceManager()),
+                         DiagEngine->getCustomDiagID(
+                             clang::DiagnosticsEngine::Error,
+                             "Compute kernel %0() targeting SDK levels "
+                             "%1-%2 may not skip parameters"))
+          << FD->getName() << SLANG_MINIMUM_TARGET_API
+          << (SLANG_ICS_TARGET_API - 1);
+      valid = false;
+    }
+  }
+  return valid;
+}
 
 RSExportForEach *RSExportForEach::Create(RSContext *Context,
                                          const clang::FunctionDecl *FD) {
@@ -464,12 +474,12 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
   if (FE->mIn) {
     const clang::Type *T = FE->mIn->getType().getCanonicalType().getTypePtr();
     FE->mInType = RSExportType::Create(Context, T);
-    if (FE->mKernel) {
+    if (FE->mIsKernelStyle) {
       slangAssert(FE->mInType);
     }
   }
 
-  if (FE->mKernel && FE->mReturn) {
+  if (FE->mIsKernelStyle && FE->mHasReturnType) {
     const clang::Type *T = FE->mResultType.getTypePtr();
     FE->mOutType = RSExportType::Create(Context, T);
     slangAssert(FE->mOutType);
