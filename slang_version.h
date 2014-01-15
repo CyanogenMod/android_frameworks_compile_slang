@@ -22,6 +22,7 @@
 // HC -> Honeycomb
 // ICS -> Ice Cream Sandwich
 // JB -> Jelly Bean
+// KK -> KitKat
 enum SlangTargetAPI {
   SLANG_MINIMUM_TARGET_API = 11,
   SLANG_HC_TARGET_API = 11,
