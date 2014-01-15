@@ -54,8 +54,8 @@ class RSExportForEach : public RSExportable {
   const clang::ParmVarDecl *mAr;
 
   clang::QualType mResultType;  // return type (if present).
-  bool mReturn;  // does this kernel have a return type?
-  bool mKernel;  // is this a pass-by-value kernel?
+  bool mHasReturnType;  // does this kernel have a return type?
+  bool mIsKernelStyle;  // is this a pass-by-value kernel?
 
   bool mDummyRoot;
 
@@ -65,17 +65,22 @@ class RSExportForEach : public RSExportable {
       mName(Name.data(), Name.size()), mParamPacketType(NULL), mInType(NULL),
       mOutType(NULL), numParams(0), mSignatureMetadata(0),
       mIn(NULL), mOut(NULL), mUsrData(NULL), mX(NULL), mY(NULL), mZ(NULL),
-      mAr(NULL), mResultType(clang::QualType()), mReturn(false),
-      mKernel(false), mDummyRoot(false) {
+      mAr(NULL), mResultType(clang::QualType()), mHasReturnType(false),
+      mIsKernelStyle(false), mDummyRoot(false) {
     return;
   }
 
   bool validateAndConstructParams(RSContext *Context,
                                   const clang::FunctionDecl *FD);
 
+  bool validateAndConstructOldStyleParams(RSContext *Context,
+                                        const clang::FunctionDecl *FD);
+
   bool validateAndConstructKernelParams(RSContext *Context,
                                         const clang::FunctionDecl *FD);
 
+  bool setSignatureMetadata(RSContext *Context,
+                            const clang::FunctionDecl *FD);
  public:
   static RSExportForEach *Create(RSContext *Context,
                                  const clang::FunctionDecl *FD);
@@ -103,7 +108,7 @@ class RSExportForEach : public RSExportable {
   }
 
   inline bool hasReturn() const {
-    return mReturn;
+    return mHasReturnType;
   }
 
   inline const RSExportType *getInType() const {
