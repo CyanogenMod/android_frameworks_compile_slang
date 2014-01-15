@@ -49,7 +49,8 @@ enum {
   JB_MR1 = 1700,
   JB_MR2 = 1800,
   KK = 1900,
-  CURRENT = KK
+  KK_P1 = 1901,
+  CURRENT = KK_P1
 };
 }  // namespace SlangVersion
 
