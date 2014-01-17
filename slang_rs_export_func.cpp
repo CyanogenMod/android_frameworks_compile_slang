@@ -32,16 +32,14 @@ namespace slang {
 namespace {
 
 // Ensure that the exported function is actually valid
-static bool ValidateFuncDecl(clang::DiagnosticsEngine *DiagEngine,
+static bool ValidateFuncDecl(slang::RSContext *Context,
                              const clang::FunctionDecl *FD) {
-  slangAssert(DiagEngine && FD);
+  slangAssert(Context && FD);
   const clang::ASTContext &C = FD->getASTContext();
   if (FD->getResultType().getCanonicalType() != C.VoidTy) {
-    DiagEngine->Report(
-      clang::FullSourceLoc(FD->getLocation(), DiagEngine->getSourceManager()),
-      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                  "invokable non-static functions are "
-                                  "required to return void"));
+    Context->ReportError(
+        FD->getLocation(),
+        "invokable non-static functions are required to return void");
     return false;
   }
   return true;
@@ -56,7 +54,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
 
   slangAssert(!Name.empty() && "Function must have a name");
 
-  if (!ValidateFuncDecl(Context->getDiagnostics(), FD)) {
+  if (!ValidateFuncDecl(Context, FD)) {
     return NULL;
   }
 

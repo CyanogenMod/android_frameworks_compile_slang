@@ -86,30 +86,20 @@ static const clang::Type *TypeExportableHelper(
     const clang::VarDecl *VD,
     const clang::RecordDecl *TopLevelRecord);
 
-static void ReportTypeError(clang::DiagnosticsEngine *DiagEngine,
+static void ReportTypeError(slang::RSContext *Context,
                             const clang::NamedDecl *ND,
                             const clang::RecordDecl *TopLevelRecord,
                             const char *Message,
                             unsigned int TargetAPI = 0) {
-  if (!DiagEngine) {
-    return;
-  }
-
-  const clang::SourceManager &SM = DiagEngine->getSourceManager();
-
   // Attempt to use the type declaration first (if we have one).
   // Fall back to the variable definition, if we are looking at something
   // like an array declaration that can't be exported.
   if (TopLevelRecord) {
-    DiagEngine->Report(
-      clang::FullSourceLoc(TopLevelRecord->getLocation(), SM),
-      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message))
-      << TopLevelRecord->getName() << TargetAPI;
+    Context->ReportError(TopLevelRecord->getLocation(), Message)
+        << TopLevelRecord->getName() << TargetAPI;
   } else if (ND) {
-    DiagEngine->Report(
-      clang::FullSourceLoc(ND->getLocation(), SM),
-      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message))
-      << ND->getName() << TargetAPI;
+    Context->ReportError(ND->getLocation(), Message) << ND->getName()
+                                                     << TargetAPI;
   } else {
     slangAssert(false && "Variables should be validated before exporting");
   }
@@ -123,12 +113,8 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
     const clang::RecordDecl *TopLevelRecord) {
   // Check element type
   const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
-  clang::DiagnosticsEngine *DiagEngine = NULL;
-  if (Context) {
-    DiagEngine = Context->getDiagnostics();
-  }
   if (ElementType->isArrayType()) {
-    ReportTypeError(DiagEngine, VD, TopLevelRecord,
+    ReportTypeError(Context, VD, TopLevelRecord,
                     "multidimensional arrays cannot be exported: '%0'");
     return NULL;
   } else if (ElementType->isExtVectorType()) {
@@ -138,13 +124,13 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
 
     const clang::Type *BaseElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
     if (!RSExportPrimitiveType::IsPrimitiveType(BaseElementType)) {
-      ReportTypeError(DiagEngine, VD, TopLevelRecord,
+      ReportTypeError(Context, VD, TopLevelRecord,
         "vectors of non-primitive types cannot be exported: '%0'");
       return NULL;
     }
 
     if (numElements == 3 && CAT->getSize() != 1) {
-      ReportTypeError(DiagEngine, VD, TopLevelRecord,
+      ReportTypeError(Context, VD, TopLevelRecord,
         "arrays of width 3 vector types cannot be exported: '%0'");
       return NULL;
     }
@@ -164,10 +150,6 @@ static const clang::Type *TypeExportableHelper(
     slang::RSContext *Context,
     clang::VarDecl const *VD,
     clang::RecordDecl const *TopLevelRecord) {
-  clang::DiagnosticsEngine *DiagEngine = NULL;
-  if (Context) {
-    DiagEngine = Context->getDiagnostics();
-  }
   // Normalize first
   if ((T = GET_CANONICAL_TYPE(T)) == NULL)
     return NULL;
@@ -198,7 +180,7 @@ static const clang::Type *TypeExportableHelper(
 
       // Check internal struct
       if (T->isUnionType()) {
-        ReportTypeError(DiagEngine, VD, T->getAsUnionType()->getDecl(),
+        ReportTypeError(Context, VD, T->getAsUnionType()->getDecl(),
                         "unions cannot be exported: '%0'");
         return NULL;
       } else if (!T->isStructureType()) {
@@ -210,7 +192,7 @@ static const clang::Type *TypeExportableHelper(
       if (RD != NULL) {
         RD = RD->getDefinition();
         if (RD == NULL) {
-          ReportTypeError(DiagEngine, NULL, T->getAsStructureType()->getDecl(),
+          ReportTypeError(Context, NULL, T->getAsStructureType()->getDecl(),
                           "struct is not defined in this module");
           return NULL;
         }
@@ -220,7 +202,7 @@ static const clang::Type *TypeExportableHelper(
         TopLevelRecord = RD;
       }
       if (RD->getName().empty()) {
-        ReportTypeError(DiagEngine, NULL, RD,
+        ReportTypeError(Context, NULL, RD,
                         "anonymous structures cannot be exported");
         return NULL;
       }
@@ -249,16 +231,10 @@ static const clang::Type *TypeExportableHelper(
         //
         // TODO(zonr/srhines): allow bit fields of size 8, 16, 32
         if (FD->isBitField()) {
-          if (DiagEngine) {
-            DiagEngine->Report(
-              clang::FullSourceLoc(FD->getLocation(),
-                                   DiagEngine->getSourceManager()),
-              DiagEngine->getCustomDiagID(
-                clang::DiagnosticsEngine::Error,
-                "bit fields are not able to be exported: '%0.%1'"))
-              << RD->getName()
-              << FD->getName();
-          }
+          Context->ReportError(
+              FD->getLocation(),
+              "bit fields are not able to be exported: '%0.%1'")
+              << RD->getName() << FD->getName();
           return NULL;
         }
       }
@@ -267,7 +243,7 @@ static const clang::Type *TypeExportableHelper(
     }
     case clang::Type::Pointer: {
       if (TopLevelRecord) {
-        ReportTypeError(DiagEngine, VD, TopLevelRecord,
+        ReportTypeError(Context, VD, TopLevelRecord,
             "structures containing pointers cannot be exported: '%0'");
         return NULL;
       }
@@ -277,7 +253,7 @@ static const clang::Type *TypeExportableHelper(
       const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
 
       if (PointeeType->getTypeClass() == clang::Type::Pointer) {
-        ReportTypeError(DiagEngine, VD, TopLevelRecord,
+        ReportTypeError(Context, VD, TopLevelRecord,
             "multiple levels of pointers cannot be exported: '%0'");
         return NULL;
       }
@@ -342,8 +318,8 @@ static const clang::Type *TypeExportable(const clang::Type *T,
   return TypeExportableHelper(T, SPS, Context, VD, NULL);
 }
 
-static bool ValidateRSObjectInVarDecl(clang::VarDecl *VD,
-                                      bool InCompositeType,
+static bool ValidateRSObjectInVarDecl(slang::RSContext *Context,
+                                      clang::VarDecl *VD, bool InCompositeType,
                                       unsigned int TargetAPI) {
   if (TargetAPI < SLANG_JB_TARGET_API) {
     // Only if we are already in a composite type (like an array or structure).
@@ -354,8 +330,7 @@ static bool ValidateRSObjectInVarDecl(clang::VarDecl *VD,
         // Only if we are not a pointer to an object.
         const clang::Type *T = GET_CANONICAL_TYPE(VD->getType().getTypePtr());
         if (T->getTypeClass() != clang::Type::Pointer) {
-          clang::ASTContext &C = VD->getASTContext();
-          ReportTypeError(&C.getDiagnostics(), VD, NULL,
+          ReportTypeError(Context, VD, NULL,
                           "arrays/structures containing RS object types "
                           "cannot be exported in target API < %1: '%0'",
                           SLANG_JB_TARGET_API);
@@ -383,6 +358,7 @@ static bool ValidateRSObjectInVarDecl(clang::VarDecl *VD,
 // TargetAPI - target SDK API level.
 // IsFilterscript - whether or not we are compiling for Filterscript
 static bool ValidateTypeHelper(
+    slang::RSContext *Context,
     clang::ASTContext &C,
     const clang::Type *&T,
     clang::NamedDecl *ND,
@@ -402,7 +378,8 @@ static bool ValidateTypeHelper(
     case clang::Type::Record: {
       if (RSExportPrimitiveType::IsRSObjectType(T)) {
         clang::VarDecl *VD = (ND ? llvm::dyn_cast<clang::VarDecl>(ND) : NULL);
-        if (VD && !ValidateRSObjectInVarDecl(VD, InCompositeType, TargetAPI)) {
+        if (VD && !ValidateRSObjectInVarDecl(Context, VD, InCompositeType,
+                                             TargetAPI)) {
           return false;
         }
       }
@@ -412,7 +389,7 @@ static bool ValidateTypeHelper(
         if (!UnionDecl) {
           return true;
         } else if (RSExportPrimitiveType::IsRSObjectType(T)) {
-          ReportTypeError(&C.getDiagnostics(), NULL, UnionDecl,
+          ReportTypeError(Context, NULL, UnionDecl,
               "unions containing RS object types are not allowed");
           return false;
         }
@@ -455,7 +432,7 @@ static bool ValidateTypeHelper(
         const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
         FT = GET_CANONICAL_TYPE(FT);
 
-        if (!ValidateTypeHelper(C, FT, ND, Loc, SPS, true, UnionDecl,
+        if (!ValidateTypeHelper(Context, C, FT, ND, Loc, SPS, true, UnionDecl,
                                 TargetAPI, IsFilterscript)) {
           return false;
         }
@@ -471,21 +448,17 @@ static bool ValidateTypeHelper(
             QT == C.LongDoubleTy ||
             QT == C.LongTy ||
             QT == C.LongLongTy) {
-          clang::DiagnosticsEngine &DiagEngine = C.getDiagnostics();
           if (ND) {
-            DiagEngine.Report(
-              clang::FullSourceLoc(Loc, C.getSourceManager()),
-              DiagEngine.getCustomDiagID(
-                clang::DiagnosticsEngine::Error,
+            Context->ReportError(
+                Loc,
                 "Builtin types > 32 bits in size are forbidden in "
-                "Filterscript: '%0'")) << ND->getName();
+                "Filterscript: '%0'")
+                << ND->getName();
           } else {
-            DiagEngine.Report(
-              clang::FullSourceLoc(Loc, C.getSourceManager()),
-              DiagEngine.getCustomDiagID(
-                clang::DiagnosticsEngine::Error,
+            Context->ReportError(
+                Loc,
                 "Builtin types > 32 bits in size are forbidden in "
-                "Filterscript"));
+                "Filterscript");
           }
           return false;
         }
@@ -496,12 +469,9 @@ static bool ValidateTypeHelper(
     case clang::Type::Pointer: {
       if (IsFilterscript) {
         if (ND) {
-          clang::DiagnosticsEngine &DiagEngine = C.getDiagnostics();
-          DiagEngine.Report(
-            clang::FullSourceLoc(Loc, C.getSourceManager()),
-            DiagEngine.getCustomDiagID(
-              clang::DiagnosticsEngine::Error,
-              "Pointers are forbidden in Filterscript: '%0'")) << ND->getName();
+          Context->ReportError(Loc,
+                               "Pointers are forbidden in Filterscript: '%0'")
+              << ND->getName();
           return false;
         } else {
           // TODO(srhines): Find a better way to handle expressions (i.e. no
@@ -515,8 +485,9 @@ static bool ValidateTypeHelper(
         UNSAFE_CAST_TYPE(const clang::PointerType, T);
       const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
 
-      return ValidateTypeHelper(C, PointeeType, ND, Loc, SPS, InCompositeType,
-                                UnionDecl, TargetAPI, IsFilterscript);
+      return ValidateTypeHelper(Context, C, PointeeType, ND, Loc, SPS,
+                                InCompositeType, UnionDecl, TargetAPI,
+                                IsFilterscript);
     }
 
     case clang::Type::ExtVector: {
@@ -528,21 +499,21 @@ static bool ValidateTypeHelper(
           EVT->getNumElements() == 3 &&
           ND &&
           ND->getFormalLinkage() == clang::ExternalLinkage) {
-        ReportTypeError(&C.getDiagnostics(), ND, NULL,
+        ReportTypeError(Context, ND, NULL,
                         "structs containing vectors of dimension 3 cannot "
                         "be exported at this API level: '%0'");
         return false;
       }
-      return ValidateTypeHelper(C, ElementType, ND, Loc, SPS, true, UnionDecl,
-                                TargetAPI, IsFilterscript);
+      return ValidateTypeHelper(Context, C, ElementType, ND, Loc, SPS, true,
+                                UnionDecl, TargetAPI, IsFilterscript);
     }
 
     case clang::Type::ConstantArray: {
       const clang::ConstantArrayType *CAT =
           UNSAFE_CAST_TYPE(const clang::ConstantArrayType, T);
       const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
-      return ValidateTypeHelper(C, ElementType, ND, Loc, SPS, true, UnionDecl,
-                                TargetAPI, IsFilterscript);
+      return ValidateTypeHelper(Context, C, ElementType, ND, Loc, SPS, true,
+                                UnionDecl, TargetAPI, IsFilterscript);
     }
 
     default: {
@@ -566,17 +537,11 @@ bool RSExportType::NormalizeType(const clang::Type *&T,
   // Get type name
   TypeName = RSExportType::GetTypeName(T);
   if (Context && TypeName.empty()) {
-    clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
     if (VD) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(VD->getLocation(),
-                             DiagEngine->getSourceManager()),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "anonymous types cannot be exported"));
+      Context->ReportError(VD->getLocation(),
+                           "anonymous types cannot be exported");
     } else {
-      DiagEngine->Report(
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "anonymous types cannot be exported"));
+      Context->ReportError("anonymous types cannot be exported");
     }
     return false;
   }
@@ -584,21 +549,23 @@ bool RSExportType::NormalizeType(const clang::Type *&T,
   return true;
 }
 
-bool RSExportType::ValidateType(clang::ASTContext &C, clang::QualType QT,
-    clang::NamedDecl *ND, clang::SourceLocation Loc, unsigned int TargetAPI,
-    bool IsFilterscript) {
+bool RSExportType::ValidateType(slang::RSContext *Context, clang::ASTContext &C,
+                                clang::QualType QT, clang::NamedDecl *ND,
+                                clang::SourceLocation Loc,
+                                unsigned int TargetAPI, bool IsFilterscript) {
   const clang::Type *T = QT.getTypePtr();
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  return ValidateTypeHelper(C, T, ND, Loc, SPS, false, NULL, TargetAPI,
+  return ValidateTypeHelper(Context, C, T, ND, Loc, SPS, false, NULL, TargetAPI,
                             IsFilterscript);
   return true;
 }
 
-bool RSExportType::ValidateVarDecl(clang::VarDecl *VD, unsigned int TargetAPI,
+bool RSExportType::ValidateVarDecl(slang::RSContext *Context,
+                                   clang::VarDecl *VD, unsigned int TargetAPI,
                                    bool IsFilterscript) {
-  return ValidateType(VD->getASTContext(), VD->getType(), VD,
+  return ValidateType(Context, VD->getASTContext(), VD->getType(), VD,
                       VD->getLocation(), TargetAPI, IsFilterscript);
 }
 
@@ -779,11 +746,8 @@ RSExportType *RSExportType::Create(RSContext *Context,
       break;
     }
     default: {
-      clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
-      DiagEngine->Report(
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "unknown type cannot be exported: '%0'"))
-        << T->getTypeClassName();
+      Context->ReportError("unknown type cannot be exported: '%0'")
+          << T->getTypeClassName();
       break;
     }
   }
@@ -998,12 +962,8 @@ RSExportPrimitiveType::GetDataType(RSContext *Context, const clang::Type *T) {
         // The size of type WChar depend on platform so we abandon the support
         // to them.
         default: {
-          clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
-          DiagEngine->Report(
-            DiagEngine->getCustomDiagID(
-              clang::DiagnosticsEngine::Error,
-              "built-in type cannot be exported: '%0'"))
-            << T->getTypeClassName();
+          Context->ReportError("built-in type cannot be exported: '%0'")
+              << T->getTypeClassName();
           break;
         }
       }
@@ -1014,10 +974,7 @@ RSExportPrimitiveType::GetDataType(RSContext *Context, const clang::Type *T) {
       return RSExportPrimitiveType::GetRSSpecificType(T);
     }
     default: {
-      clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
-      DiagEngine->Report(
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "primitive type cannot be exported: '%0'"))
+      Context->ReportError("primitive type cannot be exported: '%0'")
           << T->getTypeClassName();
       break;
     }
@@ -1276,16 +1233,12 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
   const clang::RecordDecl* RD = RT->getDecl();
   RD = RD->getDefinition();
   if (RD != NULL) {
-    clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
-    const clang::SourceManager *SM = Context->getSourceManager();
     // Find definition, perform further examination
     if (RD->field_empty()) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(RD->getLocation(), *SM),
-        DiagEngine->getCustomDiagID(
-          clang::DiagnosticsEngine::Error,
-          "invalid matrix struct: must have 1 field for saving values: '%0'"))
-           << RD->getName();
+      Context->ReportError(
+          RD->getLocation(),
+          "invalid matrix struct: must have 1 field for saving values: '%0'")
+          << RD->getName();
       return NULL;
     }
 
@@ -1293,12 +1246,10 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
     const clang::FieldDecl *FD = *FIT;
     const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
     if ((FT == NULL) || (FT->getTypeClass() != clang::Type::ConstantArray)) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(RD->getLocation(), *SM),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "invalid matrix struct: first field should"
-                                    " be an array with constant size: '%0'"))
-        << RD->getName();
+      Context->ReportError(RD->getLocation(),
+                           "invalid matrix struct: first field should"
+                           " be an array with constant size: '%0'")
+          << RD->getName();
       return NULL;
     }
     const clang::ConstantArrayType *CAT =
@@ -1308,33 +1259,27 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
         (ElementType->getTypeClass() != clang::Type::Builtin) ||
         (static_cast<const clang::BuiltinType *>(ElementType)->getKind() !=
          clang::BuiltinType::Float)) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(RD->getLocation(), *SM),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "invalid matrix struct: first field "
-                                    "should be a float array: '%0'"))
-        << RD->getName();
+      Context->ReportError(RD->getLocation(),
+                           "invalid matrix struct: first field "
+                           "should be a float array: '%0'")
+          << RD->getName();
       return NULL;
     }
 
     if (CAT->getSize() != Dim * Dim) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(RD->getLocation(), *SM),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "invalid matrix struct: first field "
-                                    "should be an array with size %0: '%1'"))
-        << (Dim * Dim) << (RD->getName());
+      Context->ReportError(RD->getLocation(),
+                           "invalid matrix struct: first field "
+                           "should be an array with size %0: '%1'")
+          << (Dim * Dim) << (RD->getName());
       return NULL;
     }
 
     FIT++;
     if (FIT != RD->field_end()) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(RD->getLocation(), *SM),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "invalid matrix struct: must have "
-                                    "exactly 1 field: '%0'"))
-        << RD->getName();
+      Context->ReportError(RD->getLocation(),
+                           "invalid matrix struct: must have "
+                           "exactly 1 field: '%0'")
+          << RD->getName();
       return NULL;
     }
   }
@@ -1462,7 +1407,6 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
            FE = RD->field_end();
        FI != FE;
        FI++, Index++) {
-    clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
 
     // FIXME: All fields should be primitive type
     slangAssert(FI->getKind() == clang::Decl::Field);
@@ -1480,11 +1424,9 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
           new Field(ET, FD->getName(), ERT,
                     static_cast<size_t>(RL->getFieldOffset(Index) >> 3)));
     } else {
-      DiagEngine->Report(
-        clang::FullSourceLoc(RD->getLocation(), DiagEngine->getSourceManager()),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "field type cannot be exported: '%0.%1'"))
-        << RD->getName() << FD->getName();
+      Context->ReportError(RD->getLocation(),
+                           "field type cannot be exported: '%0.%1'")
+          << RD->getName() << FD->getName();
       return NULL;
     }
   }

@@ -31,7 +31,6 @@ class RSCheckAST : public clang::StmtVisitor<RSCheckAST> {
  private:
   slang::RSContext *Context;
   clang::ASTContext &C;
-  clang::DiagnosticsEngine &mDiagEngine;
   clang::SourceManager &mSM;
   bool mValid;
   unsigned int mTargetAPI;
@@ -49,9 +48,12 @@ class RSCheckAST : public clang::StmtVisitor<RSCheckAST> {
  public:
   explicit RSCheckAST(RSContext *Con, unsigned int TargetAPI,
                       bool IsFilterscript)
-      : Context(Con), C(Con->getASTContext()), mDiagEngine(C.getDiagnostics()),
+      : Context(Con),
+        C(Con->getASTContext()),
         mSM(C.getSourceManager()),
-        mValid(true), mTargetAPI(TargetAPI), mIsFilterscript(IsFilterscript),
+        mValid(true),
+        mTargetAPI(TargetAPI),
+        mIsFilterscript(IsFilterscript),
         mInKernel(false) {
     return;
   }
