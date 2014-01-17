@@ -34,18 +34,12 @@ namespace slang {
 
 namespace {
 
-static void ReportNameError(clang::DiagnosticsEngine *DiagEngine,
-                            clang::ParmVarDecl const *PVD) {
-  slangAssert(DiagEngine && PVD);
-  const clang::SourceManager &SM = DiagEngine->getSourceManager();
-
-  DiagEngine->Report(
-    clang::FullSourceLoc(PVD->getLocation(), SM),
-    DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                "Duplicate parameter entry "
-                                "(by position/name): '%0'"))
-    << PVD->getName();
-  return;
+static void ReportNameError(RSContext *Context, clang::ParmVarDecl const *PVD) {
+  slangAssert(Context && PVD);
+  Context->ReportError(PVD->getLocation(),
+                       "Duplicate parameter entry "
+                       "(by position/name): '%0'")
+      << PVD->getName();
 }
 
 }  // namespace
@@ -57,20 +51,16 @@ bool RSExportForEach::validateAndConstructParams(
     RSContext *Context, const clang::FunctionDecl *FD) {
   slangAssert(Context && FD);
   bool valid = true;
-  clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
 
   numParams = FD->getNumParams();
 
   if (Context->getTargetAPI() < SLANG_JB_TARGET_API) {
     if (!isRootRSFunc(FD)) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(FD->getLocation(), DiagEngine->getSourceManager()),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "Non-root compute kernel %0() is "
-                                    "not supported in SDK levels %1-%2"))
-        << FD->getName()
-        << SLANG_MINIMUM_TARGET_API
-        << (SLANG_JB_TARGET_API - 1);
+      Context->ReportError(FD->getLocation(),
+                           "Non-root compute kernel %0() is "
+                           "not supported in SDK levels %1-%2")
+          << FD->getName() << SLANG_MINIMUM_TARGET_API
+          << (SLANG_JB_TARGET_API - 1);
       return false;
     }
   }
@@ -94,16 +84,14 @@ bool RSExportForEach::validateAndConstructOldStyleParams(RSContext *Context,
   slangAssert(numParams > 0);
 
   bool valid = true;
-  clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
 
   // Compute kernel functions of this style are required to return a void type.
   clang::ASTContext &C = Context->getASTContext();
   if (mResultType != C.VoidTy) {
-    DiagEngine->Report(
-      clang::FullSourceLoc(FD->getLocation(), DiagEngine->getSourceManager()),
-      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                  "Compute kernel %0() is required to return a "
-                                  "void type")) << FD->getName();
+    Context->ReportError(FD->getLocation(),
+                         "Compute kernel %0() is required to return a "
+                         "void type")
+        << FD->getName();
     valid = false;
   }
 
@@ -131,12 +119,10 @@ bool RSExportForEach::validateAndConstructOldStyleParams(RSContext *Context,
   }
 
   if (!mIn && !mOut) {
-    DiagEngine->Report(
-      clang::FullSourceLoc(FD->getLocation(),
-                           DiagEngine->getSourceManager()),
-      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                  "Compute kernel %0() must have at least one "
-                                  "parameter for in or out")) << FD->getName();
+    Context->ReportError(FD->getLocation(),
+                         "Compute kernel %0() must have at least one "
+                         "parameter for in or out")
+        << FD->getName();
     valid = false;
   }
 
@@ -155,30 +141,28 @@ bool RSExportForEach::validateAndConstructOldStyleParams(RSContext *Context,
     QT = PVD->getType().getCanonicalType();
 
     if (QT.getUnqualifiedType() != C.UnsignedIntTy) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(PVD->getLocation(),
-                             DiagEngine->getSourceManager()),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "Unexpected kernel %0() parameter '%1' "
-                                    "of type '%2'"))
-        << FD->getName() << PVD->getName() << PVD->getType().getAsString();
+      Context->ReportError(
+          PVD->getLocation(),
+          "Unexpected kernel %0() parameter '%1' "
+          "of type '%2'")
+          << FD->getName() << PVD->getName() << PVD->getType().getAsString();
       valid = false;
     } else {
       llvm::StringRef ParamName = PVD->getName();
       if (ParamName.equals("x")) {
         if (mX) {
-          ReportNameError(DiagEngine, PVD);
+          ReportNameError(Context, PVD);
           valid = false;
         } else if (mY) {
           // Can't go back to X after skipping Y
-          ReportNameError(DiagEngine, PVD);
+          ReportNameError(Context, PVD);
           valid = false;
         } else {
           mX = PVD;
         }
       } else if (ParamName.equals("y")) {
         if (mY) {
-          ReportNameError(DiagEngine, PVD);
+          ReportNameError(Context, PVD);
           valid = false;
         } else {
           mY = PVD;
@@ -189,13 +173,11 @@ bool RSExportForEach::validateAndConstructOldStyleParams(RSContext *Context,
         } else if (!mY) {
           mY = PVD;
         } else {
-          DiagEngine->Report(
-            clang::FullSourceLoc(PVD->getLocation(),
-                                 DiagEngine->getSourceManager()),
-            DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                        "Unexpected kernel %0() parameter '%1' "
-                                        "of type '%2'"))
-            << FD->getName() << PVD->getName() << PVD->getType().getAsString();
+          Context->ReportError(PVD->getLocation(),
+                               "Unexpected kernel %0() parameter '%1' "
+                               "of type '%2'")
+              << FD->getName() << PVD->getName()
+              << PVD->getType().getAsString();
           valid = false;
         }
       }
@@ -213,36 +195,26 @@ bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
   slangAssert(Context && FD);
   bool valid = true;
   clang::ASTContext &C = Context->getASTContext();
-  clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
 
   if (Context->getTargetAPI() < SLANG_JB_MR1_TARGET_API) {
-    DiagEngine->Report(
-      clang::FullSourceLoc(FD->getLocation(),
-                           DiagEngine->getSourceManager()),
-      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                  "Compute kernel %0() targeting SDK levels "
-                                  "%1-%2 may not use pass-by-value with "
-                                  "__attribute__((kernel))"))
-      << FD->getName() << SLANG_MINIMUM_TARGET_API
-      << (SLANG_JB_MR1_TARGET_API - 1);
+    Context->ReportError(FD->getLocation(),
+                         "Compute kernel %0() targeting SDK levels "
+                         "%1-%2 may not use pass-by-value with "
+                         "__attribute__((kernel))")
+        << FD->getName() << SLANG_MINIMUM_TARGET_API
+        << (SLANG_JB_MR1_TARGET_API - 1);
     return false;
   }
 
   // Denote that we are indeed a pass-by-value kernel.
   mIsKernelStyle = true;
 
-  if (mResultType != C.VoidTy) {
-    mHasReturnType = true;
-  }
+  mHasReturnType = (mResultType != C.VoidTy);
 
   if (mResultType->isPointerType()) {
-    DiagEngine->Report(
-      clang::FullSourceLoc(FD->getTypeSpecStartLoc(),
-                           DiagEngine->getSourceManager()),
-      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                  "Compute kernel %0() cannot return a "
-                                  "pointer type: '%1'"))
-      << FD->getName() << mResultType.getAsString();
+    Context->ReportError(FD->getTypeSpecStartLoc(),
+                         "Compute kernel %0() cannot return a pointer type: '%1'")
+        << FD->getName() << mResultType.getAsString();
     valid = false;
   }
 
@@ -258,13 +230,10 @@ bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
     QT = PVD->getType().getCanonicalType();
 
     if (QT->isPointerType()) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(PVD->getLocation(),
-                             DiagEngine->getSourceManager()),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "Compute kernel %0() cannot have "
-                                    "parameter '%1' of pointer type: '%2'"))
-        << FD->getName() << PVD->getName() << PVD->getType().getAsString();
+      Context->ReportError(PVD->getLocation(),
+                           "Compute kernel %0() cannot have "
+                           "parameter '%1' of pointer type: '%2'")
+          << FD->getName() << PVD->getName() << PVD->getType().getAsString();
       valid = false;
     } else if (QT.getUnqualifiedType() == C.UnsignedIntTy) {
       // First parameter is either input or x, y (iff it is uint32_t).
@@ -285,13 +254,11 @@ bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
 
   // Check that we have at least one allocation to use for dimensions.
   if (valid && !mIn && !mHasReturnType) {
-    DiagEngine->Report(
-      clang::FullSourceLoc(FD->getLocation(),
-                           DiagEngine->getSourceManager()),
-      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                  "Compute kernel %0() must have at least one "
-                                  "input parameter or a non-void return "
-                                  "type")) << FD->getName();
+    Context->ReportError(FD->getLocation(),
+                         "Compute kernel %0() must have at least one "
+                         "input parameter or a non-void return "
+                         "type")
+        << FD->getName();
     valid = false;
   }
 
@@ -301,30 +268,27 @@ bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
     QT = PVD->getType().getCanonicalType();
 
     if (QT.getUnqualifiedType() != C.UnsignedIntTy) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(PVD->getLocation(),
-                             DiagEngine->getSourceManager()),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "Unexpected kernel %0() parameter '%1' "
-                                    "of type '%2'"))
-        << FD->getName() << PVD->getName() << PVD->getType().getAsString();
+      Context->ReportError(PVD->getLocation(),
+                           "Unexpected kernel %0() parameter '%1' "
+                           "of type '%2'")
+          << FD->getName() << PVD->getName() << PVD->getType().getAsString();
       valid = false;
     } else {
       llvm::StringRef ParamName = PVD->getName();
       if (ParamName.equals("x")) {
         if (mX) {
-          ReportNameError(DiagEngine, PVD);
+          ReportNameError(Context, PVD);
           valid = false;
         } else if (mY) {
           // Can't go back to X after skipping Y
-          ReportNameError(DiagEngine, PVD);
+          ReportNameError(Context, PVD);
           valid = false;
         } else {
           mX = PVD;
         }
       } else if (ParamName.equals("y")) {
         if (mY) {
-          ReportNameError(DiagEngine, PVD);
+          ReportNameError(Context, PVD);
           valid = false;
         } else {
           mY = PVD;
@@ -335,13 +299,11 @@ bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
         } else if (!mY) {
           mY = PVD;
         } else {
-          DiagEngine->Report(
-            clang::FullSourceLoc(PVD->getLocation(),
-                                 DiagEngine->getSourceManager()),
-            DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                        "Unexpected kernel %0() parameter '%1' "
-                                        "of type '%2'"))
-            << FD->getName() << PVD->getName() << PVD->getType().getAsString();
+          Context->ReportError(PVD->getLocation(),
+                               "Unexpected kernel %0() parameter '%1' "
+                               "of type '%2'")
+              << FD->getName() << PVD->getName()
+              << PVD->getType().getAsString();
           valid = false;
         }
       }
@@ -382,13 +344,9 @@ bool RSExportForEach::setSignatureMetadata(RSContext *Context,
         mSignatureMetadata != 0x07 &&  // In, Out, UsrData
         mSignatureMetadata != 0x03 &&  // In, Out
         mSignatureMetadata != 0x01) {  // In
-      clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
-      DiagEngine->Report(clang::FullSourceLoc(FD->getLocation(),
-                                              DiagEngine->getSourceManager()),
-                         DiagEngine->getCustomDiagID(
-                             clang::DiagnosticsEngine::Error,
-                             "Compute kernel %0() targeting SDK levels "
-                             "%1-%2 may not skip parameters"))
+      Context->ReportError(FD->getLocation(),
+                           "Compute kernel %0() targeting SDK levels "
+                           "%1-%2 may not skip parameters")
           << FD->getName() << SLANG_MINIMUM_TARGET_API
           << (SLANG_ICS_TARGET_API - 1);
       valid = false;
@@ -526,20 +484,17 @@ bool RSExportForEach::isGraphicsRootRSFunc(int targetAPI,
 }
 
 bool RSExportForEach::isRSForEachFunc(int targetAPI,
-    clang::DiagnosticsEngine *DiagEngine,
+    slang::RSContext* Context,
     const clang::FunctionDecl *FD) {
-  slangAssert(DiagEngine && FD);
+  slangAssert(Context && FD);
   bool hasKernelAttr = FD->hasAttr<clang::KernelAttr>();
 
   if (FD->getStorageClass() == clang::SC_Static) {
     if (hasKernelAttr) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(FD->getLocation(),
-                             DiagEngine->getSourceManager()),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "Invalid use of attribute kernel with "
-                                    "static function declaration: %0"))
-        << FD->getName();
+      Context->ReportError(FD->getLocation(),
+                           "Invalid use of attribute kernel with "
+                           "static function declaration: %0")
+          << FD->getName();
     }
     return false;
   }
@@ -579,9 +534,9 @@ bool RSExportForEach::isRSForEachFunc(int targetAPI,
 
 bool
 RSExportForEach::validateSpecialFuncDecl(int targetAPI,
-                                         clang::DiagnosticsEngine *DiagEngine,
+                                         slang::RSContext *Context,
                                          clang::FunctionDecl const *FD) {
-  slangAssert(DiagEngine && FD);
+  slangAssert(Context && FD);
   bool valid = true;
   const clang::ASTContext &C = FD->getASTContext();
   const clang::QualType &IntType = FD->getASTContext().IntTy;
@@ -592,45 +547,35 @@ RSExportForEach::validateSpecialFuncDecl(int targetAPI,
       const clang::ParmVarDecl *PVD = FD->getParamDecl(0);
       clang::QualType QT = PVD->getType().getCanonicalType();
       if (QT != IntType) {
-        DiagEngine->Report(
-          clang::FullSourceLoc(PVD->getLocation(),
-                               DiagEngine->getSourceManager()),
-          DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                      "invalid parameter type for legacy "
-                                      "graphics root() function: %0"))
-          << PVD->getType();
+        Context->ReportError(PVD->getLocation(),
+                             "invalid parameter type for legacy "
+                             "graphics root() function: %0")
+            << PVD->getType();
         valid = false;
       }
     }
 
     // Graphics root function, so verify that it returns an int
     if (FD->getResultType().getCanonicalType() != IntType) {
-      DiagEngine->Report(
-        clang::FullSourceLoc(FD->getLocation(),
-                             DiagEngine->getSourceManager()),
-        DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                    "root() is required to return "
-                                    "an int for graphics usage"));
+      Context->ReportError(FD->getLocation(),
+                           "root() is required to return "
+                           "an int for graphics usage");
       valid = false;
     }
   } else if (isInitRSFunc(FD) || isDtorRSFunc(FD)) {
     if (FD->getNumParams() != 0) {
-      DiagEngine->Report(
-          clang::FullSourceLoc(FD->getLocation(),
-                               DiagEngine->getSourceManager()),
-          DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                      "%0(void) is required to have no "
-                                      "parameters")) << FD->getName();
+      Context->ReportError(FD->getLocation(),
+                           "%0(void) is required to have no "
+                           "parameters")
+          << FD->getName();
       valid = false;
     }
 
     if (FD->getResultType().getCanonicalType() != C.VoidTy) {
-      DiagEngine->Report(
-          clang::FullSourceLoc(FD->getLocation(),
-                               DiagEngine->getSourceManager()),
-          DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                      "%0(void) is required to have a void "
-                                      "return type")) << FD->getName();
+      Context->ReportError(FD->getLocation(),
+                           "%0(void) is required to have a void "
+                           "return type")
+          << FD->getName();
       valid = false;
     }
   } else {
