@@ -235,6 +235,30 @@ class RSContext {
     mPragmas->push_back(make_pair(T, V));
   }
 
+  // Report an error or a warning to the user.
+  clang::DiagnosticBuilder Report(clang::DiagnosticsEngine::Level Level,
+                                  const char *Message);
+  clang::DiagnosticBuilder Report(clang::DiagnosticsEngine::Level Level,
+                                  const clang::SourceLocation Loc,
+                                  const char *Message);
+
+  // Utility functions to report errors and warnings to make the calling code
+  // easier to read.
+  clang::DiagnosticBuilder ReportError(const char *Message) {
+    return Report(clang::DiagnosticsEngine::Error, Message);
+  }
+  clang::DiagnosticBuilder ReportError(const clang::SourceLocation Loc,
+                                       const char *Message) {
+    return Report(clang::DiagnosticsEngine::Error, Loc, Message);
+  }
+  clang::DiagnosticBuilder ReportWarning(const char *Message) {
+    return Report(clang::DiagnosticsEngine::Warning, Message);
+  }
+  clang::DiagnosticBuilder ReportWarning(const clang::SourceLocation Loc,
+                                         const char *Message) {
+    return Report(clang::DiagnosticsEngine::Warning, Loc, Message);
+  }
+
   ~RSContext();
 };
 

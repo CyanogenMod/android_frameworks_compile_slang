@@ -115,12 +115,10 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     return false;
   }
 
-  clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
   if (RSExportForEach::isSpecialRSFunc(mTargetAPI, FD)) {
     // Do not reflect specialized functions like init, dtor, or graphics root.
-    return RSExportForEach::validateSpecialFuncDecl(mTargetAPI,
-                                                    DiagEngine, FD);
-  } else if (RSExportForEach::isRSForEachFunc(mTargetAPI, DiagEngine, FD)) {
+    return RSExportForEach::validateSpecialFuncDecl(mTargetAPI, this, FD);
+  } else if (RSExportForEach::isRSForEachFunc(mTargetAPI, this, FD)) {
     RSExportForEach *EFE = RSExportForEach::Create(this, FD);
     if (EFE == NULL)
       return false;
@@ -317,6 +315,21 @@ RSContext::~RSContext() {
     if (!(*I)->isKeep())
       delete *I;
   }
+}
+
+clang::DiagnosticBuilder RSContext::Report(
+    clang::DiagnosticsEngine::Level Level, const char *Message) {
+  clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
+  return DiagEngine->Report(DiagEngine->getCustomDiagID(Level, Message));
+}
+
+clang::DiagnosticBuilder RSContext::Report(
+    clang::DiagnosticsEngine::Level Level, const clang::SourceLocation Loc,
+    const char *Message) {
+  clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
+  const clang::SourceManager *SM = getSourceManager();
+  return DiagEngine->Report(clang::FullSourceLoc(Loc, *SM),
+                            DiagEngine->getCustomDiagID(Level, Message));
 }
 
 }  // namespace slang

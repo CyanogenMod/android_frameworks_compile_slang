@@ -26,19 +26,6 @@
 
 namespace slang {
 
-namespace {
-
-static clang::DiagnosticBuilder ReportVarError(RSContext *Context,
-                           const clang::SourceLocation Loc,
-                           const char *Message) {
-  clang::DiagnosticsEngine *DiagEngine = Context->getDiagnostics();
-  const clang::SourceManager *SM = Context->getSourceManager();
-  return DiagEngine->Report(clang::FullSourceLoc(Loc, *SM),
-      DiagEngine->getCustomDiagID(clang::DiagnosticsEngine::Error, Message));
-}
-
-}  // namespace
-
 RSExportVar::RSExportVar(RSContext *Context,
                          const clang::VarDecl *VD,
                          const RSExportType *ET)
@@ -64,8 +51,8 @@ RSExportVar::RSExportVar(RSContext *Context,
           mInit.Val = clang::APValue(llvm::APSInt(1));
         } else {
           if (!Initializer->EvaluateAsRValue(mInit, Context->getASTContext())) {
-            ReportVarError(Context, Initializer->getExprLoc(),
-                           "initializer is not an R-value");
+            Context->ReportError(Initializer->getExprLoc(),
+                                 "initializer is not an R-value");
           }
         }
         break;
@@ -74,8 +61,8 @@ RSExportVar::RSExportVar(RSContext *Context,
         const clang::InitListExpr *IList =
             static_cast<const clang::InitListExpr*>(Initializer);
         if (!IList) {
-          ReportVarError(Context, VD->getLocation(),
-                         "Unable to find initializer list");
+          Context->ReportError(VD->getLocation(),
+                               "Unable to find initializer list");
           break;
         }
         const RSExportConstantArrayType *ECAT =
@@ -86,8 +73,8 @@ RSExportVar::RSExportVar(RSContext *Context,
           clang::Expr::EvalResult tempInit;
           if (!IList->getInit(i)->EvaluateAsRValue(tempInit,
                                                    Context->getASTContext())) {
-            ReportVarError(Context, IList->getInit(i)->getExprLoc(),
-                           "initializer is not an R-value");
+            Context->ReportError(IList->getInit(i)->getExprLoc(),
+                                 "initializer is not an R-value");
           }
           mInitArray.push_back(tempInit);
         }
@@ -95,11 +82,11 @@ RSExportVar::RSExportVar(RSContext *Context,
       }
       case RSExportType::ExportClassMatrix:
       case RSExportType::ExportClassRecord: {
-        ReportVarError(Context, VD->getLocation(),
-                       "Reflection of initializer to variable '%0' (of type "
-                       "'%1') is unsupported currently.")
-            << mName
-            << ET->getName();
+        Context->ReportError(
+            VD->getLocation(),
+            "Reflection of initializer to variable '%0' (of type "
+            "'%1') is unsupported currently.")
+            << mName << ET->getName();
         break;
       }
       default: {
