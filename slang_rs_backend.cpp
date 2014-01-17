@@ -94,12 +94,10 @@ bool RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
       if (!FD->getName().startswith("rs"))  // Check prefix
         continue;
       if (!SlangRS::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr))
-        mDiagEngine.Report(
-          clang::FullSourceLoc(FD->getLocation(), mSourceMgr),
-          mDiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                      "invalid function name prefix, "
-                                      "\"rs\" is reserved: '%0'"))
-          << FD->getName();
+        mContext->ReportError(FD->getLocation(),
+                              "invalid function name prefix, "
+                              "\"rs\" is reserved: '%0'")
+            << FD->getName();
     }
   }
 
@@ -114,11 +112,10 @@ bool RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
         const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
         clang::QualType QT = PVD->getOriginalType();
         if (QT->isArrayType()) {
-          mDiagEngine.Report(
-            clang::FullSourceLoc(PVD->getTypeSpecStartLoc(), mSourceMgr),
-            mDiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                        "exported function parameters may "
-                                        "not have array type: %0")) << QT;
+          mContext->ReportError(
+              PVD->getTypeSpecStartLoc(),
+              "exported function parameters may not have array type: %0")
+              << QT;
         }
       }
       AnnotateFunction(FD);

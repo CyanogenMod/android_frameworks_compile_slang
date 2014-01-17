@@ -121,11 +121,10 @@ void RSCheckAST::WarnOnSetElementAt(clang::CallExpr *E) {
       return;
   }
 
-  clang::DiagnosticBuilder DiagBuilder =  mDiagEngine.Report(
-    clang::FullSourceLoc(E->getLocStart(), mSM),
-    mDiagEngine.getCustomDiagID( clang::DiagnosticsEngine::Warning,
-    "untyped rsSetElementAt() can reduce performance. "
-    "Use rsSetElementAt_%0%1() instead."));
+  clang::DiagnosticBuilder DiagBuilder =
+      Context->ReportWarning(E->getLocStart(),
+                             "untyped rsSetElementAt() can reduce performance. "
+                             "Use rsSetElementAt_%0%1() instead.");
   DiagBuilder << Name;
 
   if (VectorTy) {
@@ -133,8 +132,6 @@ void RSCheckAST::WarnOnSetElementAt(clang::CallExpr *E) {
   } else {
     DiagBuilder << "";
   }
-
-  return;
 }
 
 void RSCheckAST::VisitCallExpr(clang::CallExpr *E) {
@@ -158,7 +155,7 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
     clang::QualType resultType = FD->getResultType().getCanonicalType();
 
     // We use FD as our NamedDecl in the case of a bad return type.
-    if (!RSExportType::ValidateType(C, resultType, FD,
+    if (!RSExportType::ValidateType(Context, C, resultType, FD,
                                     FD->getLocStart(), mTargetAPI,
                                     mIsFilterscript)) {
       mValid = false;
@@ -167,7 +164,7 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
     for (size_t i = 0; i < numParams; i++) {
       clang::ParmVarDecl *PVD = FD->getParamDecl(i);
       clang::QualType QT = PVD->getType().getCanonicalType();
-      if (!RSExportType::ValidateType(C, QT, PVD, PVD->getLocStart(),
+      if (!RSExportType::ValidateType(Context, C, QT, PVD, PVD->getLocStart(),
                                       mTargetAPI, mIsFilterscript)) {
         mValid = false;
       }
@@ -175,7 +172,7 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
   }
 
   bool saveKernel = mInKernel;
-  mInKernel = RSExportForEach::isRSForEachFunc(mTargetAPI, &mDiagEngine, FD);
+  mInKernel = RSExportForEach::isRSForEachFunc(mTargetAPI, Context, FD);
 
   if (clang::Stmt *Body = FD->getBody()) {
     Visit(Body);
@@ -203,17 +200,15 @@ void RSCheckAST::ValidateVarDecl(clang::VarDecl *VD) {
   // We don't allow static (non-const) variables within kernels.
   if (mInKernel && VD->isStaticLocal()) {
     if (!QT.isConstQualified()) {
-      mDiagEngine.Report(
-        clang::FullSourceLoc(VD->getLocation(), mSM),
-        mDiagEngine.getCustomDiagID(
-          clang::DiagnosticsEngine::Error,
-          "Non-const static variables are not allowed in kernels: '%0'"))
+      Context->ReportError(
+          VD->getLocation(),
+          "Non-const static variables are not allowed in kernels: '%0'")
           << VD->getName();
       mValid = false;
     }
   }
 
-  if (!RSExportType::ValidateVarDecl(VD, mTargetAPI, mIsFilterscript)) {
+  if (!RSExportType::ValidateVarDecl(Context, VD, mTargetAPI, mIsFilterscript)) {
     mValid = false;
   } else if (clang::Expr *Init = VD->getInit()) {
     // Only check the initializer if the decl is already ok.
@@ -245,17 +240,9 @@ void RSCheckAST::VisitCastExpr(clang::CastExpr *CE) {
     const clang::Type *T = QT.getTypePtr();
     if (T->isVectorType()) {
       if (llvm::isa<clang::ImplicitCastExpr>(CE)) {
-        mDiagEngine.Report(
-          clang::FullSourceLoc(CE->getExprLoc(),
-                               mDiagEngine.getSourceManager()),
-          mDiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                     "invalid implicit vector cast"));
+        Context->ReportError(CE->getExprLoc(), "invalid implicit vector cast");
       } else {
-        mDiagEngine.Report(
-          clang::FullSourceLoc(CE->getExprLoc(),
-                               mDiagEngine.getSourceManager()),
-          mDiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                      "invalid vector cast"));
+        Context->ReportError(CE->getExprLoc(), "invalid vector cast");
       }
       mValid = false;
     }
@@ -273,7 +260,7 @@ void RSCheckAST::VisitExpr(clang::Expr *E) {
   E = E->IgnoreImpCasts();
   if (mIsFilterscript &&
       !SlangRS::IsLocInRSHeaderFile(E->getExprLoc(), mSM) &&
-      !RSExportType::ValidateType(C, E->getType(), NULL, E->getExprLoc(),
+      !RSExportType::ValidateType(Context, C, E->getType(), NULL, E->getExprLoc(),
                                   mTargetAPI, mIsFilterscript)) {
     mValid = false;
   } else {
