@@ -1,7 +1,7 @@
 #pragma version(1)
 #pragma rs java_package_name(foo)
 
-int root(uint32_t ain) {
+int root(uint32_t x) {
   return 0;
 }
 
