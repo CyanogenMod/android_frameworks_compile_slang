@@ -32,19 +32,6 @@
 
 namespace slang {
 
-namespace {
-
-static void ReportNameError(RSContext *Context, clang::ParmVarDecl const *PVD) {
-  slangAssert(Context && PVD);
-  Context->ReportError(PVD->getLocation(),
-                       "Duplicate parameter entry "
-                       "(by position/name): '%0'")
-      << PVD->getName();
-}
-
-}  // namespace
-
-
 // This function takes care of additional validation and construction of
 // parameters related to forEach_* reflection.
 bool RSExportForEach::validateAndConstructParams(
@@ -77,8 +64,8 @@ bool RSExportForEach::validateAndConstructParams(
   return valid;
 }
 
-bool RSExportForEach::validateAndConstructOldStyleParams(RSContext *Context,
-    const clang::FunctionDecl *FD) {
+bool RSExportForEach::validateAndConstructOldStyleParams(
+    RSContext *Context, const clang::FunctionDecl *FD) {
   slangAssert(Context && FD);
   // If numParams is 0, we already marked this as a graphics root().
   slangAssert(numParams > 0);
@@ -98,23 +85,49 @@ bool RSExportForEach::validateAndConstructOldStyleParams(RSContext *Context,
   // Validate remaining parameter types
   // TODO(all): Add support for LOD/face when we have them
 
-  size_t i = 0;
-  const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
-  clang::QualType QT = PVD->getType().getCanonicalType();
+  size_t IndexOfFirstIterator = numParams;
+  valid |= validateIterationParameters(Context, FD, &IndexOfFirstIterator);
 
-  // Check for const T1 *in
-  if (QT->isPointerType() && QT->getPointeeType().isConstQualified()) {
-    mIn = PVD;
-    i++;  // advance parameter pointer
-  }
+  // Validate the non-iterator parameters, which should all be found before the
+  // first iterator.
+  for (size_t i = 0; i < IndexOfFirstIterator; i++) {
+    const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
+    clang::QualType QT = PVD->getType().getCanonicalType();
 
-  // Check for T2 *out
-  if (i < numParams) {
-    PVD = FD->getParamDecl(i);
-    QT = PVD->getType().getCanonicalType();
-    if (QT->isPointerType() && !QT->getPointeeType().isConstQualified()) {
-      mOut = PVD;
-      i++;  // advance parameter pointer
+    if (!QT->isPointerType()) {
+      Context->ReportError(PVD->getLocation(),
+                           "Compute kernel %0() cannot have non-pointer "
+                           "parameters besides 'x' and 'y'. Parameter '%1' is "
+                           "of type: '%2'")
+          << FD->getName() << PVD->getName() << PVD->getType().getAsString();
+      valid = false;
+      continue;
+    }
+
+    // The only non-const pointer should be out.
+    if (!QT->getPointeeType().isConstQualified()) {
+      if (mOut == NULL) {
+        mOut = PVD;
+      } else {
+        Context->ReportError(PVD->getLocation(),
+                             "Compute kernel %0() can only have one non-const "
+                             "pointer parameter. Parameters '%1' and '%2' are "
+                             "both non-const.")
+            << FD->getName() << mOut->getName() << PVD->getName();
+        valid = false;
+      }
+    } else {
+      if (mIn == NULL && mOut == NULL) {
+        mIn = PVD;
+      } else if (mUsrData == NULL) {
+        mUsrData = PVD;
+      } else {
+        Context->ReportError(
+            PVD->getLocation(),
+            "Unexpected parameter '%0' for compute kernel %1()")
+            << PVD->getName() << FD->getName();
+        valid = false;
+      }
     }
   }
 
@@ -126,72 +139,11 @@ bool RSExportForEach::validateAndConstructOldStyleParams(RSContext *Context,
     valid = false;
   }
 
-  // Check for T3 *usrData
-  if (i < numParams) {
-    PVD = FD->getParamDecl(i);
-    QT = PVD->getType().getCanonicalType();
-    if (QT->isPointerType() && QT->getPointeeType().isConstQualified()) {
-      mUsrData = PVD;
-      i++;  // advance parameter pointer
-    }
-  }
-
-  while (i < numParams) {
-    PVD = FD->getParamDecl(i);
-    QT = PVD->getType().getCanonicalType();
-
-    if (QT.getUnqualifiedType() != C.UnsignedIntTy) {
-      Context->ReportError(
-          PVD->getLocation(),
-          "Unexpected kernel %0() parameter '%1' "
-          "of type '%2'")
-          << FD->getName() << PVD->getName() << PVD->getType().getAsString();
-      valid = false;
-    } else {
-      llvm::StringRef ParamName = PVD->getName();
-      if (ParamName.equals("x")) {
-        if (mX) {
-          ReportNameError(Context, PVD);
-          valid = false;
-        } else if (mY) {
-          // Can't go back to X after skipping Y
-          ReportNameError(Context, PVD);
-          valid = false;
-        } else {
-          mX = PVD;
-        }
-      } else if (ParamName.equals("y")) {
-        if (mY) {
-          ReportNameError(Context, PVD);
-          valid = false;
-        } else {
-          mY = PVD;
-        }
-      } else {
-        if (!mX && !mY) {
-          mX = PVD;
-        } else if (!mY) {
-          mY = PVD;
-        } else {
-          Context->ReportError(PVD->getLocation(),
-                               "Unexpected kernel %0() parameter '%1' "
-                               "of type '%2'")
-              << FD->getName() << PVD->getName()
-              << PVD->getType().getAsString();
-          valid = false;
-        }
-      }
-    }
-
-    i++;
-  }
-
   return valid;
 }
 
-
-bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
-    const clang::FunctionDecl *FD) {
+bool RSExportForEach::validateAndConstructKernelParams(
+    RSContext *Context, const clang::FunctionDecl *FD) {
   slangAssert(Context && FD);
   bool valid = true;
   clang::ASTContext &C = Context->getASTContext();
@@ -208,12 +160,12 @@ bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
 
   // Denote that we are indeed a pass-by-value kernel.
   mIsKernelStyle = true;
-
   mHasReturnType = (mResultType != C.VoidTy);
 
   if (mResultType->isPointerType()) {
-    Context->ReportError(FD->getTypeSpecStartLoc(),
-                         "Compute kernel %0() cannot return a pointer type: '%1'")
+    Context->ReportError(
+        FD->getTypeSpecStartLoc(),
+        "Compute kernel %0() cannot return a pointer type: '%1'")
         << FD->getName() << mResultType.getAsString();
     valid = false;
   }
@@ -221,35 +173,30 @@ bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
   // Validate remaining parameter types
   // TODO(all): Add support for LOD/face when we have them
 
-  size_t i = 0;
-  const clang::ParmVarDecl *PVD = NULL;
-  clang::QualType QT;
+  size_t IndexOfFirstIterator = numParams;
+  valid |= validateIterationParameters(Context, FD, &IndexOfFirstIterator);
 
-  if (i < numParams) {
-    PVD = FD->getParamDecl(i);
-    QT = PVD->getType().getCanonicalType();
-
+  // Validate the non-iterator parameters, which should all be found before the
+  // first iterator.
+  for (size_t i = 0; i < IndexOfFirstIterator; i++) {
+    const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
+    if (i == 0) {
+      mIn = PVD;
+    } else {
+      Context->ReportError(PVD->getLocation(),
+                           "Unrecognized parameter '%0'. Compute kernel %1() "
+                           "can only have one input parameter, 'x', and 'y'")
+          << PVD->getName() << FD->getName();
+      valid = false;
+    }
+    clang::QualType QT = PVD->getType().getCanonicalType();
     if (QT->isPointerType()) {
       Context->ReportError(PVD->getLocation(),
                            "Compute kernel %0() cannot have "
                            "parameter '%1' of pointer type: '%2'")
           << FD->getName() << PVD->getName() << PVD->getType().getAsString();
       valid = false;
-    } else if (QT.getUnqualifiedType() == C.UnsignedIntTy) {
-      // First parameter is either input or x, y (iff it is uint32_t).
-      llvm::StringRef ParamName = PVD->getName();
-      if (ParamName.equals("x")) {
-        mX = PVD;
-      } else if (ParamName.equals("y")) {
-        mY = PVD;
-      } else {
-        mIn = PVD;
-      }
-    } else {
-      mIn = PVD;
     }
-
-    i++;  // advance parameter pointer
   }
 
   // Check that we have at least one allocation to use for dimensions.
@@ -262,54 +209,63 @@ bool RSExportForEach::validateAndConstructKernelParams(RSContext *Context,
     valid = false;
   }
 
-  // TODO: Abstract this block away, since it is duplicate code.
-  while (i < numParams) {
-    PVD = FD->getParamDecl(i);
-    QT = PVD->getType().getCanonicalType();
+  return valid;
+}
 
-    if (QT.getUnqualifiedType() != C.UnsignedIntTy) {
-      Context->ReportError(PVD->getLocation(),
-                           "Unexpected kernel %0() parameter '%1' "
-                           "of type '%2'")
-          << FD->getName() << PVD->getName() << PVD->getType().getAsString();
-      valid = false;
-    } else {
-      llvm::StringRef ParamName = PVD->getName();
-      if (ParamName.equals("x")) {
-        if (mX) {
-          ReportNameError(Context, PVD);
-          valid = false;
-        } else if (mY) {
-          // Can't go back to X after skipping Y
-          ReportNameError(Context, PVD);
-          valid = false;
-        } else {
-          mX = PVD;
-        }
-      } else if (ParamName.equals("y")) {
-        if (mY) {
-          ReportNameError(Context, PVD);
-          valid = false;
-        } else {
-          mY = PVD;
-        }
-      } else {
-        if (!mX && !mY) {
-          mX = PVD;
-        } else if (!mY) {
-          mY = PVD;
-        } else {
-          Context->ReportError(PVD->getLocation(),
-                               "Unexpected kernel %0() parameter '%1' "
-                               "of type '%2'")
-              << FD->getName() << PVD->getName()
-              << PVD->getType().getAsString();
-          valid = false;
-        }
+// Search for the optional x and y parameters.  Returns true if valid.   Also
+// sets *IndexOfFirstIterator to the index of the first iterator parameter, or
+// FD->getNumParams() if none are found.
+bool RSExportForEach::validateIterationParameters(
+    RSContext *Context, const clang::FunctionDecl *FD,
+    size_t *IndexOfFirstIterator) {
+  slangAssert(IndexOfFirstIterator != NULL);
+  slangAssert(mX == NULL && mY == NULL);
+  clang::ASTContext &C = Context->getASTContext();
+
+  // Find the x and y parameters if present.
+  size_t NumParams = FD->getNumParams();
+  *IndexOfFirstIterator = NumParams;
+  bool valid = true;
+  for (size_t i = 0; i < NumParams; i++) {
+    const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
+    llvm::StringRef ParamName = PVD->getName();
+    if (ParamName.equals("x")) {
+      slangAssert(mX == NULL);  // We won't be invoked if two 'x' are present.
+      mX = PVD;
+      if (mY != NULL) {
+        Context->ReportError(PVD->getLocation(),
+                             "In compute kernel %0(), parameter 'x' should "
+                             "be defined before parameter 'y'")
+            << FD->getName();
+        valid = false;
       }
+    } else if (ParamName.equals("y")) {
+      slangAssert(mY == NULL);  // We won't be invoked if two 'y' are present.
+      mY = PVD;
+    } else {
+      // It's neither x nor y.
+      if (*IndexOfFirstIterator < NumParams) {
+        Context->ReportError(PVD->getLocation(),
+                             "In compute kernel %0(), parameter '%1' cannot "
+                             "appear after the 'x' and 'y' parameters")
+            << FD->getName() << ParamName;
+        valid = false;
+      }
+      continue;
     }
-
-    i++;  // advance parameter pointer
+    // Validate the data type of x and y.
+    clang::QualType QT = PVD->getType().getCanonicalType();
+    if (QT.getUnqualifiedType() != C.UnsignedIntTy) {
+      Context->ReportError(
+          PVD->getLocation(),
+          "Parameter '%0' must be of type 'unsigned int'. It is of type '%1'")
+          << ParamName << PVD->getType().getAsString();
+      valid = false;
+    }
+    // If this is the first time we find an iterator, save it.
+    if (*IndexOfFirstIterator >= NumParams) {
+      *IndexOfFirstIterator = i;
+    }
   }
   return valid;
 }

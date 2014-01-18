@@ -74,10 +74,14 @@ class RSExportForEach : public RSExportable {
                                   const clang::FunctionDecl *FD);
 
   bool validateAndConstructOldStyleParams(RSContext *Context,
-                                        const clang::FunctionDecl *FD);
+                                          const clang::FunctionDecl *FD);
 
   bool validateAndConstructKernelParams(RSContext *Context,
                                         const clang::FunctionDecl *FD);
+
+  bool validateIterationParameters(RSContext *Context,
+                                   const clang::FunctionDecl *FD,
+                                   size_t *IndexOfFirstIterator);
 
   bool setSignatureMetadata(RSContext *Context,
                             const clang::FunctionDecl *FD);
