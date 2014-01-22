@@ -42,6 +42,7 @@ bool RSExportForEach::validateAndConstructParams(
   numParams = FD->getNumParams();
 
   if (Context->getTargetAPI() < SLANG_JB_TARGET_API) {
+    // Before JellyBean, we allowed only one kernel per file.  It must be called "root".
     if (!isRootRSFunc(FD)) {
       Context->ReportError(FD->getLocation(),
                            "Non-root compute kernel %0() is "
@@ -255,16 +256,30 @@ bool RSExportForEach::validateIterationParameters(
     }
     // Validate the data type of x and y.
     clang::QualType QT = PVD->getType().getCanonicalType();
-    if (QT.getUnqualifiedType() != C.UnsignedIntTy) {
-      Context->ReportError(
-          PVD->getLocation(),
-          "Parameter '%0' must be of type 'unsigned int'. It is of type '%1'")
+    clang::QualType UT = QT.getUnqualifiedType();
+    if (UT != C.UnsignedIntTy && UT != C.IntTy) {
+      Context->ReportError(PVD->getLocation(),
+                           "Parameter '%0' must be of type 'int' or "
+                           "'unsigned int'. It is of type '%1'")
           << ParamName << PVD->getType().getAsString();
       valid = false;
     }
     // If this is the first time we find an iterator, save it.
     if (*IndexOfFirstIterator >= NumParams) {
       *IndexOfFirstIterator = i;
+    }
+  }
+  // Check that x and y have the same type.
+  if (mX != NULL and mY != NULL) {
+    clang::QualType XType = mX->getType();
+    clang::QualType YType = mY->getType();
+
+    if (XType != YType) {
+      Context->ReportError(mY->getLocation(),
+                           "Parameter 'x' and 'y' must be of the same type. "
+                           "'x' is of type '%0' while 'y' is of type '%1'")
+          << XType.getAsString() << YType.getAsString();
+      valid = false;
     }
   }
   return valid;
