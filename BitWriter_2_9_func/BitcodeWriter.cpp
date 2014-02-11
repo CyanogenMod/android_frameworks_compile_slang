@@ -358,7 +358,6 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
   case GlobalValue::AvailableExternallyLinkage:      return 12;
   case GlobalValue::LinkerPrivateLinkage:            return 13;
   case GlobalValue::LinkerPrivateWeakLinkage:        return 14;
-  case GlobalValue::LinkOnceODRAutoHideLinkage:      return 15;
   }
   llvm_unreachable("Invalid linkage");
 }
@@ -1115,20 +1114,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Vals.push_back(VE.getValueID(SI.getDefaultDest()));
       for (SwitchInst::ConstCaseIt i = SI.case_begin(), e = SI.case_end();
            i != e; ++i) {
-        const IntegersSubset& CaseRanges = i.getCaseValueEx();
-
-        if (CaseRanges.isSingleNumber()) {
-          Vals.push_back(VE.getValueID(CaseRanges.getSingleNumber(0).toConstantInt()));
+          Vals.push_back(VE.getValueID(i.getCaseValue()));
           Vals.push_back(VE.getValueID(i.getCaseSuccessor()));
-        } else if (CaseRanges.isSingleNumbersOnly()) {
-          for (unsigned ri = 0, rn = CaseRanges.getNumItems();
-               ri != rn; ++ri) {
-            Vals.push_back(VE.getValueID(CaseRanges.getSingleNumber(ri).toConstantInt()));
-            Vals.push_back(VE.getValueID(i.getCaseSuccessor()));
-          }
-        } else {
-          llvm_unreachable("Not single number?");
-        }
       }
     }
     break;
