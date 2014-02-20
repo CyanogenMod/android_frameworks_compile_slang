@@ -291,10 +291,11 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
 
     if (Args->hasArg(OPT_reflect_cpp)) {
       Opts.mBitcodeStorage = slang::BCST_CPP_CODE;
-      // mJavaReflectionPathBase isn't set for C++ reflected builds
-      // set it to mOutputDir so we can use the path sanely from
-      // RSReflectionBase later on
-      Opts.mJavaReflectionPathBase = Opts.mOutputDir;
+      // mJavaReflectionPathBase can be set for C++ reflected builds.
+      // Set it to the standard mOutputDir (via -o) by default.
+      if (Opts.mJavaReflectionPathBase.empty()) {
+        Opts.mJavaReflectionPathBase = Opts.mOutputDir;
+      }
     }
 
     Opts.mOutputDepDir =
