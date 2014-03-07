@@ -50,6 +50,7 @@ namespace slang {
   RS_HEADER_ENTRY(rs_atomic) \
   RS_HEADER_ENTRY(rs_cl) \
   RS_HEADER_ENTRY(rs_core) \
+  RS_HEADER_ENTRY(rs_core_math) \
   RS_HEADER_ENTRY(rs_debug) \
   RS_HEADER_ENTRY(rs_element) \
   RS_HEADER_ENTRY(rs_graphics) \
