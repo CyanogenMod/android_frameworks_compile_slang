@@ -206,7 +206,7 @@ void Slang::createPreprocessor() {
   llvm::IntrusiveRefCntPtr<clang::HeaderSearchOptions> HSOpts =
       new clang::HeaderSearchOptions();
   clang::HeaderSearch *HeaderInfo = new clang::HeaderSearch(HSOpts,
-                                                            *mFileMgr,
+                                                            *mSourceMgr,
                                                             *mDiagEngine,
                                                             LangOpts,
                                                             mTarget.get());
