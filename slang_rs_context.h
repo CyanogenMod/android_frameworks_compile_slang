@@ -66,7 +66,6 @@ class RSContext {
  private:
   clang::Preprocessor &mPP;
   clang::ASTContext &mCtx;
-  const clang::TargetInfo &mTarget;
   PragmaList *mPragmas;
   unsigned int mTargetAPI;
   std::vector<std::string> *mGeneratedFileNames;

@@ -50,7 +50,6 @@ RSContext::RSContext(clang::Preprocessor &PP,
                      std::vector<std::string> *GeneratedFileNames)
     : mPP(PP),
       mCtx(Ctx),
-      mTarget(Target),
       mPragmas(Pragmas),
       mTargetAPI(TargetAPI),
       mGeneratedFileNames(GeneratedFileNames),
