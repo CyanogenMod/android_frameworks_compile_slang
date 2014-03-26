@@ -50,8 +50,6 @@ class RSExportForEach : public RSExportable {
   const clang::ParmVarDecl *mUsrData;
   const clang::ParmVarDecl *mX;
   const clang::ParmVarDecl *mY;
-  const clang::ParmVarDecl *mZ;
-  const clang::ParmVarDecl *mAr;
 
   clang::QualType mResultType;  // return type (if present).
   bool mHasReturnType;  // does this kernel have a return type?
@@ -64,8 +62,8 @@ class RSExportForEach : public RSExportable {
     : RSExportable(Context, RSExportable::EX_FOREACH),
       mName(Name.data(), Name.size()), mParamPacketType(NULL), mInType(NULL),
       mOutType(NULL), numParams(0), mSignatureMetadata(0),
-      mIn(NULL), mOut(NULL), mUsrData(NULL), mX(NULL), mY(NULL), mZ(NULL),
-      mAr(NULL), mResultType(clang::QualType()), mHasReturnType(false),
+      mIn(NULL), mOut(NULL), mUsrData(NULL), mX(NULL), mY(NULL),
+      mResultType(clang::QualType()), mHasReturnType(false),
       mIsKernelStyle(false), mDummyRoot(false) {
     return;
   }
