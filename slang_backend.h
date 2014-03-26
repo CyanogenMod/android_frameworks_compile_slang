@@ -32,8 +32,6 @@ namespace llvm {
   class LLVMContext;
   class NamedMDNode;
   class Module;
-  class PassManager;
-  class FunctionPassManager;
 }
 
 namespace clang {
