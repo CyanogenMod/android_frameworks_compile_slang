@@ -152,7 +152,7 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
     // Validate parameters for Filterscript.
     size_t numParams = FD->getNumParams();
 
-    clang::QualType resultType = FD->getResultType().getCanonicalType();
+    clang::QualType resultType = FD->getReturnType().getCanonicalType();
 
     // We use FD as our NamedDecl in the case of a bad return type.
     if (!RSExportType::ValidateType(Context, C, resultType, FD,

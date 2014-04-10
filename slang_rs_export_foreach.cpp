@@ -53,7 +53,7 @@ bool RSExportForEach::validateAndConstructParams(
     }
   }
 
-  mResultType = FD->getResultType().getCanonicalType();
+  mResultType = FD->getReturnType().getCanonicalType();
   // Compute kernel functions are defined differently when the
   // "__attribute__((kernel))" is set.
   if (FD->hasAttr<clang::KernelAttr>()) {
@@ -446,7 +446,7 @@ bool RSExportForEach::isGraphicsRootRSFunc(int targetAPI,
   // Check for legacy graphics root function (with single parameter).
   if ((targetAPI < SLANG_ICS_TARGET_API) && (FD->getNumParams() == 1)) {
     const clang::QualType &IntType = FD->getASTContext().IntTy;
-    if (FD->getResultType().getCanonicalType() == IntType) {
+    if (FD->getReturnType().getCanonicalType() == IntType) {
       return true;
     }
   }
@@ -527,7 +527,7 @@ RSExportForEach::validateSpecialFuncDecl(int targetAPI,
     }
 
     // Graphics root function, so verify that it returns an int
-    if (FD->getResultType().getCanonicalType() != IntType) {
+    if (FD->getReturnType().getCanonicalType() != IntType) {
       Context->ReportError(FD->getLocation(),
                            "root() is required to return "
                            "an int for graphics usage");
@@ -542,7 +542,7 @@ RSExportForEach::validateSpecialFuncDecl(int targetAPI,
       valid = false;
     }
 
-    if (FD->getResultType().getCanonicalType() != C.VoidTy) {
+    if (FD->getReturnType().getCanonicalType() != C.VoidTy) {
       Context->ReportError(FD->getLocation(),
                            "%0(void) is required to have a void "
                            "return type")
