@@ -33,7 +33,7 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 
-#include "llvm/Support/DebugLoc.h"
+#include "llvm/IR/DebugLoc.h"
 
 #include "slang_assert.h"
 #include "slang_rs.h"

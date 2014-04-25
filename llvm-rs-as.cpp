@@ -15,9 +15,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/Assembly/Parser.h"
+#include "llvm/IR/Verifier.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
@@ -89,7 +90,7 @@ static void WriteOutputFile(const Module *M) {
   std::string ErrorInfo;
   OwningPtr<tool_output_file> Out
   (new tool_output_file(OutputFilename.c_str(), ErrorInfo,
-                        llvm::sys::fs::F_Binary));
+                        llvm::sys::fs::F_None));
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
     exit(1);
@@ -134,7 +135,8 @@ int main(int argc, char **argv) {
 
   if (!DisableVerify) {
     std::string Err;
-    if (verifyModule(*M.get(), ReturnStatusAction, &Err)) {
+    raw_string_ostream stream(Err);
+    if (verifyModule(*M.get(), &stream)) {
       errs() << argv[0]
              << ": assembly parsed, but does not verify as correct!\n";
       errs() << Err;

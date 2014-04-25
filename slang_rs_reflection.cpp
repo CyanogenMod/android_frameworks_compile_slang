@@ -195,7 +195,7 @@ static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
       return ElementTypeName;
     }
     case RSExportType::ExportClassRecord: {
-      return ET->getElementName() + "."RS_TYPE_ITEM_CLASS_NAME;
+      return ET->getElementName() + "." RS_TYPE_ITEM_CLASS_NAME;
     }
     default: {
       slangAssert(false && "Unknown class of type");
@@ -530,7 +530,7 @@ void RSReflection::genInitExportVariable(Context &C,
 
       C.indent() << RS_EXPORT_VAR_PREFIX << VarName
                  << " = new " << ERT->getElementName()
-                 <<  "."RS_TYPE_ITEM_CLASS_NAME"();" << std::endl;
+                 <<  "." RS_TYPE_ITEM_CLASS_NAME"();" << std::endl;
 
       for (RSExportRecordType::const_field_iterator I = ERT->fields_begin(),
                E = ERT->fields_end();
@@ -561,7 +561,7 @@ void RSReflection::genInitExportVariable(Context &C,
 void RSReflection::genExportVariable(Context &C, const RSExportVar *EV) {
   const RSExportType *ET = EV->getType();
 
-  C.indent() << "private final static int "RS_EXPORT_VAR_INDEX_PREFIX
+  C.indent() << "private final static int " RS_EXPORT_VAR_INDEX_PREFIX
              << EV->getName() << " = " << C.getNextExportVarSlot() << ";"
              << std::endl;
 
@@ -599,7 +599,7 @@ void RSReflection::genExportVariable(Context &C, const RSExportVar *EV) {
 }
 
 void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
-  C.indent() << "private final static int "RS_EXPORT_FUNC_INDEX_PREFIX
+  C.indent() << "private final static int " RS_EXPORT_FUNC_INDEX_PREFIX
              << EF->getName() << " = " << C.getNextExportFuncSlot() << ";"
              << std::endl;
 
@@ -625,7 +625,7 @@ void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
                   Args);
 
   if (!EF->hasParam()) {
-    C.indent() << "invoke("RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName() << ");"
+    C.indent() << "invoke(" RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName() << ");"
                << std::endl;
   } else {
     const RSExportRecordType *ERT = EF->getParamPacketType();
@@ -634,7 +634,7 @@ void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
     if (genCreateFieldPacker(C, ERT, FieldPackerName.c_str()))
       genPackVarOfType(C, ERT, NULL, FieldPackerName.c_str());
 
-    C.indent() << "invoke("RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName() << ", "
+    C.indent() << "invoke(" RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName() << ", "
                << FieldPackerName << ");" << std::endl;
   }
 
@@ -646,13 +646,13 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
   if (EF->isDummyRoot()) {
     // Skip reflection for dummy root() kernels. Note that we have to
     // advance the next slot number for ForEach, however.
-    C.indent() << "//private final static int "RS_EXPORT_FOREACH_INDEX_PREFIX
+    C.indent() << "//private final static int " RS_EXPORT_FOREACH_INDEX_PREFIX
                << EF->getName() << " = " << C.getNextExportForEachSlot() << ";"
                << std::endl;
     return;
   }
 
-  C.indent() << "private final static int "RS_EXPORT_FOREACH_INDEX_PREFIX
+  C.indent() << "private final static int " RS_EXPORT_FOREACH_INDEX_PREFIX
              << EF->getName() << " = " << C.getNextExportForEachSlot() << ";"
              << std::endl;
 
@@ -767,7 +767,7 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
       genPackVarOfType(C, ERT, NULL, FieldPackerName.c_str());
     }
   }
-  C.indent() << "forEach("RS_EXPORT_FOREACH_INDEX_PREFIX << EF->getName();
+  C.indent() << "forEach(" RS_EXPORT_FOREACH_INDEX_PREFIX << EF->getName();
 
   if (EF->hasIn())
     C.out() << ", ain";
@@ -941,10 +941,10 @@ void RSReflection::genPrimitiveTypeExportVariable(
       C.indent() << "}" << std::endl;
 
       genPackVarOfType(C, EPT, "v", FPName.c_str());
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName
+      C.indent() << "setVar(" RS_EXPORT_VAR_INDEX_PREFIX << VarName
                  << ", " << FPName << ");" << std::endl;
     } else {
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName
+      C.indent() << "setVar(" RS_EXPORT_VAR_INDEX_PREFIX << VarName
                  << ", v);" << std::endl;
     }
 
@@ -983,7 +983,7 @@ void RSReflection::genPointerTypeExportVariable(Context &C,
                   TypeName.c_str(), "v");
 
   C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = v;" << std::endl;
-  C.indent() << "if (v == null) bindAllocation(null, "RS_EXPORT_VAR_INDEX_PREFIX
+  C.indent() << "if (v == null) bindAllocation(null, " RS_EXPORT_VAR_INDEX_PREFIX
              << VarName << ");" << std::endl;
 
   if (PointeeType->getClass() == RSExportType::ExportClassRecord)
@@ -991,7 +991,7 @@ void RSReflection::genPointerTypeExportVariable(Context &C,
         RS_EXPORT_VAR_INDEX_PREFIX << VarName << ");"
                << std::endl;
   else
-    C.indent() << "else bindAllocation(v, "RS_EXPORT_VAR_INDEX_PREFIX
+    C.indent() << "else bindAllocation(v, " RS_EXPORT_VAR_INDEX_PREFIX
                << VarName << ");" << std::endl;
 
   C.endFunction();
@@ -1039,7 +1039,7 @@ void RSReflection::genMatrixTypeExportVariable(Context &C,
 
     if (genCreateFieldPacker(C, ET, FieldPackerName))
       genPackVarOfType(C, ET, "v", FieldPackerName);
-    C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName << ", "
+    C.indent() << "setVar(" RS_EXPORT_VAR_INDEX_PREFIX << VarName << ", "
                << FieldPackerName << ");" << std::endl;
 
     C.endFunction();
@@ -1085,7 +1085,7 @@ void RSReflection::genRecordTypeExportVariable(Context &C,
 void RSReflection::genPrivateExportVariable(Context &C,
                                             const std::string &TypeName,
                                             const std::string &VarName) {
-  C.indent() << "private " << TypeName << " "RS_EXPORT_VAR_PREFIX
+  C.indent() << "private " << TypeName << " " RS_EXPORT_VAR_PREFIX
              << VarName << ";" << std::endl;
   return;
 }
@@ -1110,14 +1110,14 @@ void RSReflection::genSetExportVariable(Context &C,
 
     if (mRSContext->getTargetAPI() < SLANG_JB_TARGET_API) {
       // Legacy apps must use the old setVar() without Element/dim components.
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName
+      C.indent() << "setVar(" RS_EXPORT_VAR_INDEX_PREFIX << VarName
                  << ", " << FieldPackerName << ");" << std::endl;
     } else {
       // We only have support for one-dimensional array reflection today,
       // but the entry point (i.e. setVar()) takes an array of dimensions.
       C.indent() << "int []__dimArr = new int[1];" << std::endl;
       C.indent() << "__dimArr[0] = " << ET->getSize() << ";" << std::endl;
-      C.indent() << "setVar("RS_EXPORT_VAR_INDEX_PREFIX << VarName << ", "
+      C.indent() << "setVar(" RS_EXPORT_VAR_INDEX_PREFIX << VarName << ", "
                  << FieldPackerName << ", " RS_ELEM_PREFIX
                  << ET->getElementName() << ", __dimArr);" << std::endl;
     }
@@ -1136,7 +1136,7 @@ void RSReflection::genGetExportVariable(Context &C,
                   "get_" + VarName,
                   0);
 
-  C.indent() << "return "RS_EXPORT_VAR_PREFIX << VarName << ";" << std::endl;
+  C.indent() << "return " RS_EXPORT_VAR_PREFIX << VarName << ";" << std::endl;
 
   C.endFunction();
 }
@@ -1346,9 +1346,9 @@ void RSReflection::genNewItemBufferIfNull(Context &C,
                       "[getType().getX() /* count */];"
              << std::endl;
   if (Index != NULL)
-    C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME"[" << Index << "] == null) "
+    C.indent() << "if (" RS_TYPE_ITEM_BUFFER_NAME "[" << Index << "] == null) "
                     RS_TYPE_ITEM_BUFFER_NAME"[" << Index << "] = "
-                      "new "RS_TYPE_ITEM_CLASS_NAME"();" << std::endl;
+                      "new " RS_TYPE_ITEM_CLASS_NAME "();" << std::endl;
   return;
 }
 
@@ -1381,9 +1381,9 @@ bool RSReflection::genTypeClass(Context &C,
   genTypeItemClass(C, ERT);
 
   // Declare item buffer and item buffer packer
-  C.indent() << "private "RS_TYPE_ITEM_CLASS_NAME" "RS_TYPE_ITEM_BUFFER_NAME"[]"
+  C.indent() << "private " RS_TYPE_ITEM_CLASS_NAME " " RS_TYPE_ITEM_BUFFER_NAME "[]"
       ";" << std::endl;
-  C.indent() << "private FieldPacker "RS_TYPE_ITEM_BUFFER_PACKER_NAME";"
+  C.indent() << "private FieldPacker " RS_TYPE_ITEM_BUFFER_PACKER_NAME";"
              << std::endl;
   C.indent() << "private static java.lang.ref.WeakReference<Element> "
              RS_TYPE_ELEMENT_REF_NAME
@@ -1412,7 +1412,7 @@ bool RSReflection::genTypeClass(Context &C,
 
 void RSReflection::genTypeItemClass(Context &C,
                                     const RSExportRecordType *ERT) {
-  C.indent() << "static public class "RS_TYPE_ITEM_CLASS_NAME;
+  C.indent() << "static public class " RS_TYPE_ITEM_CLASS_NAME;
   C.startBlock();
 
   C.indent() << "public static final int sizeof = "
@@ -1430,7 +1430,7 @@ void RSReflection::genTypeItemClass(Context &C,
 
   // Constructor
   C.out() << std::endl;
-  C.indent() << RS_TYPE_ITEM_CLASS_NAME"()";
+  C.indent() << RS_TYPE_ITEM_CLASS_NAME "()";
   C.startBlock();
 
   for (RSExportRecordType::const_field_iterator FI = ERT->fields_begin(),
@@ -1482,8 +1482,8 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   C.getClassName(),
                   1,
                   "RenderScript", RenderScriptVar);
-  C.indent() << RS_TYPE_ITEM_BUFFER_NAME" = null;" << std::endl;
-  C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME" = null;" << std::endl;
+  C.indent() << RS_TYPE_ITEM_BUFFER_NAME " = null;" << std::endl;
+  C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME " = null;" << std::endl;
   C.indent() << "mElement = createElement(" << RenderScriptVar << ");"
              << std::endl;
   C.endFunction();
@@ -1497,8 +1497,8 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   "RenderScript", RenderScriptVar,
                   "int", "count");
 
-  C.indent() << RS_TYPE_ITEM_BUFFER_NAME" = null;" << std::endl;
-  C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME" = null;" << std::endl;
+  C.indent() << RS_TYPE_ITEM_BUFFER_NAME " = null;" << std::endl;
+  C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME " = null;" << std::endl;
   C.indent() << "mElement = createElement(" << RenderScriptVar << ");"
              << std::endl;
   // Call init() in super class
@@ -1515,8 +1515,8 @@ void RSReflection::genTypeClassConstructor(Context &C,
                   "int", "count",
                   "int", "usages");
 
-  C.indent() << RS_TYPE_ITEM_BUFFER_NAME" = null;" << std::endl;
-  C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME" = null;" << std::endl;
+  C.indent() << RS_TYPE_ITEM_BUFFER_NAME " = null;" << std::endl;
+  C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME " = null;" << std::endl;
   C.indent() << "mElement = createElement(" << RenderScriptVar << ");"
              << std::endl;
   // Call init() in super class
@@ -1638,7 +1638,7 @@ void RSReflection::genTypeClassCopyToArray(Context &C,
 
   genNewItemBufferPackerIfNull(C);
   C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME
-                ".reset(index * "RS_TYPE_ITEM_CLASS_NAME".sizeof);"
+                ".reset(index * " RS_TYPE_ITEM_CLASS_NAME ".sizeof);"
              << std::endl;
 
   C.indent() << "copyToArrayLocal(i, " RS_TYPE_ITEM_BUFFER_PACKER_NAME
@@ -1675,7 +1675,7 @@ void RSReflection::genTypeClassItemSetter(Context &C,
                   "int", "index",
                   "boolean", "copyNow");
   genNewItemBufferIfNull(C, NULL);
-  C.indent() << RS_TYPE_ITEM_BUFFER_NAME"[index] = i;" << std::endl;
+  C.indent() << RS_TYPE_ITEM_BUFFER_NAME "[index] = i;" << std::endl;
 
   C.indent() << "if (copyNow) ";
   C.startBlock();
@@ -1701,9 +1701,9 @@ void RSReflection::genTypeClassItemGetter(Context &C,
                   "get",
                   1,
                   "int", "index");
-  C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return null;"
+  C.indent() << "if (" RS_TYPE_ITEM_BUFFER_NAME " == null) return null;"
              << std::endl;
-  C.indent() << "return "RS_TYPE_ITEM_BUFFER_NAME"[index];" << std::endl;
+  C.indent() << "return " RS_TYPE_ITEM_BUFFER_NAME "[index];" << std::endl;
   C.endFunction();
   return;
 }
@@ -1728,7 +1728,7 @@ void RSReflection::genTypeClassComponentSetter(Context &C,
                     "boolean", "copyNow");
     genNewItemBufferPackerIfNull(C);
     genNewItemBufferIfNull(C, "index");
-    C.indent() << RS_TYPE_ITEM_BUFFER_NAME"[index]." << F->getName()
+    C.indent() << RS_TYPE_ITEM_BUFFER_NAME "[index]." << F->getName()
                << " = v;" << std::endl;
 
     C.indent() << "if (copyNow) ";
@@ -1736,11 +1736,11 @@ void RSReflection::genTypeClassComponentSetter(Context &C,
 
     if (FieldOffset > 0)
       C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME
-                    ".reset(index * "RS_TYPE_ITEM_CLASS_NAME".sizeof + "
+                    ".reset(index * " RS_TYPE_ITEM_CLASS_NAME ".sizeof + "
                  << FieldOffset << ");" << std::endl;
     else
       C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME
-                    ".reset(index * "RS_TYPE_ITEM_CLASS_NAME".sizeof);"
+                    ".reset(index * " RS_TYPE_ITEM_CLASS_NAME ".sizeof);"
                  << std::endl;
     genPackVarOfType(C, F->getType(), "v", RS_TYPE_ITEM_BUFFER_PACKER_NAME);
 
@@ -1772,9 +1772,9 @@ void RSReflection::genTypeClassComponentGetter(Context &C,
                     "get_" + F->getName(),
                     1,
                     "int", "index");
-    C.indent() << "if ("RS_TYPE_ITEM_BUFFER_NAME" == null) return "
+    C.indent() << "if (" RS_TYPE_ITEM_BUFFER_NAME " == null) return "
                << GetTypeNullValue(F->getType()) << ";" << std::endl;
-    C.indent() << "return "RS_TYPE_ITEM_BUFFER_NAME"[index]." << F->getName()
+    C.indent() << "return " RS_TYPE_ITEM_BUFFER_NAME "[index]." << F->getName()
                << ";" << std::endl;
     C.endFunction();
   }
@@ -1785,11 +1785,11 @@ void RSReflection::genTypeClassCopyAll(Context &C,
                                        const RSExportRecordType *ERT) {
   C.startFunction(Context::AM_PublicSynchronized, false, "void", "copyAll", 0);
 
-  C.indent() << "for (int ct = 0; ct < "RS_TYPE_ITEM_BUFFER_NAME".length; ct++)"
-                  " copyToArray("RS_TYPE_ITEM_BUFFER_NAME"[ct], ct);"
+  C.indent() << "for (int ct = 0; ct < " RS_TYPE_ITEM_BUFFER_NAME ".length; ct++)"
+                  " copyToArray(" RS_TYPE_ITEM_BUFFER_NAME "[ct], ct);"
              << std::endl;
   C.indent() << "mAllocation.setFromFieldPacker(0, "
-                  RS_TYPE_ITEM_BUFFER_PACKER_NAME");"
+                  RS_TYPE_ITEM_BUFFER_PACKER_NAME ");"
              << std::endl;
 
   C.endFunction();

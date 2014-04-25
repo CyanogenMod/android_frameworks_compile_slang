@@ -36,7 +36,7 @@ static bool ValidateFuncDecl(slang::RSContext *Context,
                              const clang::FunctionDecl *FD) {
   slangAssert(Context && FD);
   const clang::ASTContext &C = FD->getASTContext();
-  if (FD->getResultType().getCanonicalType() != C.VoidTy) {
+  if (FD->getReturnType().getCanonicalType() != C.VoidTy) {
     Context->ReportError(
         FD->getLocation(),
         "invokable non-static functions are required to return void");

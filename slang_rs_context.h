@@ -235,27 +235,45 @@ class RSContext {
   }
 
   // Report an error or a warning to the user.
+  template <unsigned N>
   clang::DiagnosticBuilder Report(clang::DiagnosticsEngine::Level Level,
-                                  const char *Message);
+                                             const char (&Message)[N]) {
+  clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
+  return DiagEngine->Report(DiagEngine->getCustomDiagID(Level, Message));
+}
+
+  template <unsigned N>
   clang::DiagnosticBuilder Report(clang::DiagnosticsEngine::Level Level,
-                                  const clang::SourceLocation Loc,
-                                  const char *Message);
+                                             const clang::SourceLocation Loc,
+                                             const char (&Message)[N]) {
+  clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
+  const clang::SourceManager *SM = getSourceManager();
+  return DiagEngine->Report(clang::FullSourceLoc(Loc, *SM),
+                            DiagEngine->getCustomDiagID(Level, Message));
+}
 
   // Utility functions to report errors and warnings to make the calling code
   // easier to read.
-  clang::DiagnosticBuilder ReportError(const char *Message) {
-    return Report(clang::DiagnosticsEngine::Error, Message);
+  template <unsigned N>
+  clang::DiagnosticBuilder ReportError(const char (&Message)[N]) {
+    return Report<N>(clang::DiagnosticsEngine::Error, Message);
   }
+
+  template <unsigned N>
   clang::DiagnosticBuilder ReportError(const clang::SourceLocation Loc,
-                                       const char *Message) {
-    return Report(clang::DiagnosticsEngine::Error, Loc, Message);
+                                       const char (&Message)[N]) {
+    return Report<N>(clang::DiagnosticsEngine::Error, Loc, Message);
   }
-  clang::DiagnosticBuilder ReportWarning(const char *Message) {
-    return Report(clang::DiagnosticsEngine::Warning, Message);
+
+  template <unsigned N>
+  clang::DiagnosticBuilder ReportWarning(const char (&Message)[N]) {
+    return Report<N>(clang::DiagnosticsEngine::Warning, Message);
   }
+
+  template <unsigned N>
   clang::DiagnosticBuilder ReportWarning(const clang::SourceLocation Loc,
-                                         const char *Message) {
-    return Report(clang::DiagnosticsEngine::Warning, Loc, Message);
+                                         const char (&Message)[N]) {
+    return Report<N>(clang::DiagnosticsEngine::Warning, Loc, Message);
   }
 
   ~RSContext();

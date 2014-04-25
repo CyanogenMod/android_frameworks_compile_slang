@@ -34,7 +34,7 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 
-#include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/IR/IRPrintingPasses.h"
 
 #include "llvm/Bitcode/ReaderWriter.h"
 
@@ -65,7 +65,7 @@ namespace slang {
 void Backend::CreateFunctionPasses() {
   if (!mPerFunctionPasses) {
     mPerFunctionPasses = new llvm::FunctionPassManager(mpModule);
-    mPerFunctionPasses->add(new llvm::DataLayout(mpModule));
+    mPerFunctionPasses->add(new llvm::DataLayoutPass(mpModule));
 
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
@@ -77,7 +77,7 @@ void Backend::CreateFunctionPasses() {
 void Backend::CreateModulePasses() {
   if (!mPerModulePasses) {
     mPerModulePasses = new llvm::PassManager();
-    mPerModulePasses->add(new llvm::DataLayout(mpModule));
+    mPerModulePasses->add(new llvm::DataLayoutPass(mpModule));
 
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
@@ -110,7 +110,7 @@ bool Backend::CreateCodeGenPasses() {
     return true;
   } else {
     mCodeGenPasses = new llvm::FunctionPassManager(mpModule);
-    mCodeGenPasses->add(new llvm::DataLayout(mpModule));
+    mCodeGenPasses->add(new llvm::DataLayoutPass(mpModule));
   }
 
   // Create the TargetMachine for generating code.
@@ -146,7 +146,7 @@ bool Backend::CreateCodeGenPasses() {
   // This is set for the linker (specify how large of the virtual addresses we
   // can access for all unknown symbols.)
   llvm::CodeModel::Model CM;
-  if (mpModule->getPointerSize() == llvm::Module::Pointer32) {
+  if (mpModule->getDataLayout()->getPointerSize() == 4) {
     CM = llvm::CodeModel::Small;
   } else {
     // The target may have pointer size greater than 32 (e.g. x86_64
@@ -342,7 +342,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
     }
     case Slang::OT_LLVMAssembly: {
       llvm::PassManager *LLEmitPM = new llvm::PassManager();
-      LLEmitPM->add(llvm::createPrintModulePass(&FormattedOutStream));
+      LLEmitPM->add(llvm::createPrintModulePass(FormattedOutStream));
       LLEmitPM->run(*mpModule);
       break;
     }

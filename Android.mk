@@ -77,7 +77,7 @@ LOCAL_SRC_FILES :=	\
 
 LOCAL_C_INCLUDES += frameworks/compile/libbcc/include
 
-LOCAL_LDLIBS := -ldl -lpthread
+LOCAL_LDLIBS := -ldl -lpthread -lc++
 
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
