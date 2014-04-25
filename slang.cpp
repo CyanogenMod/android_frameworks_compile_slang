@@ -51,7 +51,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 
 // More force linking
-#include "llvm/Linker.h"
+#include "llvm/Linker/Linker.h"
 
 // Force linking all passes/vmcore stuffs to libslang.so
 #include "llvm/LinkAllIR.h"
@@ -81,7 +81,7 @@ struct ForceSlangLinking {
       return;
 
     // llvm-rs-link needs following functions existing in libslang.
-    llvm::ParseBitcodeFile(NULL, llvm::getGlobalContext(), NULL);
+    llvm::parseBitcodeFile(NULL, llvm::getGlobalContext());
     llvm::Linker::LinkModules(NULL, NULL, 0, NULL);
 
     // llvm-rs-cc need this.
@@ -341,7 +341,7 @@ bool Slang::setOutput(const char *OutputFile) {
     case OT_Dependency:
     case OT_Assembly:
     case OT_LLVMAssembly: {
-      OS = OpenOutputFile(OutputFile, llvm::sys::fs::F_None, &Error,
+      OS = OpenOutputFile(OutputFile, llvm::sys::fs::F_Text, &Error,
           mDiagEngine);
       break;
     }
@@ -350,7 +350,7 @@ bool Slang::setOutput(const char *OutputFile) {
     }
     case OT_Object:
     case OT_Bitcode: {
-      OS = OpenOutputFile(OutputFile, llvm::sys::fs::F_Binary,
+      OS = OpenOutputFile(OutputFile, llvm::sys::fs::F_None,
                           &Error, mDiagEngine);
       break;
     }
@@ -373,7 +373,7 @@ bool Slang::setDepOutput(const char *OutputFile) {
   std::string Error;
 
   mDOS.reset(
-      OpenOutputFile(OutputFile, llvm::sys::fs::F_None, &Error, mDiagEngine));
+      OpenOutputFile(OutputFile, llvm::sys::fs::F_Text, &Error, mDiagEngine));
   if (!Error.empty() || (mDOS.get() == NULL))
     return false;
 
@@ -404,7 +404,7 @@ int Slang::generateDepFile() {
 
   // Per-compilation needed initialization
   createPreprocessor();
-  AttachDependencyFileGen(*mPP.get(), DepOpts);
+  clang::DependencyFileGenerator::CreateAndAttachToPreprocessor(*mPP.get(), DepOpts);
 
   // Inform the diagnostic client we are processing a source file
   mDiagClient->BeginSourceFile(LangOpts, mPP.get());

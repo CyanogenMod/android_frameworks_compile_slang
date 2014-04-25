@@ -247,7 +247,7 @@ clang::ASTConsumer
 
 bool SlangRS::IsRSHeaderFile(const char *File) {
 #define RS_HEADER_ENTRY(name)  \
-  if (::strcmp(File, #name "."RS_HEADER_SUFFIX) == 0)  \
+  if (::strcmp(File, #name "." RS_HEADER_SUFFIX) == 0)  \
     return true;
 ENUM_RS_HEADER()
 #undef RS_HEADER_ENTRY

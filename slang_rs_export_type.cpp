@@ -86,10 +86,11 @@ static const clang::Type *TypeExportableHelper(
     const clang::VarDecl *VD,
     const clang::RecordDecl *TopLevelRecord);
 
+template <unsigned N>
 static void ReportTypeError(slang::RSContext *Context,
                             const clang::NamedDecl *ND,
                             const clang::RecordDecl *TopLevelRecord,
-                            const char *Message,
+                            const char (&Message)[N],
                             unsigned int TargetAPI = 0) {
   // Attempt to use the type declaration first (if we have one).
   // Fall back to the variable definition, if we are looking at something
