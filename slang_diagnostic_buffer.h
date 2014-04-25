@@ -21,6 +21,7 @@
 
 #include "clang/Basic/Diagnostic.h"
 
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {

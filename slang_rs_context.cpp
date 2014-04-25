@@ -316,19 +316,4 @@ RSContext::~RSContext() {
   }
 }
 
-clang::DiagnosticBuilder RSContext::Report(
-    clang::DiagnosticsEngine::Level Level, const char *Message) {
-  clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
-  return DiagEngine->Report(DiagEngine->getCustomDiagID(Level, Message));
-}
-
-clang::DiagnosticBuilder RSContext::Report(
-    clang::DiagnosticsEngine::Level Level, const clang::SourceLocation Loc,
-    const char *Message) {
-  clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
-  const clang::SourceManager *SM = getSourceManager();
-  return DiagEngine->Report(clang::FullSourceLoc(Loc, *SM),
-                            DiagEngine->getCustomDiagID(Level, Message));
-}
-
 }  // namespace slang

@@ -348,16 +348,12 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
   case GlobalValue::AppendingLinkage:                return 2;
   case GlobalValue::InternalLinkage:                 return 3;
   case GlobalValue::LinkOnceAnyLinkage:              return 4;
-  case GlobalValue::DLLImportLinkage:                return 5;
-  case GlobalValue::DLLExportLinkage:                return 6;
   case GlobalValue::ExternalWeakLinkage:             return 7;
   case GlobalValue::CommonLinkage:                   return 8;
   case GlobalValue::PrivateLinkage:                  return 9;
   case GlobalValue::WeakODRLinkage:                  return 10;
   case GlobalValue::LinkOnceODRLinkage:              return 11;
   case GlobalValue::AvailableExternallyLinkage:      return 12;
-  case GlobalValue::LinkerPrivateLinkage:            return 13;
-  case GlobalValue::LinkerPrivateWeakLinkage:        return 14;
   }
   llvm_unreachable("Invalid linkage");
 }
@@ -380,8 +376,8 @@ static void WriteModuleInfo(const Module *M,
   if (!M->getTargetTriple().empty())
     WriteStringRecord(bitc::MODULE_CODE_TRIPLE, M->getTargetTriple(),
                       0/*TODO*/, Stream);
-  if (!M->getDataLayout().empty())
-    WriteStringRecord(bitc::MODULE_CODE_DATALAYOUT, M->getDataLayout(),
+  if (M->getDataLayout() != nullptr)
+    WriteStringRecord(bitc::MODULE_CODE_DATALAYOUT, M->getDataLayout()->getStringRepresentation(),
                       0/*TODO*/, Stream);
   if (!M->getModuleInlineAsm().empty())
     WriteStringRecord(bitc::MODULE_CODE_ASM, M->getModuleInlineAsm(),
@@ -1233,7 +1229,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Vals.push_back(VE.getValueID(I.getOperand(2)));       // newval.
     Vals.push_back(cast<AtomicCmpXchgInst>(I).isVolatile());
     Vals.push_back(GetEncodedOrdering(
-                     cast<AtomicCmpXchgInst>(I).getOrdering()));
+                     cast<AtomicCmpXchgInst>(I).getSuccessOrdering()));
     Vals.push_back(GetEncodedSynchScope(
                      cast<AtomicCmpXchgInst>(I).getSynchScope()));
     break;
