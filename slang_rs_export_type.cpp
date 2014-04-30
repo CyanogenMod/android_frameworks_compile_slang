@@ -42,42 +42,125 @@ namespace slang {
 
 namespace {
 
+/* For the data types we support, their category, names, and size (in bits).
+ *
+ * IMPORTANT: The data types in this table should be at the same index
+ * as specified by the corresponding DataType enum.
+ */
 static RSReflectionType gReflectionTypes[] = {
-    {"FLOAT_16", "F16", 16, "half", "half", "Half", "Half", false},
-    {"FLOAT_32", "F32", 32, "float", "float", "Float", "Float", false},
-    {"FLOAT_64", "F64", 64, "double", "double", "Double", "Double",false},
-    {"SIGNED_8", "I8", 8, "int8_t", "byte", "Byte", "Byte", false},
-    {"SIGNED_16", "I16", 16, "int16_t", "short", "Short", "Short", false},
-    {"SIGNED_32", "I32", 32, "int32_t", "int", "Int", "Int", false},
-    {"SIGNED_64", "I64", 64, "int64_t", "long", "Long", "Long", false},
-    {"UNSIGNED_8", "U8", 8, "uint8_t", "short", "UByte", "Short", true},
-    {"UNSIGNED_16", "U16", 16, "uint16_t", "int", "UShort", "Int", true},
-    {"UNSIGNED_32", "U32", 32, "uint32_t", "long", "UInt", "Long", true},
-    {"UNSIGNED_64", "U64", 64, "uint64_t", "long", "ULong", "Long", false},
+    {PrimitiveDataType, "FLOAT_16", "F16", 16, "half", "half", "Half", "Half", false},
+    {PrimitiveDataType, "FLOAT_32", "F32", 32, "float", "float", "Float", "Float", false},
+    {PrimitiveDataType, "FLOAT_64", "F64", 64, "double", "double", "Double", "Double",false},
+    {PrimitiveDataType, "SIGNED_8", "I8", 8, "int8_t", "byte", "Byte", "Byte", false},
+    {PrimitiveDataType, "SIGNED_16", "I16", 16, "int16_t", "short", "Short", "Short", false},
+    {PrimitiveDataType, "SIGNED_32", "I32", 32, "int32_t", "int", "Int", "Int", false},
+    {PrimitiveDataType, "SIGNED_64", "I64", 64, "int64_t", "long", "Long", "Long", false},
+    {PrimitiveDataType, "UNSIGNED_8", "U8", 8, "uint8_t", "short", "UByte", "Short", true},
+    {PrimitiveDataType, "UNSIGNED_16", "U16", 16, "uint16_t", "int", "UShort", "Int", true},
+    {PrimitiveDataType, "UNSIGNED_32", "U32", 32, "uint32_t", "long", "UInt", "Long", true},
+    {PrimitiveDataType, "UNSIGNED_64", "U64", 64, "uint64_t", "long", "ULong", "Long", false},
 
-    {"BOOLEAN", "BOOLEAN", 8, "bool", "boolean", NULL, NULL, false},
+    {PrimitiveDataType, "BOOLEAN", "BOOLEAN", 8, "bool", "boolean", NULL, NULL, false},
 
-    {"UNSIGNED_5_6_5", NULL, 16, NULL, NULL, NULL, NULL, false},
-    {"UNSIGNED_5_5_5_1", NULL, 16, NULL, NULL, NULL, NULL, false},
-    {"UNSIGNED_4_4_4_4", NULL, 16, NULL, NULL, NULL, NULL, false},
+    {PrimitiveDataType, "UNSIGNED_5_6_5", NULL, 16, NULL, NULL, NULL, NULL, false},
+    {PrimitiveDataType, "UNSIGNED_5_5_5_1", NULL, 16, NULL, NULL, NULL, NULL, false},
+    {PrimitiveDataType, "UNSIGNED_4_4_4_4", NULL, 16, NULL, NULL, NULL, NULL, false},
 
-    {"MATRIX_2X2", NULL, 4*32, "rsMatrix_2x2", "Matrix2f", NULL, NULL, false},
-    {"MATRIX_3X3", NULL, 9*32, "rsMatrix_3x3", "Matrix3f", NULL, NULL, false},
-    {"MATRIX_4X4", NULL, 16*32, "rsMatrix_4x4", "Matrix4f", NULL, NULL, false},
+    {MatrixDataType, "MATRIX_2X2", NULL, 4*32, "rsMatrix_2x2", "Matrix2f", NULL, NULL, false},
+    {MatrixDataType, "MATRIX_3X3", NULL, 9*32, "rsMatrix_3x3", "Matrix3f", NULL, NULL, false},
+    {MatrixDataType, "MATRIX_4X4", NULL, 16*32, "rsMatrix_4x4", "Matrix4f", NULL, NULL, false},
 
-    {"RS_ELEMENT", "ELEMENT", 32, "Element", "Element", NULL, NULL, false},
-    {"RS_TYPE", "TYPE", 32, "Type", "Type", NULL, NULL, false},
-    {"RS_ALLOCATION", "ALLOCATION", 32, "Allocation", "Allocation", NULL, NULL, false},
-    {"RS_SAMPLER", "SAMPLER", 32, "Sampler", "Sampler", NULL, NULL, false},
-    {"RS_SCRIPT", "SCRIPT", 32, "Script", "Script", NULL, NULL, false},
-    {"RS_MESH", "MESH", 32, "Mesh", "Mesh", NULL, NULL, false},
-    {"RS_PATH", "PATH", 32, "Path", "Path", NULL, NULL, false},
-    {"RS_PROGRAM_FRAGMENT", "PROGRAM_FRAGMENT", 32, "ProgramFragment", "ProgramFragment", NULL, NULL, false},
-    {"RS_PROGRAM_VERTEX", "PROGRAM_VERTEX", 32, "ProgramVertex", "ProgramVertex", NULL, NULL, false},
-    {"RS_PROGRAM_RASTER", "PROGRAM_RASTER", 32, "ProgramRaster", "ProgramRaster", NULL, NULL, false},
-    {"RS_PROGRAM_STORE", "PROGRAM_STORE", 32, "ProgramStore", "ProgramStore", NULL, NULL, false},
-    {"RS_FONT", "FONT", 32, "Font", "Font", NULL, NULL, false}
+    // TODO: For 64 bit, what will be the size of the objects??
+    {ObjectDataType, "RS_ELEMENT", "ELEMENT", 32, "Element", "Element", NULL, NULL, false},
+    {ObjectDataType, "RS_TYPE", "TYPE", 32, "Type", "Type", NULL, NULL, false},
+    {ObjectDataType, "RS_ALLOCATION", "ALLOCATION", 32, "Allocation", "Allocation", NULL, NULL, false},
+    {ObjectDataType, "RS_SAMPLER", "SAMPLER", 32, "Sampler", "Sampler", NULL, NULL, false},
+    {ObjectDataType, "RS_SCRIPT", "SCRIPT", 32, "Script", "Script", NULL, NULL, false},
+    {ObjectDataType, "RS_MESH", "MESH", 32, "Mesh", "Mesh", NULL, NULL, false},
+    {ObjectDataType, "RS_PATH", "PATH", 32, "Path", "Path", NULL, NULL, false},
+
+    {ObjectDataType, "RS_PROGRAM_FRAGMENT", "PROGRAM_FRAGMENT", 32, "ProgramFragment", "ProgramFragment", NULL, NULL, false},
+    {ObjectDataType, "RS_PROGRAM_VERTEX", "PROGRAM_VERTEX", 32, "ProgramVertex", "ProgramVertex", NULL, NULL, false},
+    {ObjectDataType, "RS_PROGRAM_RASTER", "PROGRAM_RASTER", 32, "ProgramRaster", "ProgramRaster", NULL, NULL, false},
+    {ObjectDataType, "RS_PROGRAM_STORE", "PROGRAM_STORE", 32, "ProgramStore", "ProgramStore", NULL, NULL, false},
+    {ObjectDataType, "RS_FONT", "FONT", 32, "Font", "Font", NULL, NULL, false}
 };
+
+const int kMaxVectorSize = 4;
+
+struct BuiltinInfo {
+  clang::BuiltinType::Kind builtinTypeKind;
+  RSExportPrimitiveType::DataType type;
+  /* TODO If we return std::string instead of llvm::StringRef, we could build
+   * the name instead of duplicating the entries.
+   */
+  const char *cname[kMaxVectorSize];
+};
+
+BuiltinInfo BuiltinInfoTable[] = {
+    {clang::BuiltinType::Bool, RSExportPrimitiveType::DataTypeBoolean,
+     {"bool", "bool2", "bool3", "bool4"}},
+    {clang::BuiltinType::Char_U, RSExportPrimitiveType::DataTypeUnsigned8,
+     {"uchar", "uchar2", "uchar3", "uchar4"}},
+    {clang::BuiltinType::UChar, RSExportPrimitiveType::DataTypeUnsigned8,
+     {"uchar", "uchar2", "uchar3", "uchar4"}},
+    {clang::BuiltinType::Char16, RSExportPrimitiveType::DataTypeSigned16,
+     {"short", "short2", "short3", "short4"}},
+    {clang::BuiltinType::Char32, RSExportPrimitiveType::DataTypeSigned32,
+     {"int", "int2", "int3", "int4"}},
+    {clang::BuiltinType::UShort, RSExportPrimitiveType::DataTypeUnsigned16,
+     {"ushort", "ushort2", "ushort3", "ushort4"}},
+    {clang::BuiltinType::UInt, RSExportPrimitiveType::DataTypeUnsigned32,
+     {"uint", "uint2", "uint3", "uint4"}},
+    {clang::BuiltinType::ULong, RSExportPrimitiveType::DataTypeUnsigned32,
+     {"uint", "uint2", "uint3", "uint4"}},
+    {clang::BuiltinType::ULongLong, RSExportPrimitiveType::DataTypeUnsigned64,
+     {"ulong", "ulong2", "ulong3", "ulong4"}},
+
+    {clang::BuiltinType::Char_S, RSExportPrimitiveType::DataTypeSigned8,
+     {"char", "char2", "char3", "char4"}},
+    {clang::BuiltinType::SChar, RSExportPrimitiveType::DataTypeSigned8,
+     {"char", "char2", "char3", "char4"}},
+    {clang::BuiltinType::Short, RSExportPrimitiveType::DataTypeSigned16,
+     {"short", "short2", "short3", "short4"}},
+    {clang::BuiltinType::Int, RSExportPrimitiveType::DataTypeSigned32,
+     {"int", "int2", "int3", "int4"}},
+    {clang::BuiltinType::Long, RSExportPrimitiveType::DataTypeSigned64,
+     {"long", "long2", "long3", "long4"}},
+    {clang::BuiltinType::LongLong, RSExportPrimitiveType::DataTypeSigned64,
+     {"long", "long2", "long3", "long4"}},
+    {clang::BuiltinType::Float, RSExportPrimitiveType::DataTypeFloat32,
+     {"float", "float2", "float3", "float4"}},
+    {clang::BuiltinType::Double, RSExportPrimitiveType::DataTypeFloat64,
+     {"double", "double2", "double3", "double4"}},
+};
+const int BuiltinInfoTableCount = sizeof(BuiltinInfoTable) / sizeof(BuiltinInfoTable[0]);
+
+struct NameAndPrimitiveType {
+  const char *name;
+  RSExportPrimitiveType::DataType dataType;
+};
+
+static NameAndPrimitiveType MatrixAndObjectDataTypes[] = {
+    {"rs_matrix2x2", RSExportPrimitiveType::DataTypeRSMatrix2x2},
+    {"rs_matrix3x3", RSExportPrimitiveType::DataTypeRSMatrix3x3},
+    {"rs_matrix4x4", RSExportPrimitiveType::DataTypeRSMatrix4x4},
+    {"rs_element", RSExportPrimitiveType::DataTypeRSElement},
+    {"rs_type", RSExportPrimitiveType::DataTypeRSType},
+    {"rs_allocation", RSExportPrimitiveType::DataTypeRSAllocation},
+    {"rs_sampler", RSExportPrimitiveType::DataTypeRSSampler},
+    {"rs_script", RSExportPrimitiveType::DataTypeRSScript},
+    {"rs_mesh", RSExportPrimitiveType::DataTypeRSMesh},
+    {"rs_path", RSExportPrimitiveType::DataTypeRSPath},
+    {"rs_program_fragment", RSExportPrimitiveType::DataTypeRSProgramFragment},
+    {"rs_program_vertex", RSExportPrimitiveType::DataTypeRSProgramVertex},
+    {"rs_program_raster", RSExportPrimitiveType::DataTypeRSProgramRaster},
+    {"rs_program_store", RSExportPrimitiveType::DataTypeRSProgramStore},
+    {"rs_font", RSExportPrimitiveType::DataTypeRSFont},
+};
+
+const int MatrixAndObjectDataTypesCount =
+    sizeof(MatrixAndObjectDataTypes) / sizeof(MatrixAndObjectDataTypes[0]);
 
 static const clang::Type *TypeExportableHelper(
     const clang::Type *T,
@@ -145,6 +228,15 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
   }
 }
 
+BuiltinInfo *FindBuiltinType(clang::BuiltinType::Kind builtinTypeKind) {
+  for (int i = 0; i < BuiltinInfoTableCount; i++) {
+    if (builtinTypeKind == BuiltinInfoTable[i].builtinTypeKind) {
+      return &BuiltinInfoTable[i];
+    }
+  }
+  return NULL;
+}
+
 static const clang::Type *TypeExportableHelper(
     clang::Type const *T,
     llvm::SmallPtrSet<clang::Type const *, 8> &SPS,
@@ -162,16 +254,7 @@ static const clang::Type *TypeExportableHelper(
     case clang::Type::Builtin: {
       const clang::BuiltinType *BT =
         UNSAFE_CAST_TYPE(const clang::BuiltinType, T);
-
-      switch (BT->getKind()) {
-#define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
-        case builtin_type:
-#include "RSClangBuiltinEnums.inc"
-          return T;
-        default: {
-          return NULL;
-        }
-      }
+      return FindBuiltinType(BT->getKind()) == NULL ? NULL : T;
     }
     case clang::Type::Record: {
       if (RSExportPrimitiveType::GetRSSpecificType(T) !=
@@ -592,18 +675,11 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
     case clang::Type::Builtin: {
       const clang::BuiltinType *BT =
         UNSAFE_CAST_TYPE(const clang::BuiltinType, T);
-
-      switch (BT->getKind()) {
-#define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
-        case builtin_type:                                    \
-          return cname;                                       \
-        break;
-#include "RSClangBuiltinEnums.inc"
-        default: {
-          slangAssert(false && "Unknown data type of the builtin");
-          break;
-        }
+      BuiltinInfo *info = FindBuiltinType(BT->getKind());
+      if (info != NULL) {
+        return info->cname[0];
       }
+      slangAssert(false && "Unknown data type of the builtin");
       break;
     }
     case clang::Type::Record: {
@@ -838,12 +914,10 @@ RSExportPrimitiveType::GetRSSpecificType(const llvm::StringRef &TypeName) {
     return DataTypeUnknown;
 
   if (RSSpecificTypeMap->empty()) {
-#define ENUM_RS_MATRIX_TYPE(type, cname, dim)                       \
-    RSSpecificTypeMap->GetOrCreateValue(cname, DataType ## type);
-#include "RSMatrixTypeEnums.inc"
-#define ENUM_RS_OBJECT_TYPE(type, cname)                            \
-    RSSpecificTypeMap->GetOrCreateValue(cname, DataType ## type);
-#include "RSObjectTypeEnums.inc"
+    for (int i = 0; i < MatrixAndObjectDataTypesCount; i++) {
+      RSSpecificTypeMap->GetOrCreateValue(MatrixAndObjectDataTypes[i].name,
+                                          MatrixAndObjectDataTypes[i].dataType);
+    }
   }
 
   RSSpecificTypeMapTy::const_iterator I = RSSpecificTypeMap->find(TypeName);
@@ -863,11 +937,17 @@ RSExportPrimitiveType::GetRSSpecificType(const clang::Type *T) {
 }
 
 bool RSExportPrimitiveType::IsRSMatrixType(DataType DT) {
-  return ((DT >= FirstRSMatrixType) && (DT <= LastRSMatrixType));
+    if (DT < 0 || DT >= DataTypeMax) {
+        return false;
+    }
+    return gReflectionTypes[DT].category == MatrixDataType;
 }
 
 bool RSExportPrimitiveType::IsRSObjectType(DataType DT) {
-  return ((DT >= FirstRSObjectType) && (DT <= LastRSObjectType));
+    if (DT < 0 || DT >= DataTypeMax) {
+        return false;
+    }
+    return gReflectionTypes[DT].category == ObjectDataType;
 }
 
 bool RSExportPrimitiveType::IsStructureTypeWithRSObject(const clang::Type *T) {
@@ -931,18 +1011,11 @@ bool RSExportPrimitiveType::IsStructureTypeWithRSObject(const clang::Type *T) {
   return RSObjectTypeSeen;
 }
 
-const size_t RSExportPrimitiveType::SizeOfDataTypeInBits[] = {
-#define ENUM_RS_DATA_TYPE(type, cname, bits)  \
-  bits,
-#include "RSDataTypeEnums.inc"
-  0   // DataTypeMax
-};
-
 size_t RSExportPrimitiveType::GetSizeInBits(const RSExportPrimitiveType *EPT) {
-  slangAssert(((EPT->getType() > DataTypeUnknown) &&
-               (EPT->getType() < DataTypeMax)) &&
+  int type = EPT->getType();
+  slangAssert((type > DataTypeUnknown && type < DataTypeMax) &&
               "RSExportPrimitiveType::GetSizeInBits : unknown data type");
-  return SizeOfDataTypeInBits[ static_cast<int>(EPT->getType()) ];
+  return gReflectionTypes[type].size_in_bits;
 }
 
 RSExportPrimitiveType::DataType
@@ -954,20 +1027,14 @@ RSExportPrimitiveType::GetDataType(RSContext *Context, const clang::Type *T) {
     case clang::Type::Builtin: {
       const clang::BuiltinType *BT =
         UNSAFE_CAST_TYPE(const clang::BuiltinType, T);
-      switch (BT->getKind()) {
-#define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
-        case builtin_type: {                                  \
-          return DataType ## type;                            \
-        }
-#include "RSClangBuiltinEnums.inc"
-        // The size of type WChar depend on platform so we abandon the support
-        // to them.
-        default: {
-          Context->ReportError("built-in type cannot be exported: '%0'")
-              << T->getTypeClassName();
-          break;
-        }
+      BuiltinInfo *info = FindBuiltinType(BT->getKind());
+      if (info != NULL) {
+        return info->type;
       }
+      // The size of type WChar depend on platform so we abandon the support
+      // to them.
+      Context->ReportError("built-in type cannot be exported: '%0'")
+          << T->getTypeClassName();
       break;
     }
     case clang::Type::Record: {
@@ -1154,30 +1221,29 @@ bool RSExportPointerType::equals(const RSExportable *E) const {
 llvm::StringRef
 RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT) {
   const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
+  llvm::StringRef name;
 
   if ((ElementType->getTypeClass() != clang::Type::Builtin))
-    return llvm::StringRef();
+    return name;
 
   const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(const clang::BuiltinType,
                                                   ElementType);
   if ((EVT->getNumElements() < 1) ||
       (EVT->getNumElements() > 4))
-    return llvm::StringRef();
+    return name;
 
-  switch (BT->getKind()) {
+  BuiltinInfo *info = FindBuiltinType(BT->getKind());
+  if (info != NULL) {
     // Compiler is smart enough to optimize following *big if branches* since
     // they all become "constant comparison" after macro expansion
-#define ENUM_SUPPORT_BUILTIN_TYPE(builtin_type, type, cname)  \
-    case builtin_type: {                                      \
-      const char *Name[] = { cname"2", cname"3", cname"4" };  \
-      return Name[EVT->getNumElements() - 2];                 \
-      break;                                                  \
-    }
-#include "RSClangBuiltinEnums.inc"
-    default: {
-      return llvm::StringRef();
+    int I = EVT->getNumElements() - 1;
+    if (I < kMaxVectorSize) {
+      name = info->cname[I];
+    } else {
+      slangAssert(false && "Max vector is 4");
     }
   }
+  return name;
 }
 
 RSExportVectorType *RSExportVectorType::Create(RSContext *Context,

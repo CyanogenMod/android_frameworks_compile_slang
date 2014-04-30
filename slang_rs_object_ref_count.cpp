@@ -32,17 +32,16 @@
 
 namespace slang {
 
-clang::FunctionDecl *RSObjectRefCount::
-    RSSetObjectFD[RSExportPrimitiveType::LastRSObjectType -
-                  RSExportPrimitiveType::FirstRSObjectType + 1];
-clang::FunctionDecl *RSObjectRefCount::
-    RSClearObjectFD[RSExportPrimitiveType::LastRSObjectType -
-                    RSExportPrimitiveType::FirstRSObjectType + 1];
+/* Even though those two arrays are of size DataTypeMax, only entries that
+ * correspond to object types will be set.
+ */
+clang::FunctionDecl *
+RSObjectRefCount::RSSetObjectFD[RSExportPrimitiveType::DataTypeMax];
+clang::FunctionDecl *
+RSObjectRefCount::RSClearObjectFD[RSExportPrimitiveType::DataTypeMax];
 
 void RSObjectRefCount::GetRSRefCountingFunctions(clang::ASTContext &C) {
-  for (unsigned i = 0;
-       i < (sizeof(RSClearObjectFD) / sizeof(clang::FunctionDecl*));
-       i++) {
+  for (unsigned i = 0; i < RSExportPrimitiveType::DataTypeMax; i++) {
     RSSetObjectFD[i] = NULL;
     RSClearObjectFD[i] = NULL;
   }
@@ -83,7 +82,11 @@ void RSObjectRefCount::GetRSRefCountingFunctions(clang::ASTContext &C) {
       slangAssert(RSExportPrimitiveType::IsRSObjectType(DT)
              && "must be RS object type");
 
-      RSObjectFD[(DT - RSExportPrimitiveType::FirstRSObjectType)] = FD;
+      if (DT >= 0 && DT < RSExportPrimitiveType::DataTypeMax) {
+          RSObjectFD[DT] = FD;
+      } else {
+          slangAssert(false && "incorrect type");
+      }
     }
   }
 }
