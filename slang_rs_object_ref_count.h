@@ -119,7 +119,12 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
   static clang::FunctionDecl *GetRSSetObjectFD(
       RSExportPrimitiveType::DataType DT) {
     slangAssert(RSExportPrimitiveType::IsRSObjectType(DT));
-    return RSSetObjectFD[(DT - RSExportPrimitiveType::FirstRSObjectType)];
+    if (DT >= 0 && DT < RSExportPrimitiveType::DataTypeMax) {
+      return RSSetObjectFD[DT];
+    } else {
+      slangAssert(false && "incorrect type");
+      return NULL;
+    }
   }
 
   static clang::FunctionDecl *GetRSSetObjectFD(const clang::Type *T) {
@@ -129,7 +134,12 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
   static clang::FunctionDecl *GetRSClearObjectFD(
       RSExportPrimitiveType::DataType DT) {
     slangAssert(RSExportPrimitiveType::IsRSObjectType(DT));
-    return RSClearObjectFD[(DT - RSExportPrimitiveType::FirstRSObjectType)];
+    if (DT >= 0 && DT < RSExportPrimitiveType::DataTypeMax) {
+      return RSClearObjectFD[DT];
+    } else {
+      slangAssert(false && "incorrect type");
+      return NULL;
+    }
   }
 
   static clang::FunctionDecl *GetRSClearObjectFD(const clang::Type *T) {

@@ -92,10 +92,13 @@ class RSMetadataEncoderInternal {
 
   unsigned encodeTypeBase(const struct RSTypeBase *Base);
   unsigned encodeTypeBaseAsKey(const struct RSTypeBase *Base);
-#define ENUM_RS_DATA_TYPE_CLASS(x)  \
-  unsigned encode ## x ## Type(const union RSType *T);
-RS_DATA_TYPE_CLASS_ENUMS
-#undef ENUM_RS_DATA_TYPE_CLASS
+
+  unsigned encodePrimitiveType(const union RSType *T);
+  unsigned encodePointerType(const union RSType *T);
+  unsigned encodeVectorType(const union RSType *T);
+  unsigned encodeMatrixType(const union RSType *T);
+  unsigned encodeConstantArrayType(const union RSType *T);
+  unsigned encodeRecordType(const union RSType *T);
 
   unsigned encodeRSType(const union RSType *T);
 
@@ -292,11 +295,21 @@ unsigned RSMetadataEncoderInternal::encodeRecordType(const union RSType *T) {
 
 unsigned RSMetadataEncoderInternal::encodeRSType(const union RSType *T) {
   switch (static_cast<enum RSTypeClass>(RS_TYPE_GET_CLASS(T))) {
-#define ENUM_RS_DATA_TYPE_CLASS(x)  \
-    case RS_TC_ ## x: return encode ## x ## Type(T);
-    RS_DATA_TYPE_CLASS_ENUMS
-#undef ENUM_RS_DATA_TYPE_CLASS
-    default: return 0;
+  case RS_TC_Primitive:
+    return encodePrimitiveType(T);
+  case RS_TC_Pointer:
+    return encodePointerType(T);
+  case RS_TC_Vector:
+    return encodeVectorType(T);
+  case RS_TC_Matrix:
+    return encodeMatrixType(T);
+  case RS_TC_ConstantArray:
+    return encodeConstantArrayType(T);
+  case RS_TC_Record:
+    return encodeRecordType(T);
+  default:
+    slangAssert(false && "unexpected data type");
+    return 0;
   }
   return 0;
 }
