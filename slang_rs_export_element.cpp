@@ -31,26 +31,40 @@ namespace slang {
 bool RSExportElement::Initialized = false;
 RSExportElement::ElementInfoMapTy RSExportElement::ElementInfoMap;
 
+struct DataElementInfo {
+  const char *name;
+  RSExportPrimitiveType::DataType dataType;
+  bool normalized;
+  int vsize;
+};
+
+// TODO This is very similar to DataElements[] in slang_rs_spec_table.cpp.  Merge.
+static DataElementInfo DataElementInfoTable[] = {
+    {"rs_pixel_l", RSExportPrimitiveType::DataTypeUnsigned8, true, 1},
+    {"rs_pixel_a", RSExportPrimitiveType::DataTypeUnsigned8, true, 1},
+    {"rs_pixel_la", RSExportPrimitiveType::DataTypeUnsigned8, true, 2},
+    {"rs_pixel_rgb", RSExportPrimitiveType::DataTypeUnsigned8, true, 3},
+    {"rs_pixel_rgba", RSExportPrimitiveType::DataTypeUnsigned8, true, 4},
+    {"rs_pixel_rgb565", RSExportPrimitiveType::DataTypeUnsigned8, true, 3},
+    {"rs_pixel_rgb5551", RSExportPrimitiveType::DataTypeUnsigned8, true, 4},
+    {"rs_pixel_rgb4444", RSExportPrimitiveType::DataTypeUnsigned8, true, 4},
+};
+
+const int DataElementInfoTableCount = sizeof(DataElementInfoTable) / sizeof(DataElementInfoTable[0]);
+
+// TODO Rename RSExportElement to RSExportDataElement
 void RSExportElement::Init() {
   if (!Initialized) {
     // Initialize ElementInfoMap
-#define ENUM_RS_DATA_ELEMENT(_name, _dt, _norm, _vsize)  \
-    {                                                         \
-      ElementInfo *EI = new ElementInfo;                      \
-      EI->type = RSExportPrimitiveType::DataType ## _dt;      \
-      EI->normalized = _norm;                                 \
-      EI->vsize = _vsize;                                     \
-                                                              \
-      llvm::StringRef Name(_name);                            \
-      ElementInfoMap.insert(                                  \
-          ElementInfoMapTy::value_type::Create(               \
-              Name.begin(),                                   \
-              Name.end(),                                     \
-              ElementInfoMap.getAllocator(),                  \
-              EI));                                           \
+    for (int i = 0; i < DataElementInfoTableCount; i++) {
+      ElementInfo *EI = new ElementInfo;
+      EI->type = DataElementInfoTable[i].dataType;
+      EI->normalized = DataElementInfoTable[i].normalized;
+      EI->vsize = DataElementInfoTable[i].vsize;
+      llvm::StringRef Name(DataElementInfoTable[i].name);
+      ElementInfoMap.insert(ElementInfoMapTy::value_type::Create(
+          Name.begin(), Name.end(), ElementInfoMap.getAllocator(), EI));
     }
-#include "RSDataElementEnums.inc"
-
     Initialized = true;
   }
   return;

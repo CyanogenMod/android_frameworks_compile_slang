@@ -17,85 +17,48 @@
 #ifndef _COMPILE_SLANG_SLANG_RS_TYPE_SPEC_H_  // NOLINT
 #define _COMPILE_SLANG_SLANG_RS_TYPE_SPEC_H_
 
-#define RS_DATA_TYPE_CLASS_ENUMS            \
-    ENUM_RS_DATA_TYPE_CLASS(Primitive)      \
-    ENUM_RS_DATA_TYPE_CLASS(Pointer)        \
-    ENUM_RS_DATA_TYPE_CLASS(Vector)         \
-    ENUM_RS_DATA_TYPE_CLASS(Matrix)         \
-    ENUM_RS_DATA_TYPE_CLASS(ConstantArray)  \
-    ENUM_RS_DATA_TYPE_CLASS(Record)
-
-#define PRIMITIVE_DATA_TYPE_ENUMS                         \
-    ENUM_PRIMITIVE_DATA_TYPE(Float16, NULL, 16)           \
-    ENUM_PRIMITIVE_DATA_TYPE(Float32, "float", 32)        \
-    ENUM_PRIMITIVE_DATA_TYPE(Float64, "double", 64)       \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed8, "char", 8)          \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed16, "short", 16)       \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed32, "int", 32)         \
-    ENUM_PRIMITIVE_DATA_TYPE(Signed64, "long", 64)        \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned8, "uchar", 8)       \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned16, "ushort", 16)    \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned32, "uint", 32)      \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned64, "ulong", 64)     \
-    ENUM_PRIMITIVE_DATA_TYPE(Boolean, "bool", 8)          \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned565, "u565", 16)     \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned5551, "u5551", 16)   \
-    ENUM_PRIMITIVE_DATA_TYPE(Unsigned4444, "u4444", 16)   \
-    PRIMITIVE_DATA_TYPE_RANGE(Float16, Unsigned4444)
-
-#define RS_MATRIX_DATA_TYPE_ENUMS                             \
-    ENUM_RS_MATRIX_DATA_TYPE(RSMatrix2x2, "rs_matrix2x2", 2)  \
-    ENUM_RS_MATRIX_DATA_TYPE(RSMatrix3x3, "rs_matrix3x3", 3)  \
-    ENUM_RS_MATRIX_DATA_TYPE(RSMatrix4x4, "rs_matrix4x4", 4)  \
-    RS_MATRIX_DATA_TYPE_RANGE(RSMatrix2x2, RSMatrix4x4)
-
-#define RS_OBJECT_DATA_TYPE_ENUMS                                       \
-    ENUM_RS_OBJECT_DATA_TYPE(RSElement, "rs_element")                   \
-    ENUM_RS_OBJECT_DATA_TYPE(RSType, "rs_type")                         \
-    ENUM_RS_OBJECT_DATA_TYPE(RSAllocation, "rs_allocation")             \
-    ENUM_RS_OBJECT_DATA_TYPE(RSSampler, "rs_sampler")                   \
-    ENUM_RS_OBJECT_DATA_TYPE(RSScript, "rs_script")                     \
-    ENUM_RS_OBJECT_DATA_TYPE(RSMesh, "rs_mesh")                         \
-    ENUM_RS_OBJECT_DATA_TYPE(RSPath, "rs_path")                         \
-    ENUM_RS_OBJECT_DATA_TYPE(RSProgramFragment, "rs_program_fragment")  \
-    ENUM_RS_OBJECT_DATA_TYPE(RSProgramVertex, "rs_program_vertex")      \
-    ENUM_RS_OBJECT_DATA_TYPE(RSProgramRaster, "rs_program_raster")      \
-    ENUM_RS_OBJECT_DATA_TYPE(RSProgramStore, "rs_program_store")        \
-    ENUM_RS_OBJECT_DATA_TYPE(RSFont, "rs_font")                         \
-    RS_OBJECT_DATA_TYPE_RANGE(RSElement, RSFont)
-
 enum RSTypeClass {
-#define ENUM_RS_DATA_TYPE_CLASS(x)  RS_TC_ ## x,
-  RS_DATA_TYPE_CLASS_ENUMS
-#undef ENUM_RS_DATA_TYPE_CLASS
+  RS_TC_Primitive,
+  RS_TC_Pointer,
+  RS_TC_Vector,
+  RS_TC_Matrix,
+  RS_TC_ConstantArray,
+  RS_TC_Record,
   RS_TC_Max
 };
 
+// TODO We have the same enum in PrimitiveDataType.  Join them.
 enum RSDataType {
-#define ENUM_PRIMITIVE_DATA_TYPE(x, name, bits) RS_DT_ ## x,
-#define PRIMITIVE_DATA_TYPE_RANGE(x, y) \
-    RS_DT_FirstPrimitiveType = RS_DT_ ## x, \
-    RS_DT_LastPrimitiveType = RS_DT_ ## y,
-  PRIMITIVE_DATA_TYPE_ENUMS
-#undef ENUM_PRIMITIVE_DATA_TYPE
-#undef PRIMITIVE_DATA_TYPE_RANGE
-
-#define ENUM_RS_MATRIX_DATA_TYPE(x, name, dim) RS_DT_ ## x,
-#define RS_MATRIX_DATA_TYPE_RANGE(x, y) \
-      RS_DT_FirstMatrixType = RS_DT_ ## x,  \
-      RS_DT_LastMatrixType = RS_DT_ ## y,
-  RS_MATRIX_DATA_TYPE_ENUMS
-#undef ENUM_RS_MATRIX_DATA_TYPE
-#undef RS_MATRIX_DATA_TYPE_RANGE
-
-#define ENUM_RS_OBJECT_DATA_TYPE(x, name) RS_DT_ ## x,
-#define RS_OBJECT_DATA_TYPE_RANGE(x, y) \
-    RS_DT_FirstRSObjectType = RS_DT_ ## x,  \
-    RS_DT_LastRSObjectType = RS_DT_ ## y,
-  RS_OBJECT_DATA_TYPE_ENUMS
-#undef ENUM_RS_OBJECT_DATA_TYPE
-#undef RS_OBJECT_DATA_TYPE_RANGE
-
+  RS_DT_Float16 = 0,
+  RS_DT_Float32 = 1,
+  RS_DT_Float64 = 2,
+  RS_DT_Signed8 = 3,
+  RS_DT_Signed16 = 4,
+  RS_DT_Signed32 = 5,
+  RS_DT_Signed64 = 6,
+  RS_DT_Unsigned8 = 7,
+  RS_DT_Unsigned16 = 8,
+  RS_DT_Unsigned32 = 9,
+  RS_DT_Unsigned64 = 10,
+  RS_DT_Boolean = 11,
+  RS_DT_Unsigned565 = 12,
+  RS_DT_Unsigned5551 = 13,
+  RS_DT_Unsigned4444 = 14,
+  RS_DT_RSMatrix2x2 = 15,
+  RS_DT_RSMatrix3x3 = 16,
+  RS_DT_RSMatrix4x4 = 17,
+  RS_DT_RSElement = 18,
+  RS_DT_RSType = 19,
+  RS_DT_RSAllocation = 20,
+  RS_DT_RSSampler = 21,
+  RS_DT_RSScript = 22,
+  RS_DT_RSMesh = 23,
+  RS_DT_RSPath = 24,
+  RS_DT_RSProgramFragment = 25,
+  RS_DT_RSProgramVertex = 26,
+  RS_DT_RSProgramRaster = 27,
+  RS_DT_RSProgramStore = 28,
+  RS_DT_RSFont = 29,
   RS_DT_USER_DEFINED
 };
 

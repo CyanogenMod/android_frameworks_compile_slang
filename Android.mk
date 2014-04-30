@@ -113,20 +113,6 @@ LOCAL_SRC_FILES := slang-data.c
 
 include $(BUILD_HOST_EXECUTABLE)
 
-# Executable rs-spec-gen for host
-# ========================================================
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := rs-spec-gen
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE_CLASS := EXECUTABLES
-
-LOCAL_SRC_FILES :=	\
-	slang_rs_spec_table.cpp
-
-include $(BUILD_HOST_EXECUTABLE)
-
 # ========================================================
 include $(CLEAR_VARS)
 
@@ -174,13 +160,6 @@ TBLGEN_TABLES :=    \
 	StmtNodes.inc	\
 	RSCCOptions.inc
 
-RS_SPEC_TABLES :=	\
-	RSClangBuiltinEnums.inc	\
-	RSDataTypeEnums.inc	\
-	RSDataElementEnums.inc	\
-	RSMatrixTypeEnums.inc	\
-	RSObjectTypeEnums.inc
-
 LOCAL_SRC_FILES :=	\
 	llvm-rs-cc.cpp	\
 	slang_rs.cpp	\
@@ -223,7 +202,6 @@ $(intermediates)/RSCCOptions.inc: $(LOCAL_PATH)/RSCCOptions.td $(LLVM_ROOT_PATH)
 	@echo "Building Renderscript compiler (llvm-rs-cc) Option tables with tblgen"
 	$(call transform-host-td-to-out,opt-parser-defs)
 
-include frameworks/compile/slang/RSSpec.mk
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
 include $(BUILD_HOST_EXECUTABLE)

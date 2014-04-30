@@ -61,7 +61,15 @@ namespace slang {
 
   class RSContext;
 
+  // Broad grouping of the data types
+  enum DataTypeCategory {
+      PrimitiveDataType,
+      MatrixDataType,
+      ObjectDataType
+  };
+
 typedef struct {
+    DataTypeCategory category;
     const char * rs_type;
     const char * rs_short_type;
     uint32_t size_in_bits;
@@ -217,29 +225,59 @@ class RSExportPrimitiveType : public RSExportType {
   friend class RSExportElement;
  public:
   // From graphics/java/android/renderscript/Element.java: Element.DataType
-  typedef enum {
+    // TODO move out of here
+  /* NOTE: The values of the enums are found compiled in the bit code (i.e. as
+   * values, not symbolic.  When adding new types, you must add them to the end.
+   * If removing types, you can't re-use the integer value.
+   *
+   * TODO: but if you do this, you won't be able to keep using First* & Last*
+   * for validation.
+   *
+   * IMPORTANT: This enum should correspond one-for-one to the entries found in the
+   * gReflectionsTypes table (except for the two negative numbers).  Don't edit one without
+   * the other.
+   */
+  enum DataType {
     DataTypeIsStruct = -2,
     DataTypeUnknown = -1,
 
-#define ENUM_PRIMITIVE_DATA_TYPE_RANGE(begin_type, end_type)  \
-    FirstPrimitiveType = DataType ## begin_type,  \
-    LastPrimitiveType = DataType ## end_type,
+    DataTypeFloat16 = 0,
+    DataTypeFloat32 = 1,
+    DataTypeFloat64 = 2,
+    DataTypeSigned8 = 3,
+    DataTypeSigned16 = 4,
+    DataTypeSigned32 = 5,
+    DataTypeSigned64 = 6,
+    DataTypeUnsigned8 = 7,
+    DataTypeUnsigned16 = 8,
+    DataTypeUnsigned32 = 9,
+    DataTypeUnsigned64 = 10,
+    DataTypeBoolean = 11,
+    DataTypeUnsigned565 = 12,
+    DataTypeUnsigned5551 = 13,
+    DataTypeUnsigned4444 = 14,
 
-#define ENUM_RS_MATRIX_DATA_TYPE_RANGE(begin_type, end_type)  \
-    FirstRSMatrixType = DataType ## begin_type,  \
-    LastRSMatrixType = DataType ## end_type,
+    DataTypeRSMatrix2x2 = 15,
+    DataTypeRSMatrix3x3 = 16,
+    DataTypeRSMatrix4x4 = 17,
 
-#define ENUM_RS_OBJECT_DATA_TYPE_RANGE(begin_type, end_type)  \
-    FirstRSObjectType = DataType ## begin_type,  \
-    LastRSObjectType = DataType ## end_type,
+    DataTypeRSElement = 18,
+    DataTypeRSType = 19,
+    DataTypeRSAllocation = 20,
+    DataTypeRSSampler = 21,
+    DataTypeRSScript = 22,
+    DataTypeRSMesh = 23,
+    DataTypeRSPath = 24,
+    DataTypeRSProgramFragment = 25,
+    DataTypeRSProgramVertex = 26,
+    DataTypeRSProgramRaster = 27,
+    DataTypeRSProgramStore = 28,
+    DataTypeRSFont = 29,
 
-#define ENUM_RS_DATA_TYPE(type, cname, bits)  \
-    DataType ## type,
-
-#include "RSDataTypeEnums.inc"
-
+    // This should always be last and correspond to the size of the gReflectionTypes table.
     DataTypeMax
-  } DataType;
+  };
+
 
  private:
   // NOTE: There's no any instance of RSExportPrimitiveType which mType
@@ -309,7 +347,7 @@ class RSExportPrimitiveType : public RSExportType {
 
   inline DataType getType() const { return mType; }
   inline bool isRSObjectType() const {
-    return ((mType >= FirstRSObjectType) && (mType <= LastRSObjectType));
+      return IsRSObjectType(mType);
   }
 
   virtual bool equals(const RSExportable *E) const;
