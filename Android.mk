@@ -27,15 +27,8 @@ local_cflags_for_slang += -D__DISABLE_ASSERTS
 endif
 local_cflags_for_slang += -DTARGET_BUILD_VARIANT=$(TARGET_BUILD_VARIANT)
 
-ifeq "REL" "$(PLATFORM_VERSION_CODENAME)"
-  RS_VERSION := $(PLATFORM_SDK_VERSION)
-else
-  # Increment by 1 whenever this is not a final release build, since we want to
-  # be able to see the RS version number change during development.
-  # See build/core/version_defaults.mk for more information about this.
-  RS_VERSION := "(1 + $(PLATFORM_SDK_VERSION))"
-endif
-local_cflags_for_slang += -DRS_VERSION=$(RS_VERSION)
+include $(LOCAL_PATH)/rs_version.mk
+local_cflags_for_slang += $(RS_VERSION_DEFINE)
 
 static_libraries_needed_by_slang := \
 	libLLVMBitWriter_2_9 \
