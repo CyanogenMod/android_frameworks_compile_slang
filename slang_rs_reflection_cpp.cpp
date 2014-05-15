@@ -460,7 +460,7 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
     const RSExportRecordType *params = ef->getParamPacketType();
     size_t param_len = 0;
     if (params) {
-      param_len = RSExportType::GetTypeAllocSize(params);
+      param_len = params->getAllocSize();
       if (genCreateFieldPacker(params, "__fp")) {
         genPackVarOfType(params, NULL, "__fp");
       }
@@ -688,7 +688,7 @@ void RSReflectionCpp::makeArgs(std::stringstream &ss, const ArgTy& Args) {
 
 bool RSReflectionCpp::genCreateFieldPacker(const RSExportType *ET,
                                            const char *FieldPackerName) {
-  size_t AllocSize = RSExportType::GetTypeAllocSize(ET);
+  size_t AllocSize = ET->getAllocSize();
 
   if (AllocSize > 0) {
     std::stringstream ss;
@@ -759,8 +759,9 @@ void RSReflectionCpp::genPackVarOfType(const RSExportType *ET,
         const RSExportRecordType::Field *F = *I;
         std::string FieldName;
         size_t FieldOffset = F->getOffsetInParent();
-        size_t FieldStoreSize = RSExportType::GetTypeStoreSize(F->getType());
-        size_t FieldAllocSize = RSExportType::GetTypeAllocSize(F->getType());
+        const RSExportType* T = F->getType();
+        size_t FieldStoreSize = T->getStoreSize();
+        size_t FieldAllocSize = T->getAllocSize();
 
         if (VarName != NULL)
           FieldName = VarName + ("." + F->getName());
@@ -788,10 +789,10 @@ void RSReflectionCpp::genPackVarOfType(const RSExportType *ET,
       }
 
       // There maybe some padding after the struct
-      if (RSExportType::GetTypeAllocSize(ERT) > Pos) {
+      if (ERT->getAllocSize() > Pos) {
         ss.str("");
         ss << "    " << FieldPackerName << ".skip("
-           << RSExportType::GetTypeAllocSize(ERT) - Pos << ");";
+           << ERT->getAllocSize() - Pos << ");";
         write(ss);
       }
       break;
