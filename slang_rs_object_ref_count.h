@@ -63,7 +63,7 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
 
     void AppendRSObjectInit(clang::VarDecl *VD,
                             clang::DeclStmt *DS,
-                            RSExportPrimitiveType::DataType DT,
+                            DataType DT,
                             clang::Expr *InitExpr);
 
     void InsertLocalVarDestructors();
@@ -91,13 +91,13 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
   // Return false if the type of variable declared in VD does not contain
   // an RS object type.
   static bool InitializeRSObject(clang::VarDecl *VD,
-                                 RSExportPrimitiveType::DataType *DT,
+                                 DataType *DT,
                                  clang::Expr **InitExpr);
 
   // Return a zero-initializer expr of the type DT. This processes both
   // RS matrix type and RS object type.
   static clang::Expr *CreateZeroInitializerForRSSpecificType(
-      RSExportPrimitiveType::DataType DT,
+      DataType DT,
       clang::ASTContext &C,
       const clang::SourceLocation &Loc);
 
@@ -116,10 +116,9 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
     return;
   }
 
-  static clang::FunctionDecl *GetRSSetObjectFD(
-      RSExportPrimitiveType::DataType DT) {
+  static clang::FunctionDecl *GetRSSetObjectFD(DataType DT) {
     slangAssert(RSExportPrimitiveType::IsRSObjectType(DT));
-    if (DT >= 0 && DT < RSExportPrimitiveType::DataTypeMax) {
+    if (DT >= 0 && DT < DataTypeMax) {
       return RSSetObjectFD[DT];
     } else {
       slangAssert(false && "incorrect type");
@@ -131,10 +130,9 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
     return GetRSSetObjectFD(RSExportPrimitiveType::GetRSSpecificType(T));
   }
 
-  static clang::FunctionDecl *GetRSClearObjectFD(
-      RSExportPrimitiveType::DataType DT) {
+  static clang::FunctionDecl *GetRSClearObjectFD(DataType DT) {
     slangAssert(RSExportPrimitiveType::IsRSObjectType(DT));
-    if (DT >= 0 && DT < RSExportPrimitiveType::DataTypeMax) {
+    if (DT >= 0 && DT < DataTypeMax) {
       return RSClearObjectFD[DT];
     } else {
       slangAssert(false && "incorrect type");

@@ -116,39 +116,39 @@ static const char *GetVectorAccessor(unsigned Index) {
 
 static const char *GetPackerAPIName(const RSExportPrimitiveType *EPT) {
   static const char *PrimitiveTypePackerAPINameMap[] = {
-    "",         // RSExportPrimitiveType::DataTypeFloat16
-    "addF32",   // RSExportPrimitiveType::DataTypeFloat32
-    "addF64",   // RSExportPrimitiveType::DataTypeFloat64
-    "addI8",    // RSExportPrimitiveType::DataTypeSigned8
-    "addI16",   // RSExportPrimitiveType::DataTypeSigned16
-    "addI32",   // RSExportPrimitiveType::DataTypeSigned32
-    "addI64",   // RSExportPrimitiveType::DataTypeSigned64
-    "addU8",    // RSExportPrimitiveType::DataTypeUnsigned8
-    "addU16",   // RSExportPrimitiveType::DataTypeUnsigned16
-    "addU32",   // RSExportPrimitiveType::DataTypeUnsigned32
-    "addU64",   // RSExportPrimitiveType::DataTypeUnsigned64
-    "addBoolean",  // RSExportPrimitiveType::DataTypeBoolean
+    "",         // DataTypeFloat16
+    "addF32",   // DataTypeFloat32
+    "addF64",   // DataTypeFloat64
+    "addI8",    // DataTypeSigned8
+    "addI16",   // DataTypeSigned16
+    "addI32",   // DataTypeSigned32
+    "addI64",   // DataTypeSigned64
+    "addU8",    // DataTypeUnsigned8
+    "addU16",   // DataTypeUnsigned16
+    "addU32",   // DataTypeUnsigned32
+    "addU64",   // DataTypeUnsigned64
+    "addBoolean",  // DataTypeBoolean
 
-    "addU16",   // RSExportPrimitiveType::DataTypeUnsigned565
-    "addU16",   // RSExportPrimitiveType::DataTypeUnsigned5551
-    "addU16",   // RSExportPrimitiveType::DataTypeUnsigned4444
+    "addU16",   // DataTypeUnsigned565
+    "addU16",   // DataTypeUnsigned5551
+    "addU16",   // DataTypeUnsigned4444
 
-    "addMatrix",   // RSExportPrimitiveType::DataTypeRSMatrix2x2
-    "addMatrix",   // RSExportPrimitiveType::DataTypeRSMatrix3x3
-    "addMatrix",   // RSExportPrimitiveType::DataTypeRSMatrix4x4
+    "addMatrix",   // DataTypeRSMatrix2x2
+    "addMatrix",   // DataTypeRSMatrix3x3
+    "addMatrix",   // DataTypeRSMatrix4x4
 
-    "addObj",   // RSExportPrimitiveType::DataTypeRSElement
-    "addObj",   // RSExportPrimitiveType::DataTypeRSType
-    "addObj",   // RSExportPrimitiveType::DataTypeRSAllocation
-    "addObj",   // RSExportPrimitiveType::DataTypeRSSampler
-    "addObj",   // RSExportPrimitiveType::DataTypeRSScript
-    "addObj",   // RSExportPrimitiveType::DataTypeRSMesh
-    "addObj",   // RSExportPrimitiveType::DataTypeRSPath
-    "addObj",   // RSExportPrimitiveType::DataTypeRSProgramFragment
-    "addObj",   // RSExportPrimitiveType::DataTypeRSProgramVertex
-    "addObj",   // RSExportPrimitiveType::DataTypeRSProgramRaster
-    "addObj",   // RSExportPrimitiveType::DataTypeRSProgramStore
-    "addObj",   // RSExportPrimitiveType::DataTypeRSFont
+    "addObj",   // DataTypeRSElement
+    "addObj",   // DataTypeRSType
+    "addObj",   // DataTypeRSAllocation
+    "addObj",   // DataTypeRSSampler
+    "addObj",   // DataTypeRSScript
+    "addObj",   // DataTypeRSMesh
+    "addObj",   // DataTypeRSPath
+    "addObj",   // DataTypeRSProgramFragment
+    "addObj",   // DataTypeRSProgramVertex
+    "addObj",   // DataTypeRSProgramRaster
+    "addObj",   // DataTypeRSProgramStore
+    "addObj",   // DataTypeRSFont
   };
   unsigned TypeId = EPT->getType();
 
@@ -212,7 +212,7 @@ static const char *GetTypeNullValue(const RSExportType *ET) {
           static_cast<const RSExportPrimitiveType*>(ET);
       if (EPT->isRSObjectType())
         return "null";
-      else if (EPT->getType() == RSExportPrimitiveType::DataTypeBoolean)
+      else if (EPT->getType() == DataTypeBoolean)
         return "false";
       else
         return "0";
@@ -238,14 +238,14 @@ static std::string GetBuiltinElementConstruct(const RSExportType *ET) {
     return std::string("Element.") + ET->getElementName();
   } else if (ET->getClass() == RSExportType::ExportClassVector) {
     const RSExportVectorType *EVT = static_cast<const RSExportVectorType*>(ET);
-    if (EVT->getType() == RSExportPrimitiveType::DataTypeFloat32) {
+    if (EVT->getType() == DataTypeFloat32) {
       if (EVT->getNumElement() == 2)
         return "Element.F32_2";
       else if (EVT->getNumElement() == 3)
         return "Element.F32_3";
       else if (EVT->getNumElement() == 4)
         return "Element.F32_4";
-    } else if (EVT->getType() == RSExportPrimitiveType::DataTypeUnsigned8) {
+    } else if (EVT->getType() == DataTypeUnsigned8) {
       if (EVT->getNumElement() == 4)
         return "Element.U8_4";
     }
@@ -458,7 +458,7 @@ void RSReflection::genInitExportVariable(Context &C,
     case RSExportType::ExportClassPrimitive: {
       const RSExportPrimitiveType *EPT =
           static_cast<const RSExportPrimitiveType*>(ET);
-      if (EPT->getType() == RSExportPrimitiveType::DataTypeBoolean) {
+      if (EPT->getType() == DataTypeBoolean) {
         genInitBoolExportVariable(C, VarName, Val);
       } else {
         genInitPrimitiveExportVariable(C, VarName, Val);
@@ -908,7 +908,7 @@ void RSReflection::genPrimitiveTypeExportVariable(
                << " " RS_EXPORT_VAR_CONST_PREFIX << VarName << " = ";
     const clang::APValue &Val = EV->getInit();
     C.out() << RSReflectionBase::genInitValue(Val, EPT->getType() ==
-        RSExportPrimitiveType::DataTypeBoolean) << ";" << std::endl;
+        DataTypeBoolean) << ";" << std::endl;
   } else {
     // set_*()
     // This must remain synchronized, since multiple Dalvik threads may

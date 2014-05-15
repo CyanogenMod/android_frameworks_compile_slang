@@ -229,7 +229,9 @@ void RSBackend::dumpExportVarInfo(llvm::Module *M) {
         ExportVarInfo.push_back(
             llvm::MDString::get(
               mLLVMContext, llvm::utostr_32(
-                RSExportPrimitiveType::DataTypeRSMatrix2x2 +
+                  // TODO Strange.  This pushes just a number, quite different
+                  // than the other cases.  What is this used for?
+                DataTypeRSMatrix2x2 +
                 static_cast<const RSExportMatrixType*>(ET)->getDim() - 2)));
         break;
       }
