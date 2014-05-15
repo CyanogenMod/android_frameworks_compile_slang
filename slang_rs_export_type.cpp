@@ -31,7 +31,6 @@
 #include "slang_assert.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_element.h"
-#include "slang_rs_type_spec.h"
 #include "slang_version.h"
 
 #define CHECK_PARENT_EQUALITY(ParentClass, E) \
@@ -867,8 +866,7 @@ RSExportType::RSExportType(RSContext *Context,
       // Make a copy on Name since memory stored @Name is either allocated in
       // ASTContext or allocated in GetTypeName which will be destroyed later.
       mName(Name.data(), Name.size()),
-      mLLVMType(NULL),
-      mSpecType(NULL) {
+      mLLVMType(NULL) {
   // Don't cache the type whose name start with '<'. Those type failed to
   // get their name since constructing their name in GetTypeName() requiring
   // complicated work.
@@ -892,7 +890,6 @@ bool RSExportType::equals(const RSExportable *E) const {
 }
 
 RSExportType::~RSExportType() {
-  delete mSpecType;
 }
 
 /************************** RSExportPrimitiveType **************************/
@@ -1140,15 +1137,6 @@ llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
   return NULL;
 }
 
-union RSType *RSExportPrimitiveType::convertToSpecType() const {
-  llvm::OwningPtr<union RSType> ST(new union RSType);
-  RS_TYPE_SET_CLASS(ST, RS_TC_Primitive);
-  // enum RSExportPrimitiveType::DataType is synced with enum RSDataType in
-  // slang_rs_type_spec.h
-  RS_PRIMITIVE_TYPE_SET_DATA_TYPE(ST, getType());
-  return ST.take();
-}
-
 bool RSExportPrimitiveType::equals(const RSExportable *E) const {
   CHECK_PARENT_EQUALITY(RSExportType, E);
   return (static_cast<const RSExportPrimitiveType*>(E)->getType() == getType());
@@ -1190,18 +1178,6 @@ RSExportPointerType
 llvm::Type *RSExportPointerType::convertToLLVMType() const {
   llvm::Type *PointeeType = mPointeeType->getLLVMType();
   return llvm::PointerType::getUnqual(PointeeType);
-}
-
-union RSType *RSExportPointerType::convertToSpecType() const {
-  llvm::OwningPtr<union RSType> ST(new union RSType);
-
-  RS_TYPE_SET_CLASS(ST, RS_TC_Pointer);
-  RS_POINTER_TYPE_SET_POINTEE_TYPE(ST, getPointeeType()->getSpecType());
-
-  if (RS_POINTER_TYPE_GET_POINTEE_TYPE(ST) != NULL)
-    return ST.take();
-  else
-    return NULL;
 }
 
 bool RSExportPointerType::keep() {
@@ -1269,16 +1245,6 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
 llvm::Type *RSExportVectorType::convertToLLVMType() const {
   llvm::Type *ElementType = RSExportPrimitiveType::convertToLLVMType();
   return llvm::VectorType::get(ElementType, getNumElement());
-}
-
-union RSType *RSExportVectorType::convertToSpecType() const {
-  llvm::OwningPtr<union RSType> ST(new union RSType);
-
-  RS_TYPE_SET_CLASS(ST, RS_TC_Vector);
-  RS_VECTOR_TYPE_SET_ELEMENT_TYPE(ST, getType());
-  RS_VECTOR_TYPE_SET_VECTOR_SIZE(ST, getNumElement());
-
-  return ST.take();
 }
 
 bool RSExportVectorType::equals(const RSExportable *E) const {
@@ -1366,18 +1332,6 @@ llvm::Type *RSExportMatrixType::convertToLLVMType() const {
   return llvm::StructType::get(C, X, false);
 }
 
-union RSType *RSExportMatrixType::convertToSpecType() const {
-  llvm::OwningPtr<union RSType> ST(new union RSType);
-  RS_TYPE_SET_CLASS(ST, RS_TC_Matrix);
-  switch (getDim()) {
-    case 2: RS_MATRIX_TYPE_SET_DATA_TYPE(ST, RS_DT_RSMatrix2x2); break;
-    case 3: RS_MATRIX_TYPE_SET_DATA_TYPE(ST, RS_DT_RSMatrix3x3); break;
-    case 4: RS_MATRIX_TYPE_SET_DATA_TYPE(ST, RS_DT_RSMatrix4x4); break;
-    default: slangAssert(false && "Matrix type with unsupported dimension.");
-  }
-  return ST.take();
-}
-
 bool RSExportMatrixType::equals(const RSExportable *E) const {
   CHECK_PARENT_EQUALITY(RSExportType, E);
   return (static_cast<const RSExportMatrixType*>(E)->getDim() == getDim());
@@ -1408,20 +1362,6 @@ RSExportConstantArrayType
 
 llvm::Type *RSExportConstantArrayType::convertToLLVMType() const {
   return llvm::ArrayType::get(mElementType->getLLVMType(), getSize());
-}
-
-union RSType *RSExportConstantArrayType::convertToSpecType() const {
-  llvm::OwningPtr<union RSType> ST(new union RSType);
-
-  RS_TYPE_SET_CLASS(ST, RS_TC_ConstantArray);
-  RS_CONSTANT_ARRAY_TYPE_SET_ELEMENT_TYPE(
-      ST, getElementType()->getSpecType());
-  RS_CONSTANT_ARRAY_TYPE_SET_ELEMENT_SIZE(ST, getSize());
-
-  if (RS_CONSTANT_ARRAY_TYPE_GET_ELEMENT_TYPE(ST) != NULL)
-    return ST.take();
-  else
-    return NULL;
 }
 
 bool RSExportConstantArrayType::keep() {
@@ -1524,36 +1464,6 @@ llvm::Type *RSExportRecordType::convertToLLVMType() const {
   } else {
     return NULL;
   }
-}
-
-union RSType *RSExportRecordType::convertToSpecType() const {
-  unsigned NumFields = getFields().size();
-  unsigned AllocSize = sizeof(union RSType) +
-                       sizeof(struct RSRecordField) * NumFields;
-  llvm::OwningPtr<union RSType> ST(
-      reinterpret_cast<union RSType*>(operator new(AllocSize)));
-
-  ::memset(ST.get(), 0, AllocSize);
-
-  RS_TYPE_SET_CLASS(ST, RS_TC_Record);
-  RS_RECORD_TYPE_SET_NAME(ST, getName().c_str());
-  RS_RECORD_TYPE_SET_NUM_FIELDS(ST, NumFields);
-
-  setSpecTypeTemporarily(ST.get());
-
-  unsigned FieldIdx = 0;
-  for (const_field_iterator FI = fields_begin(), FE = fields_end();
-       FI != FE;
-       FI++, FieldIdx++) {
-    const Field *F = *FI;
-
-    RS_RECORD_TYPE_SET_FIELD_NAME(ST, FieldIdx, F->getName().c_str());
-    RS_RECORD_TYPE_SET_FIELD_TYPE(ST, FieldIdx, F->getType()->getSpecType());
-  }
-
-  // TODO(slang): Check whether all fields were created normally.
-
-  return ST.take();
 }
 
 bool RSExportRecordType::keep() {
