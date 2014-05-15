@@ -89,73 +89,74 @@ const int kMaxVectorSize = 4;
 
 struct BuiltinInfo {
   clang::BuiltinType::Kind builtinTypeKind;
-  RSExportPrimitiveType::DataType type;
+  DataType type;
   /* TODO If we return std::string instead of llvm::StringRef, we could build
    * the name instead of duplicating the entries.
    */
   const char *cname[kMaxVectorSize];
 };
 
+
 BuiltinInfo BuiltinInfoTable[] = {
-    {clang::BuiltinType::Bool, RSExportPrimitiveType::DataTypeBoolean,
+    {clang::BuiltinType::Bool, DataTypeBoolean,
      {"bool", "bool2", "bool3", "bool4"}},
-    {clang::BuiltinType::Char_U, RSExportPrimitiveType::DataTypeUnsigned8,
+    {clang::BuiltinType::Char_U, DataTypeUnsigned8,
      {"uchar", "uchar2", "uchar3", "uchar4"}},
-    {clang::BuiltinType::UChar, RSExportPrimitiveType::DataTypeUnsigned8,
+    {clang::BuiltinType::UChar, DataTypeUnsigned8,
      {"uchar", "uchar2", "uchar3", "uchar4"}},
-    {clang::BuiltinType::Char16, RSExportPrimitiveType::DataTypeSigned16,
+    {clang::BuiltinType::Char16, DataTypeSigned16,
      {"short", "short2", "short3", "short4"}},
-    {clang::BuiltinType::Char32, RSExportPrimitiveType::DataTypeSigned32,
+    {clang::BuiltinType::Char32, DataTypeSigned32,
      {"int", "int2", "int3", "int4"}},
-    {clang::BuiltinType::UShort, RSExportPrimitiveType::DataTypeUnsigned16,
+    {clang::BuiltinType::UShort, DataTypeUnsigned16,
      {"ushort", "ushort2", "ushort3", "ushort4"}},
-    {clang::BuiltinType::UInt, RSExportPrimitiveType::DataTypeUnsigned32,
+    {clang::BuiltinType::UInt, DataTypeUnsigned32,
      {"uint", "uint2", "uint3", "uint4"}},
-    {clang::BuiltinType::ULong, RSExportPrimitiveType::DataTypeUnsigned32,
+    {clang::BuiltinType::ULong, DataTypeUnsigned32,
      {"uint", "uint2", "uint3", "uint4"}},
-    {clang::BuiltinType::ULongLong, RSExportPrimitiveType::DataTypeUnsigned64,
+    {clang::BuiltinType::ULongLong, DataTypeUnsigned64,
      {"ulong", "ulong2", "ulong3", "ulong4"}},
 
-    {clang::BuiltinType::Char_S, RSExportPrimitiveType::DataTypeSigned8,
+    {clang::BuiltinType::Char_S, DataTypeSigned8,
      {"char", "char2", "char3", "char4"}},
-    {clang::BuiltinType::SChar, RSExportPrimitiveType::DataTypeSigned8,
+    {clang::BuiltinType::SChar, DataTypeSigned8,
      {"char", "char2", "char3", "char4"}},
-    {clang::BuiltinType::Short, RSExportPrimitiveType::DataTypeSigned16,
+    {clang::BuiltinType::Short, DataTypeSigned16,
      {"short", "short2", "short3", "short4"}},
-    {clang::BuiltinType::Int, RSExportPrimitiveType::DataTypeSigned32,
+    {clang::BuiltinType::Int, DataTypeSigned32,
      {"int", "int2", "int3", "int4"}},
-    {clang::BuiltinType::Long, RSExportPrimitiveType::DataTypeSigned64,
+    {clang::BuiltinType::Long, DataTypeSigned64,
      {"long", "long2", "long3", "long4"}},
-    {clang::BuiltinType::LongLong, RSExportPrimitiveType::DataTypeSigned64,
+    {clang::BuiltinType::LongLong, DataTypeSigned64,
      {"long", "long2", "long3", "long4"}},
-    {clang::BuiltinType::Float, RSExportPrimitiveType::DataTypeFloat32,
+    {clang::BuiltinType::Float, DataTypeFloat32,
      {"float", "float2", "float3", "float4"}},
-    {clang::BuiltinType::Double, RSExportPrimitiveType::DataTypeFloat64,
+    {clang::BuiltinType::Double, DataTypeFloat64,
      {"double", "double2", "double3", "double4"}},
 };
 const int BuiltinInfoTableCount = sizeof(BuiltinInfoTable) / sizeof(BuiltinInfoTable[0]);
 
 struct NameAndPrimitiveType {
   const char *name;
-  RSExportPrimitiveType::DataType dataType;
+  DataType dataType;
 };
 
 static NameAndPrimitiveType MatrixAndObjectDataTypes[] = {
-    {"rs_matrix2x2", RSExportPrimitiveType::DataTypeRSMatrix2x2},
-    {"rs_matrix3x3", RSExportPrimitiveType::DataTypeRSMatrix3x3},
-    {"rs_matrix4x4", RSExportPrimitiveType::DataTypeRSMatrix4x4},
-    {"rs_element", RSExportPrimitiveType::DataTypeRSElement},
-    {"rs_type", RSExportPrimitiveType::DataTypeRSType},
-    {"rs_allocation", RSExportPrimitiveType::DataTypeRSAllocation},
-    {"rs_sampler", RSExportPrimitiveType::DataTypeRSSampler},
-    {"rs_script", RSExportPrimitiveType::DataTypeRSScript},
-    {"rs_mesh", RSExportPrimitiveType::DataTypeRSMesh},
-    {"rs_path", RSExportPrimitiveType::DataTypeRSPath},
-    {"rs_program_fragment", RSExportPrimitiveType::DataTypeRSProgramFragment},
-    {"rs_program_vertex", RSExportPrimitiveType::DataTypeRSProgramVertex},
-    {"rs_program_raster", RSExportPrimitiveType::DataTypeRSProgramRaster},
-    {"rs_program_store", RSExportPrimitiveType::DataTypeRSProgramStore},
-    {"rs_font", RSExportPrimitiveType::DataTypeRSFont},
+    {"rs_matrix2x2", DataTypeRSMatrix2x2},
+    {"rs_matrix3x3", DataTypeRSMatrix3x3},
+    {"rs_matrix4x4", DataTypeRSMatrix4x4},
+    {"rs_element", DataTypeRSElement},
+    {"rs_type", DataTypeRSType},
+    {"rs_allocation", DataTypeRSAllocation},
+    {"rs_sampler", DataTypeRSSampler},
+    {"rs_script", DataTypeRSScript},
+    {"rs_mesh", DataTypeRSMesh},
+    {"rs_path", DataTypeRSPath},
+    {"rs_program_fragment", DataTypeRSProgramFragment},
+    {"rs_program_vertex", DataTypeRSProgramVertex},
+    {"rs_program_raster", DataTypeRSProgramRaster},
+    {"rs_program_store", DataTypeRSProgramStore},
+    {"rs_font", DataTypeRSFont},
 };
 
 const int MatrixAndObjectDataTypesCount =
@@ -256,8 +257,7 @@ static const clang::Type *TypeExportableHelper(
       return FindBuiltinType(BT->getKind()) == NULL ? NULL : T;
     }
     case clang::Type::Record: {
-      if (RSExportPrimitiveType::GetRSSpecificType(T) !=
-          RSExportPrimitiveType::DataTypeUnknown) {
+      if (RSExportPrimitiveType::GetRSSpecificType(T) != DataTypeUnknown) {
         return T;  // RS object type, no further checks are needed
       }
 
@@ -467,8 +467,7 @@ static bool ValidateTypeHelper(
         }
       }
 
-      if (RSExportPrimitiveType::GetRSSpecificType(T) !=
-          RSExportPrimitiveType::DataTypeUnknown) {
+      if (RSExportPrimitiveType::GetRSSpecificType(T) != DataTypeUnknown) {
         if (!UnionDecl) {
           return true;
         } else if (RSExportPrimitiveType::IsRSObjectType(T)) {
@@ -757,17 +756,16 @@ RSExportType *RSExportType::Create(RSContext *Context,
   RSExportType *ET = NULL;
   switch (T->getTypeClass()) {
     case clang::Type::Record: {
-      RSExportPrimitiveType::DataType dt =
-          RSExportPrimitiveType::GetRSSpecificType(TypeName);
+      DataType dt = RSExportPrimitiveType::GetRSSpecificType(TypeName);
       switch (dt) {
-        case RSExportPrimitiveType::DataTypeUnknown: {
+        case DataTypeUnknown: {
           // User-defined types
           ET = RSExportRecordType::Create(Context,
                                           T->getAsStructureType(),
                                           TypeName);
           break;
         }
-        case RSExportPrimitiveType::DataTypeRSMatrix2x2: {
+        case DataTypeRSMatrix2x2: {
           // 2 x 2 Matrix type
           ET = RSExportMatrixType::Create(Context,
                                           T->getAsStructureType(),
@@ -775,7 +773,7 @@ RSExportType *RSExportType::Create(RSContext *Context,
                                           2);
           break;
         }
-        case RSExportPrimitiveType::DataTypeRSMatrix3x3: {
+        case DataTypeRSMatrix3x3: {
           // 3 x 3 Matrix type
           ET = RSExportMatrixType::Create(Context,
                                           T->getAsStructureType(),
@@ -783,7 +781,7 @@ RSExportType *RSExportType::Create(RSContext *Context,
                                           3);
           break;
         }
-        case RSExportPrimitiveType::DataTypeRSMatrix4x4: {
+        case DataTypeRSMatrix4x4: {
           // 4 x 4 Matrix type
           ET = RSExportMatrixType::Create(Context,
                                           T->getAsStructureType(),
@@ -905,7 +903,7 @@ bool RSExportPrimitiveType::IsPrimitiveType(const clang::Type *T) {
     return false;
 }
 
-RSExportPrimitiveType::DataType
+DataType
 RSExportPrimitiveType::GetRSSpecificType(const llvm::StringRef &TypeName) {
   if (TypeName.empty())
     return DataTypeUnknown;
@@ -924,8 +922,7 @@ RSExportPrimitiveType::GetRSSpecificType(const llvm::StringRef &TypeName) {
     return I->getValue();
 }
 
-RSExportPrimitiveType::DataType
-RSExportPrimitiveType::GetRSSpecificType(const clang::Type *T) {
+DataType RSExportPrimitiveType::GetRSSpecificType(const clang::Type *T) {
   T = GET_CANONICAL_TYPE(T);
   if ((T == NULL) || (T->getTypeClass() != clang::Type::Record))
     return DataTypeUnknown;
@@ -978,15 +975,15 @@ bool RSExportPrimitiveType::IsStructureTypeWithRSObject(const clang::Type *T) {
       FT = FT->getArrayElementTypeNoTypeQual();
     }
 
-    RSExportPrimitiveType::DataType DT = GetRSSpecificType(FT);
+    DataType DT = GetRSSpecificType(FT);
     if (IsRSObjectType(DT)) {
       // RS object types definitely need to be zero-initialized
       RSObjectTypeSeen = true;
     } else {
       switch (DT) {
-        case RSExportPrimitiveType::DataTypeRSMatrix2x2:
-        case RSExportPrimitiveType::DataTypeRSMatrix3x3:
-        case RSExportPrimitiveType::DataTypeRSMatrix4x4:
+        case DataTypeRSMatrix2x2:
+        case DataTypeRSMatrix3x3:
+        case DataTypeRSMatrix4x4:
           // Matrix types should get zero-initialized as well
           RSObjectTypeSeen = true;
           break;
@@ -1015,7 +1012,7 @@ size_t RSExportPrimitiveType::GetSizeInBits(const RSExportPrimitiveType *EPT) {
   return gReflectionTypes[type].size_in_bits;
 }
 
-RSExportPrimitiveType::DataType
+DataType
 RSExportPrimitiveType::GetDataType(RSContext *Context, const clang::Type *T) {
   if (T == NULL)
     return DataTypeUnknown;
@@ -1229,10 +1226,9 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
   slangAssert(EVT != NULL && EVT->getTypeClass() == clang::Type::ExtVector);
 
   const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
-  RSExportPrimitiveType::DataType DT =
-      RSExportPrimitiveType::GetDataType(Context, ElementType);
+  DataType DT = RSExportPrimitiveType::GetDataType(Context, ElementType);
 
-  if (DT != RSExportPrimitiveType::DataTypeUnknown)
+  if (DT != DataTypeUnknown)
     return new RSExportVectorType(Context,
                                   TypeName,
                                   DT,
