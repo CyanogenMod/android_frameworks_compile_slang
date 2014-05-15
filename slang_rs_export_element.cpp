@@ -33,21 +33,20 @@ RSExportElement::ElementInfoMapTy RSExportElement::ElementInfoMap;
 
 struct DataElementInfo {
   const char *name;
-  RSExportPrimitiveType::DataType dataType;
+  DataType dataType;
   bool normalized;
   int vsize;
 };
 
-// TODO This is very similar to DataElements[] in slang_rs_spec_table.cpp.  Merge.
 static DataElementInfo DataElementInfoTable[] = {
-    {"rs_pixel_l", RSExportPrimitiveType::DataTypeUnsigned8, true, 1},
-    {"rs_pixel_a", RSExportPrimitiveType::DataTypeUnsigned8, true, 1},
-    {"rs_pixel_la", RSExportPrimitiveType::DataTypeUnsigned8, true, 2},
-    {"rs_pixel_rgb", RSExportPrimitiveType::DataTypeUnsigned8, true, 3},
-    {"rs_pixel_rgba", RSExportPrimitiveType::DataTypeUnsigned8, true, 4},
-    {"rs_pixel_rgb565", RSExportPrimitiveType::DataTypeUnsigned8, true, 3},
-    {"rs_pixel_rgb5551", RSExportPrimitiveType::DataTypeUnsigned8, true, 4},
-    {"rs_pixel_rgb4444", RSExportPrimitiveType::DataTypeUnsigned8, true, 4},
+    {"rs_pixel_l", DataTypeUnsigned8, true, 1},
+    {"rs_pixel_a", DataTypeUnsigned8, true, 1},
+    {"rs_pixel_la", DataTypeUnsigned8, true, 2},
+    {"rs_pixel_rgb", DataTypeUnsigned8, true, 3},
+    {"rs_pixel_rgba", DataTypeUnsigned8, true, 4},
+    {"rs_pixel_rgb565", DataTypeUnsigned8, true, 3},
+    {"rs_pixel_rgb5551", DataTypeUnsigned8, true, 4},
+    {"rs_pixel_rgb4444", DataTypeUnsigned8, true, 4},
 };
 
 const int DataElementInfoTableCount = sizeof(DataElementInfoTable) / sizeof(DataElementInfoTable[0]);

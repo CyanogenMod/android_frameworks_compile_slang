@@ -41,7 +41,7 @@ class RSExportElement {
   RSExportElement() { return; }
 
   typedef struct {
-    RSExportPrimitiveType::DataType type;
+    DataType type;
     bool normalized;
     unsigned vsize;
   } ElementInfo;

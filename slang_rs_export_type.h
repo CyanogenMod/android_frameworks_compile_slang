@@ -57,14 +57,67 @@ namespace llvm {
 
 namespace slang {
 
-  class RSContext;
+class RSContext;
 
-  // Broad grouping of the data types
-  enum DataTypeCategory {
-      PrimitiveDataType,
-      MatrixDataType,
-      ObjectDataType
-  };
+// Broad grouping of the data types
+enum DataTypeCategory {
+    PrimitiveDataType,
+    MatrixDataType,
+    ObjectDataType
+};
+
+// From graphics/java/android/renderscript/Element.java: Element.DataType
+/* NOTE: The values of the enums are found compiled in the bit code (i.e. as
+ * values, not symbolic.  When adding new types, you must add them to the end.
+ * If removing types, you can't re-use the integer value.
+ *
+ * TODO: but if you do this, you won't be able to keep using First* & Last*
+ * for validation.
+ *
+ * IMPORTANT: This enum should correspond one-for-one to the entries found in the
+ * gReflectionsTypes table (except for the two negative numbers).  Don't edit one without
+ * the other.
+ */
+enum DataType {
+    DataTypeIsStruct = -2,
+    DataTypeUnknown = -1,
+
+    DataTypeFloat16 = 0,
+    DataTypeFloat32 = 1,
+    DataTypeFloat64 = 2,
+    DataTypeSigned8 = 3,
+    DataTypeSigned16 = 4,
+    DataTypeSigned32 = 5,
+    DataTypeSigned64 = 6,
+    DataTypeUnsigned8 = 7,
+    DataTypeUnsigned16 = 8,
+    DataTypeUnsigned32 = 9,
+    DataTypeUnsigned64 = 10,
+    DataTypeBoolean = 11,
+    DataTypeUnsigned565 = 12,
+    DataTypeUnsigned5551 = 13,
+    DataTypeUnsigned4444 = 14,
+
+    DataTypeRSMatrix2x2 = 15,
+    DataTypeRSMatrix3x3 = 16,
+    DataTypeRSMatrix4x4 = 17,
+
+    DataTypeRSElement = 18,
+    DataTypeRSType = 19,
+    DataTypeRSAllocation = 20,
+    DataTypeRSSampler = 21,
+    DataTypeRSScript = 22,
+    DataTypeRSMesh = 23,
+    DataTypeRSPath = 24,
+    DataTypeRSProgramFragment = 25,
+    DataTypeRSProgramVertex = 26,
+    DataTypeRSProgramRaster = 27,
+    DataTypeRSProgramStore = 28,
+    DataTypeRSFont = 29,
+
+    // This should always be last and correspond to the size of the gReflectionTypes table.
+    DataTypeMax
+};
 
 typedef struct {
     DataTypeCategory category;
@@ -208,62 +261,6 @@ class RSExportType : public RSExportable {
 class RSExportPrimitiveType : public RSExportType {
   friend class RSExportType;
   friend class RSExportElement;
- public:
-  // From graphics/java/android/renderscript/Element.java: Element.DataType
-    // TODO move out of here
-  /* NOTE: The values of the enums are found compiled in the bit code (i.e. as
-   * values, not symbolic.  When adding new types, you must add them to the end.
-   * If removing types, you can't re-use the integer value.
-   *
-   * TODO: but if you do this, you won't be able to keep using First* & Last*
-   * for validation.
-   *
-   * IMPORTANT: This enum should correspond one-for-one to the entries found in the
-   * gReflectionsTypes table (except for the two negative numbers).  Don't edit one without
-   * the other.
-   */
-  enum DataType {
-    DataTypeIsStruct = -2,
-    DataTypeUnknown = -1,
-
-    DataTypeFloat16 = 0,
-    DataTypeFloat32 = 1,
-    DataTypeFloat64 = 2,
-    DataTypeSigned8 = 3,
-    DataTypeSigned16 = 4,
-    DataTypeSigned32 = 5,
-    DataTypeSigned64 = 6,
-    DataTypeUnsigned8 = 7,
-    DataTypeUnsigned16 = 8,
-    DataTypeUnsigned32 = 9,
-    DataTypeUnsigned64 = 10,
-    DataTypeBoolean = 11,
-    DataTypeUnsigned565 = 12,
-    DataTypeUnsigned5551 = 13,
-    DataTypeUnsigned4444 = 14,
-
-    DataTypeRSMatrix2x2 = 15,
-    DataTypeRSMatrix3x3 = 16,
-    DataTypeRSMatrix4x4 = 17,
-
-    DataTypeRSElement = 18,
-    DataTypeRSType = 19,
-    DataTypeRSAllocation = 20,
-    DataTypeRSSampler = 21,
-    DataTypeRSScript = 22,
-    DataTypeRSMesh = 23,
-    DataTypeRSPath = 24,
-    DataTypeRSProgramFragment = 25,
-    DataTypeRSProgramVertex = 26,
-    DataTypeRSProgramRaster = 27,
-    DataTypeRSProgramStore = 28,
-    DataTypeRSFont = 29,
-
-    // This should always be last and correspond to the size of the gReflectionTypes table.
-    DataTypeMax
-  };
-
-
  private:
   // NOTE: There's no any instance of RSExportPrimitiveType which mType
   // is of the value DataTypeRSMatrix*. DataTypeRSMatrix* enumeration here is
