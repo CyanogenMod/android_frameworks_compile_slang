@@ -1162,7 +1162,7 @@ void RSReflection::genGetFieldID(Context &C, const std::string &VarName) {
 bool RSReflection::genCreateFieldPacker(Context &C,
                                         const RSExportType *ET,
                                         const char *FieldPackerName) {
-  size_t AllocSize = RSExportType::GetTypeAllocSize(ET);
+  size_t AllocSize = ET->getAllocSize();
   if (AllocSize > 0)
     C.indent() << "FieldPacker " << FieldPackerName << " = new FieldPacker("
                << AllocSize << ");" << std::endl;
@@ -1247,8 +1247,9 @@ void RSReflection::genPackVarOfType(Context &C,
         const RSExportRecordType::Field *F = *I;
         std::string FieldName;
         size_t FieldOffset = F->getOffsetInParent();
-        size_t FieldStoreSize = RSExportType::GetTypeStoreSize(F->getType());
-        size_t FieldAllocSize = RSExportType::GetTypeAllocSize(F->getType());
+        const RSExportType *T = F->getType();
+        size_t FieldStoreSize = T->getStoreSize();
+        size_t FieldAllocSize = T->getAllocSize();
 
         if (VarName != NULL)
           FieldName = VarName + ("." + F->getName());
@@ -1271,9 +1272,9 @@ void RSReflection::genPackVarOfType(Context &C,
       }
 
       // There maybe some padding after the struct
-      if (RSExportType::GetTypeAllocSize(ERT) > Pos)
+      if (ERT->getAllocSize() > Pos)
         C.indent() << FieldPackerName << ".skip("
-                   << RSExportType::GetTypeAllocSize(ERT) - Pos << ");"
+                   << ERT->getAllocSize() - Pos << ");"
                    << std::endl;
       break;
     }
@@ -1416,7 +1417,7 @@ void RSReflection::genTypeItemClass(Context &C,
   C.startBlock();
 
   C.indent() << "public static final int sizeof = "
-             << RSExportType::GetTypeAllocSize(ERT) << ";" << std::endl;
+             << ERT->getAllocSize() << ";" << std::endl;
 
   // Member elements
   C.out() << std::endl;
@@ -1716,7 +1717,7 @@ void RSReflection::genTypeClassComponentSetter(Context &C,
        FI++) {
     const RSExportRecordType::Field *F = *FI;
     size_t FieldOffset = F->getOffsetInParent();
-    size_t FieldStoreSize = RSExportType::GetTypeStoreSize(F->getType());
+    size_t FieldStoreSize = F->getType()->getStoreSize();
     unsigned FieldIndex = C.getFieldIndex(F);
 
     C.startFunction(Context::AM_PublicSynchronized,
@@ -1943,8 +1944,9 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
         const RSExportRecordType::Field *F = *I;
         std::string FieldName;
         int FieldOffset = F->getOffsetInParent();
-        int FieldStoreSize = RSExportType::GetTypeStoreSize(F->getType());
-        int FieldAllocSize = RSExportType::GetTypeAllocSize(F->getType());
+        const RSExportType *T = F->getType();
+        int FieldStoreSize = T->getStoreSize();
+        int FieldAllocSize = T->getAllocSize();
 
         if (!VarName.empty())
           FieldName = VarName + "." + F->getName();
@@ -1993,7 +1995,7 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
       }
 
       // There maybe some padding after the struct
-      size_t RecordAllocSize = RSExportType::GetTypeAllocSize(ERT);
+      size_t RecordAllocSize = ERT->getAllocSize();
 
       genAddPaddingToElementBuiler(C,
                                    RecordAllocSize - Pos,

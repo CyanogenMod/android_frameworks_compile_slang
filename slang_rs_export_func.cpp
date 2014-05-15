@@ -161,7 +161,7 @@ RSExportFunc::checkParameterPacketType(llvm::StructType *ParamTy) const {
       return false;
 
     // Check size
-    size_t T1Size = RSExportType::GetTypeAllocSize(F->getType());
+    size_t T1Size = F->getType()->getAllocSize();
     size_t T2Size = getRSContext()->getDataLayout()->getTypeAllocSize(T2);
 
     if (T1Size != T2Size)
