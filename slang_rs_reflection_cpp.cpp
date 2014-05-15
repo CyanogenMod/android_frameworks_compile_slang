@@ -884,7 +884,7 @@ void RSReflectionCpp::genInitExportVariable(const RSExportType *ET,
     case RSExportType::ExportClassPrimitive: {
       const RSExportPrimitiveType *EPT =
           static_cast<const RSExportPrimitiveType*>(ET);
-      if (EPT->getType() == RSExportPrimitiveType::DataTypeBoolean) {
+      if (EPT->getType() == DataTypeBoolean) {
         genInitBoolExportVariable(VarName, Val);
       } else {
         genInitPrimitiveExportVariable(VarName, Val);
