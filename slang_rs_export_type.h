@@ -240,11 +240,11 @@ class RSExportType : public RSExportable {
     return mLLVMType;
   }
 
-  // Return the number of bits necessary to hold the specified RSExportType
-  static size_t GetTypeStoreSize(const RSExportType *ET);
+  // Return the maximum number of bytes that may be written when this type is stored.
+  virtual size_t getStoreSize() const;
 
-  // The size of allocation of specified RSExportType (alignment considered)
-  static size_t GetTypeAllocSize(const RSExportType *ET);
+  // Return the distance in bytes between successive elements of this type; it includes padding.
+  virtual size_t getAllocSize() const;
 
   inline const std::string &getName() const { return mName; }
 
@@ -538,16 +538,19 @@ class RSExportRecordType : public RSExportType {
   // Artificial export struct type is not exported by user (and thus it won't
   // get reflected)
   bool mIsArtificial;
+  size_t mStoreSize;
   size_t mAllocSize;
 
   RSExportRecordType(RSContext *Context,
                      const llvm::StringRef &Name,
                      bool IsPacked,
                      bool IsArtificial,
+                     size_t StoreSize,
                      size_t AllocSize)
       : RSExportType(Context, ExportClassRecord, Name),
         mIsPacked(IsPacked),
         mIsArtificial(IsArtificial),
+        mStoreSize(StoreSize),
         mAllocSize(AllocSize) {
     return;
   }
@@ -567,7 +570,8 @@ class RSExportRecordType : public RSExportType {
   inline const std::list<const Field*>& getFields() const { return mFields; }
   inline bool isPacked() const { return mIsPacked; }
   inline bool isArtificial() const { return mIsArtificial; }
-  inline size_t getAllocSize() const { return mAllocSize; }
+  virtual size_t getStoreSize() const { return mStoreSize; }
+  virtual size_t getAllocSize() const { return mAllocSize; }
 
   virtual std::string getElementName() const {
     return "ScriptField_" + getName();
