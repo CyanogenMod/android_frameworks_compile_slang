@@ -843,17 +843,12 @@ RSExportType *RSExportType::CreateFromDecl(RSContext *Context,
   return RSExportType::Create(Context, GetTypeOfDecl(VD));
 }
 
-size_t RSExportType::GetTypeStoreSize(const RSExportType *ET) {
-  return ET->getRSContext()->getDataLayout()->getTypeStoreSize(
-      ET->getLLVMType());
+size_t RSExportType::getStoreSize() const {
+  return getRSContext()->getDataLayout()->getTypeStoreSize(getLLVMType());
 }
 
-size_t RSExportType::GetTypeAllocSize(const RSExportType *ET) {
-  if (ET->getClass() == RSExportType::ExportClassRecord)
-    return static_cast<const RSExportRecordType*>(ET)->getAllocSize();
-  else
-    return ET->getRSContext()->getDataLayout()->getTypeAllocSize(
-        ET->getLLVMType());
+size_t RSExportType::getAllocSize() const {
+    return getRSContext()->getDataLayout()->getTypeAllocSize(getLLVMType());
 }
 
 RSExportType::RSExportType(RSContext *Context,
@@ -1403,6 +1398,7 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
                              TypeName,
                              RD->hasAttr<clang::PackedAttr>(),
                              mIsArtificial,
+                             RL->getDataSize().getQuantity(),
                              RL->getSize().getQuantity());
   unsigned int Index = 0;
 
