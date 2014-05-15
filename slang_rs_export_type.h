@@ -46,10 +46,6 @@
 #define GET_CONSTANT_ARRAY_ELEMENT_TYPE(T)  \
     (((T) == NULL) ? NULL : \
                      GET_CANONICAL_TYPE((T)->getElementType().getTypePtr()))
-#define DUMMY_RS_TYPE_NAME_PREFIX   "<"
-#define DUMMY_RS_TYPE_NAME_POSTFIX  ">"
-#define DUMMY_TYPE_NAME_FOR_RS_CONSTANT_ARRAY_TYPE  \
-    DUMMY_RS_TYPE_NAME_PREFIX "ConstantArray" DUMMY_RS_TYPE_NAME_POSTFIX
 
 namespace llvm {
   class Type;
@@ -144,6 +140,12 @@ typedef struct RSReflectionTypeData_rec {
     //std::vector< uint32_t> fieldOffsetBytes;
 } RSReflectionTypeData;
 
+// Make a name for types that are too complicated to create the real names.
+std::string CreateDummyName(const char *type, const std::string &name);
+
+inline bool IsDummyName(const llvm::StringRef &Name) {
+  return Name.startswith("<");
+}
 
 class RSExportType : public RSExportable {
   friend class RSExportElement;
@@ -467,7 +469,7 @@ class RSExportConstantArrayType : public RSExportType {
                             unsigned Size)
     : RSExportType(Context,
                    ExportClassConstantArray,
-                   DUMMY_TYPE_NAME_FOR_RS_CONSTANT_ARRAY_TYPE),
+                   CreateDummyName("ConstantArray", std::string())),
       mElementType(ElementType),
       mSize(Size) {
     return;

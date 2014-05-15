@@ -66,8 +66,7 @@ RSExportFunc *RSExportFunc::Create(RSContext *Context,
   } else {
     clang::ASTContext &Ctx = Context->getASTContext();
 
-    std::string Id(DUMMY_RS_TYPE_NAME_PREFIX"helper_func_param:");
-    Id.append(F->getName()).append(DUMMY_RS_TYPE_NAME_POSTFIX);
+    std::string Id = CreateDummyName("helper_func_param", F->getName());
 
     clang::RecordDecl *RD =
         clang::RecordDecl::Create(Ctx, clang::TTK_Struct,
