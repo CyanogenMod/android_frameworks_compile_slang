@@ -342,8 +342,7 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
 
   clang::ASTContext &Ctx = Context->getASTContext();
 
-  std::string Id(DUMMY_RS_TYPE_NAME_PREFIX"helper_foreach_param:");
-  Id.append(FE->getName()).append(DUMMY_RS_TYPE_NAME_POSTFIX);
+  std::string Id = CreateDummyName("helper_foreach_param", FE->getName());
 
   // Extract the usrData parameter (if we have one)
   if (FE->mUsrData) {

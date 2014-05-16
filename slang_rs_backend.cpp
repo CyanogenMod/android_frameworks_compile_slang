@@ -229,8 +229,13 @@ void RSBackend::dumpExportVarInfo(llvm::Module *M) {
         ExportVarInfo.push_back(
             llvm::MDString::get(
               mLLVMContext, llvm::utostr_32(
-                  // TODO Strange.  This pushes just a number, quite different
-                  // than the other cases.  What is this used for?
+                  /* TODO Strange value.  This pushes just a number, quite
+                   * different than the other cases.  What is this used for?
+                   * These are the metadata values that some partner drivers
+                   * want to reference (for TBAA, etc.). We may want to look
+                   * at whether these provide any reasonable value (or have
+                   * distinct enough values to actually depend on).
+                   */
                 DataTypeRSMatrix2x2 +
                 static_cast<const RSExportMatrixType*>(ET)->getDim() - 2)));
         break;

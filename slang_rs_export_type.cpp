@@ -608,6 +608,16 @@ static bool ValidateTypeHelper(
 
 }  // namespace
 
+std::string CreateDummyName(const char *type, const std::string &name) {
+  std::stringstream S;
+  S << "<" << type;
+  if (!name.empty()) {
+    S << ":" << name;
+  }
+  S << ">";
+  return S.str();
+}
+
 /****************************** RSExportType ******************************/
 bool RSExportType::NormalizeType(const clang::Type *&T,
                                  llvm::StringRef &TypeName,
@@ -731,7 +741,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
     }
     case clang::Type::ConstantArray : {
       // Construct name for a constant array is too complicated.
-      return DUMMY_TYPE_NAME_FOR_RS_CONSTANT_ARRAY_TYPE;
+      return CreateDummyName("ConstantArray", std::string());
     }
     default: {
       break;
@@ -863,7 +873,7 @@ RSExportType::RSExportType(RSContext *Context,
   // Don't cache the type whose name start with '<'. Those type failed to
   // get their name since constructing their name in GetTypeName() requiring
   // complicated work.
-  if (!Name.startswith(DUMMY_RS_TYPE_NAME_PREFIX))
+  if (!IsDummyName(Name))
     // TODO(zonr): Need to check whether the insertion is successful or not.
     Context->insertExportType(llvm::StringRef(Name), this);
   return;
