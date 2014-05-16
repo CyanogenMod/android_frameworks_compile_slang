@@ -20,6 +20,7 @@ LOCAL_SRC_FILES := $(bitcode_writer_2_9_func_SRC_FILES)
 LOCAL_MODULE:= libLLVMBitWriter_2_9_func
 
 LOCAL_MODULE_TAGS := optional
+LOCAL_CLANG := true
 
 include $(LLVM_HOST_BUILD_MK)
 include $(LLVM_GEN_INTRINSICS_MK)
