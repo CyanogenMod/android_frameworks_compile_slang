@@ -9,12 +9,12 @@ static void not_a_kernel(int i) {
     j = i;
 }
 
-int __attribute__((kernel)) root(uint32_t ain) {
+int RS_KERNEL root(uint32_t ain) {
   static const int ci;
   static int i;
   return 0;
 }
 
-static int __attribute__((kernel)) static_kernel() {
+static int RS_KERNEL static_kernel() {
   return 0;
 }

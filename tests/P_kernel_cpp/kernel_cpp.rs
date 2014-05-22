@@ -16,18 +16,18 @@ rs_type type;
 rs_script script;
 rs_sampler sampler;
 
-int __attribute__((kernel)) root(uint32_t ain) {
+int RS_KERNEL root(uint32_t ain) {
   return 0;
 }
 
-void __attribute__((kernel)) in_only(uint32_t ain) {
+void RS_KERNEL in_only(uint32_t ain) {
 }
 
-int __attribute__((kernel)) out_only() {
+int RS_KERNEL out_only() {
   return 0;
 }
 
-int __attribute__((kernel)) everything(uint32_t ain, uint32_t x, uint32_t y) {
+int RS_KERNEL everything(uint32_t ain, uint32_t x, uint32_t y) {
   return 0;
 }
 
