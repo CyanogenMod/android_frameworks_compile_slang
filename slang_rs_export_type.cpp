@@ -1212,8 +1212,6 @@ RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT) {
 
   BuiltinInfo *info = FindBuiltinType(BT->getKind());
   if (info != NULL) {
-    // Compiler is smart enough to optimize following *big if branches* since
-    // they all become "constant comparison" after macro expansion
     int I = EVT->getNumElements() - 1;
     if (I < kMaxVectorSize) {
       name = info->cname[I];
