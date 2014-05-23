@@ -264,11 +264,6 @@ class RSExportPrimitiveType : public RSExportType {
   friend class RSExportType;
   friend class RSExportElement;
  private:
-  // NOTE: There's no any instance of RSExportPrimitiveType which mType
-  // is of the value DataTypeRSMatrix*. DataTypeRSMatrix* enumeration here is
-  // only for RSExportPrimitiveType::GetRSObjectType to *recognize* the struct
-  // rs_matrix{2x2, 3x3, 4x4}. These matrix type are represented as
-  // RSExportMatrixType.
   DataType mType;
   bool mNormalized;
 
