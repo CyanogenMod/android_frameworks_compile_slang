@@ -33,19 +33,39 @@
 
 #include "slang_rs_exportable.h"
 
-#define GET_CANONICAL_TYPE(T) \
-    (((T) == NULL) ? NULL : (T)->getCanonicalTypeInternal().getTypePtr())
-#define UNSAFE_CAST_TYPE(TT, T) \
-    static_cast<TT*>(T->getCanonicalTypeInternal().getTypePtr())
-#define GET_EXT_VECTOR_ELEMENT_TYPE(T) \
-    (((T) == NULL) ? NULL : \
-                     GET_CANONICAL_TYPE((T)->getElementType().getTypePtr()))
-#define GET_POINTEE_TYPE(T) \
-    (((T) == NULL) ? NULL : \
-                     GET_CANONICAL_TYPE((T)->getPointeeType().getTypePtr()))
-#define GET_CONSTANT_ARRAY_ELEMENT_TYPE(T)  \
-    (((T) == NULL) ? NULL : \
-                     GET_CANONICAL_TYPE((T)->getElementType().getTypePtr()))
+
+inline const clang::Type* GetCanonicalType(const clang::Type* T) {
+  if (T == NULL) {
+    return  NULL;
+  }
+  return T->getCanonicalTypeInternal().getTypePtr();
+}
+
+inline const clang::Type* GetCanonicalType(clang::QualType QT) {
+  return GetCanonicalType(QT.getTypePtr());
+}
+
+inline const clang::Type* GetExtVectorElementType(const clang::ExtVectorType *T) {
+  if (T == NULL) {
+    return NULL;
+  }
+  return GetCanonicalType(T->getElementType());
+}
+
+inline const clang::Type* GetPointeeType(const clang::PointerType *T) {
+  if (T == NULL) {
+    return NULL;
+  }
+  return GetCanonicalType(T->getPointeeType());
+}
+
+inline const clang::Type* GetConstantArrayElementType(const clang::ConstantArrayType *T) {
+  if (T == NULL) {
+    return NULL;
+  }
+  return GetCanonicalType(T->getElementType());
+}
+
 
 namespace llvm {
   class Type;
