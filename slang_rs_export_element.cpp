@@ -131,7 +131,7 @@ RSExportType *RSExportElement::Create(RSContext *Context,
 RSExportType *RSExportElement::CreateFromDecl(RSContext *Context,
                                               const clang::DeclaratorDecl *DD) {
   const clang::Type* T = RSExportType::GetTypeOfDecl(DD);
-  const clang::Type* CT = GET_CANONICAL_TYPE(T);
+  const clang::Type* CT = GetCanonicalType(T);
   const ElementInfo* EI = NULL;
 
   // Note: RS element like rs_pixel_rgb elements are either in the type of
