@@ -317,6 +317,8 @@ bool RSReflection::genScriptClass(Context &C,
 }
 
 void RSReflection::genScriptClassConstructor(Context &C) {
+  std::string className(RSSlangReflectUtils::JavaBitcodeClassNameFromRSFileName(
+      C.getInputRSFile().c_str()));
   // Provide a simple way to reference this object.
   C.indent() << "private static final String " RS_RESOURCE_NAME " = \""
              << C.getResourceId()
@@ -333,30 +335,37 @@ void RSReflection::genScriptClassConstructor(Context &C) {
                   "RenderScript", "rs");
 
   if (C.getEmbedBitcodeInJava()) {
-    // Call new constructor
-  }
-  // Call alternate constructor with required parameters.
-  // Look up the proper raw bitcode resource id via the context.
-  C.indent() << "this(rs," << std::endl;
-  C.indent() << "     rs.getApplicationContext().getResources()," << std::endl;
-  C.indent() << "     rs.getApplicationContext().getResources()."
-                "getIdentifier(" << std::endl;
-  C.indent() << "         " RS_RESOURCE_NAME ", \"raw\"," << std::endl;
-  C.indent() << "         rs.getApplicationContext().getPackageName()));"
-             << std::endl;
-  C.endFunction();
+    // Call new single argument Java-only constructor
+    C.indent() << "super(rs," << std::endl;
+    C.indent() << "      " << RS_RESOURCE_NAME "," << std::endl;
+    C.indent() << "      " << className << ".getBitCode32()," << std::endl;
+    // TODO(srhines): Replace the extra BitCode32 with Bitcode64 here!
+    //C.indent() << "      " << className << ".getBitCode64());" << std::endl;
+    C.indent() << "      " << className << ".getBitCode32());" << std::endl;
+  } else {
+    // Call alternate constructor with required parameters.
+    // Look up the proper raw bitcode resource id via the context.
+    C.indent() << "this(rs," << std::endl;
+    C.indent() << "     rs.getApplicationContext().getResources()," << std::endl;
+    C.indent() << "     rs.getApplicationContext().getResources()."
+                  "getIdentifier(" << std::endl;
+    C.indent() << "         " RS_RESOURCE_NAME ", \"raw\"," << std::endl;
+    C.indent() << "         rs.getApplicationContext().getPackageName()));"
+               << std::endl;
+    C.endFunction();
 
-  // Alternate constructor (legacy) with 3 original parameters.
-  C.startFunction(Context::AM_Public,
-                  false,
-                  NULL,
-                  C.getClassName(),
-                  3,
-                  "RenderScript", "rs",
-                  "Resources", "resources",
-                  "int", "id");
-  // Call constructor of super class
-  C.indent() << "super(rs, resources, id);" << std::endl;
+    // Alternate constructor (legacy) with 3 original parameters.
+    C.startFunction(Context::AM_Public,
+                    false,
+                    NULL,
+                    C.getClassName(),
+                    3,
+                    "RenderScript", "rs",
+                    "Resources", "resources",
+                    "int", "id");
+    // Call constructor of super class
+    C.indent() << "super(rs, resources, id);" << std::endl;
+  }
 
   // If an exported variable has initial value, reflect it
 
