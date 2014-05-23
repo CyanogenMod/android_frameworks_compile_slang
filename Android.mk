@@ -78,35 +78,6 @@ include $(CLANG_TBLGEN_RULES_MK)
 include $(LLVM_GEN_INTRINSICS_MK)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
-# Host static library containing rslib.bc
-# ========================================================
-include $(CLEAR_VARS)
-
-input_data_file := frameworks/compile/slang/rslib.bc
-slangdata_output_var_name := rslib_bc
-
-LOCAL_IS_HOST_MODULE := true
-LOCAL_MODULE := librslib
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE_CLASS := STATIC_LIBRARIES
-
-include $(LOCAL_PATH)/SlangData.mk
-include $(BUILD_HOST_STATIC_LIBRARY)
-
-# Executable slang-data for host
-# ========================================================
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := slang-data
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE_CLASS := EXECUTABLES
-
-LOCAL_SRC_FILES := slang-data.c
-
-include $(BUILD_HOST_EXECUTABLE)
-
 # ========================================================
 include $(CLEAR_VARS)
 
