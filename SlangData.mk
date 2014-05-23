@@ -25,7 +25,7 @@
 #
 SLANG_DATA := frameworks/compile/slang/slangdata.py
 
-intermediates := $(call local-intermediates-dir)
+intermediates := $(call local-generated-sources-dir)
 
 asm_file := $(intermediates)/$(slangdata_output_var_name).S
 LOCAL_GENERATED_SOURCES += $(asm_file)
