@@ -196,7 +196,7 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
     const clang::VarDecl *VD,
     const clang::RecordDecl *TopLevelRecord) {
   // Check element type
-  const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
+  const clang::Type *ElementType = GetConstantArrayElementType(CAT);
   if (ElementType->isArrayType()) {
     ReportTypeError(Context, VD, TopLevelRecord,
                     "multidimensional arrays cannot be exported: '%0'");
@@ -206,7 +206,7 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
         static_cast<const clang::ExtVectorType*>(ElementType);
     unsigned numElements = EVT->getNumElements();
 
-    const clang::Type *BaseElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
+    const clang::Type *BaseElementType = GetExtVectorElementType(EVT);
     if (!RSExportPrimitiveType::IsPrimitiveType(BaseElementType)) {
       ReportTypeError(Context, VD, TopLevelRecord,
         "vectors of non-primitive types cannot be exported: '%0'");
@@ -244,16 +244,17 @@ static const clang::Type *TypeExportableHelper(
     clang::VarDecl const *VD,
     clang::RecordDecl const *TopLevelRecord) {
   // Normalize first
-  if ((T = GET_CANONICAL_TYPE(T)) == NULL)
+  if ((T = GetCanonicalType(T)) == NULL)
     return NULL;
 
   if (SPS.count(T))
     return T;
 
+  const clang::Type *CTI = T->getCanonicalTypeInternal().getTypePtr();
+
   switch (T->getTypeClass()) {
     case clang::Type::Builtin: {
-      const clang::BuiltinType *BT =
-        UNSAFE_CAST_TYPE(const clang::BuiltinType, T);
+      const clang::BuiltinType *BT = static_cast<const clang::BuiltinType*>(CTI);
       return FindBuiltinType(BT->getKind()) == NULL ? NULL : T;
     }
     case clang::Type::Record: {
@@ -304,7 +305,7 @@ static const clang::Type *TypeExportableHelper(
            FI++) {
         const clang::FieldDecl *FD = *FI;
         const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
-        FT = GET_CANONICAL_TYPE(FT);
+        FT = GetCanonicalType(FT);
 
         if (!TypeExportableHelper(FT, SPS, Context, VD, TopLevelRecord)) {
           return NULL;
@@ -331,9 +332,8 @@ static const clang::Type *TypeExportableHelper(
         return NULL;
       }
 
-      const clang::PointerType *PT =
-        UNSAFE_CAST_TYPE(const clang::PointerType, T);
-      const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
+      const clang::PointerType *PT = static_cast<const clang::PointerType*>(CTI);
+      const clang::Type *PointeeType = GetPointeeType(PT);
 
       if (PointeeType->getTypeClass() == clang::Type::Pointer) {
         ReportTypeError(Context, VD, TopLevelRecord,
@@ -351,13 +351,13 @@ static const clang::Type *TypeExportableHelper(
     }
     case clang::Type::ExtVector: {
       const clang::ExtVectorType *EVT =
-          UNSAFE_CAST_TYPE(const clang::ExtVectorType, T);
+              static_cast<const clang::ExtVectorType*>(CTI);
       // Only vector with size 2, 3 and 4 are supported.
       if (EVT->getNumElements() < 2 || EVT->getNumElements() > 4)
         return NULL;
 
       // Check base element type
-      const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
+      const clang::Type *ElementType = GetExtVectorElementType(EVT);
 
       if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
           (TypeExportableHelper(ElementType, SPS, Context, VD,
@@ -368,7 +368,7 @@ static const clang::Type *TypeExportableHelper(
     }
     case clang::Type::ConstantArray: {
       const clang::ConstantArrayType *CAT =
-          UNSAFE_CAST_TYPE(const clang::ConstantArrayType, T);
+              static_cast<const clang::ConstantArrayType*>(CTI);
 
       return ConstantArrayTypeExportableHelper(CAT, SPS, Context, VD,
                                                TopLevelRecord);
@@ -411,7 +411,7 @@ static bool ValidateRSObjectInVarDecl(slang::RSContext *Context,
       if (VD->hasLinkage() &&
           (VD->getFormalLinkage() == clang::ExternalLinkage)) {
         // Only if we are not a pointer to an object.
-        const clang::Type *T = GET_CANONICAL_TYPE(VD->getType().getTypePtr());
+        const clang::Type *T = GetCanonicalType(VD->getType().getTypePtr());
         if (T->getTypeClass() != clang::Type::Pointer) {
           ReportTypeError(Context, VD, NULL,
                           "arrays/structures containing RS object types "
@@ -451,11 +451,13 @@ static bool ValidateTypeHelper(
     clang::RecordDecl *UnionDecl,
     unsigned int TargetAPI,
     bool IsFilterscript) {
-  if ((T = GET_CANONICAL_TYPE(T)) == NULL)
+  if ((T = GetCanonicalType(T)) == NULL)
     return true;
 
   if (SPS.count(T))
     return true;
+
+  const clang::Type *CTI = T->getCanonicalTypeInternal().getTypePtr();
 
   switch (T->getTypeClass()) {
     case clang::Type::Record: {
@@ -512,7 +514,7 @@ static bool ValidateTypeHelper(
            FI++) {
         const clang::FieldDecl *FD = *FI;
         const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
-        FT = GET_CANONICAL_TYPE(FT);
+        FT = GetCanonicalType(FT);
 
         if (!ValidateTypeHelper(Context, C, FT, ND, Loc, SPS, true, UnionDecl,
                                 TargetAPI, IsFilterscript)) {
@@ -563,9 +565,8 @@ static bool ValidateTypeHelper(
         }
       }
 
-      const clang::PointerType *PT =
-        UNSAFE_CAST_TYPE(const clang::PointerType, T);
-      const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
+      const clang::PointerType *PT = static_cast<const clang::PointerType*>(CTI);
+      const clang::Type *PointeeType = GetPointeeType(PT);
 
       return ValidateTypeHelper(Context, C, PointeeType, ND, Loc, SPS,
                                 InCompositeType, UnionDecl, TargetAPI,
@@ -574,8 +575,8 @@ static bool ValidateTypeHelper(
 
     case clang::Type::ExtVector: {
       const clang::ExtVectorType *EVT =
-          UNSAFE_CAST_TYPE(const clang::ExtVectorType, T);
-      const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
+              static_cast<const clang::ExtVectorType*>(CTI);
+      const clang::Type *ElementType = GetExtVectorElementType(EVT);
       if (TargetAPI < SLANG_ICS_TARGET_API &&
           InCompositeType &&
           EVT->getNumElements() == 3 &&
@@ -591,9 +592,8 @@ static bool ValidateTypeHelper(
     }
 
     case clang::Type::ConstantArray: {
-      const clang::ConstantArrayType *CAT =
-          UNSAFE_CAST_TYPE(const clang::ConstantArrayType, T);
-      const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
+      const clang::ConstantArrayType *CAT = static_cast<const clang::ConstantArrayType*>(CTI);
+      const clang::Type *ElementType = GetConstantArrayElementType(CAT);
       return ValidateTypeHelper(Context, C, ElementType, ND, Loc, SPS, true,
                                 UnionDecl, TargetAPI, IsFilterscript);
     }
@@ -675,14 +675,15 @@ const clang::Type
 }
 
 llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
-  T = GET_CANONICAL_TYPE(T);
+  T = GetCanonicalType(T);
   if (T == NULL)
     return llvm::StringRef();
 
+  const clang::Type *CTI = T->getCanonicalTypeInternal().getTypePtr();
+
   switch (T->getTypeClass()) {
     case clang::Type::Builtin: {
-      const clang::BuiltinType *BT =
-        UNSAFE_CAST_TYPE(const clang::BuiltinType, T);
+      const clang::BuiltinType *BT = static_cast<const clang::BuiltinType*>(CTI);
       BuiltinInfo *info = FindBuiltinType(BT->getKind());
       if (info != NULL) {
         return info->cname[0];
@@ -722,7 +723,8 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
     }
     case clang::Type::Pointer: {
       // "*" plus pointee name
-      const clang::Type *PT = GET_POINTEE_TYPE(T);
+      const clang::PointerType *P = static_cast<const clang::PointerType*>(CTI);
+      const clang::Type *PT = GetPointeeType(P);
       llvm::StringRef PointeeName;
       if (NormalizeType(PT, PointeeName, NULL, NULL)) {
         char *Name = new char[ 1 /* * */ + PointeeName.size() + 1 ];
@@ -735,7 +737,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
     }
     case clang::Type::ExtVector: {
       const clang::ExtVectorType *EVT =
-          UNSAFE_CAST_TYPE(const clang::ExtVectorType, T);
+              static_cast<const clang::ExtVectorType*>(CTI);
       return RSExportVectorType::GetTypeName(EVT);
       break;
     }
@@ -762,6 +764,8 @@ RSExportType *RSExportType::Create(RSContext *Context,
 
   if (ETI != Context->export_types_end())
     return ETI->second;
+
+  const clang::Type *CTI = T->getCanonicalTypeInternal().getTypePtr();
 
   RSExportType *ET = NULL;
   switch (T->getTypeClass()) {
@@ -813,20 +817,22 @@ RSExportType *RSExportType::Create(RSContext *Context,
     }
     case clang::Type::Pointer: {
       ET = RSExportPointerType::Create(Context,
-               UNSAFE_CAST_TYPE(const clang::PointerType, T), TypeName);
+                                       static_cast<const clang::PointerType*>(CTI),
+                                       TypeName);
       // FIXME: free the name (allocated in RSExportType::GetTypeName)
       delete [] TypeName.data();
       break;
     }
     case clang::Type::ExtVector: {
       ET = RSExportVectorType::Create(Context,
-               UNSAFE_CAST_TYPE(const clang::ExtVectorType, T), TypeName);
+                                      static_cast<const clang::ExtVectorType*>(CTI),
+                                      TypeName);
       break;
     }
     case clang::Type::ConstantArray: {
       ET = RSExportConstantArrayType::Create(
               Context,
-              UNSAFE_CAST_TYPE(const clang::ConstantArrayType, T));
+              static_cast<const clang::ConstantArrayType*>(CTI));
       break;
     }
     default: {
@@ -873,10 +879,11 @@ RSExportType::RSExportType(RSContext *Context,
   // Don't cache the type whose name start with '<'. Those type failed to
   // get their name since constructing their name in GetTypeName() requiring
   // complicated work.
-  if (!IsDummyName(Name))
+  if (!IsDummyName(Name)) {
     // TODO(zonr): Need to check whether the insertion is successful or not.
     Context->insertExportType(llvm::StringRef(Name), this);
-  return;
+  }
+
 }
 
 bool RSExportType::keep() {
@@ -928,7 +935,7 @@ RSExportPrimitiveType::GetRSSpecificType(const llvm::StringRef &TypeName) {
 }
 
 DataType RSExportPrimitiveType::GetRSSpecificType(const clang::Type *T) {
-  T = GET_CANONICAL_TYPE(T);
+  T = GetCanonicalType(T);
   if ((T == NULL) || (T->getTypeClass() != clang::Type::Record))
     return DataTypeUnknown;
 
@@ -1025,7 +1032,7 @@ RSExportPrimitiveType::GetDataType(RSContext *Context, const clang::Type *T) {
   switch (T->getTypeClass()) {
     case clang::Type::Builtin: {
       const clang::BuiltinType *BT =
-        UNSAFE_CAST_TYPE(const clang::BuiltinType, T);
+              static_cast<const clang::BuiltinType*>(T->getCanonicalTypeInternal().getTypePtr());
       BuiltinInfo *info = FindBuiltinType(BT->getKind());
       if (info != NULL) {
         return info->type;
@@ -1158,7 +1165,7 @@ RSExportPointerType
 *RSExportPointerType::Create(RSContext *Context,
                              const clang::PointerType *PT,
                              const llvm::StringRef &TypeName) {
-  const clang::Type *PointeeType = GET_POINTEE_TYPE(PT);
+  const clang::Type *PointeeType = GetPointeeType(PT);
   const RSExportType *PointeeET;
 
   if (PointeeType->getTypeClass() != clang::Type::Pointer) {
@@ -1198,14 +1205,16 @@ bool RSExportPointerType::equals(const RSExportable *E) const {
 /***************************** RSExportVectorType *****************************/
 llvm::StringRef
 RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT) {
-  const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
+  const clang::Type *ElementType = GetExtVectorElementType(EVT);
   llvm::StringRef name;
 
   if ((ElementType->getTypeClass() != clang::Type::Builtin))
     return name;
 
-  const clang::BuiltinType *BT = UNSAFE_CAST_TYPE(const clang::BuiltinType,
-                                                  ElementType);
+  const clang::BuiltinType *BT =
+          static_cast<const clang::BuiltinType*>(
+              ElementType->getCanonicalTypeInternal().getTypePtr());
+
   if ((EVT->getNumElements() < 1) ||
       (EVT->getNumElements() > 4))
     return name;
@@ -1228,7 +1237,7 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
                                                bool Normalized) {
   slangAssert(EVT != NULL && EVT->getTypeClass() == clang::Type::ExtVector);
 
-  const clang::Type *ElementType = GET_EXT_VECTOR_ELEMENT_TYPE(EVT);
+  const clang::Type *ElementType = GetExtVectorElementType(EVT);
   DataType DT = RSExportPrimitiveType::GetDataType(Context, ElementType);
 
   if (DT != DataTypeUnknown)
@@ -1286,7 +1295,7 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
     }
     const clang::ConstantArrayType *CAT =
       static_cast<const clang::ConstantArrayType *>(FT);
-    const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
+    const clang::Type *ElementType = GetConstantArrayElementType(CAT);
     if ((ElementType == NULL) ||
         (ElementType->getTypeClass() != clang::Type::Builtin) ||
         (static_cast<const clang::BuiltinType *>(ElementType)->getKind() !=
@@ -1347,7 +1356,7 @@ RSExportConstantArrayType
   unsigned Size = static_cast<unsigned>(CAT->getSize().getZExtValue());
   slangAssert((Size > 0) && "Constant array should have size greater than 0");
 
-  const clang::Type *ElementType = GET_CONSTANT_ARRAY_ELEMENT_TYPE(CAT);
+  const clang::Type *ElementType = GetConstantArrayElementType(CAT);
   RSExportType *ElementET = RSExportType::Create(Context, ElementType);
 
   if (ElementET == NULL) {
