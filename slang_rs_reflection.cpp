@@ -331,6 +331,10 @@ void RSReflection::genScriptClassConstructor(Context &C) {
                   C.getClassName(),
                   1,
                   "RenderScript", "rs");
+
+  if (C.getEmbedBitcodeInJava()) {
+    // Call new constructor
+  }
   // Call alternate constructor with required parameters.
   // Look up the proper raw bitcode resource id via the context.
   C.indent() << "this(rs," << std::endl;
@@ -2035,7 +2039,8 @@ bool RSReflection::reflect(const std::string &OutputPathBase,
                            const std::string &OutputPackageName,
                            const std::string &RSPackageName,
                            const std::string &InputFileName,
-                           const std::string &OutputBCFileName) {
+                           const std::string &OutputBCFileName,
+                           bool EmbedBitcodeInJava) {
   Context *C = NULL;
   std::string ResourceId = "";
   std::string PaddingPrefix = "";
@@ -2054,10 +2059,10 @@ bool RSReflection::reflect(const std::string &OutputPathBase,
 
   if (OutputPackageName.empty() || OutputPackageName == "-")
     C = new Context(OutputPathBase, InputFileName, "<Package Name>",
-                    RSPackageName, ResourceId, PaddingPrefix, true);
+                    RSPackageName, ResourceId, PaddingPrefix, true, EmbedBitcodeInJava);
   else
     C = new Context(OutputPathBase, InputFileName, OutputPackageName,
-                    RSPackageName, ResourceId, PaddingPrefix, false);
+                    RSPackageName, ResourceId, PaddingPrefix, false, EmbedBitcodeInJava);
 
   if (C != NULL) {
     std::string ErrorMsg, ScriptClassName;
@@ -2187,7 +2192,13 @@ bool RSReflection::Context::startClass(AccessModifier AM,
 
   // Imports
   out() << "import " << mRSPackageName << ".*;" << std::endl;
-  out() << "import android.content.res.Resources;" << std::endl;
+  if (getEmbedBitcodeInJava()) {
+    out() << "import " << mPackageName << "."
+          << RSSlangReflectUtils::JavaBitcodeClassNameFromRSFileName(
+              mInputRSFile.c_str()) << ";" << std::endl;
+  } else {
+    out() << "import android.content.res.Resources;" << std::endl;
+  }
   out() << std::endl;
 
   // All reflected classes should be annotated as hidden, so that they won't

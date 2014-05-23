@@ -75,11 +75,13 @@ bool SlangRS::isFilterscript(const char *Filename) {
 }
 
 bool SlangRS::reflectToJava(const std::string &OutputPathBase,
-                            const std::string &RSPackageName) {
+                            const std::string &RSPackageName,
+                            bool EmbedBitcodeInJava) {
   return mRSContext->reflectToJava(OutputPathBase,
                                    RSPackageName,
                                    getInputFileName(),
-                                   getOutputFileName());
+                                   getOutputFileName(),
+                                   EmbedBitcodeInJava);
 }
 
 bool SlangRS::generateBitcodeAccessor(const std::string &OutputPathBase,
@@ -355,7 +357,7 @@ bool SlangRS::compile(
           }
       } else {
 
-        if (!reflectToJava(JavaReflectionPathBase, RSPackageName)) {
+        if (!reflectToJava(JavaReflectionPathBase, RSPackageName, (BitcodeStorage == BCST_JAVA_CODE))) {
           return false;
         }
 
