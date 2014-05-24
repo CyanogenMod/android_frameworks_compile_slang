@@ -63,7 +63,8 @@ class SlangRS : public Slang {
   ReflectedDefinitionListTy ReflectedDefinitions;
 
   bool reflectToJava(const std::string &OutputPathBase,
-                     const std::string &RSPackageName);
+                     const std::string &RSPackageName,
+                     bool EmbedBitcodeInJava);
 
   bool generateBitcodeAccessor(const std::string &OutputPathBase,
                                const std::string &PackageName);

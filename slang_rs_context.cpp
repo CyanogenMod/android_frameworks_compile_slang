@@ -283,7 +283,8 @@ bool RSContext::insertExportType(const llvm::StringRef &TypeName,
 bool RSContext::reflectToJava(const std::string &OutputPathBase,
                               const std::string &RSPackageName,
                               const std::string &InputFileName,
-                              const std::string &OutputBCFileName) {
+                              const std::string &OutputBCFileName,
+                              bool EmbedBitcodeInJava) {
   if (!RSPackageName.empty()) {
     mRSPackageName = RSPackageName;
   }
@@ -296,7 +297,7 @@ bool RSContext::reflectToJava(const std::string &OutputPathBase,
 
   RSReflection *R = new RSReflection(this, mGeneratedFileNames);
   bool ret = R->reflect(OutputPathBase, mReflectJavaPackageName, mRSPackageName,
-                        InputFileName, OutputBCFileName);
+                        InputFileName, OutputBCFileName, EmbedBitcodeInJava);
   if (!ret)
     fprintf(stderr, "RSContext::reflectToJava : failed to do reflection "
                     "(%s)\n", R->getLastError());
