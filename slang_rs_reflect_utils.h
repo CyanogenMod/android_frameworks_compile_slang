@@ -75,6 +75,13 @@ class RSSlangReflectUtils {
   // rsFileName: the input .rs file name (with or without path).
   static std::string BCFileNameFromRSFileName(const char *rsFileName);
 
+  // Compute the bitcode-containing class name from a .rs filename.
+  // Any non-alnum, non-underscore characters will be discarded.
+  // E.g. with rsFileName=./foo/bar/my-Renderscript_file.rs it returns
+  // "myRenderscript_fileBitCode".
+  // rsFileName: the input .rs file name (with or without path).
+  static std::string JavaBitcodeClassNameFromRSFileName(const char *rsFileName);
+
   // Generate the bit code accessor Java source file.
   static bool GenerateBitCodeAccessor(const BitCodeAccessorContext &context);
 };
