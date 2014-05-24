@@ -64,6 +64,10 @@ class RSReflection {
 
     std::string mLicenseNote;
 
+    bool mUseStdout;
+
+    bool mEmbedBitcodeInJava;
+
     std::string mIndent;
 
     int mPaddingFieldIndex;
@@ -101,7 +105,6 @@ class RSReflection {
       AM_PublicSynchronized
     } AccessModifier;
 
-    bool mUseStdout;
     mutable std::ofstream mOF;
 
     // Generated RS Elements for type-checking code.
@@ -121,7 +124,8 @@ class RSReflection {
             const std::string &RSPackageName,
             const std::string &ResourceId,
             const std::string &PaddingPrefix,
-            bool UseStdout)
+            bool UseStdout,
+            bool EmbedBitcodeInJava)
         : mVerbose(true),
           mOutputPathBase(OutputPathBase),
           mInputRSFile(InputRSFile),
@@ -130,7 +134,8 @@ class RSReflection {
           mResourceId(ResourceId),
           mPaddingPrefix(PaddingPrefix),
           mLicenseNote(ApacheLicenseNote),
-          mUseStdout(UseStdout) {
+          mUseStdout(UseStdout),
+          mEmbedBitcodeInJava(EmbedBitcodeInJava) {
       clear();
       resetFieldIndex();
       clearFieldIndexMap();
@@ -157,6 +162,8 @@ class RSReflection {
     }
 
     inline int getIndentLevel() { return (mIndent.length() >> 2); }
+
+    inline bool getEmbedBitcodeInJava() const { return mEmbedBitcodeInJava; }
 
     inline int getNextExportVarSlot() { return mNextExportVarSlot++; }
 
@@ -337,7 +344,8 @@ class RSReflection {
                const std::string &OutputPackageName,
                const std::string &RSPackageName,
                const std::string &InputFileName,
-               const std::string &OutputBCFileName);
+               const std::string &OutputBCFileName,
+               bool EmbedBitcodeInJava);
 
   inline const char *getLastError() const {
     if (mLastError.empty())
