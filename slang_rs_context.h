@@ -220,7 +220,8 @@ class RSContext {
   bool reflectToJava(const std::string &OutputPathBase,
                      const std::string &RSPackageName,
                      const std::string &InputFileName,
-                     const std::string &OutputBCFileName);
+                     const std::string &OutputBCFileName,
+                     bool EmbedBitcodeInJava);
 
   int getVersion() const { return version; }
   void setVersion(int v) {

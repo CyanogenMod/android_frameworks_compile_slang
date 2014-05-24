@@ -23,6 +23,7 @@
 #include "llvm/ADT/StringRef.h"
 
 #include "os_sep.h"
+#include "slang_assert.h"
 #include "slang_utils.h"
 
 namespace slang {
@@ -103,6 +104,11 @@ std::string RSSlangReflectUtils::BCFileNameFromRSFileName(
     return InternalFileNameConvert(rsFileName, true);
 }
 
+std::string RSSlangReflectUtils::JavaBitcodeClassNameFromRSFileName(
+    const char *rsFileName) {
+    std::string tmp(InternalFileNameConvert(rsFileName, false));
+    return tmp.append("BitCode");
+}
 static bool GenerateAccessorHeader(
     const RSSlangReflectUtils::BitCodeAccessorContext &context, FILE *pfout) {
     fprintf(pfout, "/*\n");
@@ -219,6 +225,7 @@ static bool GenerateAccessorClass(
     bool ret = true;
     switch (context.bcStorage) {
       case BCST_APK_RESOURCE:
+        slangAssert(false && "Invalid generation of bitcode accessor with resource");
         break;
       case BCST_JAVA_CODE:
         ret = GenerateJavaCodeAccessorMethod(context, pfout);
@@ -245,8 +252,7 @@ bool RSSlangReflectUtils::GenerateBitCodeAccessor(
         return false;
     }
 
-    string clazz_name(JavaClassNameFromRSFileName(context.rsFileName));
-    clazz_name += "BitCode";
+    string clazz_name(JavaBitcodeClassNameFromRSFileName(context.rsFileName));
     string filename(clazz_name);
     filename += ".java";
 
