@@ -312,7 +312,6 @@ class RSExportPrimitiveType : public RSExportType {
       : RSExportType(Context, Class, Name),
         mType(DT),
         mNormalized(Normalized) {
-    return;
   }
 
   virtual llvm::Type *convertToLLVMType() const;
@@ -375,7 +374,6 @@ class RSExportPointerType : public RSExportType {
                       const RSExportType *PointeeType)
       : RSExportType(Context, ExportClassPointer, Name),
         mPointeeType(PointeeType) {
-    return;
   }
 
   // @PT was normalized by calling RSExportType::NormalizeType() before calling
@@ -409,7 +407,6 @@ class RSExportVectorType : public RSExportPrimitiveType {
       : RSExportPrimitiveType(Context, ExportClassVector, Name,
                               DT, Normalized),
         mNumElement(NumElement) {
-    return;
   }
 
   // @EVT was normalized by calling RSExportType::NormalizeType() before
@@ -455,7 +452,6 @@ class RSExportMatrixType : public RSExportType {
                      unsigned Dim)
     : RSExportType(Context, ExportClassMatrix, Name),
       mDim(Dim) {
-    return;
   }
 
   virtual llvm::Type *convertToLLVMType() const;
@@ -487,7 +483,6 @@ class RSExportConstantArrayType : public RSExportType {
                    CreateDummyName("ConstantArray", std::string())),
       mElementType(ElementType),
       mSize(Size) {
-    return;
   }
 
   // @CAT was normalized by calling RSExportType::NormalizeType() before
@@ -531,7 +526,6 @@ class RSExportRecordType : public RSExportType {
           mName(Name.data(), Name.size()),
           mParent(Parent),
           mOffset(Offset) {
-      return;
     }
 
     inline const RSExportRecordType *getParent() const { return mParent; }
@@ -569,7 +563,6 @@ class RSExportRecordType : public RSExportType {
         mIsArtificial(IsArtificial),
         mStoreSize(StoreSize),
         mAllocSize(AllocSize) {
-    return;
   }
 
   // @RT was normalized by calling RSExportType::NormalizeType() before calling
@@ -604,7 +597,6 @@ class RSExportRecordType : public RSExportType {
          I++)
       if (*I != NULL)
         delete *I;
-    return;
   }
 };  // RSExportRecordType
 

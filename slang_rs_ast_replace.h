@@ -63,7 +63,6 @@ class RSASTReplace : public clang::StmtVisitor<RSASTReplace> {
         mNewStmt(NULL),
         mOldExpr(NULL),
         mNewExpr(NULL) {
-    return;
   }
 
   void VisitStmt(clang::Stmt *S);

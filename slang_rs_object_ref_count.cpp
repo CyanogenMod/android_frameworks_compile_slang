@@ -164,8 +164,6 @@ static void AppendAfterStmt(clang::ASTContext &C,
   CS->setStmts(C, UpdatedStmtList, UpdatedStmtCount);
 
   delete [] UpdatedStmtList;
-
-  return;
 }
 
 // This class visits a compound statement and inserts DtorStmt
@@ -275,7 +273,6 @@ DestructorVisitor::DestructorVisitor(clang::ASTContext &C,
     mOuterStmt(OuterStmt),
     mDtorStmt(DtorStmt),
     mVarLoc(VarLoc) {
-  return;
 }
 
 void DestructorVisitor::VisitStmt(clang::Stmt *S) {
@@ -286,12 +283,10 @@ void DestructorVisitor::VisitStmt(clang::Stmt *S) {
       Visit(Child);
     }
   }
-  return;
 }
 
 void DestructorVisitor::VisitCompoundStmt(clang::CompoundStmt *CS) {
   VisitStmt(CS);
-  return;
 }
 
 void DestructorVisitor::VisitBreakStmt(clang::BreakStmt *BS) {
@@ -299,12 +294,10 @@ void DestructorVisitor::VisitBreakStmt(clang::BreakStmt *BS) {
   if ((mLoopDepth == 0) && (mSwitchDepth == 0)) {
     mReplaceStmtStack.push(BS);
   }
-  return;
 }
 
 void DestructorVisitor::VisitCaseStmt(clang::CaseStmt *CS) {
   VisitStmt(CS);
-  return;
 }
 
 void DestructorVisitor::VisitContinueStmt(clang::ContinueStmt *CS) {
@@ -313,56 +306,47 @@ void DestructorVisitor::VisitContinueStmt(clang::ContinueStmt *CS) {
     // Switch statements can have nested continues.
     mReplaceStmtStack.push(CS);
   }
-  return;
 }
 
 void DestructorVisitor::VisitDefaultStmt(clang::DefaultStmt *DS) {
   VisitStmt(DS);
-  return;
 }
 
 void DestructorVisitor::VisitDoStmt(clang::DoStmt *DS) {
   mLoopDepth++;
   VisitStmt(DS);
   mLoopDepth--;
-  return;
 }
 
 void DestructorVisitor::VisitForStmt(clang::ForStmt *FS) {
   mLoopDepth++;
   VisitStmt(FS);
   mLoopDepth--;
-  return;
 }
 
 void DestructorVisitor::VisitIfStmt(clang::IfStmt *IS) {
   VisitStmt(IS);
-  return;
 }
 
 void DestructorVisitor::VisitReturnStmt(clang::ReturnStmt *RS) {
   mReplaceStmtStack.push(RS);
-  return;
 }
 
 void DestructorVisitor::VisitSwitchCase(clang::SwitchCase *SC) {
   slangAssert(false && "Both case and default have specialized handlers");
   VisitStmt(SC);
-  return;
 }
 
 void DestructorVisitor::VisitSwitchStmt(clang::SwitchStmt *SS) {
   mSwitchDepth++;
   VisitStmt(SS);
   mSwitchDepth--;
-  return;
 }
 
 void DestructorVisitor::VisitWhileStmt(clang::WhileStmt *WS) {
   mLoopDepth++;
   VisitStmt(WS);
   mLoopDepth--;
-  return;
 }
 
 clang::Expr *ClearSingleRSObject(clang::ASTContext &C,
@@ -1133,7 +1117,6 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
 
   RSASTReplace R(C);
   R.ReplaceStmt(mCS, AS, UpdatedStmt);
-  return;
 }
 
 void RSObjectRefCount::Scope::AppendRSObjectInit(
@@ -1236,8 +1219,6 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
   std::list<clang::Stmt*> StmtList;
   StmtList.push_back(RSSetObjectCall);
   AppendAfterStmt(C, mCS, DS, StmtList);
-
-  return;
 }
 
 void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
@@ -1256,7 +1237,6 @@ void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
       DV.InsertDestructors();
     }
   }
-  return;
 }
 
 clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(
@@ -1474,7 +1454,6 @@ void RSObjectRefCount::VisitDeclStmt(clang::DeclStmt *DS) {
       }
     }
   }
-  return;
 }
 
 void RSObjectRefCount::VisitCompoundStmt(clang::CompoundStmt *CS) {
@@ -1491,7 +1470,6 @@ void RSObjectRefCount::VisitCompoundStmt(clang::CompoundStmt *CS) {
     mScopeStack.pop();
     delete S;
   }
-  return;
 }
 
 void RSObjectRefCount::VisitBinAssign(clang::BinaryOperator *AS) {
@@ -1500,8 +1478,6 @@ void RSObjectRefCount::VisitBinAssign(clang::BinaryOperator *AS) {
   if (CountRSObjectTypes(mCtx, QT.getTypePtr(), AS->getExprLoc())) {
     getCurrentScope()->ReplaceRSObjectAssignment(AS);
   }
-
-  return;
 }
 
 void RSObjectRefCount::VisitStmt(clang::Stmt *S) {
@@ -1512,7 +1488,6 @@ void RSObjectRefCount::VisitStmt(clang::Stmt *S) {
       Visit(Child);
     }
   }
-  return;
 }
 
 // This function walks the list of global variables and (potentially) creates
