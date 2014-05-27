@@ -173,8 +173,8 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
 
   // Imports
   //for(unsigned i = 0; i < (sizeof(Import) / sizeof(const char*)); i++)
-      //out() << "import " << Import[i] << ";" << std::endl;
-  //out() << std::endl;
+      //out() << "import " << Import[i] << ";\n";
+  //out() << "\n";
 
   if (!baseClass.empty()) {
     write("class " + mClassName + " : public " + baseClass + " {");
@@ -325,8 +325,8 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
 
   // Imports
   //for(unsigned i = 0; i < (sizeof(Import) / sizeof(const char*)); i++)
-      //out() << "import " << Import[i] << ";" << std::endl;
-  //out() << std::endl;
+      //out() << "import " << Import[i] << ";\n";
+  //out() << "\n";
 
   write("\n");
   stringstream ss;
