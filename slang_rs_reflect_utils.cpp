@@ -126,7 +126,7 @@ static bool GenerateAccessorMethodSignature(
     const RSSlangReflectUtils::BitCodeAccessorContext &context, FILE *pfout) {
     // the prototype of the accessor method
     fprintf(pfout, "  // return byte array representation of the bitcode.\n");
-    fprintf(pfout, "  public static byte[] getBitCode() {\n");
+    fprintf(pfout, "  public static byte[] getBitCode32() {\n");
     return true;
 }
 
@@ -135,7 +135,7 @@ static bool GenerateAccessorMethodSignature(
 static bool GenerateSegmentMethod(
     const char *buff, int blen, int seg_num, FILE *pfout) {
 
-    fprintf(pfout, "  private static byte[] getSegment_%d() {\n", seg_num);
+    fprintf(pfout, "  private static byte[] getSegment32_%d() {\n", seg_num);
     fprintf(pfout, "    byte[] data = {\n");
 
     static const int LINE_BYTE_NUM = 16;
@@ -174,7 +174,7 @@ static bool GenerateJavaCodeAccessorMethod(
 
     // start the accessor method
     GenerateAccessorMethodSignature(context, pfout);
-    fprintf(pfout, "    return getBitCodeInternal();\n");
+    fprintf(pfout, "    return getBitCode32Internal();\n");
     // end the accessor method
     fprintf(pfout, "  };\n\n");
 
@@ -197,12 +197,12 @@ static bool GenerateJavaCodeAccessorMethod(
     // output the internal accessor method
     fprintf(pfout, "  private static int bitCodeLength = %d;\n\n",
         total_length);
-    fprintf(pfout, "  private static byte[] getBitCodeInternal() {\n");
+    fprintf(pfout, "  private static byte[] getBitCode32Internal() {\n");
     fprintf(pfout, "    byte[] bc = new byte[bitCodeLength];\n");
     fprintf(pfout, "    int offset = 0;\n");
     fprintf(pfout, "    byte[] seg;\n");
     for (int i = 0; i < seg_num; ++i) {
-    fprintf(pfout, "    seg = getSegment_%d();\n", i);
+    fprintf(pfout, "    seg = getSegment32_%d();\n", i);
     fprintf(pfout, "    System.arraycopy(seg, 0, bc, offset, seg.length);\n");
     fprintf(pfout, "    offset += seg.length;\n");
     }

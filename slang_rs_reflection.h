@@ -142,6 +142,10 @@ class RSReflection {
       return;
     }
 
+    inline std::string &getInputRSFile() {
+      return mInputRSFile;
+    }
+
     inline std::ostream &out() const {
       return ((mUseStdout) ? std::cout : mOF);
     }
