@@ -420,8 +420,6 @@ void RSReflection::genScriptClassConstructor(Context &C) {
        I++) {
     C.indent() << "private FieldPacker " RS_FP_PREFIX << *I << ";" << std::endl;
   }
-
-  return;
 }
 
 void RSReflection::genInitBoolExportVariable(Context &C,
@@ -435,8 +433,6 @@ void RSReflection::genInitBoolExportVariable(Context &C,
 
   C.out() << ((Val.getInt().getSExtValue() == 0) ? "false" : "true")
           << ";" << std::endl;
-
-  return;
 }
 
 void RSReflection::genInitPrimitiveExportVariable(
@@ -448,8 +444,6 @@ void RSReflection::genInitPrimitiveExportVariable(
   C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
   C.out() << RSReflectionBase::genInitValue(Val);
   C.out() << ";" << std::endl;
-
-  return;
 }
 
 void RSReflection::genInitExportVariable(Context &C,
@@ -559,7 +553,6 @@ void RSReflection::genInitExportVariable(Context &C,
       slangAssert(false && "Unknown class of type");
     }
   }
-  return;
 }
 
 void RSReflection::genExportVariable(Context &C, const RSExportVar *EV) {
@@ -598,8 +591,6 @@ void RSReflection::genExportVariable(Context &C, const RSExportVar *EV) {
       slangAssert(false && "Unknown class of type");
     }
   }
-
-  return;
 }
 
 void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
@@ -643,7 +634,6 @@ void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
   }
 
   C.endFunction();
-  return;
 }
 
 void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
@@ -795,7 +785,6 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
   }
 
   C.endFunction();
-  return;
 }
 
 void RSReflection::genTypeInstanceFromPointer(Context &C,
@@ -889,8 +878,6 @@ void RSReflection::genTypeCheck(Context &C,
                << TypeName << "!\");" << std::endl;
     C.indent() << "}" << std::endl;
   }
-
-  return;
 }
 
 
@@ -961,7 +948,6 @@ void RSReflection::genPrimitiveTypeExportVariable(
 
   genGetExportVariable(C, TypeName, VarName);
   genGetFieldID(C, VarName);
-  return;
 }
 
 void RSReflection::genPointerTypeExportVariable(Context &C,
@@ -1001,7 +987,6 @@ void RSReflection::genPointerTypeExportVariable(Context &C,
   C.endFunction();
 
   genGetExportVariable(C, TypeName, VarName);
-  return;
 }
 
 void RSReflection::genVectorTypeExportVariable(Context &C,
@@ -1016,7 +1001,6 @@ void RSReflection::genVectorTypeExportVariable(Context &C,
   genSetExportVariable(C, TypeName, EV);
   genGetExportVariable(C, TypeName, VarName);
   genGetFieldID(C, VarName);
-  return;
 }
 
 void RSReflection::genMatrixTypeExportVariable(Context &C,
@@ -1051,7 +1035,6 @@ void RSReflection::genMatrixTypeExportVariable(Context &C,
 
   genGetExportVariable(C, TypeName, VarName);
   genGetFieldID(C, VarName);
-  return;
 }
 
 void RSReflection::genConstantArrayTypeExportVariable(
@@ -1068,7 +1051,6 @@ void RSReflection::genConstantArrayTypeExportVariable(
   genSetExportVariable(C, TypeName, EV);
   genGetExportVariable(C, TypeName, VarName);
   genGetFieldID(C, VarName);
-  return;
 }
 
 void RSReflection::genRecordTypeExportVariable(Context &C,
@@ -1083,7 +1065,6 @@ void RSReflection::genRecordTypeExportVariable(Context &C,
   genSetExportVariable(C, TypeName, EV);
   genGetExportVariable(C, TypeName, VarName);
   genGetFieldID(C, VarName);
-  return;
 }
 
 void RSReflection::genPrivateExportVariable(Context &C,
@@ -1091,7 +1072,6 @@ void RSReflection::genPrivateExportVariable(Context &C,
                                             const std::string &VarName) {
   C.indent() << "private " << TypeName << " " RS_EXPORT_VAR_PREFIX
              << VarName << ";" << std::endl;
-  return;
 }
 
 void RSReflection::genSetExportVariable(Context &C,
@@ -1128,7 +1108,6 @@ void RSReflection::genSetExportVariable(Context &C,
 
     C.endFunction();
   }
-  return;
 }
 
 void RSReflection::genGetExportVariable(Context &C,
@@ -1286,8 +1265,6 @@ void RSReflection::genPackVarOfType(Context &C,
       slangAssert(false && "Unknown class of type");
     }
   }
-
-  return;
 }
 
 void RSReflection::genAllocateVarOfType(Context &C,
@@ -1340,7 +1317,6 @@ void RSReflection::genAllocateVarOfType(Context &C,
       break;
     }
   }
-  return;
 }
 
 void RSReflection::genNewItemBufferIfNull(Context &C,
@@ -1354,7 +1330,6 @@ void RSReflection::genNewItemBufferIfNull(Context &C,
     C.indent() << "if (" RS_TYPE_ITEM_BUFFER_NAME "[" << Index << "] == null) "
                     RS_TYPE_ITEM_BUFFER_NAME"[" << Index << "] = "
                       "new " RS_TYPE_ITEM_CLASS_NAME "();" << std::endl;
-  return;
 }
 
 void RSReflection::genNewItemBufferPackerIfNull(Context &C) {
@@ -1363,7 +1338,6 @@ void RSReflection::genNewItemBufferPackerIfNull(Context &C) {
                     "new FieldPacker(" RS_TYPE_ITEM_CLASS_NAME
                       ".sizeof * getType().getX()/* count */"
                         ");" << std::endl;
-  return;
 }
 
 /********************** Methods to generate type class  **********************/
@@ -1451,8 +1425,6 @@ void RSReflection::genTypeItemClass(Context &C,
 
   // end Item class
   C.endBlock();
-
-  return;
 }
 
 void RSReflection::genTypeClassConstructor(Context &C,
@@ -1650,7 +1622,6 @@ void RSReflection::genTypeClassCopyToArray(Context &C,
                 ");" << std::endl;
 
   C.endFunction();
-  return;
 }
 
 void RSReflection::genTypeClassCopyToArrayLocal(Context &C,
@@ -1666,7 +1637,6 @@ void RSReflection::genTypeClassCopyToArrayLocal(Context &C,
   genPackVarOfType(C, ERT, "i", "fp");
 
   C.endFunction();
-  return;
 }
 
 void RSReflection::genTypeClassItemSetter(Context &C,
@@ -1695,7 +1665,6 @@ void RSReflection::genTypeClassItemSetter(Context &C,
   C.endBlock();
 
   C.endFunction();
-  return;
 }
 
 void RSReflection::genTypeClassItemGetter(Context &C,
@@ -1710,7 +1679,6 @@ void RSReflection::genTypeClassItemGetter(Context &C,
              << std::endl;
   C.indent() << "return " RS_TYPE_ITEM_BUFFER_NAME "[index];" << std::endl;
   C.endFunction();
-  return;
 }
 
 void RSReflection::genTypeClassComponentSetter(Context &C,
@@ -1761,7 +1729,6 @@ void RSReflection::genTypeClassComponentSetter(Context &C,
 
     C.endFunction();
   }
-  return;
 }
 
 void RSReflection::genTypeClassComponentGetter(Context &C,
@@ -1783,7 +1750,6 @@ void RSReflection::genTypeClassComponentGetter(Context &C,
                << ";" << std::endl;
     C.endFunction();
   }
-  return;
 }
 
 void RSReflection::genTypeClassCopyAll(Context &C,
@@ -1798,7 +1764,6 @@ void RSReflection::genTypeClassCopyAll(Context &C,
              << std::endl;
 
   C.endFunction();
-  return;
 }
 
 void RSReflection::genTypeClassResize(Context &C) {
@@ -1828,7 +1793,6 @@ void RSReflection::genTypeClassResize(Context &C) {
                         ");" << std::endl;
 
   C.endFunction();
-  return;
 }
 
 /******************** Methods to generate type class /end ********************/
@@ -1852,7 +1816,6 @@ void RSReflection::genBuildElement(Context &C,
 
   if (!IsInline)
     C.indent() << "return " << ElementBuilderName << ".create();" << std::endl;
-  return;
 }
 
 #define EB_ADD(x) do {                                              \
@@ -2029,7 +1992,6 @@ void RSReflection::genAddPaddingToElementBuiler(Context &C,
       PaddingSize -= 1;
     }
   }
-  return;
 }
 
 #undef EB_ADD
@@ -2224,7 +2186,6 @@ void RSReflection::Context::endClass() {
   if (!mUseStdout)
     mOF.close();
   clear();
-  return;
 }
 
 void RSReflection::Context::startBlock(bool ShouldIndent) {
@@ -2233,24 +2194,20 @@ void RSReflection::Context::startBlock(bool ShouldIndent) {
   else
     out() << " {" << std::endl;
   incIndentLevel();
-  return;
 }
 
 void RSReflection::Context::endBlock() {
   decIndentLevel();
   indent() << "}" << std::endl << std::endl;
-  return;
 }
 
 void RSReflection::Context::startTypeClass(const std::string &ClassName) {
   indent() << "public static class " << ClassName;
   startBlock();
-  return;
 }
 
 void RSReflection::Context::endTypeClass() {
   endBlock();
-  return;
 }
 
 void RSReflection::Context::startFunction(AccessModifier AM,
@@ -2271,8 +2228,6 @@ void RSReflection::Context::startFunction(AccessModifier AM,
   va_end(vl);
 
   startFunction(AM, IsStatic, ReturnType, FunctionName, Args);
-
-  return;
 }
 
 void RSReflection::Context::startFunction(AccessModifier AM,
@@ -2297,13 +2252,10 @@ void RSReflection::Context::startFunction(AccessModifier AM,
 
   out() << ")";
   startBlock();
-
-  return;
 }
 
 void RSReflection::Context::endFunction() {
   endBlock();
-  return;
 }
 
 bool RSReflection::Context::addTypeNameForElement(

@@ -103,8 +103,6 @@ RSExportVar::RSExportVar(RSContext *Context,
       mIsUnsigned = false;
     }
   }
-
-  return;
 }
 
 }  // namespace slang

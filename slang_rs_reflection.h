@@ -91,7 +91,6 @@ class RSReflection {
       mNextExportVarSlot = 0;
       mNextExportFuncSlot = 0;
       mNextExportForEachSlot = 0;
-      return;
     }
 
     bool openClassFile(const std::string &ClassName,
@@ -139,7 +138,6 @@ class RSReflection {
       clear();
       resetFieldIndex();
       clearFieldIndexMap();
-      return;
     }
 
     inline std::ostream &out() const {
@@ -152,13 +150,11 @@ class RSReflection {
 
     inline void incIndentLevel() {
       mIndent.append(4, ' ');
-      return;
     }
 
     inline void decIndentLevel() {
       slangAssert(getIndentLevel() > 0 && "No indent");
       mIndent.erase(0, 4);
-      return;
     }
 
     inline int getIndentLevel() { return (mIndent.length() >> 2); }
@@ -337,7 +333,6 @@ class RSReflection {
         mLastError(""),
         mGeneratedFileNames(GeneratedFileNames) {
     slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
-    return;
   }
 
   bool reflect(const std::string &OutputPathBase,

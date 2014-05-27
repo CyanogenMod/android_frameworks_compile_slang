@@ -65,7 +65,6 @@ class RSExportForEach : public RSExportable {
       mIn(NULL), mOut(NULL), mUsrData(NULL), mX(NULL), mY(NULL),
       mResultType(clang::QualType()), mHasReturnType(false),
       mIsKernelStyle(false), mDummyRoot(false) {
-    return;
   }
 
   bool validateAndConstructParams(RSContext *Context,

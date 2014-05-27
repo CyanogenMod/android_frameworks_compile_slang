@@ -66,7 +66,6 @@ void RSExportElement::Init() {
     }
     Initialized = true;
   }
-  return;
 }
 
 RSExportType *RSExportElement::Create(RSContext *Context,
