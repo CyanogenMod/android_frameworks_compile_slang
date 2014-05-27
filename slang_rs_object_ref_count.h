@@ -51,12 +51,10 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
 
    public:
     explicit Scope(clang::CompoundStmt *CS) : mCS(CS) {
-      return;
     }
 
     inline void addRSObject(clang::VarDecl* VD) {
       mRSO.push_back(VD);
-      return;
     }
 
     void ReplaceRSObjectAssignment(clang::BinaryOperator *AS);
@@ -105,7 +103,6 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
   explicit RSObjectRefCount(clang::ASTContext &C)
       : mCtx(C),
         RSInitFD(false) {
-    return;
   }
 
   void Init() {
@@ -113,7 +110,6 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
       GetRSRefCountingFunctions(mCtx);
       RSInitFD = true;
     }
-    return;
   }
 
   static clang::FunctionDecl *GetRSSetObjectFD(DataType DT) {

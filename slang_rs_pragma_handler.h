@@ -38,15 +38,14 @@ class RSPragmaHandler : public clang::PragmaHandler {
   RSPragmaHandler(llvm::StringRef Name, RSContext *Context)
       : clang::PragmaHandler(Name),
         mContext(Context) {
-    return;
   }
   RSContext *getContext() const {
     return this->mContext;
   }
 
-  virtual void handleItem(const std::string &Item) { return; }
+  virtual void handleItem(const std::string &Item) { }
   virtual void handleInt(clang::Preprocessor &PP, clang::Token &Tok,
-                         const int v) { return; }
+                         const int v) { }
 
   // Handle pragma like #pragma rs [name] ([item #1],[item #2],...,[item #i])
   void handleItemListPragma(clang::Preprocessor &PP,

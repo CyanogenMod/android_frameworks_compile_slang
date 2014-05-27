@@ -38,7 +38,7 @@ namespace slang {
 
 class RSExportElement {
   // This is a utility class for handling the RS_ELEMENT_ADD* marker
-  RSExportElement() { return; }
+  RSExportElement() { }
 
   typedef struct {
     DataType type;

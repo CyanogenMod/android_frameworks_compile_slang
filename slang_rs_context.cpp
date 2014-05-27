@@ -79,8 +79,6 @@ RSContext::RSContext(clang::Preprocessor &PP,
 
   // Prepare target data
   mDataLayout = new llvm::DataLayout(Target.getTargetDescription());
-
-  return;
 }
 
 bool RSContext::processExportVar(const clang::VarDecl *VD) {

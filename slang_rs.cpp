@@ -415,7 +415,6 @@ void SlangRS::reset() {
   mRSContext = NULL;
   mGeneratedFileNames.clear();
   Slang::reset();
-  return;
 }
 
 SlangRS::~SlangRS() {
@@ -426,7 +425,6 @@ SlangRS::~SlangRS() {
        I++) {
     delete I->getValue().first;
   }
-  return;
 }
 
 }  // namespace slang

@@ -57,8 +57,6 @@ void RSASTReplace::ReplaceInCompoundStmt(clang::CompoundStmt *CS) {
   CS->setStmts(C, UpdatedStmtList, UpdatedStmtCount);
 
   delete [] UpdatedStmtList;
-
-  return;
 }
 
 void RSASTReplace::VisitStmt(clang::Stmt *S) {
@@ -74,13 +72,11 @@ void RSASTReplace::VisitStmt(clang::Stmt *S) {
       }
     }
   }
-  return;
 }
 
 void RSASTReplace::VisitCompoundStmt(clang::CompoundStmt *CS) {
   VisitStmt(CS);
   ReplaceInCompoundStmt(CS);
-  return;
 }
 
 void RSASTReplace::VisitCaseStmt(clang::CaseStmt *CS) {
@@ -89,7 +85,6 @@ void RSASTReplace::VisitCaseStmt(clang::CaseStmt *CS) {
   } else {
     VisitStmt(CS);
   }
-  return;
 }
 
 void RSASTReplace::VisitDefaultStmt(clang::DefaultStmt *DS) {
@@ -98,7 +93,6 @@ void RSASTReplace::VisitDefaultStmt(clang::DefaultStmt *DS) {
   } else {
     VisitStmt(DS);
   }
-  return;
 }
 
 void RSASTReplace::VisitDoStmt(clang::DoStmt *DS) {
@@ -109,7 +103,6 @@ void RSASTReplace::VisitDoStmt(clang::DoStmt *DS) {
   } else {
     VisitStmt(DS);
   }
-  return;
 }
 
 void RSASTReplace::VisitForStmt(clang::ForStmt *FS) {
@@ -124,7 +117,6 @@ void RSASTReplace::VisitForStmt(clang::ForStmt *FS) {
   } else {
     VisitStmt(FS);
   }
-  return;
 }
 
 void RSASTReplace::VisitIfStmt(clang::IfStmt *IS) {
@@ -137,13 +129,11 @@ void RSASTReplace::VisitIfStmt(clang::IfStmt *IS) {
   } else {
     VisitStmt(IS);
   }
-  return;
 }
 
 void RSASTReplace::VisitSwitchCase(clang::SwitchCase *SC) {
   slangAssert(false && "Both case and default have specialized handlers");
   VisitStmt(SC);
-  return;
 }
 
 void RSASTReplace::VisitSwitchStmt(clang::SwitchStmt *SS) {
@@ -152,7 +142,6 @@ void RSASTReplace::VisitSwitchStmt(clang::SwitchStmt *SS) {
   } else {
     VisitStmt(SS);
   }
-  return;
 }
 
 void RSASTReplace::VisitWhileStmt(clang::WhileStmt *WS) {
@@ -163,7 +152,6 @@ void RSASTReplace::VisitWhileStmt(clang::WhileStmt *WS) {
   } else {
     VisitStmt(WS);
   }
-  return;
 }
 
 }  // namespace slang

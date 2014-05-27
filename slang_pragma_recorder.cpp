@@ -50,7 +50,6 @@ bool PragmaRecorder::GetPragmaValueFromToken(const clang::Token &Token,
 PragmaRecorder::PragmaRecorder(PragmaList *Pragmas)
     : PragmaHandler(),
       mPragmas(Pragmas) {
-  return;
 }
 
 void PragmaRecorder::HandlePragma(clang::Preprocessor &PP,
@@ -110,8 +109,6 @@ void PragmaRecorder::HandlePragma(clang::Preprocessor &PP,
 
   // Inform lex to eat the token
   PP.LexUnexpandedToken(CurrentToken);
-
-  return;
 }
 
 }  // namespace slang

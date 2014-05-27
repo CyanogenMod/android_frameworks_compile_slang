@@ -320,8 +320,6 @@ static void ParseArguments(llvm::SmallVectorImpl<const char*> &ArgVector,
                                                 RS_VERSION,
                                                 DiagEngine);
   }
-
-  return;
 }
 
 static const char *DetermineOutputFile(const std::string &OutputDir,
@@ -392,7 +390,6 @@ static void llvm_rs_cc_VersionPrinter() {
   OS << " with assertions";
 #endif
   OS << ".\n";
-  return;
 }
 #undef wrap_str
 #undef str
