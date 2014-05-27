@@ -946,7 +946,6 @@ void RSReflectionCpp::genInitExportVariable(const RSExportType *ET,
       slangAssert(false && "Unknown class of type");
     }
   }
-  return;
 }
 
 void RSReflectionCpp::genZeroInitExportVariable(const std::string &VarName) {

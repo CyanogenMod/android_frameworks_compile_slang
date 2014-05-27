@@ -55,7 +55,6 @@ class RSCheckAST : public clang::StmtVisitor<RSCheckAST> {
         mTargetAPI(TargetAPI),
         mIsFilterscript(IsFilterscript),
         mInKernel(false) {
-    return;
   }
 
   void VisitStmt(clang::Stmt *S);

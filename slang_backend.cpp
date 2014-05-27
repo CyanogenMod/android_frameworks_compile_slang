@@ -71,7 +71,6 @@ void Backend::CreateFunctionPasses() {
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
     PMBuilder.populateFunctionPassManager(*mPerFunctionPasses);
   }
-  return;
 }
 
 void Backend::CreateModulePasses() {
@@ -98,7 +97,6 @@ void Backend::CreateModulePasses() {
     // Add a pass to strip off unknown/unsupported attributes.
     mPerModulePasses->add(createStripUnknownAttributesPass());
   }
-  return;
 }
 
 bool Backend::CreateCodeGenPasses() {
@@ -226,15 +224,12 @@ Backend::Backend(clang::DiagnosticsEngine *DiagEngine,
                                llvm::formatted_raw_ostream::PRESERVE_STREAM);
   mGen = CreateLLVMCodeGen(mDiagEngine, "", mCodeGenOpts,
                            mTargetOpts, mLLVMContext);
-  return;
 }
 
 void Backend::Initialize(clang::ASTContext &Ctx) {
   mGen->Initialize(Ctx);
 
   mpModule = mGen->GetModule();
-
-  return;
 }
 
 // Encase the Bitcode in a wrapper containing RS version information.
@@ -251,7 +246,6 @@ void Backend::WrapBitcode(llvm::raw_string_ostream &Bitcode) {
 
   // Write out the actual encoded bitcode.
   FormattedOutStream << Bitcode.str();
-  return;
 }
 
 bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
@@ -391,18 +385,14 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
   }
 
   FormattedOutStream.flush();
-
-  return;
 }
 
 void Backend::HandleTagDeclDefinition(clang::TagDecl *D) {
   mGen->HandleTagDeclDefinition(D);
-  return;
 }
 
 void Backend::CompleteTentativeDefinition(clang::VarDecl *D) {
   mGen->CompleteTentativeDefinition(D);
-  return;
 }
 
 Backend::~Backend() {
@@ -411,7 +401,6 @@ Backend::~Backend() {
   delete mPerFunctionPasses;
   delete mPerModulePasses;
   delete mCodeGenPasses;
-  return;
 }
 
 }  // namespace slang

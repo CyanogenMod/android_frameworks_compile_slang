@@ -91,12 +91,12 @@ class Backend : public clang::ASTConsumer {
   // translate @Ctx into LLVM IR. One should not operate on @Ctx afterwards
   // since the changes applied on that never reflects to the LLVM module used
   // in the final codegen.
-  virtual void HandleTranslationUnitPre(clang::ASTContext &Ctx) { return; }
+  virtual void HandleTranslationUnitPre(clang::ASTContext &Ctx) { }
 
   // This handler will be invoked when Clang have converted AST tree to LLVM IR.
   // The @M contains the resulting LLVM IR tree. After the return from this
   // method, slang will start doing optimization and code generation for @M.
-  virtual void HandleTranslationUnitPost(llvm::Module *M) { return; }
+  virtual void HandleTranslationUnitPost(llvm::Module *M) { }
 
  public:
   Backend(clang::DiagnosticsEngine *DiagEngine,

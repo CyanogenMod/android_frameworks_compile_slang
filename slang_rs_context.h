@@ -132,12 +132,10 @@ class RSContext {
 
   inline void addExportType(const std::string &S) {
     mNeedExportTypes.insert(S);
-    return;
   }
 
   inline void setReflectJavaPackageName(const std::string &S) {
     mReflectJavaPackageName = S;
-    return;
   }
   inline const std::string &getReflectJavaPackageName() const {
     return mReflectJavaPackageName;
@@ -145,7 +143,6 @@ class RSContext {
 
   inline void setRSPackageName(const std::string &S) {
     mRSPackageName = S;
-    return;
   }
   inline const std::string &getRSPackageName() const {
     return mRSPackageName;
@@ -226,7 +223,6 @@ class RSContext {
   int getVersion() const { return version; }
   void setVersion(int v) {
     version = v;
-    return;
   }
 
   bool isCompatLib() const { return mIsCompatLib; }

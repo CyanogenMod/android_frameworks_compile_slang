@@ -79,7 +79,6 @@ void RSBackend::AnnotateFunction(clang::FunctionDecl *FD) {
     mRefCount.Init();
     mRefCount.Visit(FD->getBody());
   }
-  return;
 }
 
 bool RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
@@ -178,8 +177,6 @@ void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
       }
     }
   }
-
-  return;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -508,12 +505,9 @@ void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
 
   if (mContext->hasExportType())
     dumpExportTypeInfo(M);
-
-  return;
 }
 
 RSBackend::~RSBackend() {
-  return;
 }
 
 }  // namespace slang
