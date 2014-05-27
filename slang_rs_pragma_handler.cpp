@@ -41,7 +41,7 @@ class RSExportTypePragmaHandler : public RSPragmaHandler {
 
  public:
   RSExportTypePragmaHandler(llvm::StringRef Name, RSContext *Context)
-      : RSPragmaHandler(Name, Context) { return; }
+      : RSPragmaHandler(Name, Context) { }
 
   void HandlePragma(clang::Preprocessor &PP,
                     clang::PragmaIntroducerKind Introducer,
@@ -53,7 +53,7 @@ class RSExportTypePragmaHandler : public RSPragmaHandler {
 class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
  public:
   RSJavaPackageNamePragmaHandler(llvm::StringRef Name, RSContext *Context)
-      : RSPragmaHandler(Name, Context) { return; }
+      : RSPragmaHandler(Name, Context) { }
 
   void HandlePragma(clang::Preprocessor &PP,
                     clang::PragmaIntroducerKind Introducer,
@@ -116,7 +116,6 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
         }
       }
     }
-    return;
   }
 };
 
@@ -129,7 +128,7 @@ class RSReflectLicensePragmaHandler : public RSPragmaHandler {
 
  public:
   RSReflectLicensePragmaHandler(llvm::StringRef Name, RSContext *Context)
-      : RSPragmaHandler(Name, Context) { return; }
+      : RSPragmaHandler(Name, Context) { }
 
   void HandlePragma(clang::Preprocessor &PP,
                     clang::PragmaIntroducerKind Introducer,
@@ -159,7 +158,7 @@ class RSVersionPragmaHandler : public RSPragmaHandler {
 
  public:
   RSVersionPragmaHandler(llvm::StringRef Name, RSContext *Context)
-      : RSPragmaHandler(Name, Context) { return; }
+      : RSPragmaHandler(Name, Context) { }
 
   void HandlePragma(clang::Preprocessor &PP,
                     clang::PragmaIntroducerKind Introducer,
@@ -216,7 +215,6 @@ void RSPragmaHandler::handleItemListPragma(clang::Preprocessor &PP,
     if (PragmaToken.isNot(clang::tok::comma))
       break;
   }
-  return;
 }
 
 void RSPragmaHandler::handleNonParamPragma(clang::Preprocessor &PP,
@@ -235,7 +233,6 @@ void RSPragmaHandler::handleNonParamPragma(clang::Preprocessor &PP,
                   "expected a ')'"));
       return;
     }
-  return;
 }
 
 void RSPragmaHandler::handleOptionalStringLiteralParamPragma(

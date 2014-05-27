@@ -40,7 +40,6 @@ class RSExportable {
       : mContext(Context),
         mK(K) {
     Context->newExportable(this);
-    return;
   }
 
  public:

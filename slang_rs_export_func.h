@@ -65,8 +65,6 @@ class RSExportFunc : public RSExportable {
       Context->getMangleContext().mangleName(FD, BufStm);
       BufStm.flush();
     }
-
-    return;
   }
 
  public:
