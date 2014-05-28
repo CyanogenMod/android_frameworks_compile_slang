@@ -36,7 +36,7 @@ namespace slang {
   class RSExportFunc;
   class RSExportForEach;
 
-class RSReflection {
+class RSReflectionJava {
  private:
   const RSContext *mRSContext;
 
@@ -331,7 +331,7 @@ class RSReflection {
   void genNewItemBufferPackerIfNull(Context &C);
 
  public:
-  explicit RSReflection(const RSContext *Context,
+  explicit RSReflectionJava(const RSContext *Context,
       std::vector<std::string> *GeneratedFileNames)
       : mRSContext(Context),
         mLastError(""),
@@ -352,7 +352,7 @@ class RSReflection {
     else
       return mLastError.c_str();
   }
-};  // class RSReflection
+};  // class RSReflectionJava
 
 }   // namespace slang
 
