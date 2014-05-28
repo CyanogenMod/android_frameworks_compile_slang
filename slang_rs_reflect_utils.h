@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_REFLECT_UTILS_H_  // NOLINT
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_REFLECT_UTILS_H_ // NOLINT
 #define _FRAMEWORKS_COMPILE_SLANG_SLANG_REFLECT_UTILS_H_
 
 #include <string>
@@ -22,14 +22,10 @@
 namespace slang {
 
 // BitCode storage type
-enum BitCodeStorageType {
-  BCST_APK_RESOURCE,
-  BCST_JAVA_CODE,
-  BCST_CPP_CODE
-};
+enum BitCodeStorageType { BCST_APK_RESOURCE, BCST_JAVA_CODE, BCST_CPP_CODE };
 
 class RSSlangReflectUtils {
- public:
+public:
   // Encode a binary bitcode file into a Java source file.
   // rsFileName: the original .rs file name (with or without path).
   // bcFileName: where is the bit code file
@@ -49,7 +45,7 @@ class RSSlangReflectUtils {
   // Eg, foo.ext -> foo
   //     foo.bar.ext -> foo.bar
   //     ./path/foo.ext -> foo
-  static std::string GetFileNameStem(const char* fileName);
+  static std::string GetFileNameStem(const char *fileName);
 
   // Compuate a Java source file path from a given prefixPath and its package.
   // Eg, given prefixPath=./foo/bar and packageName=com.x.y, then it returns
@@ -85,6 +81,6 @@ class RSSlangReflectUtils {
   // Generate the bit code accessor Java source file.
   static bool GenerateBitCodeAccessor(const BitCodeAccessorContext &context);
 };
-}  // namespace slang
+} // namespace slang
 
-#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_REFLECT_UTILS_H_  NOLINT
+#endif // _FRAMEWORKS_COMPILE_SLANG_SLANG_REFLECT_UTILS_H_  NOLINT
