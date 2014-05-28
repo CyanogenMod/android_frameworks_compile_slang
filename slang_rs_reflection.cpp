@@ -71,7 +71,7 @@
 
 namespace slang {
 
-// Some utility function using internal in RSReflection
+// Some utility function using internal in RSReflectionJava
 static bool GetClassNameFromFileName(const std::string &FileName,
                                      std::string &ClassName) {
   ClassName.clear();
@@ -276,14 +276,10 @@ static std::string SanitizeString(std::string s) {
 
 
 /********************** Methods to generate script class **********************/
-bool RSReflection::genScriptClass(Context &C,
-                                  const std::string &ClassName,
-                                  std::string &ErrorMsg) {
-  if (!C.startClass(Context::AM_Public,
-                    false,
-                    ClassName,
-                    RS_SCRIPT_CLASS_SUPER_CLASS_NAME,
-                    ErrorMsg))
+bool RSReflectionJava::genScriptClass(Context &C, const std::string &ClassName,
+                                      std::string &ErrorMsg) {
+  if (!C.startClass(Context::AM_Public, false, ClassName,
+                    RS_SCRIPT_CLASS_SUPER_CLASS_NAME, ErrorMsg))
     return false;
 
   genScriptClassConstructor(C);
@@ -316,7 +312,7 @@ bool RSReflection::genScriptClass(Context &C,
   return true;
 }
 
-void RSReflection::genScriptClassConstructor(Context &C) {
+void RSReflectionJava::genScriptClassConstructor(Context &C) {
   std::string className(RSSlangReflectUtils::JavaBitcodeClassNameFromRSFileName(
       C.getInputRSFile().c_str()));
   // Provide a simple way to reference this object.
@@ -430,9 +426,9 @@ void RSReflection::genScriptClassConstructor(Context &C) {
   }
 }
 
-void RSReflection::genInitBoolExportVariable(Context &C,
-                                             const std::string &VarName,
-                                             const clang::APValue &Val) {
+void RSReflectionJava::genInitBoolExportVariable(Context &C,
+                                                 const std::string &VarName,
+                                                 const clang::APValue &Val) {
   slangAssert(!Val.isUninit() && "Not a valid initializer");
   slangAssert((Val.getKind() == clang::APValue::Int)
               && "Bool type has wrong initial APValue");
@@ -442,20 +438,17 @@ void RSReflection::genInitBoolExportVariable(Context &C,
   C.out() << ((Val.getInt().getSExtValue() == 0) ? "false" : "true") << ";\n";
 }
 
-void RSReflection::genInitPrimitiveExportVariable(
-      Context &C,
-      const std::string &VarName,
-      const clang::APValue &Val) {
+void RSReflectionJava::genInitPrimitiveExportVariable(
+    Context &C, const std::string &VarName, const clang::APValue &Val) {
   slangAssert(!Val.isUninit() && "Not a valid initializer");
 
   C.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
   C.out() << RSReflectionBase::genInitValue(Val) << ";\n";
 }
 
-void RSReflection::genInitExportVariable(Context &C,
-                                         const RSExportType *ET,
-                                         const std::string &VarName,
-                                         const clang::APValue &Val) {
+void RSReflectionJava::genInitExportVariable(Context &C, const RSExportType *ET,
+                                             const std::string &VarName,
+                                             const clang::APValue &Val) {
   slangAssert(!Val.isUninit() && "Not a valid initializer");
 
   switch (ET->getClass()) {
@@ -561,7 +554,7 @@ void RSReflection::genInitExportVariable(Context &C,
   }
 }
 
-void RSReflection::genExportVariable(Context &C, const RSExportVar *EV) {
+void RSReflectionJava::genExportVariable(Context &C, const RSExportVar *EV) {
   const RSExportType *ET = EV->getType();
 
   C.indent() << "private final static int " RS_EXPORT_VAR_INDEX_PREFIX
@@ -598,7 +591,7 @@ void RSReflection::genExportVariable(Context &C, const RSExportVar *EV) {
   }
 }
 
-void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
+void RSReflectionJava::genExportFunction(Context &C, const RSExportFunc *EF) {
   C.indent() << "private final static int " RS_EXPORT_FUNC_INDEX_PREFIX
              << EF->getName() << " = " << C.getNextExportFuncSlot() << ";\n";
 
@@ -639,7 +632,7 @@ void RSReflection::genExportFunction(Context &C, const RSExportFunc *EF) {
   C.endFunction();
 }
 
-void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
+void RSReflectionJava::genExportForEach(Context &C, const RSExportForEach *EF) {
   if (EF->isDummyRoot()) {
     // Skip reflection for dummy root() kernels. Note that we have to
     // advance the next slot number for ForEach, however.
@@ -786,8 +779,8 @@ void RSReflection::genExportForEach(Context &C, const RSExportForEach *EF) {
   C.endFunction();
 }
 
-void RSReflection::genTypeInstanceFromPointer(Context &C,
-                                              const RSExportType *ET) {
+void RSReflectionJava::genTypeInstanceFromPointer(Context &C,
+                                                  const RSExportType *ET) {
   if (ET->getClass() == RSExportType::ExportClassPointer) {
     // For pointer parameters to original forEach kernels.
     const RSExportPointerType *EPT =
@@ -799,8 +792,7 @@ void RSReflection::genTypeInstanceFromPointer(Context &C,
   }
 }
 
-void RSReflection::genTypeInstance(Context &C,
-                                   const RSExportType *ET) {
+void RSReflectionJava::genTypeInstance(Context &C, const RSExportType *ET) {
   switch (ET->getClass()) {
     case RSExportType::ExportClassPrimitive:
     case RSExportType::ExportClassVector:
@@ -827,8 +819,8 @@ void RSReflection::genTypeInstance(Context &C,
   }
 }
 
-void RSReflection::genFieldPackerInstance(Context &C,
-                                          const RSExportType *ET) {
+void RSReflectionJava::genFieldPackerInstance(Context &C,
+                                              const RSExportType *ET) {
   switch (ET->getClass()) {
     case RSExportType::ExportClassPrimitive:
     case RSExportType::ExportClassVector:
@@ -844,9 +836,8 @@ void RSReflection::genFieldPackerInstance(Context &C,
   }
 }
 
-void RSReflection::genTypeCheck(Context &C,
-                                const RSExportType *ET,
-                                const char *VarName) {
+void RSReflectionJava::genTypeCheck(Context &C, const RSExportType *ET,
+                                    const char *VarName) {
   C.indent() << "// check " << VarName << "\n";
 
   if (ET->getClass() == RSExportType::ExportClassPointer) {
@@ -879,12 +870,11 @@ void RSReflection::genTypeCheck(Context &C,
   }
 }
 
-
-void RSReflection::genPrimitiveTypeExportVariable(
-    Context &C,
-    const RSExportVar *EV) {
-  slangAssert((EV->getType()->getClass() == RSExportType::ExportClassPrimitive)
-              && "Variable should be type of primitive here");
+void RSReflectionJava::genPrimitiveTypeExportVariable(Context &C,
+                                                      const RSExportVar *EV) {
+  slangAssert(
+      (EV->getType()->getClass() == RSExportType::ExportClassPrimitive) &&
+      "Variable should be type of primitive here");
 
   const RSExportPrimitiveType *EPT =
       static_cast<const RSExportPrimitiveType*>(EV->getType());
@@ -948,8 +938,8 @@ void RSReflection::genPrimitiveTypeExportVariable(
   genGetFieldID(C, VarName);
 }
 
-void RSReflection::genPointerTypeExportVariable(Context &C,
-                                                const RSExportVar *EV) {
+void RSReflectionJava::genPointerTypeExportVariable(Context &C,
+                                                    const RSExportVar *EV) {
   const RSExportType *ET = EV->getType();
   const RSExportType *PointeeType;
 
@@ -986,8 +976,8 @@ void RSReflection::genPointerTypeExportVariable(Context &C,
   genGetExportVariable(C, TypeName, VarName);
 }
 
-void RSReflection::genVectorTypeExportVariable(Context &C,
-                                               const RSExportVar *EV) {
+void RSReflectionJava::genVectorTypeExportVariable(Context &C,
+                                                   const RSExportVar *EV) {
   slangAssert((EV->getType()->getClass() == RSExportType::ExportClassVector) &&
               "Variable should be type of vector here");
 
@@ -1000,8 +990,8 @@ void RSReflection::genVectorTypeExportVariable(Context &C,
   genGetFieldID(C, VarName);
 }
 
-void RSReflection::genMatrixTypeExportVariable(Context &C,
-                                               const RSExportVar *EV) {
+void RSReflectionJava::genMatrixTypeExportVariable(Context &C,
+                                                   const RSExportVar *EV) {
   slangAssert((EV->getType()->getClass() == RSExportType::ExportClassMatrix) &&
               "Variable should be type of matrix here");
 
@@ -1034,12 +1024,12 @@ void RSReflection::genMatrixTypeExportVariable(Context &C,
   genGetFieldID(C, VarName);
 }
 
-void RSReflection::genConstantArrayTypeExportVariable(
-    Context &C,
-    const RSExportVar *EV) {
-  slangAssert((EV->getType()->getClass() ==
-               RSExportType::ExportClassConstantArray) &&
-              "Variable should be type of constant array here");
+void
+RSReflectionJava::genConstantArrayTypeExportVariable(Context &C,
+                                                     const RSExportVar *EV) {
+  slangAssert(
+      (EV->getType()->getClass() == RSExportType::ExportClassConstantArray) &&
+      "Variable should be type of constant array here");
 
   std::string TypeName = GetTypeName(EV->getType());
   std::string VarName = EV->getName();
@@ -1050,8 +1040,8 @@ void RSReflection::genConstantArrayTypeExportVariable(
   genGetFieldID(C, VarName);
 }
 
-void RSReflection::genRecordTypeExportVariable(Context &C,
-                                               const RSExportVar *EV) {
+void RSReflectionJava::genRecordTypeExportVariable(Context &C,
+                                                   const RSExportVar *EV) {
   slangAssert((EV->getType()->getClass() == RSExportType::ExportClassRecord) &&
               "Variable should be type of struct here");
 
@@ -1064,16 +1054,16 @@ void RSReflection::genRecordTypeExportVariable(Context &C,
   genGetFieldID(C, VarName);
 }
 
-void RSReflection::genPrivateExportVariable(Context &C,
-                                            const std::string &TypeName,
-                                            const std::string &VarName) {
-  C.indent() << "private " << TypeName << " " RS_EXPORT_VAR_PREFIX
-             << VarName << ";\n";
+void RSReflectionJava::genPrivateExportVariable(Context &C,
+                                                const std::string &TypeName,
+                                                const std::string &VarName) {
+  C.indent() << "private " << TypeName << " " RS_EXPORT_VAR_PREFIX << VarName
+             << ";\n";
 }
 
-void RSReflection::genSetExportVariable(Context &C,
-                                        const std::string &TypeName,
-                                        const RSExportVar *EV) {
+void RSReflectionJava::genSetExportVariable(Context &C,
+                                            const std::string &TypeName,
+                                            const RSExportVar *EV) {
   if (!EV->isConst()) {
     const char *FieldPackerName = "fp";
     std::string VarName = EV->getName();
@@ -1107,13 +1097,10 @@ void RSReflection::genSetExportVariable(Context &C,
   }
 }
 
-void RSReflection::genGetExportVariable(Context &C,
-                                        const std::string &TypeName,
-                                        const std::string &VarName) {
-  C.startFunction(Context::AM_Public,
-                  false,
-                  TypeName.c_str(),
-                  "get_" + VarName,
+void RSReflectionJava::genGetExportVariable(Context &C,
+                                            const std::string &TypeName,
+                                            const std::string &VarName) {
+  C.startFunction(Context::AM_Public, false, TypeName.c_str(), "get_" + VarName,
                   0);
 
   C.indent() << "return " RS_EXPORT_VAR_PREFIX << VarName << ";\n";
@@ -1121,7 +1108,7 @@ void RSReflection::genGetExportVariable(Context &C,
   C.endFunction();
 }
 
-void RSReflection::genGetFieldID(Context &C, const std::string &VarName) {
+void RSReflectionJava::genGetFieldID(Context &C, const std::string &VarName) {
   // We only generate getFieldID_*() for non-Pointer (bind) types.
   if (mRSContext->getTargetAPI() >= SLANG_JB_MR1_TARGET_API) {
     C.startFunction(Context::AM_Public,
@@ -1139,9 +1126,8 @@ void RSReflection::genGetFieldID(Context &C, const std::string &VarName) {
 
 /******************* Methods to generate script class /end *******************/
 
-bool RSReflection::genCreateFieldPacker(Context &C,
-                                        const RSExportType *ET,
-                                        const char *FieldPackerName) {
+bool RSReflectionJava::genCreateFieldPacker(Context &C, const RSExportType *ET,
+                                            const char *FieldPackerName) {
   size_t AllocSize = ET->getAllocSize();
   if (AllocSize > 0)
     C.indent() << "FieldPacker " << FieldPackerName << " = new FieldPacker("
@@ -1151,10 +1137,9 @@ bool RSReflection::genCreateFieldPacker(Context &C,
   return true;
 }
 
-void RSReflection::genPackVarOfType(Context &C,
-                                    const RSExportType *ET,
-                                    const char *VarName,
-                                    const char *FieldPackerName) {
+void RSReflectionJava::genPackVarOfType(Context &C, const RSExportType *ET,
+                                        const char *VarName,
+                                        const char *FieldPackerName) {
   switch (ET->getClass()) {
     case RSExportType::ExportClassPrimitive:
     case RSExportType::ExportClassVector: {
@@ -1262,9 +1247,8 @@ void RSReflection::genPackVarOfType(Context &C,
   }
 }
 
-void RSReflection::genAllocateVarOfType(Context &C,
-                                        const RSExportType *T,
-                                        const std::string &VarName) {
+void RSReflectionJava::genAllocateVarOfType(Context &C, const RSExportType *T,
+                                            const std::string &VarName) {
   switch (T->getClass()) {
     case RSExportType::ExportClassPrimitive: {
       // Primitive type like int in Java has its own storage once it's declared.
@@ -1312,19 +1296,18 @@ void RSReflection::genAllocateVarOfType(Context &C,
   }
 }
 
-void RSReflection::genNewItemBufferIfNull(Context &C,
-                                          const char *Index) {
-  C.indent() << "if (" RS_TYPE_ITEM_BUFFER_NAME " == null) "
-                  RS_TYPE_ITEM_BUFFER_NAME " = "
-                    "new " RS_TYPE_ITEM_CLASS_NAME
-                    "[getType().getX() /* count */];\n";
+void RSReflectionJava::genNewItemBufferIfNull(Context &C, const char *Index) {
+  C.indent() << "if (" RS_TYPE_ITEM_BUFFER_NAME
+                " == null) " RS_TYPE_ITEM_BUFFER_NAME " = "
+                "new " RS_TYPE_ITEM_CLASS_NAME
+                "[getType().getX() /* count */];\n";
   if (Index != NULL)
     C.indent() << "if (" RS_TYPE_ITEM_BUFFER_NAME "[" << Index << "] == null) "
                     RS_TYPE_ITEM_BUFFER_NAME"[" << Index << "] = "
                       "new " RS_TYPE_ITEM_CLASS_NAME "();\n";
 }
 
-void RSReflection::genNewItemBufferPackerIfNull(Context &C) {
+void RSReflectionJava::genNewItemBufferPackerIfNull(Context &C) {
   C.indent() << "if (" RS_TYPE_ITEM_BUFFER_PACKER_NAME " == null) "
                   RS_TYPE_ITEM_BUFFER_PACKER_NAME " = "
                     "new FieldPacker(" RS_TYPE_ITEM_CLASS_NAME
@@ -1333,9 +1316,8 @@ void RSReflection::genNewItemBufferPackerIfNull(Context &C) {
 }
 
 /********************** Methods to generate type class  **********************/
-bool RSReflection::genTypeClass(Context &C,
-                                const RSExportRecordType *ERT,
-                                std::string &ErrorMsg) {
+bool RSReflectionJava::genTypeClass(Context &C, const RSExportRecordType *ERT,
+                                    std::string &ErrorMsg) {
   std::string ClassName = ERT->getElementName();
   std::string superClassName = C.getRSPackageName();
   superClassName += RS_TYPE_CLASS_SUPER_CLASS_NAME;
@@ -1380,8 +1362,8 @@ bool RSReflection::genTypeClass(Context &C,
   return true;
 }
 
-void RSReflection::genTypeItemClass(Context &C,
-                                    const RSExportRecordType *ERT) {
+void RSReflectionJava::genTypeItemClass(Context &C,
+                                        const RSExportRecordType *ERT) {
   C.indent() << "static public class " RS_TYPE_ITEM_CLASS_NAME;
   C.startBlock();
 
@@ -1418,8 +1400,8 @@ void RSReflection::genTypeItemClass(Context &C,
   C.endBlock();
 }
 
-void RSReflection::genTypeClassConstructor(Context &C,
-                                           const RSExportRecordType *ERT) {
+void RSReflectionJava::genTypeClassConstructor(Context &C,
+                                               const RSExportRecordType *ERT) {
   const char *RenderScriptVar = "rs";
 
   C.startFunction(Context::AM_Public,
@@ -1584,16 +1566,10 @@ void RSReflection::genTypeClassConstructor(Context &C,
   C.endFunction();
 }
 
-
-void RSReflection::genTypeClassCopyToArray(Context &C,
-                                           const RSExportRecordType *ERT) {
-  C.startFunction(Context::AM_Private,
-                  false,
-                  "void",
-                  "copyToArray",
-                  2,
-                  RS_TYPE_ITEM_CLASS_NAME, "i",
-                  "int", "index");
+void RSReflectionJava::genTypeClassCopyToArray(Context &C,
+                                               const RSExportRecordType *ERT) {
+  C.startFunction(Context::AM_Private, false, "void", "copyToArray", 2,
+                  RS_TYPE_ITEM_CLASS_NAME, "i", "int", "index");
 
   genNewItemBufferPackerIfNull(C);
   C.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME
@@ -1605,31 +1581,22 @@ void RSReflection::genTypeClassCopyToArray(Context &C,
   C.endFunction();
 }
 
-void RSReflection::genTypeClassCopyToArrayLocal(Context &C,
-                                                const RSExportRecordType *ERT) {
-  C.startFunction(Context::AM_Private,
-                  false,
-                  "void",
-                  "copyToArrayLocal",
-                  2,
-                  RS_TYPE_ITEM_CLASS_NAME, "i",
-                  "FieldPacker", "fp");
+void
+RSReflectionJava::genTypeClassCopyToArrayLocal(Context &C,
+                                               const RSExportRecordType *ERT) {
+  C.startFunction(Context::AM_Private, false, "void", "copyToArrayLocal", 2,
+                  RS_TYPE_ITEM_CLASS_NAME, "i", "FieldPacker", "fp");
 
   genPackVarOfType(C, ERT, "i", "fp");
 
   C.endFunction();
 }
 
-void RSReflection::genTypeClassItemSetter(Context &C,
-                                          const RSExportRecordType *ERT) {
-  C.startFunction(Context::AM_PublicSynchronized,
-                  false,
-                  "void",
-                  "set",
-                  3,
-                  RS_TYPE_ITEM_CLASS_NAME, "i",
-                  "int", "index",
-                  "boolean", "copyNow");
+void RSReflectionJava::genTypeClassItemSetter(Context &C,
+                                              const RSExportRecordType *ERT) {
+  C.startFunction(Context::AM_PublicSynchronized, false, "void", "set", 3,
+                  RS_TYPE_ITEM_CLASS_NAME, "i", "int", "index", "boolean",
+                  "copyNow");
   genNewItemBufferIfNull(C, NULL);
   C.indent() << RS_TYPE_ITEM_BUFFER_NAME "[index] = i;\n";
 
@@ -1648,25 +1615,21 @@ void RSReflection::genTypeClassItemSetter(Context &C,
   C.endFunction();
 }
 
-void RSReflection::genTypeClassItemGetter(Context &C,
-                                          const RSExportRecordType *ERT) {
-  C.startFunction(Context::AM_PublicSynchronized,
-                  false,
-                  RS_TYPE_ITEM_CLASS_NAME,
-                  "get",
-                  1,
-                  "int", "index");
+void RSReflectionJava::genTypeClassItemGetter(Context &C,
+                                              const RSExportRecordType *ERT) {
+  C.startFunction(Context::AM_PublicSynchronized, false,
+                  RS_TYPE_ITEM_CLASS_NAME, "get", 1, "int", "index");
   C.indent() << "if (" RS_TYPE_ITEM_BUFFER_NAME " == null) return null;\n";
   C.indent() << "return " RS_TYPE_ITEM_BUFFER_NAME "[index];\n";
   C.endFunction();
 }
 
-void RSReflection::genTypeClassComponentSetter(Context &C,
-                                               const RSExportRecordType *ERT) {
+void
+RSReflectionJava::genTypeClassComponentSetter(Context &C,
+                                              const RSExportRecordType *ERT) {
   for (RSExportRecordType::const_field_iterator FI = ERT->fields_begin(),
-           FE = ERT->fields_end();
-       FI != FE;
-       FI++) {
+                                                FE = ERT->fields_end();
+       FI != FE; FI++) {
     const RSExportRecordType::Field *F = *FI;
     size_t FieldOffset = F->getOffsetInParent();
     size_t FieldStoreSize = F->getType()->getStoreSize();
@@ -1708,12 +1671,12 @@ void RSReflection::genTypeClassComponentSetter(Context &C,
   }
 }
 
-void RSReflection::genTypeClassComponentGetter(Context &C,
-                                               const RSExportRecordType *ERT) {
+void
+RSReflectionJava::genTypeClassComponentGetter(Context &C,
+                                              const RSExportRecordType *ERT) {
   for (RSExportRecordType::const_field_iterator FI = ERT->fields_begin(),
-           FE = ERT->fields_end();
-       FI != FE;
-       FI++) {
+                                                FE = ERT->fields_end();
+       FI != FE; FI++) {
     const RSExportRecordType::Field *F = *FI;
     C.startFunction(Context::AM_PublicSynchronized,
                     false,
@@ -1729,8 +1692,8 @@ void RSReflection::genTypeClassComponentGetter(Context &C,
   }
 }
 
-void RSReflection::genTypeClassCopyAll(Context &C,
-                                       const RSExportRecordType *ERT) {
+void RSReflectionJava::genTypeClassCopyAll(Context &C,
+                                           const RSExportRecordType *ERT) {
   C.startFunction(Context::AM_PublicSynchronized, false, "void", "copyAll", 0);
 
   C.indent() << "for (int ct = 0; ct < " RS_TYPE_ITEM_BUFFER_NAME ".length; ct++)"
@@ -1741,7 +1704,7 @@ void RSReflection::genTypeClassCopyAll(Context &C,
   C.endFunction();
 }
 
-void RSReflection::genTypeClassResize(Context &C) {
+void RSReflectionJava::genTypeClassResize(Context &C) {
   C.startFunction(Context::AM_PublicSynchronized,
                   false,
                   "void",
@@ -1772,13 +1735,14 @@ void RSReflection::genTypeClassResize(Context &C) {
 /******************** Methods to generate type class /end ********************/
 
 /********** Methods to create Element in Java of given record type ***********/
-void RSReflection::genBuildElement(Context &C,
-                                   const char *ElementBuilderName,
-                                   const RSExportRecordType *ERT,
-                                   const char *RenderScriptVar,
-                                   bool IsInline) {
-  C.indent() << "Element.Builder " << ElementBuilderName << " = "
-      "new Element.Builder(" << RenderScriptVar << ");\n";
+void RSReflectionJava::genBuildElement(Context &C,
+                                       const char *ElementBuilderName,
+                                       const RSExportRecordType *ERT,
+                                       const char *RenderScriptVar,
+                                       bool IsInline) {
+  C.indent() << "Element.Builder " << ElementBuilderName
+             << " = "
+                "new Element.Builder(" << RenderScriptVar << ");\n";
 
   // eb.add(...)
   genAddElementToElementBuilder(C,
@@ -1801,12 +1765,10 @@ void RSReflection::genBuildElement(Context &C,
   C.incFieldIndex();                                                \
 } while (false)
 
-void RSReflection::genAddElementToElementBuilder(Context &C,
-                                                 const RSExportType *ET,
-                                                 const std::string &VarName,
-                                                 const char *ElementBuilderName,
-                                                 const char *RenderScriptVar,
-                                                 unsigned ArraySize) {
+void RSReflectionJava::genAddElementToElementBuilder(
+    Context &C, const RSExportType *ET, const std::string &VarName,
+    const char *ElementBuilderName, const char *RenderScriptVar,
+    unsigned ArraySize) {
   std::string ElementConstruct = GetBuiltinElementConstruct(ET);
 
   if (ElementConstruct != "") {
@@ -1948,11 +1910,11 @@ void RSReflection::genAddElementToElementBuilder(Context &C,
   }
 }
 
-void RSReflection::genAddPaddingToElementBuiler(Context &C,
-                                                int PaddingSize,
-                                                const char *ElementBuilderName,
-                                                const char *RenderScriptVar) {
-  unsigned ArraySize = 0;   // Hack the EB_ADD macro
+void
+RSReflectionJava::genAddPaddingToElementBuiler(Context &C, int PaddingSize,
+                                               const char *ElementBuilderName,
+                                               const char *RenderScriptVar) {
+  unsigned ArraySize = 0; // Hack the EB_ADD macro
   while (PaddingSize > 0) {
     const std::string &VarName = C.createPaddingField();
     if (PaddingSize >= 4) {
@@ -1971,12 +1933,12 @@ void RSReflection::genAddPaddingToElementBuiler(Context &C,
 #undef EB_ADD
 /******** Methods to create Element in Java of given record type /end ********/
 
-bool RSReflection::reflect(const std::string &OutputPathBase,
-                           const std::string &OutputPackageName,
-                           const std::string &RSPackageName,
-                           const std::string &InputFileName,
-                           const std::string &OutputBCFileName,
-                           bool EmbedBitcodeInJava) {
+bool RSReflectionJava::reflect(const std::string &OutputPathBase,
+                               const std::string &OutputPackageName,
+                               const std::string &RSPackageName,
+                               const std::string &InputFileName,
+                               const std::string &OutputBCFileName,
+                               bool EmbedBitcodeInJava) {
   Context *C = NULL;
   std::string ResourceId = "";
   std::string PaddingPrefix = "";
@@ -2047,8 +2009,8 @@ bool RSReflection::reflect(const std::string &OutputPathBase,
   return true;
 }
 
-/************************** RSReflection::Context **************************/
-const char *const RSReflection::Context::ApacheLicenseNote =
+/************************** RSReflectionJava::Context **************************/
+const char *const RSReflectionJava::Context::ApacheLicenseNote =
     "/*\n"
     " * Copyright (C) 2011-2013 The Android Open Source Project\n"
     " *\n"
@@ -2067,8 +2029,8 @@ const char *const RSReflection::Context::ApacheLicenseNote =
     " */\n"
     "\n";
 
-bool RSReflection::Context::openClassFile(const std::string &ClassName,
-                                          std::string &ErrorMsg) {
+bool RSReflectionJava::Context::openClassFile(const std::string &ClassName,
+                                              std::string &ErrorMsg) {
   if (!mUseStdout) {
     mOF.clear();
     std::string Path =
@@ -2089,7 +2051,7 @@ bool RSReflection::Context::openClassFile(const std::string &ClassName,
   return true;
 }
 
-const char *RSReflection::Context::AccessModifierStr(AccessModifier AM) {
+const char *RSReflectionJava::Context::AccessModifierStr(AccessModifier AM) {
   switch (AM) {
     case AM_Public: return "public"; break;
     case AM_Protected: return "protected"; break;
@@ -2099,11 +2061,10 @@ const char *RSReflection::Context::AccessModifierStr(AccessModifier AM) {
   }
 }
 
-bool RSReflection::Context::startClass(AccessModifier AM,
-                                       bool IsStatic,
-                                       const std::string &ClassName,
-                                       const char *SuperClassName,
-                                       std::string &ErrorMsg) {
+bool RSReflectionJava::Context::startClass(AccessModifier AM, bool IsStatic,
+                                           const std::string &ClassName,
+                                           const char *SuperClassName,
+                                           std::string &ErrorMsg) {
   if (mVerbose)
     std::cout << "Generating " << ClassName << ".java ...\n";
 
@@ -2155,14 +2116,14 @@ bool RSReflection::Context::startClass(AccessModifier AM,
   return true;
 }
 
-void RSReflection::Context::endClass() {
+void RSReflectionJava::Context::endClass() {
   endBlock();
   if (!mUseStdout)
     mOF.close();
   clear();
 }
 
-void RSReflection::Context::startBlock(bool ShouldIndent) {
+void RSReflectionJava::Context::startBlock(bool ShouldIndent) {
   if (ShouldIndent)
     indent() << "{\n";
   else
@@ -2170,25 +2131,24 @@ void RSReflection::Context::startBlock(bool ShouldIndent) {
   incIndentLevel();
 }
 
-void RSReflection::Context::endBlock() {
+void RSReflectionJava::Context::endBlock() {
   decIndentLevel();
   indent() << "}\n\n";
 }
 
-void RSReflection::Context::startTypeClass(const std::string &ClassName) {
+void RSReflectionJava::Context::startTypeClass(const std::string &ClassName) {
   indent() << "public static class " << ClassName;
   startBlock();
 }
 
-void RSReflection::Context::endTypeClass() {
+void RSReflectionJava::Context::endTypeClass() {
   endBlock();
 }
 
-void RSReflection::Context::startFunction(AccessModifier AM,
-                                          bool IsStatic,
-                                          const char *ReturnType,
-                                          const std::string &FunctionName,
-                                          int Argc, ...) {
+void RSReflectionJava::Context::startFunction(AccessModifier AM, bool IsStatic,
+                                              const char *ReturnType,
+                                              const std::string &FunctionName,
+                                              int Argc, ...) {
   ArgTy Args;
   va_list vl;
   va_start(vl, Argc);
@@ -2204,11 +2164,10 @@ void RSReflection::Context::startFunction(AccessModifier AM,
   startFunction(AM, IsStatic, ReturnType, FunctionName, Args);
 }
 
-void RSReflection::Context::startFunction(AccessModifier AM,
-                                          bool IsStatic,
-                                          const char *ReturnType,
-                                          const std::string &FunctionName,
-                                          const ArgTy &Args) {
+void RSReflectionJava::Context::startFunction(AccessModifier AM, bool IsStatic,
+                                              const char *ReturnType,
+                                              const std::string &FunctionName,
+                                              const ArgTy &Args) {
   indent() << AccessModifierStr(AM) << ((IsStatic) ? " static " : " ")
            << ((ReturnType) ? ReturnType : "") << " " << FunctionName << "(";
 
@@ -2228,11 +2187,11 @@ void RSReflection::Context::startFunction(AccessModifier AM,
   startBlock();
 }
 
-void RSReflection::Context::endFunction() {
+void RSReflectionJava::Context::endFunction() {
   endBlock();
 }
 
-bool RSReflection::Context::addTypeNameForElement(
+bool RSReflectionJava::Context::addTypeNameForElement(
     const std::string &TypeName) {
   if (mTypesToCheck.find(TypeName) == mTypesToCheck.end()) {
     mTypesToCheck.insert(TypeName);
@@ -2242,7 +2201,7 @@ bool RSReflection::Context::addTypeNameForElement(
   }
 }
 
-bool RSReflection::Context::addTypeNameForFieldPacker(
+bool RSReflectionJava::Context::addTypeNameForFieldPacker(
     const std::string &TypeName) {
   if (mFieldPackerTypes.find(TypeName) == mFieldPackerTypes.end()) {
     mFieldPackerTypes.insert(TypeName);
