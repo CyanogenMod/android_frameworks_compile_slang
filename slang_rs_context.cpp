@@ -293,7 +293,7 @@ bool RSContext::reflectToJava(const std::string &OutputPathBase,
     mIsCompatLib = true;
   }
 
-  RSReflection *R = new RSReflection(this, mGeneratedFileNames);
+  RSReflectionJava *R = new RSReflectionJava(this, mGeneratedFileNames);
   bool ret = R->reflect(OutputPathBase, mReflectJavaPackageName, mRSPackageName,
                         InputFileName, OutputBCFileName, EmbedBitcodeInJava);
   if (!ret)
