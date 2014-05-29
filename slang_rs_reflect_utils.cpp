@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, The Android Open Source Project
+ * Copyright 2010-2014, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <iomanip>
 
 #include "llvm/ADT/StringRef.h"
 
@@ -108,62 +109,53 @@ std::string RSSlangReflectUtils::JavaBitcodeClassNameFromRSFileName(
   std::string tmp(InternalFileNameConvert(rsFileName, false));
   return tmp.append("BitCode");
 }
-static bool GenerateAccessorHeader(
-    const RSSlangReflectUtils::BitCodeAccessorContext &context, FILE *pfout) {
-  fprintf(pfout, "/*\n");
-  fprintf(pfout, " * This file is auto-generated. DO NOT MODIFY!\n");
-  fprintf(pfout, " * The source Renderscript file: %s\n", context.rsFileName);
-  fprintf(pfout, " */\n\n");
-  fprintf(pfout, "package %s;\n\n", context.packageName);
 
-  // add imports here.
-
-  return true;
-}
-
-static bool GenerateAccessorMethodSignature(
-    const RSSlangReflectUtils::BitCodeAccessorContext &context, FILE *pfout) {
+static bool GenerateAccessorMethod(
+    const RSSlangReflectUtils::BitCodeAccessorContext &context,
+    GeneratedFile &out) {
   // the prototype of the accessor method
-  fprintf(pfout, "  // return byte array representation of the bitcode.\n");
-  fprintf(pfout, "  public static byte[] getBitCode32() {\n");
+  out.indent() << "// return byte array representation of the bitcode.\n";
+  out.indent() << "public static byte[] getBitCode32()";
+  out.startBlock();
+  out.indent() << "return getBitCode32Internal();\n";
+  out.endBlock(true);
   return true;
 }
 
 // Java method size must not exceed 64k,
 // so we have to split the bitcode into multiple segments.
 static bool GenerateSegmentMethod(const char *buff, int blen, int seg_num,
-                                  FILE *pfout) {
+                                  GeneratedFile &out) {
+  out.indent() << "private static byte[] getSegment32_" << seg_num << "()";
+  out.startBlock();
+  out.indent() << "byte[] data = {";
+  out.increaseIndent();
 
-  fprintf(pfout, "  private static byte[] getSegment32_%d() {\n", seg_num);
-  fprintf(pfout, "    byte[] data = {\n");
-
-  static const int LINE_BYTE_NUM = 16;
-  char out_line[LINE_BYTE_NUM * 6 + 10];
-  const char *out_line_end = out_line + sizeof(out_line);
-  char *p = out_line;
-
-  int write_length = 0;
-  while (write_length < blen) {
-    p += snprintf(p, out_line_end - p, " %4d,",
-                  static_cast<int>(buff[write_length]));
-    ++write_length;
-    if (((write_length % LINE_BYTE_NUM) == 0) || (write_length == blen)) {
-      fprintf(pfout, "     ");
-      fprintf(pfout, "%s", out_line);
-      fprintf(pfout, "\n");
-      p = out_line;
+  const int kEntriesPerLine = 16;
+  int position = kEntriesPerLine;  // We start with a new line and indent.
+  for (int written = 0; written < blen; written++) {
+    if (++position >= kEntriesPerLine) {
+      out << "\n";
+      out.indent();
+      position = 0;
+    } else {
+      out << " ";
     }
+    out << std::setw(4) << static_cast<int>(buff[written]) << ",";
   }
+  out << "\n";
 
-  fprintf(pfout, "    };\n");
-  fprintf(pfout, "    return data;\n");
-  fprintf(pfout, "  }\n\n");
+  out.decreaseIndent();
+  out.indent() << "};\n";
+  out.indent() << "return data;\n";
+  out.endBlock();
 
   return true;
 }
 
 static bool GenerateJavaCodeAccessorMethod(
-    const RSSlangReflectUtils::BitCodeAccessorContext &context, FILE *pfout) {
+    const RSSlangReflectUtils::BitCodeAccessorContext &context,
+    GeneratedFile &out) {
   FILE *pfin = fopen(context.bcFileName, "rb");
   if (pfin == NULL) {
     fprintf(stderr, "Error: could not read file %s\n", context.bcFileName);
@@ -171,10 +163,7 @@ static bool GenerateJavaCodeAccessorMethod(
   }
 
   // start the accessor method
-  GenerateAccessorMethodSignature(context, pfout);
-  fprintf(pfout, "    return getBitCode32Internal();\n");
-  // end the accessor method
-  fprintf(pfout, "  };\n\n");
+  GenerateAccessorMethod(context, out);
 
   // output the data
   // make sure the generated function for a segment won't break the Javac
@@ -185,7 +174,7 @@ static bool GenerateJavaCodeAccessorMethod(
   int seg_num = 0;
   int total_length = 0;
   while ((read_length = fread(buff, 1, SEG_SIZE, pfin)) > 0) {
-    GenerateSegmentMethod(buff, read_length, seg_num, pfout);
+    GenerateSegmentMethod(buff, read_length, seg_num, out);
     ++seg_num;
     total_length += read_length;
   }
@@ -193,31 +182,33 @@ static bool GenerateJavaCodeAccessorMethod(
   fclose(pfin);
 
   // output the internal accessor method
-  fprintf(pfout, "  private static int bitCodeLength = %d;\n\n", total_length);
-  fprintf(pfout, "  private static byte[] getBitCode32Internal() {\n");
-  fprintf(pfout, "    byte[] bc = new byte[bitCodeLength];\n");
-  fprintf(pfout, "    int offset = 0;\n");
-  fprintf(pfout, "    byte[] seg;\n");
+  out.indent() << "private static int bitCodeLength = " << total_length
+               << ";\n\n";
+  out.indent() << "private static byte[] getBitCode32Internal()";
+  out.startBlock();
+  out.indent() << "byte[] bc = new byte[bitCodeLength];\n";
+  out.indent() << "int offset = 0;\n";
+  out.indent() << "byte[] seg;\n";
   for (int i = 0; i < seg_num; ++i) {
-    fprintf(pfout, "    seg = getSegment32_%d();\n", i);
-    fprintf(pfout, "    System.arraycopy(seg, 0, bc, offset, seg.length);\n");
-    fprintf(pfout, "    offset += seg.length;\n");
+    out.indent() << "seg = getSegment32_" << i << "();\n";
+    out.indent() << "System.arraycopy(seg, 0, bc, offset, seg.length);\n";
+    out.indent() << "offset += seg.length;\n";
   }
-  fprintf(pfout, "    return bc;\n");
-  fprintf(pfout, "  }\n\n");
+  out.indent() << "return bc;\n";
+  out.endBlock();
 
   return true;
 }
 
 static bool GenerateAccessorClass(
     const RSSlangReflectUtils::BitCodeAccessorContext &context,
-    const char *clazz_name, FILE *pfout) {
+    const char *clazz_name, GeneratedFile &out) {
   // begin the class.
-  fprintf(pfout, "/**\n");
-  fprintf(pfout, " * @hide\n");
-  fprintf(pfout, " */\n");
-  fprintf(pfout, "public class %s {\n", clazz_name);
-  fprintf(pfout, "\n");
+  out << "/**\n";
+  out << " * @hide\n";
+  out << " */\n";
+  out << "public class " << clazz_name;
+  out.startBlock();
 
   bool ret = true;
   switch (context.bcStorage) {
@@ -226,19 +217,19 @@ static bool GenerateAccessorClass(
                 "Invalid generation of bitcode accessor with resource");
     break;
   case BCST_JAVA_CODE:
-    ret = GenerateJavaCodeAccessorMethod(context, pfout);
+    ret = GenerateJavaCodeAccessorMethod(context, out);
     break;
   default:
     ret = false;
   }
 
   // end the class.
-  fprintf(pfout, "}\n");
+  out.endBlock();
 
   return ret;
 }
 
-bool RSSlangReflectUtils::GenerateBitCodeAccessor(
+bool RSSlangReflectUtils::GenerateJavaBitCodeAccessor(
     const BitCodeAccessorContext &context) {
   string output_path =
       ComputePackagedPath(context.reflectPath, context.packageName);
@@ -252,21 +243,105 @@ bool RSSlangReflectUtils::GenerateBitCodeAccessor(
   string filename(clazz_name);
   filename += ".java";
 
-  string output_filename(output_path);
-  output_filename += OS_PATH_SEPARATOR_STR;
-  output_filename += filename;
-  printf("Generating %s ...\n", filename.c_str());
-  FILE *pfout = fopen(output_filename.c_str(), "w");
-  if (pfout == NULL) {
-    fprintf(stderr, "Error: could not write to file %s\n",
-            output_filename.c_str());
+  GeneratedFile out;
+  if (!out.startFile(output_path, filename, context.rsFileName,
+                     context.licenseNote)) {
     return false;
   }
 
-  bool ret = GenerateAccessorHeader(context, pfout) &&
-             GenerateAccessorClass(context, clazz_name.c_str(), pfout);
+  out << "package " << context.packageName << ";\n\n";
 
-  fclose(pfout);
+  bool ret = GenerateAccessorClass(context, clazz_name.c_str(), out);
+
+  out.closeFile();
   return ret;
 }
+
+std::string JoinPath(const std::string &path1, const std::string &path2) {
+  if (path1.empty()) {
+    return path2;
+  }
+  if (path2.empty()) {
+    return path1;
+  }
+  std::string fullPath = path1;
+  if (fullPath[fullPath.length() - 1] != OS_PATH_SEPARATOR) {
+    fullPath += OS_PATH_SEPARATOR;
+  }
+  if (path2[0] == OS_PATH_SEPARATOR) {
+    fullPath += path2.substr(1, string::npos);
+  } else {
+    fullPath += path2;
+  }
+  return fullPath;
+}
+
+static const char *const gApacheLicenseNote =
+    "/*\n"
+    " * Copyright (C) 2011-2014 The Android Open Source Project\n"
+    " *\n"
+    " * Licensed under the Apache License, Version 2.0 (the \"License\");\n"
+    " * you may not use this file except in compliance with the License.\n"
+    " * You may obtain a copy of the License at\n"
+    " *\n"
+    " *      http://www.apache.org/licenses/LICENSE-2.0\n"
+    " *\n"
+    " * Unless required by applicable law or agreed to in writing, software\n"
+    " * distributed under the License is distributed on an \"AS IS\" BASIS,\n"
+    " * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or "
+    "implied.\n"
+    " * See the License for the specific language governing permissions and\n"
+    " * limitations under the License.\n"
+    " */\n"
+    "\n";
+
+bool GeneratedFile::startFile(const string &outDirectory,
+                              const string &outFileName,
+                              const string &sourceFileName,
+                              const string *optionalLicense) {
+  printf("Generating %s\n", outFileName.c_str());
+
+  // Create the parent directories.
+  if (!outDirectory.empty()) {
+    std::string errorMsg;
+    if (!SlangUtils::CreateDirectoryWithParents(outDirectory, &errorMsg)) {
+      fprintf(stderr, "Error: %s\n", errorMsg.c_str());
+      return false;
+    }
+  }
+
+  std::string FilePath = JoinPath(outDirectory, outFileName);
+
+  // Open the file.
+  open(FilePath.c_str());
+  if (!good()) {
+    fprintf(stderr, "Error: could not write file %s\n", outFileName.c_str());
+    return false;
+  }
+
+  // Write the license.
+  if (optionalLicense != NULL) {
+    *this << *optionalLicense;
+  } else {
+    *this << gApacheLicenseNote;
+  }
+
+  // Write a notice that this is a generated file.
+  *this << "/*\n"
+        << " * This file is auto-generated. DO NOT MODIFY!\n"
+        << " * The source Renderscript file: " << sourceFileName << "\n"
+        << " */\n\n";
+
+  return true;
+}
+
+void GeneratedFile::closeFile() { close(); }
+
+void GeneratedFile::increaseIndent() { mIndent.append("    "); }
+
+void GeneratedFile::decreaseIndent() {
+  slangAssert(!mIndent.empty() && "No indent");
+  mIndent.erase(0, 4);
+}
+
 } // namespace slang
