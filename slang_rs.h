@@ -153,6 +153,12 @@ class SlangRS : public Slang {
                                  clang::Module::NameVisibilityKind Visibility,
                                  clang::SourceLocation ImportLoc,
                                  bool Complain = false) { }
+
+  virtual clang::GlobalModuleIndex *loadGlobalModuleIndex(
+      clang::SourceLocation TriggerLoc) { }
+
+  virtual bool lookupMissingImports(llvm::StringRef Name,
+                                    clang::SourceLocation TriggerLoc) { }
 };
 }  // namespace slang
 
