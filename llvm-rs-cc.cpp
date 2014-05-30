@@ -515,7 +515,7 @@ static void ExpandArgsFromBuf(const char *Arg,
                               llvm::SmallVectorImpl<const char*> &ArgVector,
                               std::set<std::string> &SavedStrings) {
   const char *FName = Arg + 1;
-  llvm::OwningPtr<llvm::MemoryBuffer> MemBuf;
+  std::unique_ptr<llvm::MemoryBuffer> MemBuf;
   if (llvm::MemoryBuffer::getFile(FName, MemBuf)) {
     // Unable to open the file
     ArgVector.push_back(SaveStringInSet(SavedStrings, Arg));
