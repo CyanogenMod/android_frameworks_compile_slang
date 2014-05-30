@@ -216,13 +216,13 @@ void Slang::createPreprocessor() {
   mPP.reset(new clang::Preprocessor(PPOpts,
                                     *mDiagEngine,
                                     LangOpts,
-                                    mTarget.get(),
                                     *mSourceMgr,
                                     *HeaderInfo,
                                     *this,
                                     NULL,
                                     /* OwnsHeaderSearch = */true));
   // Initialize the preprocessor
+  mPP->Initialize(getTargetInfo());
   mPragmas.clear();
   mPP->AddPragmaHandler(new PragmaRecorder(&mPragmas));
 
@@ -247,11 +247,10 @@ void Slang::createPreprocessor() {
 void Slang::createASTContext() {
   mASTContext.reset(new clang::ASTContext(LangOpts,
                                           *mSourceMgr,
-                                          mTarget.get(),
                                           mPP->getIdentifierTable(),
                                           mPP->getSelectorTable(),
-                                          mPP->getBuiltinInfo(),
-                                          /* size_reserve = */0));
+                                          mPP->getBuiltinInfo()));
+  mASTContext->InitBuiltinTypes(getTargetInfo());
   initASTContext();
 }
 
@@ -307,7 +306,7 @@ bool Slang::setInputSource(llvm::StringRef InputFile,
   // Load the source
   llvm::MemoryBuffer *SB =
       llvm::MemoryBuffer::getMemBuffer(Text, Text + TextLength);
-  mSourceMgr->createMainFileIDForMemBuffer(SB);
+  mSourceMgr->setMainFileID(mSourceMgr->createFileID(SB));
 
   if (mSourceMgr->getMainFileID().isInvalid()) {
     mDiagEngine->Report(clang::diag::err_fe_error_reading) << InputFile;
@@ -322,8 +321,10 @@ bool Slang::setInputSource(llvm::StringRef InputFile) {
   mSourceMgr->clearIDTables();
 
   const clang::FileEntry *File = mFileMgr->getFile(InputFile);
-  if (File)
-    mSourceMgr->createMainFileID(File);
+  if (File) {
+    mSourceMgr->setMainFileID(mSourceMgr->createFileID(File,
+        clang::SourceLocation(), clang::SrcMgr::C_User));
+  }
 
   if (mSourceMgr->getMainFileID().isInvalid()) {
     mDiagEngine->Report(clang::diag::err_fe_error_reading) << InputFile;
