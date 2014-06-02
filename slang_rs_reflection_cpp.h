@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_CPP_H_  // NOLINT
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_CPP_H_ // NOLINT
 #define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_CPP_H_
 
 #include "slang_rs_reflection_base.h"
@@ -22,12 +22,12 @@
 #include <set>
 #include <string>
 
-#define RS_EXPORT_VAR_PREFIX             "mExportVar_"
+#define RS_EXPORT_VAR_PREFIX "mExportVar_"
 
 namespace slang {
 
 class RSReflectionCpp : public RSReflectionBase {
- public:
+public:
   explicit RSReflectionCpp(const RSContext *);
   virtual ~RSReflectionCpp();
 
@@ -35,8 +35,7 @@ class RSReflectionCpp : public RSReflectionBase {
                const std::string &InputFileName,
                const std::string &OutputBCFileName);
 
-
- private:
+private:
   unsigned int mNextExportVarSlot;
   unsigned int mNextExportFuncSlot;
   unsigned int mNextExportForEachSlot;
@@ -48,13 +47,9 @@ class RSReflectionCpp : public RSReflectionBase {
     mTypesToCheck.clear();
   }
 
-  inline unsigned int getNextExportVarSlot() {
-    return mNextExportVarSlot++;
-  }
+  inline unsigned int getNextExportVarSlot() { return mNextExportVarSlot++; }
 
-  inline unsigned int getNextExportFuncSlot() {
-    return mNextExportFuncSlot++;
-  }
+  inline unsigned int getNextExportFuncSlot() { return mNextExportFuncSlot++; }
 
   inline unsigned int getNextExportForEachSlot() {
     return mNextExportForEachSlot++;
@@ -68,10 +63,8 @@ class RSReflectionCpp : public RSReflectionBase {
 
   bool startScriptHeader();
 
-
   // Write out code for an export variable initialization.
-  void genInitExportVariable(const RSExportType *ET,
-                             const std::string &VarName,
+  void genInitExportVariable(const RSExportType *ET, const std::string &VarName,
                              const clang::APValue &Val);
   void genZeroInitExportVariable(const std::string &VarName);
   void genInitBoolExportVariable(const std::string &VarName,
@@ -80,7 +73,7 @@ class RSReflectionCpp : public RSReflectionBase {
                                       const clang::APValue &Val);
 
   // Produce an argument string of the form "T1 t, T2 u, T3 v".
-  void makeArgs(std::stringstream &ss, const ArgTy& Args);
+  void makeArgs(std::stringstream &ss, const ArgTy &Args);
 
   // Write out code for an export variable.
   void genExportVariable(const RSExportVar *EV);
@@ -93,12 +86,10 @@ class RSReflectionCpp : public RSReflectionBase {
   void genRecordTypeExportVariable(const RSExportVar *EV);
 
   // Write out a local FieldPacker (if necessary).
-  bool genCreateFieldPacker(const RSExportType *T,
-                            const char *FieldPackerName);
+  bool genCreateFieldPacker(const RSExportType *T, const char *FieldPackerName);
 
   // Populate (write) the FieldPacker with add() operations.
-  void genPackVarOfType(const RSExportType *ET,
-                        const char *VarName,
+  void genPackVarOfType(const RSExportType *ET, const char *VarName,
                         const char *FieldPackerName);
 
   // Generate a runtime type check for VarName.
@@ -108,8 +99,8 @@ class RSReflectionCpp : public RSReflectionBase {
   void genTypeInstanceFromPointer(const RSExportType *ET);
   void genTypeInstance(const RSExportType *ET);
 
-};  // class RSReflectionCpp
+}; // class RSReflectionCpp
 
-}   // namespace slang
+} // namespace slang
 
-#endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_CPP_H_  NOLINT
+#endif // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_CPP_H_  NOLINT
