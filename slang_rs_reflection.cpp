@@ -1721,8 +1721,8 @@ void RSReflectionJava::genAddElementToElementBuilder(
           FieldName = F->getName();
 
         // Alignment
-        genAddPaddingToElementBuiler(C, (FieldOffset - Pos), ElementBuilderName,
-                                     RenderScriptVar);
+        genAddPaddingToElementBuilder(C, (FieldOffset - Pos),
+                                      ElementBuilderName, RenderScriptVar);
 
         // eb.add(...)
         C.addFieldIndexMapping(F);
@@ -1745,8 +1745,8 @@ void RSReflectionJava::genAddElementToElementBuilder(
         if (mRSContext->getTargetAPI() < SLANG_ICS_TARGET_API) {
           // There is padding within the field type. This is only necessary
           // for HC-targeted APIs.
-          genAddPaddingToElementBuiler(C, (FieldAllocSize - FieldStoreSize),
-                                       ElementBuilderName, RenderScriptVar);
+          genAddPaddingToElementBuilder(C, (FieldAllocSize - FieldStoreSize),
+                                        ElementBuilderName, RenderScriptVar);
         }
 
         Pos = FieldOffset + FieldAllocSize;
@@ -1755,8 +1755,8 @@ void RSReflectionJava::genAddElementToElementBuilder(
       // There maybe some padding after the struct
       size_t RecordAllocSize = ERT->getAllocSize();
 
-      genAddPaddingToElementBuiler(C, RecordAllocSize - Pos, ElementBuilderName,
-                                   RenderScriptVar);
+      genAddPaddingToElementBuilder(C, RecordAllocSize - Pos,
+                                    ElementBuilderName, RenderScriptVar);
     } else {
       slangAssert(false && "Unknown class of type");
     }
@@ -1764,9 +1764,9 @@ void RSReflectionJava::genAddElementToElementBuilder(
 }
 
 void
-RSReflectionJava::genAddPaddingToElementBuiler(Context &C, int PaddingSize,
-                                               const char *ElementBuilderName,
-                                               const char *RenderScriptVar) {
+RSReflectionJava::genAddPaddingToElementBuilder(Context &C, int PaddingSize,
+                                                const char *ElementBuilderName,
+                                                const char *RenderScriptVar) {
   unsigned ArraySize = 0; // Hack the EB_ADD macro
   while (PaddingSize > 0) {
     const std::string &VarName = C.createPaddingField();
