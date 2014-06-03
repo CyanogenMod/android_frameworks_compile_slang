@@ -110,7 +110,8 @@ static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
   return "";
 }
 
-RSReflectionCpp::RSReflectionCpp(const RSContext *con) : RSReflectionBase(con) {
+RSReflectionCpp::RSReflectionCpp(const RSContext *Context)
+    : mRSContext(Context) {
   clear();
 }
 
@@ -119,10 +120,11 @@ RSReflectionCpp::~RSReflectionCpp() {}
 bool RSReflectionCpp::reflect(const string &OutputPathBase,
                               const string &InputFileName,
                               const string &OutputBCFileName) {
-  mInputFileName = InputFileName;
-  mOutputPath = OutputPathBase + OS_PATH_SEPARATOR_STR;
-  mOutputBCFileName = OutputBCFileName;
-  mClassName = string("ScriptC_") + stripRS(InputFileName);
+  mRSSourceFilePath = InputFileName;
+  mOutputDirectory = OutputPathBase + OS_PATH_SEPARATOR_STR;
+  mBitCodeFilePath = OutputBCFileName;
+  mCleanedRSFileName = RootNameFromRSFileName(mRSSourceFilePath);
+  mClassName = "ScriptC_" + mCleanedRSFileName;
 
   std::string Path =
       RSSlangReflectUtils::ComputePackagedPath(OutputPathBase.c_str(), "");
@@ -144,7 +146,7 @@ bool RSReflectionCpp::reflect(const string &OutputPathBase,
 
 bool RSReflectionCpp::makeHeader() {
   // Create the file and write the license note.
-  if (!mOut.startFile(mOutputPath, mClassName + ".h", mInputFileName,
+  if (!mOut.startFile(mOutputDirectory, mClassName + ".h", mRSSourceFilePath,
                       mRSContext->getLicenseNote())) {
     return false;
   }
@@ -223,7 +225,7 @@ bool RSReflectionCpp::makeHeader() {
       continue;
     }
 
-    ArgTy Args;
+    ArgumentList Args;
     std::string FunctionStart = "void forEach_" + ef->getName() + "(";
     mOut.indent() << FunctionStart;
 
@@ -268,10 +270,10 @@ bool RSReflectionCpp::makeHeader() {
 }
 
 bool RSReflectionCpp::writeBC() {
-  FILE *pfin = fopen(mOutputBCFileName.c_str(), "rb");
+  FILE *pfin = fopen(mBitCodeFilePath.c_str(), "rb");
   if (pfin == NULL) {
     fprintf(stderr, "Error: could not read file %s\n",
-            mOutputBCFileName.c_str());
+            mBitCodeFilePath.c_str());
     return false;
   }
 
@@ -294,7 +296,7 @@ bool RSReflectionCpp::writeBC() {
 }
 
 bool RSReflectionCpp::makeImpl() {
-  if (!mOut.startFile(mOutputPath, mClassName + ".cpp", mInputFileName,
+  if (!mOut.startFile(mOutputDirectory, mClassName + ".cpp", mRSSourceFilePath,
                       mRSContext->getLicenseNote())) {
     return false;
   }
@@ -313,9 +315,9 @@ bool RSReflectionCpp::makeImpl() {
   mOut.indent() << mClassName << "::" << mClassName
                 << "(android::RSC::sp<android::RSC::RS> rs):\n"
                    "        ScriptC(rs, __txt, sizeof(__txt), \""
-                << stripRS(mInputFileName) << "\", "
-                << stripRS(mInputFileName).length() << ", \"/data/data/"
-                << packageName << "/app\", sizeof(\"" << packageName << "\"))";
+                << mCleanedRSFileName << "\", " << mCleanedRSFileName.length()
+                << ", \"/data/data/" << packageName << "/app\", sizeof(\""
+                << packageName << "\"))";
   mOut.startBlock();
   for (std::set<std::string>::iterator I = mTypesToCheck.begin(),
                                        E = mTypesToCheck.end();
@@ -352,7 +354,7 @@ bool RSReflectionCpp::makeImpl() {
       continue;
     }
 
-    ArgTy Args;
+    ArgumentList Args;
     std::string FunctionStart =
         "void " + mClassName + "::forEach_" + ef->getName() + "(";
     mOut.indent() << FunctionStart;
@@ -389,6 +391,9 @@ bool RSReflectionCpp::makeImpl() {
     if (OET) {
       genTypeCheck(OET, "aout");
     }
+
+    // TODO Add the appropriate dimension checking code, as seen in
+    // slang_rs_reflection.cpp.
 
     std::string FieldPackerName = ef->getName() + "_fp";
     if (ERT) {
@@ -632,10 +637,11 @@ void RSReflectionCpp::makeFunctionSignature(bool isDefinition,
   }
 }
 
-void RSReflectionCpp::makeArgs(const ArgTy &Args, int Offset) {
+void RSReflectionCpp::makeArgs(const ArgumentList &Args, int Offset) {
   bool FirstArg = true;
 
-  for (ArgTy::const_iterator I = Args.begin(), E = Args.end(); I != E; I++) {
+  for (ArgumentList::const_iterator I = Args.begin(), E = Args.end(); I != E;
+       I++) {
     if (!FirstArg) {
       mOut << ",\n";
       mOut.indent() << string(Offset, ' ');
@@ -804,7 +810,7 @@ void RSReflectionCpp::genTypeInstance(const RSExportType *ET) {
   case RSExportType::ExportClassConstantArray:
   case RSExportType::ExportClassRecord: {
     std::string TypeName = ET->getElementName();
-    addTypeNameForElement(TypeName);
+    mTypesToCheck.insert(TypeName);
     break;
   }
 
@@ -881,6 +887,19 @@ void RSReflectionCpp::genInitExportVariable(const RSExportType *ET,
   }
 }
 
+const char *RSReflectionCpp::getVectorAccessor(unsigned Index) {
+  static const char *VectorAccessorMap[] = {/* 0 */ "x",
+                                            /* 1 */ "y",
+                                            /* 2 */ "z",
+                                            /* 3 */ "w",
+  };
+
+  slangAssert((Index < (sizeof(VectorAccessorMap) / sizeof(const char *))) &&
+              "Out-of-bound index to access vector member");
+
+  return VectorAccessorMap[Index];
+}
+
 void RSReflectionCpp::genZeroInitExportVariable(const std::string &VarName) {
   mOut.indent() << "memset(&" << RS_EXPORT_VAR_PREFIX << VarName
                 << ", 0, sizeof(" << RS_EXPORT_VAR_PREFIX << VarName << "));\n";
@@ -891,8 +910,52 @@ RSReflectionCpp::genInitPrimitiveExportVariable(const std::string &VarName,
                                                 const clang::APValue &Val) {
   slangAssert(!Val.isUninit() && "Not a valid initializer");
 
-  mOut.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = "
-                << RSReflectionBase::genInitValue(Val) << ";\n";
+  mOut.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
+  genInitValue(Val);
+  mOut << ";\n";
+}
+
+void RSReflectionCpp::genInitValue(const clang::APValue &Val, bool asBool) {
+  switch (Val.getKind()) {
+  case clang::APValue::Int: {
+    llvm::APInt api = Val.getInt();
+    if (asBool) {
+      mOut << ((api.getSExtValue() == 0) ? "false" : "true");
+    } else {
+      // TODO: Handle unsigned correctly for C++
+      mOut << api.getSExtValue();
+      if (api.getBitWidth() > 32) {
+        mOut << "L";
+      }
+    }
+    break;
+  }
+
+  case clang::APValue::Float: {
+    llvm::APFloat apf = Val.getFloat();
+    llvm::SmallString<30> s;
+    apf.toString(s);
+    mOut << s.c_str();
+    if (&apf.getSemantics() == &llvm::APFloat::IEEEsingle) {
+      if (s.count('.') == 0) {
+        mOut << ".f";
+      } else {
+        mOut << "f";
+      }
+    }
+    break;
+  }
+
+  case clang::APValue::ComplexInt:
+  case clang::APValue::ComplexFloat:
+  case clang::APValue::LValue:
+  case clang::APValue::Vector: {
+    slangAssert(false && "Primitive type cannot have such kind of initializer");
+    break;
+  }
+
+  default: { slangAssert(false && "Unknown kind of initializer"); }
+  }
 }
 
 void RSReflectionCpp::genInitBoolExportVariable(const std::string &VarName,
