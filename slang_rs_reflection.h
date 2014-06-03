@@ -273,9 +273,9 @@ private:
                                      const char *ElementBuilderName,
                                      const char *RenderScriptVar,
                                      unsigned ArraySize);
-  void genAddPaddingToElementBuiler(Context &C, int PaddingSize,
-                                    const char *ElementBuilderName,
-                                    const char *RenderScriptVar);
+  void genAddPaddingToElementBuilder(Context &C, int PaddingSize,
+                                     const char *ElementBuilderName,
+                                     const char *RenderScriptVar);
 
   bool genCreateFieldPacker(Context &C, const RSExportType *T,
                             const char *FieldPackerName);
