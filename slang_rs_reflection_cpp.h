@@ -18,6 +18,7 @@
 #define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_CPP_H_
 
 #include "slang_rs_reflection_base.h"
+#include "slang_rs_reflect_utils.h"
 
 #include <set>
 #include <string>
@@ -47,6 +48,10 @@ private:
     mTypesToCheck.clear();
   }
 
+  // The file we are currently generating, either the header or the
+  // implementation file.
+  GeneratedFile mOut;
+
   inline unsigned int getNextExportVarSlot() { return mNextExportVarSlot++; }
 
   inline unsigned int getNextExportFuncSlot() { return mNextExportFuncSlot++; }
@@ -55,10 +60,9 @@ private:
     return mNextExportForEachSlot++;
   }
 
-  bool makeHeader(const std::string &baseClass);
-  bool makeImpl(const std::string &baseClass);
-  void makeFunctionSignature(std::stringstream &ss, bool isDefinition,
-                             const RSExportFunc *ef);
+  bool makeHeader();
+  bool makeImpl();
+  void makeFunctionSignature(bool isDefinition, const RSExportFunc *ef);
   bool writeBC();
 
   bool startScriptHeader();
@@ -73,7 +77,7 @@ private:
                                       const clang::APValue &Val);
 
   // Produce an argument string of the form "T1 t, T2 u, T3 v".
-  void makeArgs(std::stringstream &ss, const ArgTy &Args);
+  void makeArgs(const ArgTy &Args, int Offset);
 
   // Write out code for an export variable.
   void genExportVariable(const RSExportVar *EV);
