@@ -17,6 +17,7 @@
 #ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_REFLECT_UTILS_H_ // NOLINT
 #define _FRAMEWORKS_COMPILE_SLANG_SLANG_REFLECT_UTILS_H_
 
+#include <fstream>
 #include <string>
 
 namespace slang {
@@ -37,6 +38,7 @@ public:
     const char *bcFileName;
     const char *reflectPath;
     const char *packageName;
+    const std::string *licenseNote;
 
     BitCodeStorageType bcStorage;
   };
@@ -47,7 +49,7 @@ public:
   //     ./path/foo.ext -> foo
   static std::string GetFileNameStem(const char *fileName);
 
-  // Compuate a Java source file path from a given prefixPath and its package.
+  // Compute a Java source file path from a given prefixPath and its package.
   // Eg, given prefixPath=./foo/bar and packageName=com.x.y, then it returns
   // ./foo/bar/com/x/y
   static std::string ComputePackagedPath(const char *prefixPath,
@@ -79,8 +81,59 @@ public:
   static std::string JavaBitcodeClassNameFromRSFileName(const char *rsFileName);
 
   // Generate the bit code accessor Java source file.
-  static bool GenerateBitCodeAccessor(const BitCodeAccessorContext &context);
+  static bool GenerateJavaBitCodeAccessor(const BitCodeAccessorContext &context);
 };
+
+// Joins two sections of a path, inserting a separator if needed.
+// E.g. JoinPath("foo/bar", "baz/a.java") returns "foo/bar/baz/a.java",
+// JoinPath("foo", "/bar/baz") returns "foo/bar/baz", and
+// JoinPath("foo/", "/bar") returns "foo/bar".
+std::string JoinPath(const std::string &path1, const std::string &path2);
+
+/* This class is used to generate one source file.  There will be one instance
+ * for each generated file.
+ */
+class GeneratedFile : public std::ofstream {
+public:
+  /* Starts the file by:
+   * - creating the parent directories (if needed),
+   * - opening the stream,
+   * - writing out the license,
+   * - writing a message that this file has been auto-generated.
+   * If optionalLicense is NULL, a default license is used.
+   */
+  bool startFile(const std::string &outPath, const std::string &outFileName,
+                 const std::string &sourceFileName,
+                 const std::string *optionalLicense);
+  void closeFile();
+
+  void increaseIndent(); // Increases the new line indentation by 4
+  void decreaseIndent(); // Decreases the new line indentation by 4
+
+  // Starts a control block.  This works both for Java and C++.
+  void startBlock() {
+    *this << " {\n";
+    increaseIndent();
+  }
+
+  // Ends a control block.
+  void endBlock(bool addSemicolon = false) {
+    decreaseIndent();
+    indent() << "}" << (addSemicolon ? ";" : "") << "\n\n";
+  }
+
+  /* Indents the line.  By returning *this, we can use like this:
+   *  mOut.ident() << "a = b;\n";
+   */
+  std::ofstream &indent() {
+    *this << mIndent;
+    return *this;
+  }
+
+private:
+  std::string mIndent; // The correct spacing at the beginning of each line.
+};
+
 } // namespace slang
 
 #endif // _FRAMEWORKS_COMPILE_SLANG_SLANG_REFLECT_UTILS_H_  NOLINT
