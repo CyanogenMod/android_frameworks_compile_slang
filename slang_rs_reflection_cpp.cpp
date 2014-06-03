@@ -122,9 +122,19 @@ bool RSReflectionCpp::reflect(const string &OutputPathBase,
                               const string &InputFileName,
                               const string &OutputBCFileName) {
   mInputFileName = InputFileName;
-  mOutputPath = OutputPathBase;
+  mOutputPath = OutputPathBase + OS_PATH_SEPARATOR_STR;
   mOutputBCFileName = OutputBCFileName;
   mClassName = string("ScriptC_") + stripRS(InputFileName);
+
+  std::string Path =
+      RSSlangReflectUtils::ComputePackagedPath(OutputPathBase.c_str(), "");
+
+  std::string ErrorMsg;
+  if (!SlangUtils::CreateDirectoryWithParents(Path, &ErrorMsg)) {
+    fprintf(stderr, "Error: Could not create path %s - %s\n",
+            Path.c_str(), ErrorMsg.c_str());
+    return false;
+  }
 
   makeHeader("android::RSC::ScriptC");
   std::vector< std::string > header(mText);
