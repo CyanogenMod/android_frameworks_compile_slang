@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 
 #include <cstdarg>
 #include <cctype>
@@ -133,51 +134,43 @@ bool RSReflectionCpp::reflect(const string &OutputPathBase,
     return false;
   }
 
-  makeHeader("android::RSC::ScriptC");
-  std::vector<std::string> header(mText);
-  mText.clear();
-
-  makeImpl("android::RSC::ScriptC");
-  std::vector<std::string> cpp(mText);
-  mText.clear();
-
-  writeFile(mClassName + ".h", header);
-  writeFile(mClassName + ".cpp", cpp);
+  makeHeader();
+  makeImpl();
 
   return true;
 }
 
 #define RS_TYPE_CLASS_NAME_PREFIX "ScriptField_"
 
-bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
-  startFile(mClassName + ".h");
+bool RSReflectionCpp::makeHeader() {
+  // Create the file and write the license note.
+  if (!mOut.startFile(mOutputPath, mClassName + ".h", mInputFileName,
+                      mRSContext->getLicenseNote())) {
+    return false;
+  }
 
-  write("");
-  write("#include \"RenderScript.h\"");
-  write("using namespace android::RSC;");
-  write("");
+  mOut.indent() << "#include \"RenderScript.h\"\n\n";
+  mOut.indent() << "using namespace android::RSC;\n\n";
 
   // Imports
   // for(unsigned i = 0; i < (sizeof(Import) / sizeof(const char*)); i++)
   // out() << "import " << Import[i] << ";\n";
   // out() << "\n";
 
-  if (!baseClass.empty()) {
-    write("class " + mClassName + " : public " + baseClass + " {");
-  } else {
-    write("class " + mClassName + " {");
-  }
+  mOut.indent() << "class " << mClassName
+                << " : public android::RSC::ScriptC {\n";
 
-  write("private:");
+  mOut.indent() << "private:\n";
+  mOut.increaseIndent();
+
   uint32_t slot = 0;
-  incIndent();
   for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
                                             E = mRSContext->export_vars_end();
        I != E; I++, slot++) {
     const RSExportVar *ev = *I;
     if (!ev->isConst()) {
-      write(GetTypeName(ev->getType()) + " " RS_EXPORT_VAR_PREFIX +
-            ev->getName() + ";");
+      mOut.indent() << GetTypeName(ev->getType()) << " " RS_EXPORT_VAR_PREFIX
+                    << ev->getName() << ";\n";
     }
   }
 
@@ -199,17 +192,17 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
   for (std::set<std::string>::iterator I = mTypesToCheck.begin(),
                                        E = mTypesToCheck.end();
        I != E; I++) {
-    write("android::RSC::sp<const android::RSC::Element> " RS_ELEM_PREFIX + *I +
-          ";");
+    mOut.indent() << "android::RSC::sp<const android::RSC::Element> "
+                  << RS_ELEM_PREFIX << *I << ";\n";
   }
 
-  decIndent();
+  mOut.decreaseIndent();
 
-  write("public:");
-  incIndent();
-  write(mClassName + "(android::RSC::sp<android::RSC::RS> rs);");
-  write("virtual ~" + mClassName + "();");
-  write("");
+  mOut.indent() << "public:\n";
+  mOut.increaseIndent();
+  mOut.indent() << mClassName << "(android::RSC::sp<android::RSC::RS> rs);\n";
+  mOut.indent() << "virtual ~" << mClassName + "();\n";
+  mOut.indent() << "\n";
 
   // Reflect export variable
   slot = 0;
@@ -226,13 +219,13 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
        I != E; I++) {
     const RSExportForEach *ef = *I;
     if (ef->isDummyRoot()) {
-      write("// No forEach_root(...)");
+      mOut.indent() << "// No forEach_root(...)\n";
       continue;
     }
 
     ArgTy Args;
-    stringstream ss;
-    ss << "void forEach_" << ef->getName() << "(";
+    std::string FunctionStart = "void forEach_" + ef->getName() + "(";
+    mOut.indent() << FunctionStart;
 
     if (ef->hasIn()) {
       Args.push_back(std::make_pair(
@@ -254,9 +247,8 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
         Args.push_back(std::make_pair(rtd.type->c_name, (*i)->getName()));
       }
     }
-    makeArgs(ss, Args);
-    ss << ");";
-    write(ss);
+    makeArgs(Args, FunctionStart.length());
+    mOut << ");\n";
   }
 
   // Reflect export function
@@ -266,13 +258,12 @@ bool RSReflectionCpp::makeHeader(const std::string &baseClass) {
        I != E; I++) {
     const RSExportFunc *ef = *I;
 
-    stringstream ss;
-    makeFunctionSignature(ss, false, ef);
-    write(ss);
+    makeFunctionSignature(false, ef);
   }
 
-  decIndent();
-  write("};");
+  mOut.decreaseIndent();
+  mOut.indent() << "};\n";
+  mOut.closeFile();
   return true;
 }
 
@@ -286,53 +277,51 @@ bool RSReflectionCpp::writeBC() {
 
   unsigned char buf[16];
   int read_length;
-  write("static const unsigned char __txt[] = {");
-  incIndent();
+  mOut.indent() << "static const unsigned char __txt[] =";
+  mOut.startBlock();
   while ((read_length = fread(buf, 1, sizeof(buf), pfin)) > 0) {
-    string s;
+    mOut.indent();
     for (int i = 0; i < read_length; i++) {
       char buf2[16];
       snprintf(buf2, sizeof(buf2), "0x%02x,", buf[i]);
-      s += buf2;
+      mOut << buf2;
     }
-    write(s);
+    mOut << "\n";
   }
-  decIndent();
-  write("};");
-  write("");
+  mOut.endBlock(true);
+  mOut << "\n";
   return true;
 }
 
-bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
-  startFile(mClassName + ".cpp");
+bool RSReflectionCpp::makeImpl() {
+  if (!mOut.startFile(mOutputPath, mClassName + ".cpp", mInputFileName,
+                      mRSContext->getLicenseNote())) {
+    return false;
+  }
 
-  write("");
-  write("#include \"" + mClassName + ".h\"");
-  write("");
+  mOut.indent() << "#include \"" << mClassName << ".h\"\n\n";
 
   writeBC();
+  mOut.indent() << "\n\n";
 
   // Imports
   // for(unsigned i = 0; i < (sizeof(Import) / sizeof(const char*)); i++)
   // out() << "import " << Import[i] << ";\n";
   // out() << "\n";
 
-  write("\n");
-  stringstream ss;
   const std::string &packageName = mRSContext->getReflectJavaPackageName();
-  ss << mClassName << "::" << mClassName
-     << "(android::RSC::sp<android::RSC::RS> rs):\n"
-        "        ScriptC(rs, __txt, sizeof(__txt), \""
-     << stripRS(mInputFileName) << "\", " << stripRS(mInputFileName).length()
-     << ", \"/data/data/" << packageName << "/app\", sizeof(\"" << packageName
-     << "\")) {";
-  write(ss);
-  ss.str("");
-  incIndent();
+  mOut.indent() << mClassName << "::" << mClassName
+                << "(android::RSC::sp<android::RSC::RS> rs):\n"
+                   "        ScriptC(rs, __txt, sizeof(__txt), \""
+                << stripRS(mInputFileName) << "\", "
+                << stripRS(mInputFileName).length() << ", \"/data/data/"
+                << packageName << "/app\", sizeof(\"" << packageName << "\"))";
+  mOut.startBlock();
   for (std::set<std::string>::iterator I = mTypesToCheck.begin(),
                                        E = mTypesToCheck.end();
        I != E; I++) {
-    write(RS_ELEM_PREFIX + *I + " = android::RSC::Element::" + *I + "(mRS);");
+    mOut.indent() << RS_ELEM_PREFIX << *I << " = android::RSC::Element::" << *I
+                  << "(mRS);\n";
   }
 
   for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
@@ -345,13 +334,11 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
       genZeroInitExportVariable(EV->getName());
     }
   }
-  decIndent();
-  write("}");
-  write("");
+  mOut.endBlock();
 
-  write(mClassName + "::~" + mClassName + "() {");
-  write("}");
-  write("");
+  mOut.indent() << mClassName << "::~" << mClassName << "()";
+  mOut.startBlock();
+  mOut.endBlock();
 
   // Reflect export for each functions
   uint32_t slot = 0;
@@ -361,13 +348,14 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
        I != E; I++, slot++) {
     const RSExportForEach *ef = *I;
     if (ef->isDummyRoot()) {
-      write("// No forEach_root(...)");
+      mOut.indent() << "// No forEach_root(...)\n";
       continue;
     }
 
-    stringstream tmp;
     ArgTy Args;
-    tmp << "void " << mClassName << "::forEach_" << ef->getName() << "(";
+    std::string FunctionStart =
+        "void " + mClassName + "::forEach_" + ef->getName() + "(";
+    mOut.indent() << FunctionStart;
 
     if (ef->hasIn()) {
       Args.push_back(std::make_pair(
@@ -389,24 +377,18 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
         Args.push_back(std::make_pair(rtd.type->c_name, (*i)->getName()));
       }
     }
-    makeArgs(tmp, Args);
-
-    tmp << ") {";
-    write(tmp);
-    tmp.str("");
+    makeArgs(Args, FunctionStart.length());
+    mOut << ")";
+    mOut.startBlock();
 
     const RSExportType *IET = ef->getInType();
     const RSExportType *OET = ef->getOutType();
-
-    incIndent();
     if (IET) {
       genTypeCheck(IET, "ain");
     }
-
     if (OET) {
       genTypeCheck(OET, "aout");
     }
-    decIndent();
 
     std::string FieldPackerName = ef->getName() + "_fp";
     if (ERT) {
@@ -414,26 +396,23 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
         genPackVarOfType(ERT, NULL, FieldPackerName.c_str());
       }
     }
-    tmp << "    forEach(" << slot << ", ";
+    mOut.indent() << "forEach(" << slot << ", ";
 
     if (ef->hasIn()) {
-      tmp << "ain, ";
+      mOut << "ain, ";
     } else {
-      tmp << "NULL, ";
+      mOut << "NULL, ";
     }
 
     if (ef->hasOut() || ef->hasReturn()) {
-      tmp << "aout, ";
+      mOut << "aout, ";
     } else {
-      tmp << "NULL, ";
+      mOut << "NULL, ";
     }
 
     // FIXME (no support for usrData with C++ kernels)
-    tmp << "NULL, 0);";
-    write(tmp);
-
-    write("}");
-    write("");
+    mOut << "NULL, 0);\n";
+    mOut.endBlock();
   }
 
   slot = 0;
@@ -444,10 +423,8 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
        I != E; I++) {
     const RSExportFunc *ef = *I;
 
-    stringstream ss;
-    makeFunctionSignature(ss, true, ef);
-    write(ss);
-    ss.str("");
+    makeFunctionSignature(true, ef);
+    mOut.startBlock();
     const RSExportRecordType *params = ef->getParamPacketType();
     size_t param_len = 0;
     if (params) {
@@ -457,22 +434,18 @@ bool RSReflectionCpp::makeImpl(const std::string &baseClass) {
       }
     }
 
-    ss.str("");
-    ss << "    invoke(" << slot;
+    mOut.indent() << "invoke(" << slot;
     if (params) {
-      ss << ", __fp.getData(), " << param_len << ");";
+      mOut << ", __fp.getData(), " << param_len << ");\n";
     } else {
-      ss << ", NULL, 0);";
+      mOut << ", NULL, 0);\n";
     }
-    write(ss);
-
-    write("}");
-    write("");
+    mOut.endBlock();
 
     slot++;
   }
 
-  decIndent();
+  mOut.closeFile();
   return true;
 }
 
@@ -516,29 +489,31 @@ void RSReflectionCpp::genPrimitiveTypeExportVariable(const RSExportVar *EV) {
   std::string TypeName = GetTypeName(EPT, false);
 
   if (!EV->isConst()) {
-    write(string("void set_") + EV->getName() + "(" + TypeName.c_str() +
-          " v) {");
-    stringstream tmp;
-    tmp << getNextExportVarSlot() << ", ";
+    mOut.indent() << "void set_" << EV->getName() << "(" << TypeName << " v)";
+    mOut.startBlock();
+    mOut.indent() << "setVar(" << getNextExportVarSlot() << ", ";
     if (EPT->isRSObjectType()) {
-      tmp << "v);";
+      mOut << "v";
     } else {
-      tmp << "&v, sizeof(v));";
+      mOut << "&v, sizeof(v)";
     }
-    write(string("    setVar(") + tmp.str());
-    write(string("    " RS_EXPORT_VAR_PREFIX) + EV->getName() + " = v;");
-    write("}");
+    mOut << ");\n";
+    mOut.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;\n";
+    mOut.endBlock();
   }
-  write(TypeName + " get_" + EV->getName() + "() const {");
+  mOut.indent() << TypeName << " get_" << EV->getName() << "() const";
+  mOut.startBlock();
   if (EV->isConst()) {
     const clang::APValue &val = EV->getInit();
     bool isBool = !strcmp(TypeName.c_str(), "bool");
-    write(string("    return ") + genInitValue(val, isBool) + ";");
+    mOut.indent() << "return ";
+    genInitValue(val, isBool);
+    mOut << ";\n";
   } else {
-    write(string("    return " RS_EXPORT_VAR_PREFIX) + EV->getName() + ";");
+    mOut.indent() << "return " << RS_EXPORT_VAR_PREFIX << EV->getName()
+                  << ";\n";
   }
-  write("}");
-  write("");
+  mOut.endBlock();
 }
 
 void RSReflectionCpp::genPointerTypeExportVariable(const RSExportVar *EV) {
@@ -555,23 +530,24 @@ void RSReflectionCpp::genPointerTypeExportVariable(const RSExportVar *EV) {
   uint32_t slot = getNextExportVarSlot();
 
   if (!EV->isConst()) {
-    write(string("void bind_") + VarName + "(" + TypeName + " v) {");
-    stringstream tmp;
-    tmp << slot;
-    write(string("    bindAllocation(v, ") + tmp.str() + ");");
-    write(string("    " RS_EXPORT_VAR_PREFIX) + VarName + " = v;");
-    write("}");
+    mOut.indent() << "void bind_" << VarName << "(" << TypeName << " v)";
+    mOut.startBlock();
+    mOut.indent() << "bindAllocation(v, " << slot << ");\n";
+    mOut.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = v;\n";
+    mOut.endBlock();
   }
-  write(TypeName + " get_" + VarName + "() const {");
+  mOut.indent() << TypeName << " get_" << VarName << "() const";
+  mOut.startBlock();
   if (EV->isConst()) {
     const clang::APValue &val = EV->getInit();
     bool isBool = !strcmp(TypeName.c_str(), "bool");
-    write(string("    return ") + genInitValue(val, isBool) + ";");
+    mOut.indent() << "return ";
+    genInitValue(val, isBool);
+    mOut << ";\n";
   } else {
-    write(string("    return " RS_EXPORT_VAR_PREFIX) + VarName + ";");
+    mOut.indent() << "return " << RS_EXPORT_VAR_PREFIX << VarName << ";\n";
   }
-  write("}");
-  write("");
+  mOut.endBlock();
 }
 
 void RSReflectionCpp::genVectorTypeExportVariable(const RSExportVar *EV) {
@@ -588,28 +564,28 @@ void RSReflectionCpp::genVectorTypeExportVariable(const RSExportVar *EV) {
   std::stringstream ss;
 
   if (!EV->isConst()) {
-    ss << "void set_" << EV->getName() << "(" << rtd.type->rs_c_vector_prefix
-       << EVT->getNumElement() << " v) {";
-    write(ss);
-    ss.str("");
-    ss << getNextExportVarSlot();
-    write(string("    setVar(") + ss.str() + ", &v, sizeof(v));");
-    ss.str("");
-    write(string("    " RS_EXPORT_VAR_PREFIX) + EV->getName() + " = v;");
-    write("}");
+    mOut.indent() << "void set_" << EV->getName() << "("
+                  << rtd.type->rs_c_vector_prefix << EVT->getNumElement()
+                  << " v)";
+    mOut.startBlock();
+    mOut.indent() << "setVar(" << getNextExportVarSlot()
+                  << ", &v, sizeof(v));\n";
+    mOut.indent() << RS_EXPORT_VAR_PREFIX << EV->getName() << " = v;\n";
+    mOut.endBlock();
   }
-  ss << rtd.type->rs_c_vector_prefix << EVT->getNumElement() << " get_"
-     << EV->getName() << "() const {";
-  write(ss);
-  ss.str("");
+  mOut.indent() << rtd.type->rs_c_vector_prefix << EVT->getNumElement()
+                << " get_" << EV->getName() << "() const";
+  mOut.startBlock();
   if (EV->isConst()) {
     const clang::APValue &val = EV->getInit();
-    write(string("    return ") + genInitValue(val, false) + ";");
+    mOut.indent() << "return ";
+    genInitValue(val, false);
+    mOut << ";\n";
   } else {
-    write(string("    return " RS_EXPORT_VAR_PREFIX) + EV->getName() + ";");
+    mOut.indent() << "return " << RS_EXPORT_VAR_PREFIX << EV->getName()
+                  << ";\n";
   }
-  write("}");
-  write("");
+  mOut.endBlock();
 }
 
 void RSReflectionCpp::genMatrixTypeExportVariable(const RSExportVar *EV) {
@@ -625,14 +601,13 @@ void RSReflectionCpp::genRecordTypeExportVariable(const RSExportVar *EV) {
   slangAssert(false);
 }
 
-void RSReflectionCpp::makeFunctionSignature(std::stringstream &ss,
-                                            bool isDefinition,
+void RSReflectionCpp::makeFunctionSignature(bool isDefinition,
                                             const RSExportFunc *ef) {
-  ss << "void ";
+  mOut.indent() << "void ";
   if (isDefinition) {
-    ss << mClassName << "::";
+    mOut << mClassName << "::";
   }
-  ss << "invoke_" << ef->getName() << "(";
+  mOut << "invoke_" << ef->getName() << "(";
 
   if (ef->getParamPacketType()) {
     bool FirstArg = true;
@@ -642,32 +617,33 @@ void RSReflectionCpp::makeFunctionSignature(std::stringstream &ss,
       RSReflectionTypeData rtd;
       (*i)->getType()->convertToRTD(&rtd);
       if (!FirstArg) {
-        ss << ", ";
+        mOut << ", ";
       } else {
         FirstArg = false;
       }
-      ss << rtd.type->c_name << " " << (*i)->getName();
+      mOut << rtd.type->c_name << " " << (*i)->getName();
     }
   }
 
   if (isDefinition) {
-    ss << ") {";
+    mOut << ")";
   } else {
-    ss << ");";
+    mOut << ");\n";
   }
 }
 
-void RSReflectionCpp::makeArgs(std::stringstream &ss, const ArgTy &Args) {
+void RSReflectionCpp::makeArgs(const ArgTy &Args, int Offset) {
   bool FirstArg = true;
 
   for (ArgTy::const_iterator I = Args.begin(), E = Args.end(); I != E; I++) {
     if (!FirstArg) {
-      ss << ", ";
+      mOut << ",\n";
+      mOut.indent() << string(Offset, ' ');
     } else {
       FirstArg = false;
     }
 
-    ss << I->first << " " << I->second;
+    mOut << I->first << " " << I->second;
   }
 }
 
@@ -676,9 +652,8 @@ bool RSReflectionCpp::genCreateFieldPacker(const RSExportType *ET,
   size_t AllocSize = ET->getAllocSize();
 
   if (AllocSize > 0) {
-    std::stringstream ss;
-    ss << "    FieldPacker " << FieldPackerName << "(" << AllocSize << ");";
-    write(ss);
+    mOut.indent() << "android::RSC::FieldPacker " << FieldPackerName << "("
+                  << AllocSize << ");\n";
     return true;
   }
 
@@ -688,14 +663,12 @@ bool RSReflectionCpp::genCreateFieldPacker(const RSExportType *ET,
 void RSReflectionCpp::genPackVarOfType(const RSExportType *ET,
                                        const char *VarName,
                                        const char *FieldPackerName) {
-  std::stringstream ss;
   switch (ET->getClass()) {
   case RSExportType::ExportClassPrimitive:
   case RSExportType::ExportClassVector:
   case RSExportType::ExportClassPointer:
   case RSExportType::ExportClassMatrix: {
-    ss << "    " << FieldPackerName << ".add(" << VarName << ");";
-    write(ss);
+    mOut.indent() << FieldPackerName << ".add(" << VarName << ");\n";
     break;
   }
   case RSExportType::ExportClassConstantArray: {
@@ -711,23 +684,23 @@ void RSReflectionCpp::genPackVarOfType(const RSExportType *ET,
     size_t LastDotPos = 0;
     std::string ElementVarName(VarName);
 
-    while (LastDotPos != std::string::npos) {
-      LastDotPos = ElementVarName.find_first_of('.', LastDotPos + 1);
-      Level++;
-    }
-    std::string IndexVarName("ct");
-    IndexVarName.append(llvm::utostr_32(Level));
+  while (LastDotPos != std::string::npos) {
+    LastDotPos = ElementVarName.find_first_of('.', LastDotPos + 1);
+    Level++;
+  }
+  std::string IndexVarName("ct");
+  IndexVarName.append(llvm::utostr_32(Level));
 
-    C.indent() << "for (int " << IndexVarName << " = 0; " <<
-                        IndexVarName << " < " << ECAT->getSize() << "; " <<
-                        IndexVarName << "++)";
-    C.startBlock();
+  C.indent() << "for (int " << IndexVarName << " = 0; " <<
+                      IndexVarName << " < " << ECAT->getSize() << "; " <<
+                      IndexVarName << "++)";
+  C.startBlock();
 
-    ElementVarName.append("[" + IndexVarName + "]");
-    genPackVarOfType(C, ECAT->getElementType(), ElementVarName.c_str(),
-                     FieldPackerName);
+  ElementVarName.append("[" + IndexVarName + "]");
+  genPackVarOfType(C, ECAT->getElementType(), ElementVarName.c_str(),
+                   FieldPackerName);
 
-    C.endBlock();*/
+  C.endBlock();*/
     break;
   }
   case RSExportType::ExportClassRecord: {
@@ -751,20 +724,16 @@ void RSReflectionCpp::genPackVarOfType(const RSExportType *ET,
         FieldName = F->getName();
 
       if (FieldOffset > Pos) {
-        ss.str("");
-        ss << "    " << FieldPackerName << ".skip(" << (FieldOffset - Pos)
-           << ");";
-        write(ss);
+        mOut.indent() << FieldPackerName << ".skip(" << (FieldOffset - Pos)
+                      << ");\n";
       }
 
       genPackVarOfType(F->getType(), FieldName.c_str(), FieldPackerName);
 
       // There is padding in the field type
       if (FieldAllocSize > FieldStoreSize) {
-        ss.str("");
-        ss << "    " << FieldPackerName << ".skip("
-           << (FieldAllocSize - FieldStoreSize) << ");";
-        write(ss);
+        mOut.indent() << FieldPackerName << ".skip("
+                      << (FieldAllocSize - FieldStoreSize) << ");\n";
       }
 
       Pos = FieldOffset + FieldAllocSize;
@@ -772,10 +741,8 @@ void RSReflectionCpp::genPackVarOfType(const RSExportType *ET,
 
     // There maybe some padding after the struct
     if (ERT->getAllocSize() > Pos) {
-      ss.str("");
-      ss << "    " << FieldPackerName << ".skip(" << ERT->getAllocSize() - Pos
-         << ");";
-      write(ss);
+      mOut.indent() << FieldPackerName << ".skip(" << ERT->getAllocSize() - Pos
+                    << ");\n";
     }
     break;
   }
@@ -785,10 +752,7 @@ void RSReflectionCpp::genPackVarOfType(const RSExportType *ET,
 
 void RSReflectionCpp::genTypeCheck(const RSExportType *ET,
                                    const char *VarName) {
-  stringstream tmp;
-  tmp << "// Type check for " << VarName;
-  write(tmp);
-  tmp.str("");
+  mOut.indent() << "// Type check for " << VarName << "\n";
 
   if (ET->getClass() == RSExportType::ExportClassPointer) {
     const RSExportPointerType *EPT =
@@ -810,18 +774,14 @@ void RSReflectionCpp::genTypeCheck(const RSExportType *ET,
   }
 
   if (!TypeName.empty()) {
-    // tmp << "// TypeName: " << TypeName;
-    tmp << "if (!" << VarName << "->getType()->getElement()->isCompatible("
-        << RS_ELEM_PREFIX << TypeName << ")) {";
-    write(tmp);
-
-    incIndent();
-    write("mRS->throwError(RS_ERROR_RUNTIME_ERROR, "
-          "\"Incompatible type\");");
-    write("return;");
-    decIndent();
-
-    write("}");
+    mOut.indent() << "if (!" << VarName
+                  << "->getType()->getElement()->isCompatible("
+                  << RS_ELEM_PREFIX << TypeName << "))";
+    mOut.startBlock();
+    mOut.indent() << "mRS->throwError(RS_ERROR_RUNTIME_ERROR, "
+                     "\"Incompatible type\");\n";
+    mOut.indent() << "return;\n";
+    mOut.endBlock();
   }
 }
 
@@ -922,10 +882,8 @@ void RSReflectionCpp::genInitExportVariable(const RSExportType *ET,
 }
 
 void RSReflectionCpp::genZeroInitExportVariable(const std::string &VarName) {
-  std::stringstream ss;
-  ss << "memset(&" RS_EXPORT_VAR_PREFIX << VarName << ", 0, sizeof("
-     << RS_EXPORT_VAR_PREFIX << VarName << "));";
-  write(ss);
+  mOut.indent() << "memset(&" << RS_EXPORT_VAR_PREFIX << VarName
+                << ", 0, sizeof(" << RS_EXPORT_VAR_PREFIX << VarName << "));\n";
 }
 
 void
@@ -933,10 +891,8 @@ RSReflectionCpp::genInitPrimitiveExportVariable(const std::string &VarName,
                                                 const clang::APValue &Val) {
   slangAssert(!Val.isUninit() && "Not a valid initializer");
 
-  std::stringstream ss;
-  ss << RS_EXPORT_VAR_PREFIX << VarName << " = "
-     << RSReflectionBase::genInitValue(Val) << ";";
-  write(ss);
+  mOut.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = "
+                << RSReflectionBase::genInitValue(Val) << ";\n";
 }
 
 void RSReflectionCpp::genInitBoolExportVariable(const std::string &VarName,
@@ -945,10 +901,9 @@ void RSReflectionCpp::genInitBoolExportVariable(const std::string &VarName,
   slangAssert((Val.getKind() == clang::APValue::Int) &&
               "Bool type has wrong initial APValue");
 
-  std::stringstream ss;
-  ss << RS_EXPORT_VAR_PREFIX << VarName << " = "
-     << ((Val.getInt().getSExtValue() == 0) ? "false" : "true") << ";";
-  write(ss);
+  mOut.indent() << RS_EXPORT_VAR_PREFIX << VarName << " = "
+                << ((Val.getInt().getSExtValue() == 0) ? "false" : "true")
+                << ";";
 }
 
 } // namespace slang
