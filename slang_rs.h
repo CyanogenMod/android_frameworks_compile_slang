@@ -66,8 +66,9 @@ class SlangRS : public Slang {
                      const std::string &RSPackageName,
                      bool EmbedBitcodeInJava);
 
-  bool generateBitcodeAccessor(const std::string &OutputPathBase,
-                               const std::string &PackageName);
+  bool generateJavaBitcodeAccessor(const std::string &OutputPathBase,
+                                   const std::string &PackageName,
+                                   const std::string *LicenseNote);
 
   // CurInputFile is the pointer to a char array holding the input filename
   // and is valid before compile() ends.

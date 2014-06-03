@@ -84,17 +84,19 @@ bool SlangRS::reflectToJava(const std::string &OutputPathBase,
                                    EmbedBitcodeInJava);
 }
 
-bool SlangRS::generateBitcodeAccessor(const std::string &OutputPathBase,
-                                      const std::string &PackageName) {
+bool SlangRS::generateJavaBitcodeAccessor(const std::string &OutputPathBase,
+                                      const std::string &PackageName,
+                                      const std::string *LicenseNote) {
   RSSlangReflectUtils::BitCodeAccessorContext BCAccessorContext;
 
   BCAccessorContext.rsFileName = getInputFileName().c_str();
   BCAccessorContext.bcFileName = getOutputFileName().c_str();
   BCAccessorContext.reflectPath = OutputPathBase.c_str();
   BCAccessorContext.packageName = PackageName.c_str();
+  BCAccessorContext.licenseNote = LicenseNote;
   BCAccessorContext.bcStorage = BCST_JAVA_CODE;   // Must be BCST_JAVA_CODE
 
-  return RSSlangReflectUtils::GenerateBitCodeAccessor(BCAccessorContext);
+  return RSSlangReflectUtils::GenerateJavaBitCodeAccessor(BCAccessorContext);
 }
 
 bool SlangRS::checkODR(const char *CurInputFile) {
@@ -373,8 +375,9 @@ bool SlangRS::compile(
 
         if ((OutputType == Slang::OT_Bitcode) &&
             (BitcodeStorage == BCST_JAVA_CODE) &&
-            !generateBitcodeAccessor(JavaReflectionPathBase,
-                                     RealPackageName.c_str())) {
+            !generateJavaBitcodeAccessor(JavaReflectionPathBase,
+                                         RealPackageName.c_str(),
+                                         mRSContext->getLicenseNote())) {
           return false;
         }
       }
