@@ -90,6 +90,13 @@ public:
 // JoinPath("foo/", "/bar") returns "foo/bar".
 std::string JoinPath(const std::string &path1, const std::string &path2);
 
+/* Compute a safe root name from a .rs file name.  Any non-alphanumeric,
+ * non-underscore characters will be discarded.
+ * E.g. RootNameFromRSFileName("./foo/bar/my-Renderscript_file.rs") returns
+ * "myRenderscript_file".
+ */
+std::string RootNameFromRSFileName(const std::string &rsFileName);
+
 /* This class is used to generate one source file.  There will be one instance
  * for each generated file.
  */

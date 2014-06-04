@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_CPP_H_ // NOLINT
+#ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_CPP_H_  // NOLINT
 #define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_REFLECTION_CPP_H_
 
-#include "slang_rs_reflection_base.h"
 #include "slang_rs_reflect_utils.h"
 
 #include <set>
@@ -27,8 +26,8 @@
 
 namespace slang {
 
-class RSReflectionCpp : public RSReflectionBase {
-public:
+class RSReflectionCpp {
+ public:
   explicit RSReflectionCpp(const RSContext *);
   virtual ~RSReflectionCpp();
 
@@ -36,10 +35,32 @@ public:
                const std::string &InputFileName,
                const std::string &OutputBCFileName);
 
-private:
+ private:
+  // List of of (type, name) pairs.
+  typedef std::vector<std::pair<std::string, std::string> > ArgumentList;
+
+  // Information coming from the compiler about the code we're reflecting.
+  const RSContext *mRSContext;
+
+  // Path to the *.rs file for which we're generating C++ code.
+  std::string mRSSourceFilePath;
+  // Path to the file that contains the byte code generated from the *.rs file.
+  std::string mBitCodeFilePath;
+  // The directory where we'll generate the C++ files.
+  std::string mOutputDirectory;
+  // A cleaned up version of the *.rs file name that can be used in generating
+  // C++ identifiers.
+  std::string mCleanedRSFileName;
+  // The name of the generated C++ class.
+  std::string mClassName;
+
+  // TODO document
   unsigned int mNextExportVarSlot;
   unsigned int mNextExportFuncSlot;
   unsigned int mNextExportForEachSlot;
+
+  // Generated RS Elements for type-checking code.
+  std::set<std::string> mTypesToCheck;
 
   inline void clear() {
     mNextExportVarSlot = 0;
@@ -51,6 +72,9 @@ private:
   // The file we are currently generating, either the header or the
   // implementation file.
   GeneratedFile mOut;
+
+  void genInitValue(const clang::APValue &Val, bool asBool = false);
+  static const char *getVectorAccessor(unsigned index);
 
   inline unsigned int getNextExportVarSlot() { return mNextExportVarSlot++; }
 
@@ -77,7 +101,7 @@ private:
                                       const clang::APValue &Val);
 
   // Produce an argument string of the form "T1 t, T2 u, T3 v".
-  void makeArgs(const ArgTy &Args, int Offset);
+  void makeArgs(const ArgumentList &Args, int Offset);
 
   // Write out code for an export variable.
   void genExportVariable(const RSExportVar *EV);
