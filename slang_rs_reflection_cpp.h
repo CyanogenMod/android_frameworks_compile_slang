@@ -28,12 +28,12 @@ namespace slang {
 
 class RSReflectionCpp {
  public:
-  explicit RSReflectionCpp(const RSContext *);
+  RSReflectionCpp(const RSContext *Context, const std::string &OutputDirectory,
+                  const std::string &RSSourceFileName,
+                  const std::string &BitCodeFileName);
   virtual ~RSReflectionCpp();
 
-  bool reflect(const std::string &OutputPathBase,
-               const std::string &InputFileName,
-               const std::string &OutputBCFileName);
+  bool reflect();
 
  private:
   // List of of (type, name) pairs.
