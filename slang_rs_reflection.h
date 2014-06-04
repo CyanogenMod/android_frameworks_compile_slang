@@ -198,6 +198,7 @@ private:
                                       const clang::APValue &Val);
   void genInitExportVariable(const RSExportType *ET, const std::string &VarName,
                              const clang::APValue &Val);
+  void genInitValue(const clang::APValue &Val, bool asBool);
   void genExportVariable(const RSExportVar *EV);
   void genPrimitiveTypeExportVariable(const RSExportVar *EV);
   void genPointerTypeExportVariable(const RSExportVar *EV);
