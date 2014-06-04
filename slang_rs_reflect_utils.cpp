@@ -249,7 +249,7 @@ bool RSSlangReflectUtils::GenerateJavaBitCodeAccessor(
 
   GeneratedFile out;
   if (!out.startFile(output_path, filename, context.rsFileName,
-                     context.licenseNote)) {
+                     context.licenseNote, true)) {
     return false;
   }
 
@@ -280,6 +280,20 @@ std::string JoinPath(const std::string &path1, const std::string &path2) {
   return fullPath;
 }
 
+// Replace all instances of "\" with "\\" in a single string to prevent
+// formatting errors.  In Java, this can happen even within comments, as
+// Java processes \u before the comments are stripped.  E.g. if the generated
+// file in Windows contains the note:
+//     /* Do not modify!  Generated from \Users\MyName\MyDir\foo.cs */
+// Java will think that \U tells of a Unicode character.
+static void SanitizeString(std::string *s) {
+  size_t p = 0;
+  while ((p = s->find('\\', p)) != std::string::npos) {
+    s->replace(p, 1, "\\\\");
+    p += 2;
+  }
+}
+
 static const char *const gApacheLicenseNote =
     "/*\n"
     " * Copyright (C) 2011-2014 The Android Open Source Project\n"
@@ -302,7 +316,7 @@ static const char *const gApacheLicenseNote =
 bool GeneratedFile::startFile(const string &outDirectory,
                               const string &outFileName,
                               const string &sourceFileName,
-                              const string *optionalLicense) {
+                              const string *optionalLicense, bool isJava) {
   printf("Generating %s\n", outFileName.c_str());
 
   // Create the parent directories.
@@ -331,9 +345,14 @@ bool GeneratedFile::startFile(const string &outDirectory,
   }
 
   // Write a notice that this is a generated file.
+  std::string source(sourceFileName);
+  if (isJava) {
+    SanitizeString(&source);
+  }
+
   *this << "/*\n"
         << " * This file is auto-generated. DO NOT MODIFY!\n"
-        << " * The source Renderscript file: " << sourceFileName << "\n"
+        << " * The source Renderscript file: " << source << "\n"
         << " */\n\n";
 
   return true;

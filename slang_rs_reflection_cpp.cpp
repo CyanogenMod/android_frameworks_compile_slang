@@ -147,7 +147,7 @@ bool RSReflectionCpp::reflect(const string &OutputPathBase,
 bool RSReflectionCpp::makeHeader() {
   // Create the file and write the license note.
   if (!mOut.startFile(mOutputDirectory, mClassName + ".h", mRSSourceFilePath,
-                      mRSContext->getLicenseNote())) {
+                      mRSContext->getLicenseNote(), false)) {
     return false;
   }
 
@@ -297,7 +297,7 @@ bool RSReflectionCpp::writeBC() {
 
 bool RSReflectionCpp::makeImpl() {
   if (!mOut.startFile(mOutputDirectory, mClassName + ".cpp", mRSSourceFilePath,
-                      mRSContext->getLicenseNote())) {
+                      mRSContext->getLicenseNote(), false)) {
     return false;
   }
 
