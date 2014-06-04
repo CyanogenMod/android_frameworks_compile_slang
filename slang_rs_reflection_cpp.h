@@ -84,10 +84,10 @@ class RSReflectionCpp {
     return mNextExportForEachSlot++;
   }
 
-  bool makeHeader();
-  bool makeImpl();
+  bool writeHeaderFile();
+  bool writeImplementationFile();
   void makeFunctionSignature(bool isDefinition, const RSExportFunc *ef);
-  bool writeBC();
+  bool genEncodedBitCode();
 
   bool startScriptHeader();
 
@@ -101,7 +101,7 @@ class RSReflectionCpp {
                                       const clang::APValue &Val);
 
   // Produce an argument string of the form "T1 t, T2 u, T3 v".
-  void makeArgs(const ArgumentList &Args, int Offset);
+  void genArguments(const ArgumentList &Args, int Offset);
 
   // Write out code for an export variable.
   void genExportVariable(const RSExportVar *EV);
