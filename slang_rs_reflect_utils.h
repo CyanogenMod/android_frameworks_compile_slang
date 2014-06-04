@@ -111,7 +111,7 @@ public:
    */
   bool startFile(const std::string &outPath, const std::string &outFileName,
                  const std::string &sourceFileName,
-                 const std::string *optionalLicense);
+                 const std::string *optionalLicense, bool isJava);
   void closeFile();
 
   void increaseIndent(); // Increases the new line indentation by 4
