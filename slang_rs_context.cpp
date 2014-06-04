@@ -278,31 +278,6 @@ bool RSContext::insertExportType(const llvm::StringRef &TypeName,
   }
 }
 
-bool RSContext::reflectToJava(const std::string &OutputPathBase,
-                              const std::string &RSPackageName,
-                              const std::string &InputFileName,
-                              const std::string &OutputBCFileName,
-                              bool EmbedBitcodeInJava) {
-  if (!RSPackageName.empty()) {
-    mRSPackageName = RSPackageName;
-  }
-
-  // If we are not targeting the actual Android Renderscript classes,
-  // we should reflect code that works with the compatibility library.
-  if (mRSPackageName.compare("android.renderscript") != 0) {
-    mIsCompatLib = true;
-  }
-
-  RSReflectionJava *R = new RSReflectionJava(this, mGeneratedFileNames);
-  bool ret = R->reflect(OutputPathBase, mReflectJavaPackageName, mRSPackageName,
-                        InputFileName, OutputBCFileName, EmbedBitcodeInJava);
-  if (!ret)
-    fprintf(stderr, "RSContext::reflectToJava : failed to do reflection "
-                    "(%s)\n", R->getLastError());
-  delete R;
-  return ret;
-}
-
 RSContext::~RSContext() {
   delete mLicenseNote;
   delete mDataLayout;
