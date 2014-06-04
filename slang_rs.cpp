@@ -36,6 +36,7 @@
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
 
+#include "slang_rs_reflection.h"
 #include "slang_rs_reflection_cpp.h"
 
 namespace slang {
@@ -74,19 +75,9 @@ bool SlangRS::isFilterscript(const char *Filename) {
   }
 }
 
-bool SlangRS::reflectToJava(const std::string &OutputPathBase,
-                            const std::string &RSPackageName,
-                            bool EmbedBitcodeInJava) {
-  return mRSContext->reflectToJava(OutputPathBase,
-                                   RSPackageName,
-                                   getInputFileName(),
-                                   getOutputFileName(),
-                                   EmbedBitcodeInJava);
-}
-
 bool SlangRS::generateJavaBitcodeAccessor(const std::string &OutputPathBase,
-                                      const std::string &PackageName,
-                                      const std::string *LicenseNote) {
+                                          const std::string &PackageName,
+                                          const std::string *LicenseNote) {
   RSSlangReflectUtils::BitCodeAccessorContext BCAccessorContext;
 
   BCAccessorContext.rsFileName = getInputFileName().c_str();
@@ -229,8 +220,7 @@ void SlangRS::initASTContext() {
                              getASTContext(),
                              getTargetInfo(),
                              &mPragmas,
-                             mTargetAPI,
-                             &mGeneratedFileNames);
+                             mTargetAPI);
 }
 
 clang::ASTConsumer
@@ -353,13 +343,26 @@ bool SlangRS::compile(
 
       if (BitcodeStorage == BCST_CPP_CODE) {
           RSReflectionCpp R(mRSContext);
-          bool ret = R.reflect(JavaReflectionPathBase, getInputFileName(), getOutputFileName());
+          bool ret = R.reflect(JavaReflectionPathBase, getInputFileName(),
+                               getOutputFileName());
           if (!ret) {
             return false;
           }
       } else {
+        if (!RSPackageName.empty()) {
+          mRSContext->setRSPackageName(RSPackageName);
+        }
 
-        if (!reflectToJava(JavaReflectionPathBase, RSPackageName, (BitcodeStorage == BCST_JAVA_CODE))) {
+        RSReflectionJava R(mRSContext, &mGeneratedFileNames);
+        if (!R.reflect(JavaReflectionPathBase,
+                       mRSContext->getReflectJavaPackageName(),
+                       mRSContext->getRSPackageName(), getInputFileName(),
+                       getOutputFileName(), BitcodeStorage == BCST_JAVA_CODE)) {
+          // TODO Is this needed or will the error message have been printed
+          // already? and why not for the C++ case?
+          fprintf(stderr, "RSContext::reflectToJava : failed to do reflection "
+                          "(%s)\n",
+                  R.getLastError());
           return false;
         }
 
