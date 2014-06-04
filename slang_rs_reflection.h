@@ -28,6 +28,7 @@
 
 #include "slang_assert.h"
 #include "slang_rs_export_type.h"
+#include "slang_rs_reflect_utils.h"
 
 namespace slang {
 
@@ -39,6 +40,8 @@ class RSExportForEach;
 class RSReflectionJava {
 private:
   const RSContext *mRSContext;
+
+  std::string mOutputDirectory; // Includes the terminating separator
 
   std::string mLastError;
   std::vector<std::string> *mGeneratedFileNames;
@@ -60,17 +63,15 @@ private:
 
   std::string mClassName;
 
-  std::string mLicenseNote;
-
   bool mEmbedBitcodeInJava;
-
-  std::string mIndent;
 
   int mPaddingFieldIndex;
 
   int mNextExportVarSlot;
   int mNextExportFuncSlot;
   int mNextExportForEachSlot;
+
+  GeneratedFile mOut;
 
   // A mapping from a field in a record type to its index in the rsType
   // instance. Only used when generates TypeClass (ScriptField_*).
@@ -81,14 +82,11 @@ private:
 
   inline void clear() {
     mClassName = "";
-    mIndent = "";
     mPaddingFieldIndex = 1;
     mNextExportVarSlot = 0;
     mNextExportFuncSlot = 0;
     mNextExportForEachSlot = 0;
   }
-
-  bool openClassFile(const std::string &ClassName, std::string &ErrorMsg);
 
 public:
   typedef enum {
@@ -97,8 +95,6 @@ public:
     AM_Private,
     AM_PublicSynchronized
   } AccessModifier;
-
-  mutable std::ofstream mOF;
 
   // Generated RS Elements for type-checking code.
   std::set<std::string> mTypesToCheck;
@@ -113,25 +109,9 @@ public:
 
   inline std::string &getInputFileName() { return mInputFileName; }
 
-  inline std::ostream &out() const { return mOF; }
-  inline std::ostream &indent() const {
-    out() << mIndent;
-    return out();
-  }
-
-  inline void incIndentLevel() { mIndent.append(4, ' '); }
-
-  inline void decIndentLevel() {
-    slangAssert(getIndentLevel() > 0 && "No indent");
-    mIndent.erase(0, 4);
-  }
-
-  inline int getIndentLevel() { return (mIndent.length() >> 2); }
-
   inline bool getEmbedBitcodeInJava() const { return mEmbedBitcodeInJava; }
 
   inline int getNextExportVarSlot() { return mNextExportVarSlot++; }
-
   inline int getNextExportFuncSlot() { return mNextExportFuncSlot++; }
   inline int getNextExportForEachSlot() { return mNextExportForEachSlot++; }
 
@@ -139,10 +119,6 @@ public:
   // C-reflect-to-Java
   inline std::string createPaddingField() {
     return mPaddingPrefix + llvm::itostr(mPaddingFieldIndex++);
-  }
-
-  inline void setLicenseNote(const std::string &LicenseNote) {
-    mLicenseNote = LicenseNote;
   }
 
   bool startClass(AccessModifier AM, bool IsStatic,
@@ -157,9 +133,6 @@ public:
   void startFunction(AccessModifier AM, bool IsStatic, const char *ReturnType,
                      const std::string &FunctionName, const ArgTy &Args);
   void endFunction();
-
-  void startBlock(bool ShouldIndent = false);
-  void endBlock();
 
   inline const std::string &getPackageName() const { return mPackageName; }
   inline const std::string &getRSPackageName() const { return mRSPackageName; }
