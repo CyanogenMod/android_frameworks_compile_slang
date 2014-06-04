@@ -143,6 +143,11 @@ class RSContext {
 
   inline void setRSPackageName(const std::string &S) {
     mRSPackageName = S;
+    // If we are not targeting the actual Android Renderscript classes,
+    // we should reflect code that works with the compatibility library.
+    if (mRSPackageName.compare("android.renderscript") != 0) {
+      mIsCompatLib = true;
+    }
   }
   inline const std::string &getRSPackageName() const {
     return mRSPackageName;
@@ -213,12 +218,6 @@ class RSContext {
   // exists in the map, return false and ignore the request, otherwise insert it
   // and return true.
   bool insertExportType(const llvm::StringRef &TypeName, RSExportType *Type);
-
-  bool reflectToJava(const std::string &OutputPathBase,
-                     const std::string &RSPackageName,
-                     const std::string &InputFileName,
-                     const std::string &OutputBCFileName,
-                     bool EmbedBitcodeInJava);
 
   int getVersion() const { return version; }
   void setVersion(int v) {
