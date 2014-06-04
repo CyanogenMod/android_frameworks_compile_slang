@@ -136,15 +136,15 @@ bool RSReflectionCpp::reflect(const string &OutputPathBase,
     return false;
   }
 
-  makeHeader();
-  makeImpl();
+  writeHeaderFile();
+  writeImplementationFile();
 
   return true;
 }
 
 #define RS_TYPE_CLASS_NAME_PREFIX "ScriptField_"
 
-bool RSReflectionCpp::makeHeader() {
+bool RSReflectionCpp::writeHeaderFile() {
   // Create the file and write the license note.
   if (!mOut.startFile(mOutputDirectory, mClassName + ".h", mRSSourceFilePath,
                       mRSContext->getLicenseNote(), false)) {
@@ -153,11 +153,6 @@ bool RSReflectionCpp::makeHeader() {
 
   mOut.indent() << "#include \"RenderScript.h\"\n\n";
   mOut.indent() << "using namespace android::RSC;\n\n";
-
-  // Imports
-  // for(unsigned i = 0; i < (sizeof(Import) / sizeof(const char*)); i++)
-  // out() << "import " << Import[i] << ";\n";
-  // out() << "\n";
 
   mOut.indent() << "class " << mClassName
                 << " : public android::RSC::ScriptC {\n";
@@ -219,37 +214,37 @@ bool RSReflectionCpp::makeHeader() {
            I = mRSContext->export_foreach_begin(),
            E = mRSContext->export_foreach_end();
        I != E; I++) {
-    const RSExportForEach *ef = *I;
-    if (ef->isDummyRoot()) {
+    const RSExportForEach *ForEach = *I;
+    if (ForEach->isDummyRoot()) {
       mOut.indent() << "// No forEach_root(...)\n";
       continue;
     }
 
-    ArgumentList Args;
-    std::string FunctionStart = "void forEach_" + ef->getName() + "(";
+    std::string FunctionStart = "void forEach_" + ForEach->getName() + "(";
     mOut.indent() << FunctionStart;
 
-    if (ef->hasIn()) {
-      Args.push_back(std::make_pair(
+    ArgumentList Arguments;
+    if (ForEach->hasIn()) {
+      Arguments.push_back(std::make_pair(
           "android::RSC::sp<const android::RSC::Allocation>", "ain"));
     }
 
-    if (ef->hasOut() || ef->hasReturn()) {
-      Args.push_back(std::make_pair(
+    if (ForEach->hasOut() || ForEach->hasReturn()) {
+      Arguments.push_back(std::make_pair(
           "android::RSC::sp<const android::RSC::Allocation>", "aout"));
     }
 
-    const RSExportRecordType *ERT = ef->getParamPacketType();
+    const RSExportRecordType *ERT = ForEach->getParamPacketType();
     if (ERT) {
-      for (RSExportForEach::const_param_iterator i = ef->params_begin(),
-                                                 e = ef->params_end();
+      for (RSExportForEach::const_param_iterator i = ForEach->params_begin(),
+                                                 e = ForEach->params_end();
            i != e; i++) {
         RSReflectionTypeData rtd;
         (*i)->getType()->convertToRTD(&rtd);
-        Args.push_back(std::make_pair(rtd.type->c_name, (*i)->getName()));
+        Arguments.push_back(std::make_pair(rtd.type->c_name, (*i)->getName()));
       }
     }
-    makeArgs(Args, FunctionStart.length());
+    genArguments(Arguments, FunctionStart.length());
     mOut << ");\n";
   }
 
@@ -269,7 +264,7 @@ bool RSReflectionCpp::makeHeader() {
   return true;
 }
 
-bool RSReflectionCpp::writeBC() {
+bool RSReflectionCpp::genEncodedBitCode() {
   FILE *pfin = fopen(mBitCodeFilePath.c_str(), "rb");
   if (pfin == NULL) {
     fprintf(stderr, "Error: could not read file %s\n",
@@ -295,7 +290,7 @@ bool RSReflectionCpp::writeBC() {
   return true;
 }
 
-bool RSReflectionCpp::makeImpl() {
+bool RSReflectionCpp::writeImplementationFile() {
   if (!mOut.startFile(mOutputDirectory, mClassName + ".cpp", mRSSourceFilePath,
                       mRSContext->getLicenseNote(), false)) {
     return false;
@@ -303,13 +298,8 @@ bool RSReflectionCpp::makeImpl() {
 
   mOut.indent() << "#include \"" << mClassName << ".h\"\n\n";
 
-  writeBC();
+  genEncodedBitCode();
   mOut.indent() << "\n\n";
-
-  // Imports
-  // for(unsigned i = 0; i < (sizeof(Import) / sizeof(const char*)); i++)
-  // out() << "import " << Import[i] << ";\n";
-  // out() << "\n";
 
   const std::string &packageName = mRSContext->getReflectJavaPackageName();
   mOut.indent() << mClassName << "::" << mClassName
@@ -354,18 +344,18 @@ bool RSReflectionCpp::makeImpl() {
       continue;
     }
 
-    ArgumentList Args;
+    ArgumentList Arguments;
     std::string FunctionStart =
         "void " + mClassName + "::forEach_" + ef->getName() + "(";
     mOut.indent() << FunctionStart;
 
     if (ef->hasIn()) {
-      Args.push_back(std::make_pair(
+      Arguments.push_back(std::make_pair(
           "android::RSC::sp<const android::RSC::Allocation>", "ain"));
     }
 
     if (ef->hasOut() || ef->hasReturn()) {
-      Args.push_back(std::make_pair(
+      Arguments.push_back(std::make_pair(
           "android::RSC::sp<const android::RSC::Allocation>", "aout"));
     }
 
@@ -376,10 +366,10 @@ bool RSReflectionCpp::makeImpl() {
            i != e; i++) {
         RSReflectionTypeData rtd;
         (*i)->getType()->convertToRTD(&rtd);
-        Args.push_back(std::make_pair(rtd.type->c_name, (*i)->getName()));
+        Arguments.push_back(std::make_pair(rtd.type->c_name, (*i)->getName()));
       }
     }
-    makeArgs(Args, FunctionStart.length());
+    genArguments(Arguments, FunctionStart.length());
     mOut << ")";
     mOut.startBlock();
 
@@ -566,8 +556,6 @@ void RSReflectionCpp::genVectorTypeExportVariable(const RSExportVar *EV) {
   RSReflectionTypeData rtd;
   EVT->convertToRTD(&rtd);
 
-  std::stringstream ss;
-
   if (!EV->isConst()) {
     mOut.indent() << "void set_" << EV->getName() << "("
                   << rtd.type->rs_c_vector_prefix << EVT->getNumElement()
@@ -637,11 +625,11 @@ void RSReflectionCpp::makeFunctionSignature(bool isDefinition,
   }
 }
 
-void RSReflectionCpp::makeArgs(const ArgumentList &Args, int Offset) {
+void RSReflectionCpp::genArguments(const ArgumentList &Arguments, int Offset) {
   bool FirstArg = true;
 
-  for (ArgumentList::const_iterator I = Args.begin(), E = Args.end(); I != E;
-       I++) {
+  for (ArgumentList::const_iterator I = Arguments.begin(), E = Arguments.end();
+       I != E; I++) {
     if (!FirstArg) {
       mOut << ",\n";
       mOut.indent() << string(Offset, ' ');
