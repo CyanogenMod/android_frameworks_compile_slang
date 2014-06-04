@@ -166,7 +166,7 @@ endif
 # For build RSCCOptions.inc from RSCCOptions.td
 intermediates := $(call local-generated-sources-dir)
 LOCAL_GENERATED_SOURCES += $(intermediates)/RSCCOptions.inc
-$(intermediates)/RSCCOptions.inc: $(LOCAL_PATH)/RSCCOptions.td $(LLVM_ROOT_PATH)/include/llvm/Option/OptParser.td $(TBLGEN)
+$(intermediates)/RSCCOptions.inc: $(LOCAL_PATH)/RSCCOptions.td $(LLVM_ROOT_PATH)/include/llvm/Option/OptParser.td $(LLVM_TBLGEN)
 	@echo "Building Renderscript compiler (llvm-rs-cc) Option tables with tblgen"
 	$(call transform-host-td-to-out,opt-parser-defs)
 
