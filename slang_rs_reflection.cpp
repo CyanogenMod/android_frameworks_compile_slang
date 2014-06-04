@@ -38,8 +38,6 @@
 #include "slang_version.h"
 #include "slang_utils.h"
 
-#include "slang_rs_reflection_base.h"
-
 #define RS_SCRIPT_CLASS_NAME_PREFIX "ScriptC_"
 #define RS_SCRIPT_CLASS_SUPER_CLASS_NAME "ScriptC"
 
@@ -420,7 +418,8 @@ RSReflectionJava::genInitPrimitiveExportVariable(const std::string &VarName,
   slangAssert(!Val.isUninit() && "Not a valid initializer");
 
   indent() << RS_EXPORT_VAR_PREFIX << VarName << " = ";
-  out() << RSReflectionBase::genInitValue(Val) << ";\n";
+  genInitValue(Val, false);
+  out() << ";\n";
 }
 
 void RSReflectionJava::genInitExportVariable(const RSExportType *ET,
@@ -841,8 +840,8 @@ void RSReflectionJava::genPrimitiveTypeExportVariable(const RSExportVar *EV) {
     indent() << "public final static " << TypeName
              << " " RS_EXPORT_VAR_CONST_PREFIX << VarName << " = ";
     const clang::APValue &Val = EV->getInit();
-    out() << RSReflectionBase::genInitValue(Val, EPT->getType() ==
-                                                     DataTypeBoolean) << ";\n";
+    genInitValue(Val, EPT->getType() == DataTypeBoolean);
+    out() << ";\n";
   } else {
     // set_*()
     // This must remain synchronized, since multiple Dalvik threads may
@@ -884,6 +883,49 @@ void RSReflectionJava::genPrimitiveTypeExportVariable(const RSExportVar *EV) {
 
   genGetExportVariable(TypeName, VarName);
   genGetFieldID(VarName);
+}
+
+void RSReflectionJava::genInitValue(const clang::APValue &Val, bool asBool) {
+  switch (Val.getKind()) {
+  case clang::APValue::Int: {
+    llvm::APInt api = Val.getInt();
+    if (asBool) {
+      out() << ((api.getSExtValue() == 0) ? "false" : "true");
+    } else {
+      // TODO: Handle unsigned correctly
+      out() << api.getSExtValue();
+      if (api.getBitWidth() > 32) {
+        out() << "L";
+      }
+    }
+    break;
+  }
+
+  case clang::APValue::Float: {
+    llvm::APFloat apf = Val.getFloat();
+    llvm::SmallString<30> s;
+    apf.toString(s);
+    out() << s.c_str();
+    if (&apf.getSemantics() == &llvm::APFloat::IEEEsingle) {
+      if (s.count('.') == 0) {
+        out() << ".f";
+      } else {
+        out() << "f";
+      }
+    }
+    break;
+  }
+
+  case clang::APValue::ComplexInt:
+  case clang::APValue::ComplexFloat:
+  case clang::APValue::LValue:
+  case clang::APValue::Vector: {
+    slangAssert(false && "Primitive type cannot have such kind of initializer");
+    break;
+  }
+
+  default: { slangAssert(false && "Unknown kind of initializer"); }
+  }
 }
 
 void RSReflectionJava::genPointerTypeExportVariable(const RSExportVar *EV) {
