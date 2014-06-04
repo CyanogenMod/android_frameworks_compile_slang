@@ -99,6 +99,10 @@ RSSlangReflectUtils::JavaClassNameFromRSFileName(const char *rsFileName) {
   return InternalFileNameConvert(rsFileName, false);
 }
 
+std::string RootNameFromRSFileName(const std::string &rsFileName) {
+  return InternalFileNameConvert(rsFileName.c_str(), false);
+}
+
 std::string
 RSSlangReflectUtils::BCFileNameFromRSFileName(const char *rsFileName) {
   return InternalFileNameConvert(rsFileName, true);
