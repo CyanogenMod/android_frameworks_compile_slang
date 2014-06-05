@@ -41,30 +41,41 @@ class RSReflectionJava {
 private:
   const RSContext *mRSContext;
 
-  std::string mOutputDirectory; // Includes the terminating separator
-
-  std::string mLastError;
-  std::vector<std::string> *mGeneratedFileNames;
-
-  inline void setError(const std::string &Error) { mLastError = Error; }
-
-  static const char *const ApacheLicenseNote;
-
-  bool mVerbose;
-
-  std::string mOutputPathBase;
-
-  std::string mInputFileName;
-
+  // The name of the Java package name we're creating this file for,
+  // e.g. com.example.android.rs.flashlight
   std::string mPackageName;
+  // The name of the Java Renderscript package we'll be using,
+  // e.g. android.renderscript
+  // e.g. android.support.v8.renderscript
   std::string mRSPackageName;
-  std::string mResourceId;
-  std::string mPaddingPrefix;
 
+  // The directory under which we'll create the Java files, in appropriate subdirectories,
+  // e.g. /tmp/myout
+  std::string mOutputBaseDirectory;
+  // The output directory for the specfied package (mPackageName),
+  // e.g. /tmp/myout/com/example/android/rs/flashlight/
+  // TODO This includes the terminating separator.  Needed?
+  std::string mOutputDirectory;
+
+  // The full path of the .rs file that we are reflecting.
+  std::string mRSSourceFileName;
+  // The full path where the generated bit code can be read.
+  std::string mBitCodeFileName;
+
+  // The name of the resource we pass to the RenderScript constructor
+  // e.g. flashlight
+  std::string mResourceId;
+  // The name of the Java class we are generating for this script.
+  // e.g. ScriptC_flashlight
+  std::string mScriptClassName;
+
+
+  // This is set by startClass() and will change for the multiple classes generated.
   std::string mClassName;
 
   bool mEmbedBitcodeInJava;
 
+  std::string mPaddingPrefix;
   int mPaddingFieldIndex;
 
   int mNextExportVarSlot;
@@ -73,12 +84,17 @@ private:
 
   GeneratedFile mOut;
 
+  std::string mLastError;
+  std::vector<std::string> *mGeneratedFileNames;
+
   // A mapping from a field in a record type to its index in the rsType
   // instance. Only used when generates TypeClass (ScriptField_*).
   typedef std::map<const RSExportRecordType::Field *, unsigned> FieldIndexMapTy;
   FieldIndexMapTy mFieldIndexMap;
   // Field index of current processing TypeClass.
   unsigned mFieldIndex;
+
+  inline void setError(const std::string &Error) { mLastError = Error; }
 
   inline void clear() {
     mClassName = "";
@@ -106,8 +122,6 @@ public:
   bool addTypeNameForFieldPacker(const std::string &TypeName);
 
   static const char *AccessModifierStr(AccessModifier AM);
-
-  inline std::string &getInputFileName() { return mInputFileName; }
 
   inline bool getEmbedBitcodeInJava() const { return mEmbedBitcodeInJava; }
 
@@ -230,18 +244,14 @@ private:
   void genNewItemBufferPackerIfNull();
 
 public:
-  explicit RSReflectionJava(const RSContext *Context,
-                            std::vector<std::string> *GeneratedFileNames)
-      : mRSContext(Context), mLastError(""),
-        mGeneratedFileNames(GeneratedFileNames) {
-    slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
-  }
+  RSReflectionJava(const RSContext *Context,
+                   std::vector<std::string> *GeneratedFileNames,
+                   const std::string &OutputBaseDirectory,
+                   const std::string &RSSourceFilename,
+                   const std::string &BitCodeFileName,
+                   bool EmbedBitcodeInJava);
 
-  bool reflect(const std::string &OutputPathBase,
-               const std::string &OutputPackageName,
-               const std::string &RSPackageName,
-               const std::string &InputFileName,
-               const std::string &OutputBCFileName, bool EmbedBitcodeInJava);
+  bool reflect();
 
   inline const char *getLastError() const {
     if (mLastError.empty())
