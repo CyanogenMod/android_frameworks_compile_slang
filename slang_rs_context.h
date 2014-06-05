@@ -68,7 +68,6 @@ class RSContext {
   clang::ASTContext &mCtx;
   PragmaList *mPragmas;
   unsigned int mTargetAPI;
-  std::vector<std::string> *mGeneratedFileNames;
 
   llvm::DataLayout *mDataLayout;
   llvm::LLVMContext &mLLVMContext;
@@ -84,8 +83,6 @@ class RSContext {
   std::string mRSPackageName;
 
   int version;
-
-  bool mIsCompatLib;
 
   llvm::OwningPtr<clang::MangleContext> mMangleCtx;
 
@@ -105,8 +102,7 @@ class RSContext {
             clang::ASTContext &Ctx,
             const clang::TargetInfo &Target,
             PragmaList *Pragmas,
-            unsigned int TargetAPI,
-            std::vector<std::string> *GeneratedFileNames);
+            unsigned int TargetAPI);
 
   inline clang::Preprocessor &getPreprocessor() const { return mPP; }
   inline clang::ASTContext &getASTContext() const { return mCtx; }
@@ -144,9 +140,8 @@ class RSContext {
   inline void setRSPackageName(const std::string &S) {
     mRSPackageName = S;
   }
-  inline const std::string &getRSPackageName() const {
-    return mRSPackageName;
-  }
+
+  inline const std::string &getRSPackageName() const { return mRSPackageName; }
 
   bool processExport();
   inline void newExportable(RSExportable *E) {
@@ -214,18 +209,16 @@ class RSContext {
   // and return true.
   bool insertExportType(const llvm::StringRef &TypeName, RSExportType *Type);
 
-  bool reflectToJava(const std::string &OutputPathBase,
-                     const std::string &RSPackageName,
-                     const std::string &InputFileName,
-                     const std::string &OutputBCFileName,
-                     bool EmbedBitcodeInJava);
-
   int getVersion() const { return version; }
   void setVersion(int v) {
     version = v;
   }
 
-  bool isCompatLib() const { return mIsCompatLib; }
+  bool isCompatLib() const {
+    // If we are not targeting the actual Android Renderscript classes,
+    // we should reflect code that works with the compatibility library.
+    return (mRSPackageName.compare("android.renderscript") != 0);
+  }
 
   void addPragma(const std::string &T, const std::string &V) {
     mPragmas->push_back(make_pair(T, V));
