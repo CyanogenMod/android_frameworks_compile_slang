@@ -342,10 +342,9 @@ bool SlangRS::compile(
     if (OutputType != Slang::OT_Dependency) {
 
       if (BitcodeStorage == BCST_CPP_CODE) {
-          RSReflectionCpp R(mRSContext);
-          bool ret = R.reflect(JavaReflectionPathBase, getInputFileName(),
-                               getOutputFileName());
-          if (!ret) {
+          RSReflectionCpp R(mRSContext, JavaReflectionPathBase, getInputFileName(),
+                            getOutputFileName());
+          if (!R.reflect()) {
             return false;
           }
       } else {
@@ -353,11 +352,11 @@ bool SlangRS::compile(
           mRSContext->setRSPackageName(RSPackageName);
         }
 
-        RSReflectionJava R(mRSContext, &mGeneratedFileNames);
-        if (!R.reflect(JavaReflectionPathBase,
-                       mRSContext->getReflectJavaPackageName(),
-                       mRSContext->getRSPackageName(), getInputFileName(),
-                       getOutputFileName(), BitcodeStorage == BCST_JAVA_CODE)) {
+        RSReflectionJava R(mRSContext, &mGeneratedFileNames,
+                           JavaReflectionPathBase, getInputFileName(),
+                           getOutputFileName(),
+                           BitcodeStorage == BCST_JAVA_CODE);
+        if (!R.reflect()) {
           // TODO Is this needed or will the error message have been printed
           // already? and why not for the C++ case?
           fprintf(stderr, "RSContext::reflectToJava : failed to do reflection "
