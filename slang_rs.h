@@ -62,10 +62,6 @@ class SlangRS : public Slang {
   typedef llvm::StringMap<ReflectedDefinitionTy> ReflectedDefinitionListTy;
   ReflectedDefinitionListTy ReflectedDefinitions;
 
-  bool reflectToJava(const std::string &OutputPathBase,
-                     const std::string &RSPackageName,
-                     bool EmbedBitcodeInJava);
-
   bool generateJavaBitcodeAccessor(const std::string &OutputPathBase,
                                    const std::string &PackageName,
                                    const std::string *LicenseNote);
