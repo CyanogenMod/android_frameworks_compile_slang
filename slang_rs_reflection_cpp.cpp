@@ -155,22 +155,35 @@ bool RSReflectionCpp::writeHeaderFile() {
   mOut.indent() << "using namespace android::RSC;\n\n";
 
   mOut.indent() << "class " << mClassName
-                << " : public android::RSC::ScriptC {\n";
+                << " : public android::RSC::ScriptC";
+  mOut.startBlock();
 
+  mOut.decreaseIndent();
   mOut.indent() << "private:\n";
   mOut.increaseIndent();
 
-  uint32_t slot = 0;
-  for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
-                                            E = mRSContext->export_vars_end();
-       I != E; I++, slot++) {
-    const RSExportVar *ev = *I;
-    if (!ev->isConst()) {
-      mOut.indent() << GetTypeName(ev->getType()) << " " RS_EXPORT_VAR_PREFIX
-                    << ev->getName() << ";\n";
-    }
-  }
+  genFieldsToStoreExportVariableValues();
+  genTypeInstancesUsedInForEach();
+  genFieldsForAllocationTypeVerification();
 
+  mOut.decreaseIndent();
+  mOut.indent() << "public:\n";
+  mOut.increaseIndent();
+
+  // Generate the constructor and destructor declarations.
+  mOut.indent() << mClassName << "(android::RSC::sp<android::RSC::RS> rs);\n";
+  mOut.indent() << "virtual ~" << mClassName << "();\n\n";
+
+  genExportVariablesGetterAndSetter();
+  genForEachDeclarations();
+  genExportFunctionDeclarations();
+
+  mOut.endBlock(true);
+  mOut.closeFile();
+  return true;
+}
+
+void RSReflectionCpp::genTypeInstancesUsedInForEach() {
   for (RSContext::const_export_foreach_iterator
            I = mRSContext->export_foreach_begin(),
            E = mRSContext->export_foreach_end();
@@ -185,36 +198,36 @@ bool RSReflectionCpp::writeHeaderFile() {
       genTypeInstanceFromPointer(OET);
     }
   }
+}
 
+void RSReflectionCpp::genFieldsForAllocationTypeVerification() {
   for (std::set<std::string>::iterator I = mTypesToCheck.begin(),
                                        E = mTypesToCheck.end();
        I != E; I++) {
     mOut.indent() << "android::RSC::sp<const android::RSC::Element> "
                   << RS_ELEM_PREFIX << *I << ";\n";
   }
+}
 
-  mOut.decreaseIndent();
-
-  mOut.indent() << "public:\n";
-  mOut.increaseIndent();
-  mOut.indent() << mClassName << "(android::RSC::sp<android::RSC::RS> rs);\n";
-  mOut.indent() << "virtual ~" << mClassName + "();\n";
-  mOut.indent() << "\n";
-
-  // Reflect export variable
-  slot = 0;
+void RSReflectionCpp::genFieldsToStoreExportVariableValues() {
   for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
                                             E = mRSContext->export_vars_end();
-       I != E; I++, slot++) {
-    genExportVariable(*I);
+       I != E; I++) {
+    const RSExportVar *ev = *I;
+    if (!ev->isConst()) {
+      mOut.indent() << GetTypeName(ev->getType()) << " " RS_EXPORT_VAR_PREFIX
+                    << ev->getName() << ";\n";
+    }
   }
+}
 
-  // Reflect export for each functions
+void RSReflectionCpp::genForEachDeclarations() {
   for (RSContext::const_export_foreach_iterator
            I = mRSContext->export_foreach_begin(),
            E = mRSContext->export_foreach_end();
        I != E; I++) {
     const RSExportForEach *ForEach = *I;
+
     if (ForEach->isDummyRoot()) {
       mOut.indent() << "// No forEach_root(...)\n";
       continue;
@@ -247,8 +260,9 @@ bool RSReflectionCpp::writeHeaderFile() {
     genArguments(Arguments, FunctionStart.length());
     mOut << ");\n";
   }
+}
 
-  // Reflect export function
+void RSReflectionCpp::genExportFunctionDeclarations() {
   for (RSContext::const_export_func_iterator
            I = mRSContext->export_funcs_begin(),
            E = mRSContext->export_funcs_end();
@@ -257,11 +271,6 @@ bool RSReflectionCpp::writeHeaderFile() {
 
     makeFunctionSignature(false, ef);
   }
-
-  mOut.decreaseIndent();
-  mOut.indent() << "};\n";
-  mOut.closeFile();
-  return true;
 }
 
 bool RSReflectionCpp::genEncodedBitCode() {
@@ -444,42 +453,48 @@ bool RSReflectionCpp::writeImplementationFile() {
   return true;
 }
 
-void RSReflectionCpp::genExportVariable(const RSExportVar *EV) {
-  const RSExportType *ET = EV->getType();
+void RSReflectionCpp::genExportVariablesGetterAndSetter() {
+  for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
+                                            E = mRSContext->export_vars_end();
+       I != E; I++) {
+    const RSExportVar *EV = *I;
+    const RSExportType *ET = EV->getType();
 
-  switch (ET->getClass()) {
-  case RSExportType::ExportClassPrimitive: {
-    genPrimitiveTypeExportVariable(EV);
-    break;
-  }
-  case RSExportType::ExportClassPointer: {
-    genPointerTypeExportVariable(EV);
-    break;
-  }
-  case RSExportType::ExportClassVector: {
-    genVectorTypeExportVariable(EV);
-    break;
-  }
-  case RSExportType::ExportClassMatrix: {
-    genMatrixTypeExportVariable(EV);
-    break;
-  }
-  case RSExportType::ExportClassConstantArray: {
-    genConstantArrayTypeExportVariable(EV);
-    break;
-  }
-  case RSExportType::ExportClassRecord: {
-    genRecordTypeExportVariable(EV);
-    break;
-  }
-  default: { slangAssert(false && "Unknown class of type"); }
+    switch (ET->getClass()) {
+    case RSExportType::ExportClassPrimitive: {
+      genGetterAndSetter(static_cast<const RSExportPrimitiveType *>(ET), EV);
+      break;
+    }
+    case RSExportType::ExportClassPointer: {
+      // TODO Deprecate this.
+      genPointerTypeExportVariable(EV);
+      break;
+    }
+    case RSExportType::ExportClassVector: {
+      genGetterAndSetter(static_cast<const RSExportVectorType *>(ET), EV);
+      break;
+    }
+    case RSExportType::ExportClassMatrix: {
+      genMatrixTypeExportVariable(EV);
+      break;
+    }
+    case RSExportType::ExportClassConstantArray: {
+      genGetterAndSetter(static_cast<const RSExportConstantArrayType *>(ET),
+                         EV);
+      break;
+    }
+    case RSExportType::ExportClassRecord: {
+      genGetterAndSetter(static_cast<const RSExportRecordType *>(ET), EV);
+      break;
+    }
+    default: { slangAssert(false && "Unknown class of type"); }
+    }
   }
 }
 
-void RSReflectionCpp::genPrimitiveTypeExportVariable(const RSExportVar *EV) {
+void RSReflectionCpp::genGetterAndSetter(const RSExportPrimitiveType *EPT,
+                                         const RSExportVar *EV) {
   RSReflectionTypeData rtd;
-  const RSExportPrimitiveType *EPT =
-      static_cast<const RSExportPrimitiveType *>(EV->getType());
   EPT->convertToRTD(&rtd);
   std::string TypeName = GetTypeName(EPT, false);
 
@@ -545,12 +560,8 @@ void RSReflectionCpp::genPointerTypeExportVariable(const RSExportVar *EV) {
   mOut.endBlock();
 }
 
-void RSReflectionCpp::genVectorTypeExportVariable(const RSExportVar *EV) {
-  slangAssert((EV->getType()->getClass() == RSExportType::ExportClassVector) &&
-              "Variable should be type of vector here");
-
-  const RSExportVectorType *EVT =
-      static_cast<const RSExportVectorType *>(EV->getType());
+void RSReflectionCpp::genGetterAndSetter(const RSExportVectorType *EVT,
+                                         const RSExportVar *EV) {
   slangAssert(EVT != NULL);
 
   RSReflectionTypeData rtd;
@@ -585,12 +596,13 @@ void RSReflectionCpp::genMatrixTypeExportVariable(const RSExportVar *EV) {
   slangAssert(false);
 }
 
-void
-RSReflectionCpp::genConstantArrayTypeExportVariable(const RSExportVar *EV) {
+void RSReflectionCpp::genGetterAndSetter(const RSExportConstantArrayType *AT,
+                                         const RSExportVar *EV) {
   slangAssert(false);
 }
 
-void RSReflectionCpp::genRecordTypeExportVariable(const RSExportVar *EV) {
+void RSReflectionCpp::genGetterAndSetter(const RSExportRecordType *ERT,
+                                         const RSExportVar *EV) {
   slangAssert(false);
 }
 
