@@ -88,6 +88,12 @@ class RSReflectionCpp {
   bool writeImplementationFile();
   void makeFunctionSignature(bool isDefinition, const RSExportFunc *ef);
   bool genEncodedBitCode();
+  void genFieldsToStoreExportVariableValues();
+  void genTypeInstancesUsedInForEach();
+  void genFieldsForAllocationTypeVerification();
+  void genExportVariablesGetterAndSetter();
+  void genForEachDeclarations();
+  void genExportFunctionDeclarations();
 
   bool startScriptHeader();
 
@@ -103,15 +109,14 @@ class RSReflectionCpp {
   // Produce an argument string of the form "T1 t, T2 u, T3 v".
   void genArguments(const ArgumentList &Args, int Offset);
 
-  // Write out code for an export variable.
-  void genExportVariable(const RSExportVar *EV);
-
-  void genPrimitiveTypeExportVariable(const RSExportVar *EV);
   void genPointerTypeExportVariable(const RSExportVar *EV);
-  void genVectorTypeExportVariable(const RSExportVar *EV);
   void genMatrixTypeExportVariable(const RSExportVar *EV);
-  void genConstantArrayTypeExportVariable(const RSExportVar *EV);
   void genRecordTypeExportVariable(const RSExportVar *EV);
+
+  void genGetterAndSetter(const RSExportPrimitiveType *EPT, const RSExportVar* EV);
+  void genGetterAndSetter(const RSExportVectorType *EVT, const RSExportVar* EV);
+  void genGetterAndSetter(const RSExportConstantArrayType *AT, const RSExportVar* EV);
+  void genGetterAndSetter(const RSExportRecordType *ERT, const RSExportVar *EV);
 
   // Write out a local FieldPacker (if necessary).
   bool genCreateFieldPacker(const RSExportType *T, const char *FieldPackerName);
