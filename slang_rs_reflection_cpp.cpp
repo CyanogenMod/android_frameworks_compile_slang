@@ -110,32 +110,20 @@ static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
   return "";
 }
 
-RSReflectionCpp::RSReflectionCpp(const RSContext *Context)
-    : mRSContext(Context) {
-  clear();
+RSReflectionCpp::RSReflectionCpp(const RSContext *Context,
+                                 const string &OutputDirectory,
+                                 const string &RSSourceFileName,
+                                 const string &BitCodeFileName)
+    : mRSContext(Context), mRSSourceFilePath(RSSourceFileName),
+      mBitCodeFilePath(BitCodeFileName), mOutputDirectory(OutputDirectory),
+      mNextExportVarSlot(0), mNextExportFuncSlot(0), mNextExportForEachSlot(0) {
+  mCleanedRSFileName = RootNameFromRSFileName(mRSSourceFilePath);
+  mClassName = "ScriptC_" + mCleanedRSFileName;
 }
 
 RSReflectionCpp::~RSReflectionCpp() {}
 
-bool RSReflectionCpp::reflect(const string &OutputPathBase,
-                              const string &InputFileName,
-                              const string &OutputBCFileName) {
-  mRSSourceFilePath = InputFileName;
-  mOutputDirectory = OutputPathBase + OS_PATH_SEPARATOR_STR;
-  mBitCodeFilePath = OutputBCFileName;
-  mCleanedRSFileName = RootNameFromRSFileName(mRSSourceFilePath);
-  mClassName = "ScriptC_" + mCleanedRSFileName;
-
-  std::string Path =
-      RSSlangReflectUtils::ComputePackagedPath(OutputPathBase.c_str(), "");
-
-  std::string ErrorMsg;
-  if (!SlangUtils::CreateDirectoryWithParents(Path, &ErrorMsg)) {
-    fprintf(stderr, "Error: Could not create path %s - %s\n", Path.c_str(),
-            ErrorMsg.c_str());
-    return false;
-  }
-
+bool RSReflectionCpp::reflect() {
   writeHeaderFile();
   writeImplementationFile();
 
