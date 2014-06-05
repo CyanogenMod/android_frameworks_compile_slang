@@ -69,20 +69,6 @@
 
 namespace slang {
 
-// Some utility function using internal in RSReflectionJava
-static bool GetClassNameFromFileName(const std::string &FileName,
-                                     std::string &ClassName) {
-  ClassName.clear();
-
-  if (FileName.empty() || (FileName == "-"))
-    return true;
-
-  ClassName =
-      RSSlangReflectUtils::JavaClassNameFromRSFileName(FileName.c_str());
-
-  return true;
-}
-
 static const char *GetMatrixTypeName(const RSExportMatrixType *EMT) {
   static const char *MatrixTypeJavaNameMap[] = {/* 2x2 */ "Matrix2f",
                                                 /* 3x3 */ "Matrix3f",
@@ -256,6 +242,38 @@ static std::string GetBuiltinElementConstruct(const RSExportType *ET) {
 }
 
 /********************** Methods to generate script class **********************/
+RSReflectionJava::RSReflectionJava(const RSContext *Context,
+                                   std::vector<std::string> *GeneratedFileNames,
+                                   const std::string &OutputBaseDirectory,
+                                   const std::string &RSSourceFileName,
+                                   const std::string &BitCodeFileName,
+                                   bool EmbedBitcodeInJava)
+    : mRSContext(Context), mPackageName(Context->getReflectJavaPackageName()),
+      mRSPackageName(Context->getRSPackageName()),
+      mOutputBaseDirectory(OutputBaseDirectory),
+      mRSSourceFileName(RSSourceFileName), mBitCodeFileName(BitCodeFileName),
+      mResourceId(RSSlangReflectUtils::JavaClassNameFromRSFileName(
+          mBitCodeFileName.c_str())),
+      mScriptClassName(RS_SCRIPT_CLASS_NAME_PREFIX +
+                       RSSlangReflectUtils::JavaClassNameFromRSFileName(
+                           mRSSourceFileName.c_str())),
+      mEmbedBitcodeInJava(EmbedBitcodeInJava), mPaddingFieldIndex(1),
+      mNextExportVarSlot(0), mNextExportFuncSlot(0), mNextExportForEachSlot(0),
+      mLastError(""), mGeneratedFileNames(GeneratedFileNames), mFieldIndex(0) {
+  slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
+  slangAssert(!mPackageName.empty() && mPackageName != "-");
+
+  mOutputDirectory = RSSlangReflectUtils::ComputePackagedPath(
+                         OutputBaseDirectory.c_str(), mPackageName.c_str()) +
+                     OS_PATH_SEPARATOR_STR;
+
+  if (mRSContext->getTargetAPI() < SLANG_ICS_TARGET_API) {
+    mPaddingPrefix = "#padding_";
+  } else {
+    mPaddingPrefix = "#rs_padding_";
+  }
+}
+
 bool RSReflectionJava::genScriptClass(const std::string &ClassName,
                                       std::string &ErrorMsg) {
   if (!startClass(AM_Public, false, ClassName, RS_SCRIPT_CLASS_SUPER_CLASS_NAME,
@@ -293,7 +311,7 @@ bool RSReflectionJava::genScriptClass(const std::string &ClassName,
 
 void RSReflectionJava::genScriptClassConstructor() {
   std::string className(RSSlangReflectUtils::JavaBitcodeClassNameFromRSFileName(
-      getInputFileName().c_str()));
+      mRSSourceFileName.c_str()));
   // Provide a simple way to reference this object.
   mOut.indent() << "private static final String " RS_RESOURCE_NAME " = \""
                 << getResourceId() << "\";\n";
@@ -1797,63 +1815,15 @@ RSReflectionJava::genAddPaddingToElementBuilder(int PaddingSize,
 #undef EB_ADD
 /******** Methods to create Element in Java of given record type /end ********/
 
-bool RSReflectionJava::reflect(const std::string &OutputPathBase,
-                               const std::string &OutputPackageName,
-                               const std::string &RSPackageName,
-                               const std::string &InputFileName,
-                               const std::string &OutputBCFileName,
-                               bool EmbedBitcodeInJava) {
-  std::string ResourceId = "";
-  std::string PaddingPrefix = "";
-
-  if (mRSContext->getTargetAPI() < SLANG_ICS_TARGET_API) {
-    PaddingPrefix = "#padding_";
-  } else {
-    PaddingPrefix = "#rs_padding_";
-  }
-
-  if (!GetClassNameFromFileName(OutputBCFileName, ResourceId))
-    return false;
-
-  if (ResourceId.empty())
-    ResourceId = "<Resource ID>";
-
-  slangAssert(!OutputPackageName.empty() && OutputPackageName != "-");
-
-  mVerbose = true;
-  mOutputPathBase = OutputPathBase;
-  mInputFileName = InputFileName;
-  mPackageName = OutputPackageName;
-  mRSPackageName = RSPackageName;
-  mResourceId = ResourceId;
-  mPaddingPrefix = PaddingPrefix;
-  mEmbedBitcodeInJava = EmbedBitcodeInJava;
-
-  mOutputDirectory = RSSlangReflectUtils::ComputePackagedPath(
-                         OutputPathBase.c_str(), mPackageName.c_str()) +
-                     OS_PATH_SEPARATOR_STR;
-
-  clear();
-  resetFieldIndex();
-  clearFieldIndexMap();
-
-  std::string ErrorMsg, ScriptClassName;
-  // class ScriptC_<ScriptName>
-  if (!GetClassNameFromFileName(InputFileName, ScriptClassName))
-    return false;
-
-  if (ScriptClassName.empty())
-    ScriptClassName = "<Input Script Name>";
-
-  ScriptClassName.insert(0, RS_SCRIPT_CLASS_NAME_PREFIX);
-
-  if (!genScriptClass(ScriptClassName, ErrorMsg)) {
-    std::cerr << "Failed to generate class " << ScriptClassName << " ("
+bool RSReflectionJava::reflect() {
+  std::string ErrorMsg;
+  if (!genScriptClass(mScriptClassName, ErrorMsg)) {
+    std::cerr << "Failed to generate class " << mScriptClassName << " ("
               << ErrorMsg << ")\n";
     return false;
   }
 
-  mGeneratedFileNames->push_back(ScriptClassName);
+  mGeneratedFileNames->push_back(mScriptClassName);
 
   // class ScriptField_<TypeName>
   for (RSContext::const_export_type_iterator
@@ -1903,7 +1873,7 @@ bool RSReflectionJava::startClass(AccessModifier AM, bool IsStatic,
                                   std::string &ErrorMsg) {
   // Open file for class
   std::string FileName = ClassName + ".java";
-  if (!mOut.startFile(mOutputDirectory, FileName, mInputFileName,
+  if (!mOut.startFile(mOutputDirectory, FileName, mRSSourceFileName,
                       mRSContext->getLicenseNote(), true)) {
     return false;
   }
@@ -1919,7 +1889,7 @@ bool RSReflectionJava::startClass(AccessModifier AM, bool IsStatic,
   if (getEmbedBitcodeInJava()) {
     mOut << "import " << mPackageName << "."
           << RSSlangReflectUtils::JavaBitcodeClassNameFromRSFileName(
-                 mInputFileName.c_str()) << ";\n";
+                 mRSSourceFileName.c_str()) << ";\n";
   } else {
     mOut << "import android.content.res.Resources;\n";
   }
