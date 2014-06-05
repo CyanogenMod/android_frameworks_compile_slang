@@ -75,9 +75,6 @@ private:
 
   bool mEmbedBitcodeInJava;
 
-  std::string mPaddingPrefix;
-  int mPaddingFieldIndex;
-
   int mNextExportVarSlot;
   int mNextExportFuncSlot;
   int mNextExportForEachSlot;
@@ -98,7 +95,6 @@ private:
 
   inline void clear() {
     mClassName = "";
-    mPaddingFieldIndex = 1;
     mNextExportVarSlot = 0;
     mNextExportFuncSlot = 0;
     mNextExportForEachSlot = 0;
@@ -128,12 +124,6 @@ public:
   inline int getNextExportVarSlot() { return mNextExportVarSlot++; }
   inline int getNextExportFuncSlot() { return mNextExportFuncSlot++; }
   inline int getNextExportForEachSlot() { return mNextExportForEachSlot++; }
-
-  // Will remove later due to field name information is not necessary for
-  // C-reflect-to-Java
-  inline std::string createPaddingField() {
-    return mPaddingPrefix + llvm::itostr(mPaddingFieldIndex++);
-  }
 
   bool startClass(AccessModifier AM, bool IsStatic,
                   const std::string &ClassName, const char *SuperClassName,
@@ -232,9 +222,6 @@ private:
                                      const char *ElementBuilderName,
                                      const char *RenderScriptVar,
                                      unsigned ArraySize);
-  void genAddPaddingToElementBuilder(int PaddingSize,
-                                     const char *ElementBuilderName,
-                                     const char *RenderScriptVar);
 
   bool genCreateFieldPacker(const RSExportType *T, const char *FieldPackerName);
   void genPackVarOfType(const RSExportType *T, const char *VarName,

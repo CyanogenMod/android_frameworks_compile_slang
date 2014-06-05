@@ -69,6 +69,37 @@
 
 namespace slang {
 
+class RSReflectionJavaElementBuilder {
+public:
+  RSReflectionJavaElementBuilder(const char *ElementBuilderName,
+                                 const RSExportRecordType *ERT,
+                                 const char *RenderScriptVar,
+                                 GeneratedFile *Out, const RSContext *RSContext,
+                                 RSReflectionJava *Reflection);
+  void generate();
+
+private:
+  void genAddElement(const RSExportType *ET, const std::string &VarName,
+                     unsigned ArraySize);
+  void genAddStatementStart();
+  void genAddStatementEnd(const std::string &VarName, unsigned ArraySize);
+  void genAddPadding(int PaddingSize);
+  // TODO Will remove later due to field name information is not necessary for
+  // C-reflect-to-Java
+  std::string createPaddingField() {
+    return mPaddingPrefix + llvm::itostr(mPaddingFieldIndex++);
+  }
+
+  const char *mElementBuilderName;
+  const RSExportRecordType *mERT;
+  const char *mRenderScriptVar;
+  GeneratedFile *mOut;
+  std::string mPaddingPrefix;
+  int mPaddingFieldIndex;
+  const RSContext *mRSContext;
+  RSReflectionJava *mReflection;
+};
+
 static const char *GetMatrixTypeName(const RSExportMatrixType *EMT) {
   static const char *MatrixTypeJavaNameMap[] = {/* 2x2 */ "Matrix2f",
                                                 /* 3x3 */ "Matrix3f",
@@ -213,12 +244,15 @@ static std::string GetBuiltinElementConstruct(const RSExportType *ET) {
   } else if (ET->getClass() == RSExportType::ExportClassVector) {
     const RSExportVectorType *EVT = static_cast<const RSExportVectorType *>(ET);
     if (EVT->getType() == DataTypeFloat32) {
-      if (EVT->getNumElement() == 2)
+      if (EVT->getNumElement() == 2) {
         return "Element.F32_2";
-      else if (EVT->getNumElement() == 3)
+      } else if (EVT->getNumElement() == 3) {
         return "Element.F32_3";
-      else if (EVT->getNumElement() == 4)
+      } else if (EVT->getNumElement() == 4) {
         return "Element.F32_4";
+      } else {
+        slangAssert(false && "Vectors should be size 2, 3, 4");
+      }
     } else if (EVT->getType() == DataTypeUnsigned8) {
       if (EVT->getNumElement() == 4)
         return "Element.U8_4";
@@ -257,21 +291,15 @@ RSReflectionJava::RSReflectionJava(const RSContext *Context,
       mScriptClassName(RS_SCRIPT_CLASS_NAME_PREFIX +
                        RSSlangReflectUtils::JavaClassNameFromRSFileName(
                            mRSSourceFileName.c_str())),
-      mEmbedBitcodeInJava(EmbedBitcodeInJava), mPaddingFieldIndex(1),
-      mNextExportVarSlot(0), mNextExportFuncSlot(0), mNextExportForEachSlot(0),
-      mLastError(""), mGeneratedFileNames(GeneratedFileNames), mFieldIndex(0) {
+      mEmbedBitcodeInJava(EmbedBitcodeInJava), mNextExportVarSlot(0),
+      mNextExportFuncSlot(0), mNextExportForEachSlot(0), mLastError(""),
+      mGeneratedFileNames(GeneratedFileNames), mFieldIndex(0) {
   slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
   slangAssert(!mPackageName.empty() && mPackageName != "-");
 
   mOutputDirectory = RSSlangReflectUtils::ComputePackagedPath(
                          OutputBaseDirectory.c_str(), mPackageName.c_str()) +
                      OS_PATH_SEPARATOR_STR;
-
-  if (mRSContext->getTargetAPI() < SLANG_ICS_TARGET_API) {
-    mPaddingPrefix = "#padding_";
-  } else {
-    mPaddingPrefix = "#rs_padding_";
-  }
 }
 
 bool RSReflectionJava::genScriptClass(const std::string &ClassName,
@@ -1382,7 +1410,10 @@ void RSReflectionJava::genTypeClassConstructor(const RSExportRecordType *ERT) {
   // mOut.indent() << "Element e = " << RS_TYPE_ELEMENT_REF_NAME
   //            << ".get();\n";
   // mOut.indent() << "if (e != null) return e;\n";
-  genBuildElement("eb", ERT, RenderScriptVar, /* IsInline = */ true);
+  RSReflectionJavaElementBuilder builder("eb", ERT, RenderScriptVar, &mOut,
+                                         mRSContext, this);
+  builder.generate();
+
   mOut.indent() << "return eb.create();\n";
   // mOut.indent() << "e = eb.create();\n";
   // mOut.indent() << RS_TYPE_ELEMENT_REF_NAME
@@ -1638,94 +1669,97 @@ void RSReflectionJava::genTypeClassResize() {
 /******************** Methods to generate type class /end ********************/
 
 /********** Methods to create Element in Java of given record type ***********/
-void RSReflectionJava::genBuildElement(const char *ElementBuilderName,
-                                       const RSExportRecordType *ERT,
-                                       const char *RenderScriptVar,
-                                       bool IsInline) {
-  mOut.indent() << "Element.Builder " << ElementBuilderName << " = "
-                                                          "new Element.Builder("
-           << RenderScriptVar << ");\n";
 
-  // eb.add(...)
-  genAddElementToElementBuilder(ERT, "", ElementBuilderName, RenderScriptVar,
-                                /* ArraySize = */ 0);
-
-  if (!IsInline)
-    mOut.indent() << "return " << ElementBuilderName << ".create();" << std::endl;
+RSReflectionJavaElementBuilder::RSReflectionJavaElementBuilder(
+    const char *ElementBuilderName, const RSExportRecordType *ERT,
+    const char *RenderScriptVar, GeneratedFile *Out, const RSContext *RSContext,
+    RSReflectionJava *Reflection)
+    : mElementBuilderName(ElementBuilderName), mERT(ERT),
+      mRenderScriptVar(RenderScriptVar), mOut(Out), mPaddingFieldIndex(1),
+      mRSContext(RSContext), mReflection(Reflection) {
+  if (mRSContext->getTargetAPI() < SLANG_ICS_TARGET_API) {
+    mPaddingPrefix = "#padding_";
+  } else {
+    mPaddingPrefix = "#rs_padding_";
+  }
 }
 
-#define EB_ADD(x)                                                              \
-  do {                                                                         \
-    mOut.indent() << ElementBuilderName << ".add(" << x << ", \"" << VarName        \
-                  << "\"";                                                          \
-    if (ArraySize > 0)                                                         \
-      mOut << ", " << ArraySize;                                              \
-    mOut << ");\n";                                                           \
-    incFieldIndex();                                                           \
-  } while (false)
+void RSReflectionJavaElementBuilder::generate() {
+  mOut->indent() << "Element.Builder " << mElementBuilderName
+                 << " = new Element.Builder(" << mRenderScriptVar << ");\n";
+  genAddElement(mERT, "", /* ArraySize = */ 0);
+}
 
-void RSReflectionJava::genAddElementToElementBuilder(
-    const RSExportType *ET, const std::string &VarName,
-    const char *ElementBuilderName, const char *RenderScriptVar,
-    unsigned ArraySize) {
+void RSReflectionJavaElementBuilder::genAddElement(const RSExportType *ET,
+                                                   const std::string &VarName,
+                                                   unsigned ArraySize) {
   std::string ElementConstruct = GetBuiltinElementConstruct(ET);
 
   if (ElementConstruct != "") {
-    EB_ADD(ElementConstruct << "(" << RenderScriptVar << ")");
+    genAddStatementStart();
+    *mOut << ElementConstruct << "(" << mRenderScriptVar << ")";
+    genAddStatementEnd(VarName, ArraySize);
   } else {
-    if ((ET->getClass() == RSExportType::ExportClassPrimitive) ||
-        (ET->getClass() == RSExportType::ExportClassVector)) {
+
+    switch (ET->getClass()) {
+    case RSExportType::ExportClassPrimitive: {
       const RSExportPrimitiveType *EPT =
           static_cast<const RSExportPrimitiveType *>(ET);
       const char *DataTypeName =
           RSExportPrimitiveType::getRSReflectionType(EPT)->rs_type;
-      int Size =
-          (ET->getClass() == RSExportType::ExportClassVector)
-              ? static_cast<const RSExportVectorType *>(ET)->getNumElement()
-              : 1;
-
-      if (EPT->getClass() == RSExportType::ExportClassPrimitive) {
-        // Element.createUser()
-        EB_ADD("Element.createUser(" << RenderScriptVar << ", Element.DataType."
-                                     << DataTypeName << ")");
-      } else {
-        slangAssert((ET->getClass() == RSExportType::ExportClassVector) &&
-                    "Unexpected type.");
-        EB_ADD("Element.createVector(" << RenderScriptVar
-                                       << ", Element.DataType." << DataTypeName
-                                       << ", " << Size << ")");
-      }
-#ifndef NDEBUG
-    } else if (ET->getClass() == RSExportType::ExportClassPointer) {
+      genAddStatementStart();
+      *mOut << "Element.createUser(" << mRenderScriptVar
+            << ", Element.DataType." << DataTypeName << ")";
+      genAddStatementEnd(VarName, ArraySize);
+      break;
+    }
+    case RSExportType::ExportClassVector: {
+      const RSExportVectorType *EVT =
+          static_cast<const RSExportVectorType *>(ET);
+      const char *DataTypeName =
+          RSExportPrimitiveType::getRSReflectionType(EVT)->rs_type;
+      genAddStatementStart();
+      *mOut << "Element.createVector(" << mRenderScriptVar
+            << ", Element.DataType." << DataTypeName << ", "
+            << EVT->getNumElement() << ")";
+      genAddStatementEnd(VarName, ArraySize);
+      break;
+    }
+    case RSExportType::ExportClassPointer:
       // Pointer type variable should be resolved in
       // GetBuiltinElementConstruct()
       slangAssert(false && "??");
-    } else if (ET->getClass() == RSExportType::ExportClassMatrix) {
+      break;
+    case RSExportType::ExportClassMatrix:
       // Matrix type variable should be resolved
       // in GetBuiltinElementConstruct()
       slangAssert(false && "??");
-#endif
-    } else if (ET->getClass() == RSExportType::ExportClassConstantArray) {
+      break;
+    case RSExportType::ExportClassConstantArray: {
       const RSExportConstantArrayType *ECAT =
           static_cast<const RSExportConstantArrayType *>(ET);
 
       const RSExportType *ElementType = ECAT->getElementType();
       if (ElementType->getClass() != RSExportType::ExportClassRecord) {
-        genAddElementToElementBuilder(ECAT->getElementType(), VarName,
-                                      ElementBuilderName, RenderScriptVar,
-                                      ECAT->getSize());
+        genAddElement(ECAT->getElementType(), VarName, ECAT->getSize());
       } else {
-        std::string NewElementBuilderName(ElementBuilderName);
+        std::string NewElementBuilderName(mElementBuilderName);
         NewElementBuilderName.append(1, '_');
 
-        genBuildElement(NewElementBuilderName.c_str(),
-                        static_cast<const RSExportRecordType *>(ElementType),
-                        RenderScriptVar,
-                        /* IsInline = */ true);
+        RSReflectionJavaElementBuilder builder(
+            NewElementBuilderName.c_str(),
+            static_cast<const RSExportRecordType *>(ElementType),
+            mRenderScriptVar, mOut, mRSContext, mReflection);
+        builder.generate();
+
         ArraySize = ECAT->getSize();
-        EB_ADD(NewElementBuilderName << ".create()");
+        genAddStatementStart();
+        *mOut << NewElementBuilderName << ".create()";
+        genAddStatementEnd(VarName, ArraySize);
       }
-    } else if (ET->getClass() == RSExportType::ExportClassRecord) {
+      break;
+    }
+    case RSExportType::ExportClassRecord: {
       // Simalar to case of RSExportType::ExportClassRecord in genPackVarOfType.
       //
       // TODO(zonr): Generalize these two function such that there's no
@@ -1738,44 +1772,43 @@ void RSReflectionJava::genAddElementToElementBuilder(
                                                     E = ERT->fields_end();
            I != E; I++) {
         const RSExportRecordType::Field *F = *I;
-        std::string FieldName;
         int FieldOffset = F->getOffsetInParent();
         const RSExportType *T = F->getType();
         int FieldStoreSize = T->getStoreSize();
         int FieldAllocSize = T->getAllocSize();
 
+        std::string FieldName;
         if (!VarName.empty())
           FieldName = VarName + "." + F->getName();
         else
           FieldName = F->getName();
 
         // Alignment
-        genAddPaddingToElementBuilder((FieldOffset - Pos), ElementBuilderName,
-                                      RenderScriptVar);
+        genAddPadding(FieldOffset - Pos);
 
         // eb.add(...)
-        addFieldIndexMapping(F);
+        mReflection->addFieldIndexMapping(F);
         if (F->getType()->getClass() != RSExportType::ExportClassRecord) {
-          genAddElementToElementBuilder(F->getType(), FieldName,
-                                        ElementBuilderName, RenderScriptVar, 0);
+          genAddElement(F->getType(), FieldName, 0);
         } else {
-          std::string NewElementBuilderName(ElementBuilderName);
+          std::string NewElementBuilderName(mElementBuilderName);
           NewElementBuilderName.append(1, '_');
 
-          genBuildElement(NewElementBuilderName.c_str(),
-                          static_cast<const RSExportRecordType *>(F->getType()),
-                          RenderScriptVar,
-                          /* IsInline = */ true);
+          RSReflectionJavaElementBuilder builder(
+              NewElementBuilderName.c_str(),
+              static_cast<const RSExportRecordType *>(F->getType()),
+              mRenderScriptVar, mOut, mRSContext, mReflection);
+          builder.generate();
 
-          const std::string &VarName = FieldName; // Hack for EB_ADD macro
-          EB_ADD(NewElementBuilderName << ".create()");
+          genAddStatementStart();
+          *mOut << NewElementBuilderName << ".create()";
+          genAddStatementEnd(FieldName, ArraySize);
         }
 
         if (mRSContext->getTargetAPI() < SLANG_ICS_TARGET_API) {
           // There is padding within the field type. This is only necessary
           // for HC-targeted APIs.
-          genAddPaddingToElementBuilder(FieldAllocSize - FieldStoreSize,
-                                        ElementBuilderName, RenderScriptVar);
+          genAddPadding(FieldAllocSize - FieldStoreSize);
         }
 
         Pos = FieldOffset + FieldAllocSize;
@@ -1784,35 +1817,52 @@ void RSReflectionJava::genAddElementToElementBuilder(
       // There maybe some padding after the struct
       size_t RecordAllocSize = ERT->getAllocSize();
 
-      genAddPaddingToElementBuilder(RecordAllocSize - Pos, ElementBuilderName,
-                                    RenderScriptVar);
-    } else {
+      genAddPadding(RecordAllocSize - Pos);
+      break;
+    }
+    default:
       slangAssert(false && "Unknown class of type");
+      break;
     }
   }
+}
+
+void RSReflectionJavaElementBuilder::genAddPadding(int PaddingSize) {
+  while (PaddingSize > 0) {
+    const std::string &VarName = createPaddingField();
+    genAddStatementStart();
+    if (PaddingSize >= 4) {
+      *mOut << "Element.U32(" << mRenderScriptVar << ")";
+      PaddingSize -= 4;
+    } else if (PaddingSize >= 2) {
+      *mOut << "Element.U16(" << mRenderScriptVar << ")";
+      PaddingSize -= 2;
+    } else if (PaddingSize >= 1) {
+      *mOut << "Element.U8(" << mRenderScriptVar << ")";
+      PaddingSize -= 1;
+    }
+    genAddStatementEnd(VarName, 0);
+  }
+}
+
+void RSReflectionJavaElementBuilder::genAddStatementStart() {
+  mOut->indent() << mElementBuilderName << ".add(";
 }
 
 void
-RSReflectionJava::genAddPaddingToElementBuilder(int PaddingSize,
-                                                const char *ElementBuilderName,
-                                                const char *RenderScriptVar) {
-  unsigned ArraySize = 0; // Hack the EB_ADD macro
-  while (PaddingSize > 0) {
-    const std::string &VarName = createPaddingField();
-    if (PaddingSize >= 4) {
-      EB_ADD("Element.U32(" << RenderScriptVar << ")");
-      PaddingSize -= 4;
-    } else if (PaddingSize >= 2) {
-      EB_ADD("Element.U16(" << RenderScriptVar << ")");
-      PaddingSize -= 2;
-    } else if (PaddingSize >= 1) {
-      EB_ADD("Element.U8(" << RenderScriptVar << ")");
-      PaddingSize -= 1;
-    }
+RSReflectionJavaElementBuilder::genAddStatementEnd(const std::string &VarName,
+                                                   unsigned ArraySize) {
+  *mOut << ", \"" << VarName << "\"";
+  if (ArraySize > 0) {
+    *mOut << ", " << ArraySize;
   }
+  *mOut << ");\n";
+  // TODO Review incFieldIndex.  It's probably better to assign the numbers at
+  // the start rather
+  // than as we're generating the code.
+  mReflection->incFieldIndex();
 }
 
-#undef EB_ADD
 /******** Methods to create Element in Java of given record type /end ********/
 
 bool RSReflectionJava::reflect() {
