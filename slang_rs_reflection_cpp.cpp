@@ -135,7 +135,8 @@ bool RSReflectionCpp::reflect() {
 bool RSReflectionCpp::writeHeaderFile() {
   // Create the file and write the license note.
   if (!mOut.startFile(mOutputDirectory, mClassName + ".h", mRSSourceFilePath,
-                      mRSContext->getLicenseNote(), false)) {
+                      mRSContext->getLicenseNote(), false,
+                      mRSContext->getVerbose())) {
     return false;
   }
 
@@ -289,7 +290,8 @@ bool RSReflectionCpp::genEncodedBitCode() {
 
 bool RSReflectionCpp::writeImplementationFile() {
   if (!mOut.startFile(mOutputDirectory, mClassName + ".cpp", mRSSourceFilePath,
-                      mRSContext->getLicenseNote(), false)) {
+                      mRSContext->getLicenseNote(), false,
+                      mRSContext->getVerbose())) {
     return false;
   }
 

@@ -68,6 +68,7 @@ class RSContext {
   clang::ASTContext &mCtx;
   PragmaList *mPragmas;
   unsigned int mTargetAPI;
+  bool mVerbose;
 
   llvm::DataLayout *mDataLayout;
   llvm::LLVMContext &mLLVMContext;
@@ -102,7 +103,8 @@ class RSContext {
             clang::ASTContext &Ctx,
             const clang::TargetInfo &Target,
             PragmaList *Pragmas,
-            unsigned int TargetAPI);
+            unsigned int TargetAPI,
+            bool Verbose);
 
   inline clang::Preprocessor &getPreprocessor() const { return mPP; }
   inline clang::ASTContext &getASTContext() const { return mCtx; }
@@ -119,6 +121,10 @@ class RSContext {
   }
   inline unsigned int getTargetAPI() const {
     return mTargetAPI;
+  }
+
+  inline bool getVerbose() const {
+    return mVerbose;
   }
 
   inline void setLicenseNote(const std::string &S) {
