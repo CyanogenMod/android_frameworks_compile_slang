@@ -67,7 +67,7 @@ static const char *DetermineOutputFile(const std::string &OutputDir,
 
   std::string OutputFile(OutputDir);
 
-  // Append '/' to Opts.mOutputDir if not presents
+  // Append '/' to Opts.mBitcodeOutputDir if not presents
   if (!OutputFile.empty() &&
       (OutputFile[OutputFile.size() - 1]) != OS_PATH_SEPARATOR)
     OutputFile.append(1, OS_PATH_SEPARATOR);
@@ -195,16 +195,16 @@ int main(int argc, const char **argv) {
   for (int i = 0, e = Inputs.size(); i != e; i++) {
     const char *InputFile = Inputs[i];
     const char *OutputFile =
-        DetermineOutputFile(Opts.mOutputDir, InputFile,
+        DetermineOutputFile(Opts.mBitcodeOutputDir, InputFile,
                             Opts.mOutputType, SavedStrings);
 
-    if (Opts.mOutputDep) {
+    if (Opts.mEmitDependency) {
       const char *BCOutputFile, *DepOutputFile;
 
       if (Opts.mOutputType == slang::Slang::OT_Bitcode)
         BCOutputFile = OutputFile;
       else
-        BCOutputFile = DetermineOutputFile(Opts.mOutputDepDir,
+        BCOutputFile = DetermineOutputFile(Opts.mDependencyOutputDir,
                                            InputFile,
                                            slang::Slang::OT_Bitcode,
                                            SavedStrings);
@@ -212,7 +212,7 @@ int main(int argc, const char **argv) {
       if (Opts.mOutputType == slang::Slang::OT_Dependency)
         DepOutputFile = OutputFile;
       else
-        DepOutputFile = DetermineOutputFile(Opts.mOutputDepDir,
+        DepOutputFile = DetermineOutputFile(Opts.mDependencyOutputDir,
                                             InputFile,
                                             slang::Slang::OT_Dependency,
                                             SavedStrings);
@@ -226,18 +226,7 @@ int main(int argc, const char **argv) {
   // Let's rock!
   int CompileFailed = !Compiler->compile(IOFiles,
                                          DepFiles,
-                                         Opts.mIncludePaths,
-                                         Opts.mAdditionalDepTargets,
-                                         Opts.mOutputType,
-                                         Opts.mBitcodeStorage,
-                                         Opts.mAllowRSPrefix,
-                                         Opts.mOutputDep,
-                                         Opts.mTargetAPI,
-                                         Opts.mDebugEmission,
-                                         Opts.mOptimizationLevel,
-                                         Opts.mJavaReflectionPathBase,
-                                         Opts.mJavaReflectionPackageName,
-                                         Opts.mRSPackageName);
+                                         Opts);
 
   Compiler->reset();
 
