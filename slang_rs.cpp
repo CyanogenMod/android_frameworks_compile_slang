@@ -32,6 +32,7 @@
 #include "llvm/Support/Path.h"
 
 #include "os_sep.h"
+#include "rs_cc_options.h"
 #include "slang_rs_backend.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
@@ -270,19 +271,11 @@ SlangRS::SlangRS()
 bool SlangRS::compile(
     const std::list<std::pair<const char*, const char*> > &IOFiles,
     const std::list<std::pair<const char*, const char*> > &DepFiles,
-    const std::vector<std::string> &IncludePaths,
-    const std::vector<std::string> &AdditionalDepTargets,
-    Slang::OutputType OutputType, BitCodeStorageType BitcodeStorage,
-    bool AllowRSPrefix, bool OutputDep,
-    unsigned int TargetAPI, bool EmitDebug,
-    llvm::CodeGenOpt::Level OptimizationLevel,
-    const std::string &JavaReflectionPathBase,
-    const std::string &JavaReflectionPackageName,
-    const std::string &RSPackageName) {
+    const RSCCOptions &Opts) {
   if (IOFiles.empty())
     return true;
 
-  if (OutputDep && (DepFiles.size() != IOFiles.size())) {
+  if (Opts.mEmitDependency && (DepFiles.size() != IOFiles.size())) {
     getDiagnostics().Report(mDiagErrorInvalidOutputDepParameter);
     return false;
   }
@@ -293,19 +286,19 @@ bool SlangRS::compile(
   std::list<std::pair<const char*, const char*> >::const_iterator
       IOFileIter = IOFiles.begin(), DepFileIter = DepFiles.begin();
 
-  setIncludePaths(IncludePaths);
-  setOutputType(OutputType);
-  if (OutputDep) {
-    setAdditionalDepTargets(AdditionalDepTargets);
+  setIncludePaths(Opts.mIncludePaths);
+  setOutputType(Opts.mOutputType);
+  if (Opts.mEmitDependency) {
+    setAdditionalDepTargets(Opts.mAdditionalDepTargets);
   }
 
-  setDebugMetadataEmission(EmitDebug);
+  setDebugMetadataEmission(Opts.mDebugEmission);
 
-  setOptimizationLevel(OptimizationLevel);
+  setOptimizationLevel(Opts.mOptimizationLevel);
 
-  mAllowRSPrefix = AllowRSPrefix;
+  mAllowRSPrefix = Opts.mAllowRSPrefix;
 
-  mTargetAPI = TargetAPI;
+  mTargetAPI = Opts.mTargetAPI;
   if (mTargetAPI < SLANG_MINIMUM_TARGET_API ||
       mTargetAPI > SLANG_MAXIMUM_TARGET_API) {
     getDiagnostics().Report(mDiagErrorTargetAPIRange) << mTargetAPI
@@ -315,7 +308,7 @@ bool SlangRS::compile(
 
   // Skip generation of warnings a second time if we are doing more than just
   // a single pass over the input file.
-  bool SuppressAllWarnings = (OutputType != Slang::OT_Dependency);
+  bool SuppressAllWarnings = (Opts.mOutputType != Slang::OT_Dependency);
 
   for (unsigned i = 0, e = IOFiles.size(); i != e; i++) {
     InputFile = IOFileIter->first;
@@ -334,29 +327,29 @@ bool SlangRS::compile(
     if (Slang::compile() > 0)
       return false;
 
-    if (!JavaReflectionPackageName.empty()) {
-      mRSContext->setReflectJavaPackageName(JavaReflectionPackageName);
+    if (!Opts.mJavaReflectionPackageName.empty()) {
+      mRSContext->setReflectJavaPackageName(Opts.mJavaReflectionPackageName);
     }
     const std::string &RealPackageName =
         mRSContext->getReflectJavaPackageName();
 
-    if (OutputType != Slang::OT_Dependency) {
+    if (Opts.mOutputType != Slang::OT_Dependency) {
 
-      if (BitcodeStorage == BCST_CPP_CODE) {
-          RSReflectionCpp R(mRSContext, JavaReflectionPathBase, getInputFileName(),
-                            getOutputFileName());
+      if (Opts.mBitcodeStorage == BCST_CPP_CODE) {
+          RSReflectionCpp R(mRSContext, Opts.mJavaReflectionPathBase,
+                            getInputFileName(), getOutputFileName());
           if (!R.reflect()) {
             return false;
           }
       } else {
-        if (!RSPackageName.empty()) {
-          mRSContext->setRSPackageName(RSPackageName);
+        if (!Opts.mRSPackageName.empty()) {
+          mRSContext->setRSPackageName(Opts.mRSPackageName);
         }
 
         RSReflectionJava R(mRSContext, &mGeneratedFileNames,
-                           JavaReflectionPathBase, getInputFileName(),
+                           Opts.mJavaReflectionPathBase, getInputFileName(),
                            getOutputFileName(),
-                           BitcodeStorage == BCST_JAVA_CODE);
+                           Opts.mBitcodeStorage == BCST_JAVA_CODE);
         if (!R.reflect()) {
           // TODO Is this needed or will the error message have been printed
           // already? and why not for the C++ case?
@@ -371,14 +364,14 @@ bool SlangRS::compile(
              I != E;
              I++) {
           std::string ReflectedName = RSSlangReflectUtils::ComputePackagedPath(
-              JavaReflectionPathBase.c_str(),
+              Opts.mJavaReflectionPathBase.c_str(),
               (RealPackageName + OS_PATH_SEPARATOR_STR + *I).c_str());
           appendGeneratedFileName(ReflectedName + ".java");
         }
 
-        if ((OutputType == Slang::OT_Bitcode) &&
-            (BitcodeStorage == BCST_JAVA_CODE) &&
-            !generateJavaBitcodeAccessor(JavaReflectionPathBase,
+        if ((Opts.mOutputType == Slang::OT_Bitcode) &&
+            (Opts.mBitcodeStorage == BCST_JAVA_CODE) &&
+            !generateJavaBitcodeAccessor(Opts.mJavaReflectionPathBase,
                                          RealPackageName.c_str(),
                                          mRSContext->getLicenseNote())) {
           return false;
@@ -386,7 +379,7 @@ bool SlangRS::compile(
       }
     }
 
-    if (OutputDep) {
+    if (Opts.mEmitDependency) {
       BCOutputFile = DepFileIter->first;
       DepOutputFile = DepFileIter->second;
 
