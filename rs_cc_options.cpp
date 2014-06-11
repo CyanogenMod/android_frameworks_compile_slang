@@ -118,17 +118,17 @@ void slang::ParseArguments(llvm::SmallVectorImpl<const char *> &ArgVector,
 
     Opts.mIncludePaths = Args->getAllArgValues(OPT_I);
 
-    Opts.mOutputDir = Args->getLastArgValue(OPT_o);
+    Opts.mBitcodeOutputDir = Args->getLastArgValue(OPT_o);
 
     if (const llvm::opt::Arg *A = Args->getLastArg(OPT_M_Group)) {
       switch (A->getOption().getID()) {
         case OPT_M: {
-          Opts.mOutputDep = 1;
+          Opts.mEmitDependency = true;
           Opts.mOutputType = slang::Slang::OT_Dependency;
           break;
         }
         case OPT_MD: {
-          Opts.mOutputDep = 1;
+          Opts.mEmitDependency = true;
           Opts.mOutputType = slang::Slang::OT_Bitcode;
           break;
         }
@@ -160,8 +160,9 @@ void slang::ParseArguments(llvm::SmallVectorImpl<const char *> &ArgVector,
       }
     }
 
-    if (Opts.mOutputDep && ((Opts.mOutputType != slang::Slang::OT_Bitcode) &&
-                            (Opts.mOutputType != slang::Slang::OT_Dependency)))
+    if (Opts.mEmitDependency &&
+        ((Opts.mOutputType != slang::Slang::OT_Bitcode) &&
+         (Opts.mOutputType != slang::Slang::OT_Dependency)))
       DiagEngine.Report(clang::diag::err_drv_argument_not_allowed_with)
           << Args->getLastArg(OPT_M_Group)->getAsString(*Args)
           << Args->getLastArg(OPT_Output_Type_Group)->getAsString(*Args);
@@ -189,14 +190,14 @@ void slang::ParseArguments(llvm::SmallVectorImpl<const char *> &ArgVector,
     if (Args->hasArg(OPT_reflect_cpp)) {
       Opts.mBitcodeStorage = slang::BCST_CPP_CODE;
       // mJavaReflectionPathBase can be set for C++ reflected builds.
-      // Set it to the standard mOutputDir (via -o) by default.
+      // Set it to the standard mBitcodeOutputDir (via -o) by default.
       if (Opts.mJavaReflectionPathBase.empty()) {
-        Opts.mJavaReflectionPathBase = Opts.mOutputDir;
+        Opts.mJavaReflectionPathBase = Opts.mBitcodeOutputDir;
       }
     }
 
-    Opts.mOutputDepDir =
-        Args->getLastArgValue(OPT_output_dep_dir, Opts.mOutputDir);
+    Opts.mDependencyOutputDir =
+        Args->getLastArgValue(OPT_output_dep_dir, Opts.mBitcodeOutputDir);
     Opts.mAdditionalDepTargets =
         Args->getAllArgValues(OPT_additional_dep_target);
 
