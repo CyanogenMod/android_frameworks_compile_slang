@@ -210,6 +210,7 @@ void SlangRS::initPreprocessor() {
   clang::Preprocessor &PP = getPreprocessor();
 
   std::stringstream RSH;
+  RSH << PP.getPredefines();
   RSH << "#define RS_VERSION " << mTargetAPI << "\n";
   RSH << "#include \"rs_core." RS_HEADER_SUFFIX "\"\n";
   PP.setPredefines(RSH.str());

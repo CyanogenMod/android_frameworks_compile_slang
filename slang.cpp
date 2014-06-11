@@ -36,6 +36,7 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/FrontendOptions.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 
@@ -223,6 +224,9 @@ void Slang::createPreprocessor() {
                                     /* OwnsHeaderSearch = */true));
   // Initialize the preprocessor
   mPP->Initialize(getTargetInfo());
+  clang::FrontendOptions FEOpts;
+  clang::InitializePreprocessor(*mPP, *PPOpts, *HSOpts, FEOpts);
+
   mPragmas.clear();
   mPP->AddPragmaHandler(new PragmaRecorder(&mPragmas));
 
