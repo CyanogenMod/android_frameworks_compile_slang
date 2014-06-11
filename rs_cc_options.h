@@ -99,6 +99,9 @@ class RSCCOptions {
   // The optimization level used in CodeGen, and encoded in emitted bitcode.
   llvm::CodeGenOpt::Level mOptimizationLevel;
 
+  // Display verbose information about the compilation on stdout.
+  bool mVerbose;
+
   RSCCOptions() {
     mOutputType = slang::Slang::OT_Bitcode;
     // Triple/CPU/Features must be hard-coded to our chosen portable ABI.
@@ -112,6 +115,7 @@ class RSCCOptions {
     mTargetAPI = RS_VERSION;
     mDebugEmission = 0;
     mOptimizationLevel = llvm::CodeGenOpt::Aggressive;
+    mVerbose = false;
   }
 };
 

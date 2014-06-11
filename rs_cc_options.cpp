@@ -204,6 +204,7 @@ void slang::ParseArguments(llvm::SmallVectorImpl<const char *> &ArgVector,
     Opts.mShowHelp = Args->hasArg(OPT_help);
     Opts.mShowVersion = Args->hasArg(OPT_version);
     Opts.mDebugEmission = Args->hasArg(OPT_emit_g);
+    Opts.mVerbose = Args->hasArg(OPT_verbose);
 
     size_t OptLevel =
         clang::getLastArgIntValue(*Args, OPT_optimization_level, 3, DiagEngine);

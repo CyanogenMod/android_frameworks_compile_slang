@@ -33,13 +33,15 @@ public:
   // reflectPath: where to output the generated Java file, no package name in
   // it.
   // packageName: the package of the output Java file.
+  // verbose: whether or not to print out additional info about compilation.
+  // bcStorage: where to emit bitcode to (resource file or embedded).
   struct BitCodeAccessorContext {
     const char *rsFileName;
     const char *bcFileName;
     const char *reflectPath;
     const char *packageName;
     const std::string *licenseNote;
-
+    bool verbose;
     BitCodeStorageType bcStorage;
   };
 
@@ -111,7 +113,7 @@ public:
    */
   bool startFile(const std::string &outPath, const std::string &outFileName,
                  const std::string &sourceFileName,
-                 const std::string *optionalLicense, bool isJava);
+                 const std::string *optionalLicense, bool isJava, bool verbose);
   void closeFile();
 
   void increaseIndent(); // Increases the new line indentation by 4

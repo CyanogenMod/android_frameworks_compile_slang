@@ -1924,7 +1924,8 @@ bool RSReflectionJava::startClass(AccessModifier AM, bool IsStatic,
   // Open file for class
   std::string FileName = ClassName + ".java";
   if (!mOut.startFile(mOutputDirectory, FileName, mRSSourceFileName,
-                      mRSContext->getLicenseNote(), true)) {
+                      mRSContext->getLicenseNote(), true,
+                      mRSContext->getVerbose())) {
     return false;
   }
 
