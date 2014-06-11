@@ -30,6 +30,7 @@
 #include "slang_version.h"
 
 namespace slang {
+  class RSCCOptions;
   class RSContext;
   class RSExportRecordType;
 
@@ -103,44 +104,10 @@ class SlangRS : public Slang {
   //             target>. If @OutputDep is true, this parameter must be given
   //             with the same number of pairs given in @IOFiles.
   //
-  // @IncludePaths - User-defined include paths.
-  //
-  // @AdditionalDepTargets - User-defined files added to the dependencies.
-  //
-  // @OutputType - See Slang::OutputType.
-  //
-  // @BitcodeStorage - See BitCodeStorageType in slang_rs_reflect_util.cpp.
-  //
-  // @AllowRSPrefix - true to allow user-defined function prefixed with 'rs'.
-  //
-  // @OutputDep - true if output dependecies file for each input file.
-  //
-  // @JavaReflectionPathBase - The path base for storing reflection files.
-  //
-  // @EmitDebug - true to allow debug metadata emission
-  //
-  // @OptimizationLevel - code generation optimization level: None is recommended for
-  //                      interactive debugging. The default is Aggresive.
-  //
-  // @JavaReflectionPackageName - The package name given by user in command
-  //                              line. This may override the package name
-  //                              specified in the .rs using #pragma.
-  //
-  // @RSPackageName - The RS package name supplied by the command line. This
-  //                  can override the default value of
-  //                  "android.renderscript" used by the normal APIs.
-  //
+  // @Opts - Selection of options defined from invoking llvm-rs-cc
   bool compile(const std::list<std::pair<const char*, const char*> > &IOFiles,
                const std::list<std::pair<const char*, const char*> > &DepFiles,
-               const std::vector<std::string> &IncludePaths,
-               const std::vector<std::string> &AdditionalDepTargets,
-               Slang::OutputType OutputType, BitCodeStorageType BitcodeStorage,
-               bool AllowRSPrefix, bool OutputDep,
-               unsigned int TargetAPI, bool EmitDebug,
-               llvm::CodeGenOpt::Level OptimizationLevel,
-               const std::string &JavaReflectionPathBase,
-               const std::string &JavaReflectionPackageName,
-               const std::string &RSPackageName);
+               const RSCCOptions &Opts);
 
   virtual void reset();
 

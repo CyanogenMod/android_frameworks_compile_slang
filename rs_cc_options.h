@@ -38,16 +38,18 @@ namespace slang {
 // Options for the RenderScript compiler llvm-rs-cc
 class RSCCOptions {
  public:
-  // The include search paths
+  // User-defined include paths.
   std::vector<std::string> mIncludePaths;
 
-  // The output directory, if any.
-  std::string mOutputDir;
+  // The output directory for writing the bitcode files
+  // (i.e. out/target/common/obj/APPS/.../src/renderscript/res/raw).
+  std::string mBitcodeOutputDir;
 
-  // The output type
+  // Type of file to emit (bitcode, dependency, ...).
   slang::Slang::OutputType mOutputType;
 
-  unsigned mAllowRSPrefix : 1;
+  // Allow user-defined functions prefixed with 'rs'.
+  bool mAllowRSPrefix;
 
   // The name of the target triple to compile for.
   std::string mTriple;
@@ -59,29 +61,42 @@ class RSCCOptions {
   // be a list of strings starting with by '+' or '-'.
   std::vector<std::string> mFeatures;
 
+  // The path for storing reflected Java source files
+  // (i.e. out/target/common/obj/APPS/.../src/renderscript/src).
   std::string mJavaReflectionPathBase;
 
+  // Force package name. This may override the package name specified by a
+  // #pragma in the .rs file.
   std::string mJavaReflectionPackageName;
 
+  // Force the RS package name to use. This can override the default value of
+  // "android.renderscript" used for the standard RS APIs.
   std::string mRSPackageName;
 
+  // Where to store the generated bitcode (resource, Java source, C++ source).
   slang::BitCodeStorageType mBitcodeStorage;
 
-  unsigned mOutputDep : 1;
+  // Emit output dependency file for each input file.
+  bool mEmitDependency;
 
-  std::string mOutputDepDir;
+  // The output directory for writing dependency files
+  // (i.e. out/target/common/obj/APPS/.../src/renderscript).
+  std::string mDependencyOutputDir;
 
+  // User-defined files added to the dependencies (i.e. for adding fake
+  // dependency files like RenderScript.stamp).
   std::vector<std::string> mAdditionalDepTargets;
 
-  unsigned mShowHelp : 1;     // Show the -help text.
-  unsigned mShowVersion : 1;  // Show the -version text.
+  bool mShowHelp;     // Show the -help text.
+  bool mShowVersion;  // Show the -version text.
 
+  // The target API we are generating code for (see slang_version.h).
   unsigned int mTargetAPI;
 
-  // Enable emission of debugging symbols
-  unsigned mDebugEmission : 1;
+  // Enable emission of debugging symbols.
+  bool mDebugEmission;
 
-  // The optimization level used in CodeGen, and encoded in emitted bitcode
+  // The optimization level used in CodeGen, and encoded in emitted bitcode.
   llvm::CodeGenOpt::Level mOptimizationLevel;
 
   RSCCOptions() {
@@ -91,7 +106,7 @@ class RSCCOptions {
     mCPU = "";
     mFeatures.push_back("+long64");
     mBitcodeStorage = slang::BCST_APK_RESOURCE;
-    mOutputDep = 0;
+    mEmitDependency = 0;
     mShowHelp = 0;
     mShowVersion = 0;
     mTargetAPI = RS_VERSION;
