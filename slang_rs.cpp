@@ -222,7 +222,8 @@ void SlangRS::initASTContext() {
                              getASTContext(),
                              getTargetInfo(),
                              &mPragmas,
-                             mTargetAPI);
+                             mTargetAPI,
+                             mVerbose);
 }
 
 clang::ASTConsumer
@@ -265,7 +266,7 @@ bool SlangRS::IsLocInRSHeaderFile(const clang::SourceLocation &Loc,
 
 SlangRS::SlangRS()
   : Slang(), mRSContext(NULL), mAllowRSPrefix(false), mTargetAPI(0),
-    mIsFilterscript(false) {
+    mVerbose(false), mIsFilterscript(false) {
 }
 
 bool SlangRS::compile(
@@ -305,6 +306,8 @@ bool SlangRS::compile(
         << SLANG_MINIMUM_TARGET_API << SLANG_MAXIMUM_TARGET_API;
     return false;
   }
+
+  mVerbose = Opts.mVerbose;
 
   // Skip generation of warnings a second time if we are doing more than just
   // a single pass over the input file.

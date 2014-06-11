@@ -43,6 +43,8 @@ class SlangRS : public Slang {
 
   unsigned int mTargetAPI;
 
+  bool mVerbose;
+
   bool mIsFilterscript;
 
   // Custom diagnostic identifiers

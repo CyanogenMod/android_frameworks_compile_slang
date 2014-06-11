@@ -249,7 +249,7 @@ bool RSSlangReflectUtils::GenerateJavaBitCodeAccessor(
 
   GeneratedFile out;
   if (!out.startFile(output_path, filename, context.rsFileName,
-                     context.licenseNote, true)) {
+                     context.licenseNote, true, context.verbose)) {
     return false;
   }
 
@@ -316,8 +316,11 @@ static const char *const gApacheLicenseNote =
 bool GeneratedFile::startFile(const string &outDirectory,
                               const string &outFileName,
                               const string &sourceFileName,
-                              const string *optionalLicense, bool isJava) {
-  printf("Generating %s\n", outFileName.c_str());
+                              const string *optionalLicense, bool isJava,
+                              bool verbose) {
+  if (verbose) {
+    printf("Generating %s\n", outFileName.c_str());
+  }
 
   // Create the parent directories.
   if (!outDirectory.empty()) {
