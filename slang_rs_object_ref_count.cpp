@@ -1100,7 +1100,7 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
   clang::QualType QT = AS->getType();
 
   clang::ASTContext &C = RSObjectRefCount::GetRSSetObjectFD(
-      DataTypeRSFont)->getASTContext();
+      DataTypeRSAllocation)->getASTContext();
 
   clang::SourceLocation Loc = AS->getExprLoc();
   clang::SourceLocation StartLoc = AS->getLHS()->getExprLoc();
@@ -1131,11 +1131,11 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
   }
 
   clang::ASTContext &C = RSObjectRefCount::GetRSSetObjectFD(
-      DataTypeRSFont)->getASTContext();
+      DataTypeRSAllocation)->getASTContext();
   clang::SourceLocation Loc = RSObjectRefCount::GetRSSetObjectFD(
-      DataTypeRSFont)->getLocation();
+      DataTypeRSAllocation)->getLocation();
   clang::SourceLocation StartLoc = RSObjectRefCount::GetRSSetObjectFD(
-      DataTypeRSFont)->getInnerLocStart();
+      DataTypeRSAllocation)->getInnerLocStart();
 
   if (DT == DataTypeIsStruct) {
     const clang::Type *T = RSExportType::GetTypeOfDecl(VD);

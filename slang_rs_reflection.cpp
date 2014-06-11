@@ -366,9 +366,7 @@ void RSReflectionJava::genScriptClassConstructor() {
     mOut.indent() << "super(rs,\n";
     mOut.indent() << "      " << RS_RESOURCE_NAME ",\n";
     mOut.indent() << "      " << className << ".getBitCode32(),\n";
-    // TODO(srhines): Replace the extra BitCode32 with Bitcode64 here!
-    // mOut.indent() << "      " << className << ".getBitCode64());\n";
-    mOut.indent() << "      " << className << ".getBitCode32());\n";
+    mOut.indent() << "      " << className << ".getBitCode64());\n";
   } else {
     // Call alternate constructor with required parameters.
     // Look up the proper raw bitcode resource id via the context.
