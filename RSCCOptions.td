@@ -123,6 +123,11 @@ def reflect_cpp : Flag<["-"], "reflect-c++">,
 // Misc Options
 //===----------------------------------------------------------------------===//
 
+def verbose : Flag<["-"], "v">,
+  HelpText<"Display verbose information during the compilation">;
+def _verbose : Flag<["-"], "verbose">, Alias<verbose>;
+def __verbose : Flag<["--"], "verbose">, Alias<verbose>;
+
 def help : Flag<["-"], "help">,
   HelpText<"Print this help text">;
 def _help : Flag<["--"], "help">, Alias<help>;
