@@ -230,6 +230,8 @@ private:
   void genNewItemBufferIfNull(const char *Index);
   void genNewItemBufferPackerIfNull();
 
+  void genPairwiseDimCheck(std::string name0, std::string name1);
+
 public:
   RSReflectionJava(const RSContext *Context,
                    std::vector<std::string> *GeneratedFileNames,

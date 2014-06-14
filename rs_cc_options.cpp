@@ -214,5 +214,9 @@ void slang::ParseArguments(llvm::SmallVectorImpl<const char *> &ArgVector,
 
     Opts.mTargetAPI = clang::getLastArgIntValue(*Args, OPT_target_api,
                                                 RS_VERSION, DiagEngine);
+
+    if (Opts.mTargetAPI == 0) {
+      Opts.mTargetAPI = UINT_MAX;
+    }
   }
 }

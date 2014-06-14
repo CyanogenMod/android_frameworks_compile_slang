@@ -412,10 +412,15 @@ void RSReflectionJava::genScriptClassConstructor() {
        I != E; I++) {
     const RSExportForEach *EF = *I;
 
-    const RSExportType *IET = EF->getInType();
-    if (IET) {
-      genTypeInstanceFromPointer(IET);
+    const RSExportForEach::InTypeVec &InTypes = EF->getInTypes();
+    for (RSExportForEach::InTypeIter BI = InTypes.begin(), EI = InTypes.end();
+         BI != EI; BI++) {
+
+      if (*BI != NULL) {
+        genTypeInstanceFromPointer(*BI);
+      }
     }
+
     const RSExportType *OET = EF->getOutType();
     if (OET) {
       genTypeInstanceFromPointer(OET);
@@ -635,6 +640,24 @@ void RSReflectionJava::genExportFunction(const RSExportFunc *EF) {
   endFunction();
 }
 
+void RSReflectionJava::genPairwiseDimCheck(std::string name0,
+                                           std::string name1) {
+
+  mOut.indent() << "// Verify dimensions\n";
+  mOut.indent() << "t0 = " << name0 << ".getType();\n";
+  mOut.indent() << "t1 = " << name1 << ".getType();\n";
+  mOut.indent() << "if ((t0.getCount() != t1.getCount()) ||\n";
+  mOut.indent() << "    (t0.getX() != t1.getX()) ||\n";
+  mOut.indent() << "    (t0.getY() != t1.getY()) ||\n";
+  mOut.indent() << "    (t0.getZ() != t1.getZ()) ||\n";
+  mOut.indent() << "    (t0.hasFaces()   != t1.hasFaces()) ||\n";
+  mOut.indent() << "    (t0.hasMipmaps() != t1.hasMipmaps())) {\n";
+  mOut.indent() << "    throw new RSRuntimeException(\"Dimension mismatch "
+                << "between parameters " << name0 << " and " << name1
+                << "!\");\n";
+  mOut.indent() << "}\n\n";
+}
+
 void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
   if (EF->isDummyRoot()) {
     // Skip reflection for dummy root() kernels. Note that we have to
@@ -654,8 +677,22 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
 
   slangAssert(EF->getNumParameters() > 0 || EF->hasReturn());
 
-  if (EF->hasIn())
+  const RSExportForEach::InVec     &Ins     = EF->getIns();
+  const RSExportForEach::InTypeVec &InTypes = EF->getInTypes();
+  const RSExportType               *OET     = EF->getOutType();
+
+  if (Ins.size() == 1) {
     Args.push_back(std::make_pair("Allocation", "ain"));
+
+  } else if (Ins.size() > 1) {
+    for (RSExportForEach::InIter BI = Ins.begin(), EI = Ins.end(); BI != EI;
+         BI++) {
+
+      Args.push_back(std::make_pair("Allocation",
+                                    "ain_" + (*BI)->getName().str()));
+    }
+  }
+
   if (EF->hasOut() || EF->hasReturn())
     Args.push_back(std::make_pair("Allocation", "aout"));
 
@@ -669,22 +706,14 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
     }
   }
 
-  const RSExportType *IET = EF->getInType();
-  const RSExportType *OET = EF->getOutType();
-
   if (mRSContext->getTargetAPI() >= SLANG_JB_MR1_TARGET_API) {
-    int signature = 0;
     startFunction(AM_Public, false, "Script.KernelID",
                   "getKernelID_" + EF->getName(), 0);
 
-    if (IET)
-      signature |= 1;
-    if (OET)
-      signature |= 2;
-
     // TODO: add element checking
     mOut.indent() << "return createKernelID(" << RS_EXPORT_FOREACH_INDEX_PREFIX
-                  << EF->getName() << ", " << signature << ", null, null);\n";
+                  << EF->getName() << ", " << EF->getSignatureMetadata()
+                  << ", null, null);\n";
 
     endFunction();
   }
@@ -695,8 +724,15 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
     mOut.indent() << "forEach_" << EF->getName();
     mOut << "(";
 
-    if (EF->hasIn()) {
+    if (Ins.size() == 1) {
       mOut << "ain, ";
+
+    } else if (Ins.size() > 1) {
+      for (RSExportForEach::InIter BI = Ins.begin(), EI = Ins.end(); BI != EI;
+           BI++) {
+
+        mOut << "ain_" << (*BI)->getName().str() << ", ";
+      }
     }
 
     if (EF->hasOut() || EF->hasReturn()) {
@@ -718,26 +754,42 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
 
   startFunction(AM_Public, false, "void", "forEach_" + EF->getName(), Args);
 
-  if (IET) {
-    genTypeCheck(IET, "ain");
+  if (InTypes.size() == 1) {
+    if (InTypes.front() != NULL) {
+      genTypeCheck(InTypes.front(), "ain");
+    }
+
+  } else if (InTypes.size() > 1) {
+    size_t Index = 0;
+    for (RSExportForEach::InTypeIter BI = InTypes.begin(), EI = InTypes.end();
+         BI != EI; BI++, ++Index) {
+
+      if (*BI != NULL) {
+        genTypeCheck(*BI, ("ain_" + Ins[Index]->getName()).str().c_str());
+      }
+    }
   }
+
   if (OET) {
     genTypeCheck(OET, "aout");
   }
 
-  if (EF->hasIn() && (EF->hasOut() || EF->hasReturn())) {
-    mOut.indent() << "// Verify dimensions\n";
-    mOut.indent() << "Type tIn = ain.getType();\n";
-    mOut.indent() << "Type tOut = aout.getType();\n";
-    mOut.indent() << "if ((tIn.getCount() != tOut.getCount()) ||\n";
-    mOut.indent() << "    (tIn.getX() != tOut.getX()) ||\n";
-    mOut.indent() << "    (tIn.getY() != tOut.getY()) ||\n";
-    mOut.indent() << "    (tIn.getZ() != tOut.getZ()) ||\n";
-    mOut.indent() << "    (tIn.hasFaces() != tOut.hasFaces()) ||\n";
-    mOut.indent() << "    (tIn.hasMipmaps() != tOut.hasMipmaps())) {\n";
-    mOut.indent() << "    throw new RSRuntimeException(\"Dimension mismatch "
-                  << "between input and output parameters!\");\n";
-    mOut.indent() << "}\n";
+  if (Ins.size() == 1 && (EF->hasOut() || EF->hasReturn())) {
+    mOut.indent() << "Type t0, t1;";
+    genPairwiseDimCheck("ain", "aout");
+
+  } else if (Ins.size() > 1) {
+    mOut.indent() << "Type t0, t1;";
+
+    std::string In0Name = "ain_" + Ins[0]->getName().str();
+
+    for (size_t index = 1; index < Ins.size(); ++index) {
+      genPairwiseDimCheck(In0Name, "ain_" + Ins[index]->getName().str());
+    }
+
+    if (EF->hasOut() || EF->hasReturn()) {
+      genPairwiseDimCheck(In0Name, "aout");
+    }
   }
 
   std::string FieldPackerName = EF->getName() + "_fp";
@@ -749,10 +801,20 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
   mOut.indent() << "forEach(" << RS_EXPORT_FOREACH_INDEX_PREFIX
                 << EF->getName();
 
-  if (EF->hasIn())
+  if (Ins.size() == 1) {
     mOut << ", ain";
-  else
-    mOut << ", null";
+  } else if (Ins.size() > 1) {
+    mOut << ", new Allocation[]{ain_" << Ins[0]->getName().str();
+
+    for (size_t index = 1; index < Ins.size(); ++index) {
+      mOut << ", ain_" << Ins[index]->getName().str();
+    }
+
+    mOut << "}";
+
+  } else {
+    mOut << ", (Allocation) null";
+  }
 
   if (EF->hasOut() || EF->hasReturn())
     mOut << ", aout";
