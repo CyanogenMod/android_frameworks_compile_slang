@@ -50,7 +50,9 @@ include $(CLANG_ROOT_PATH)/clang.mk
 
 LOCAL_MODULE := libslang
 LOCAL_MODULE_TAGS := optional
+ifneq ($(HOST_OS),windows)
 LOCAL_CLANG := true
+endif
 
 LOCAL_CFLAGS += $(local_cflags_for_slang)
 
@@ -74,7 +76,10 @@ LOCAL_SRC_FILES :=	\
 
 LOCAL_C_INCLUDES += frameworks/compile/libbcc/include
 
-LOCAL_LDLIBS := -ldl -lpthread -lc++
+LOCAL_LDLIBS := -ldl -lpthread
+ifneq ($(HOST_OS),windows)
+LOCAL_LDLIBS += -lc++
+endif
 
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
@@ -109,7 +114,9 @@ include $(CLEAR_TBLGEN_VARS)
 
 LOCAL_IS_HOST_MODULE := true
 LOCAL_MODULE := llvm-rs-cc
+ifneq ($(HOST_OS),windows)
 LOCAL_CLANG := true
+endif
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE_CLASS := EXECUTABLES
