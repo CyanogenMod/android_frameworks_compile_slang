@@ -81,7 +81,7 @@ class Backend : public clang::ASTConsumer {
 
   PragmaList *mPragmas;
 
-  virtual unsigned int getTargetAPI() const {
+  virtual int getTargetAPI() const {
     return SLANG_MAXIMUM_TARGET_API;
   }
 
