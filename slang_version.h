@@ -17,6 +17,8 @@
 #ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_VERSION_H_  // NOLINT
 #define _FRAMEWORKS_COMPILE_SLANG_SLANG_VERSION_H_
 
+#define RS_DEVELOPMENT_API -1
+
 // API levels used by the standard Android SDK.
 // MR -> Maintenance Release
 // HC -> Honeycomb
@@ -24,6 +26,7 @@
 // JB -> Jelly Bean
 // KK -> KitKat
 enum SlangTargetAPI {
+  SLANG_DEVELOPMENT_TARGET_API = RS_DEVELOPMENT_API,
   SLANG_MINIMUM_TARGET_API = 11,
   SLANG_HC_TARGET_API = 11,
   SLANG_HC_MR1_TARGET_API = 12,

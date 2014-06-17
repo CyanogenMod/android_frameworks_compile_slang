@@ -344,7 +344,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
       llvm::PassManager *BCEmitPM = new llvm::PassManager();
       std::string BCStr;
       llvm::raw_string_ostream Bitcode(BCStr);
-      unsigned int TargetAPI = getTargetAPI();
+      int TargetAPI = getTargetAPI();
       switch (TargetAPI) {
         case SLANG_HC_TARGET_API:
         case SLANG_HC_MR1_TARGET_API:
@@ -360,8 +360,9 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
           break;
         }
         default: {
-          if (TargetAPI < SLANG_MINIMUM_TARGET_API ||
-              TargetAPI > SLANG_MAXIMUM_TARGET_API) {
+          if (TargetAPI != SLANG_DEVELOPMENT_TARGET_API &&
+              (TargetAPI < SLANG_MINIMUM_TARGET_API ||
+               TargetAPI > SLANG_MAXIMUM_TARGET_API)) {
             slangAssert(false && "Invalid target API value");
           }
           // Switch to the 3.2 BitcodeWriter by default, and don't use
