@@ -67,7 +67,7 @@ class RSContext {
   clang::Preprocessor &mPP;
   clang::ASTContext &mCtx;
   PragmaList *mPragmas;
-  unsigned int mTargetAPI;
+  int mTargetAPI;
   bool mVerbose;
 
   llvm::DataLayout *mDataLayout;
@@ -119,7 +119,7 @@ class RSContext {
   inline clang::DiagnosticsEngine *getDiagnostics() const {
     return &mPP.getDiagnostics();
   }
-  inline unsigned int getTargetAPI() const {
+  inline int getTargetAPI() const {
     return mTargetAPI;
   }
 

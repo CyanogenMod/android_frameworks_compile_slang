@@ -41,7 +41,7 @@ class SlangRS : public Slang {
 
   bool mAllowRSPrefix;
 
-  unsigned int mTargetAPI;
+  int mTargetAPI;
 
   bool mVerbose;
 
