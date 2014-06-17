@@ -69,7 +69,7 @@ class RSBackend : public Backend {
   void dumpExportTypeInfo(llvm::Module *M);
 
  protected:
-  virtual unsigned int getTargetAPI() const {
+  virtual int getTargetAPI() const {
     return mContext->getTargetAPI();
   }
 
