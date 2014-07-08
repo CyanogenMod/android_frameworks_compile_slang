@@ -17,7 +17,9 @@
 #ifndef _FRAMEWORKS_COMPILE_SLANG_SLANG_VERSION_H_  // NOLINT
 #define _FRAMEWORKS_COMPILE_SLANG_SLANG_VERSION_H_
 
-#define RS_DEVELOPMENT_API -1
+#include <climits>
+
+#define RS_DEVELOPMENT_API UINT_MAX
 
 // API levels used by the standard Android SDK.
 // MR -> Maintenance Release
@@ -26,7 +28,6 @@
 // JB -> Jelly Bean
 // KK -> KitKat
 enum SlangTargetAPI {
-  SLANG_DEVELOPMENT_TARGET_API = RS_DEVELOPMENT_API,
   SLANG_MINIMUM_TARGET_API = 11,
   SLANG_HC_TARGET_API = 11,
   SLANG_HC_MR1_TARGET_API = 12,
@@ -37,7 +38,8 @@ enum SlangTargetAPI {
   SLANG_JB_MR1_TARGET_API = 17,
   SLANG_JB_MR2_TARGET_API = 18,
   SLANG_KK_TARGET_API = 19,
-  SLANG_MAXIMUM_TARGET_API = RS_VERSION
+  SLANG_MAXIMUM_TARGET_API = RS_VERSION,
+  SLANG_DEVELOPMENT_TARGET_API = RS_DEVELOPMENT_API
 };
 // Note that RS_VERSION is defined at build time (see Android.mk for details).
 
