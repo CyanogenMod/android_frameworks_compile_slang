@@ -64,16 +64,14 @@ class RSPragmaHandler : public clang::PragmaHandler {
                                 clang::Token &FirstToken);
 
  public:
-  static RSPragmaHandler *CreatePragmaExportTypeHandler(RSContext *Context);
-  static RSPragmaHandler *CreatePragmaJavaPackageNameHandler(
-      RSContext *Context);
-  static RSPragmaHandler *CreatePragmaReflectLicenseHandler(RSContext *Context);
-  static RSPragmaHandler *CreatePragmaVersionHandler(RSContext *Context);
-
   virtual void HandlePragma(clang::Preprocessor &PP,
                             clang::PragmaIntroducerKind Introducer,
                             clang::Token &FirstToken) = 0;
 };
+
+// Add handlers for the RS pragmas to the preprocessor.  These handlers
+// validate the pragmas and, if valid, set fields of the RSContext.
+void AddPragmaHandlers(clang::Preprocessor &PP, RSContext *RsContext);
 
 }   // namespace slang
 
