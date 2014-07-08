@@ -61,6 +61,7 @@ bool RSExportForEach::validateAndConstructParams(
   } else {
     valid |= validateAndConstructOldStyleParams(Context, FD);
   }
+
   valid |= setSignatureMetadata(Context, FD);
   return valid;
 }
@@ -118,8 +119,8 @@ bool RSExportForEach::validateAndConstructOldStyleParams(
         valid = false;
       }
     } else {
-      if (mIn == NULL && mOut == NULL) {
-        mIn = PVD;
+      if (mIns.empty() && mOut == NULL) {
+        mIns.push_back(PVD);
       } else if (mUsrData == NULL) {
         mUsrData = PVD;
       } else {
@@ -132,7 +133,7 @@ bool RSExportForEach::validateAndConstructOldStyleParams(
     }
   }
 
-  if (!mIn && !mOut) {
+  if (mIns.empty() && !mOut) {
     Context->ReportError(FD->getLocation(),
                          "Compute kernel %0() must have at least one "
                          "parameter for in or out")
@@ -181,13 +182,20 @@ bool RSExportForEach::validateAndConstructKernelParams(
   // first iterator.
   for (size_t i = 0; i < IndexOfFirstIterator; i++) {
     const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
-    if (i == 0) {
-      mIn = PVD;
+
+    /*
+     * FIXME: Change this to a test against an actual API version when the
+     *        multi-input feature is officially supported.
+     */
+    if (Context->getTargetAPI() == SLANG_DEVELOPMENT_TARGET_API || i == 0) {
+      mIns.push_back(PVD);
     } else {
       Context->ReportError(PVD->getLocation(),
-                           "Unrecognized parameter '%0'. Compute kernel %1() "
-                           "can only have one input parameter, 'x', and 'y'")
-          << PVD->getName() << FD->getName();
+                           "Invalid parameter '%0' for compute kernel %1(). "
+                           "Kernels targeting SDK levels %2-%3 may not use "
+                           "multiple input parameters.") << PVD->getName() <<
+                           FD->getName() << SLANG_MINIMUM_TARGET_API <<
+                           SLANG_MAXIMUM_TARGET_API;
       valid = false;
     }
     clang::QualType QT = PVD->getType().getCanonicalType();
@@ -201,7 +209,7 @@ bool RSExportForEach::validateAndConstructKernelParams(
   }
 
   // Check that we have at least one allocation to use for dimensions.
-  if (valid && !mIn && !mHasReturnType) {
+  if (valid && mIns.empty() && !mHasReturnType) {
     Context->ReportError(FD->getLocation(),
                          "Compute kernel %0() must have at least one "
                          "input parameter or a non-void return "
@@ -300,7 +308,7 @@ bool RSExportForEach::setSignatureMetadata(RSContext *Context,
   // Set up the bitwise metadata encoding for runtime argument passing.
   // TODO: If this bit field is re-used from C++ code, define the values in a header.
   const bool HasOut = mOut || mHasReturnType;
-  mSignatureMetadata |= (mIn ?            0x01 : 0);
+  mSignatureMetadata |= (hasIns() ?       0x01 : 0);
   mSignatureMetadata |= (HasOut ?         0x02 : 0);
   mSignatureMetadata |= (mUsrData ?       0x04 : 0);
   mSignatureMetadata |= (mX ?             0x08 : 0);
@@ -399,11 +407,17 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
     }
   }
 
-  if (FE->mIn) {
-    const clang::Type *T = FE->mIn->getType().getCanonicalType().getTypePtr();
-    FE->mInType = RSExportType::Create(Context, T);
-    if (FE->mIsKernelStyle) {
-      slangAssert(FE->mInType);
+  if (FE->hasIns()) {
+
+    for (InIter BI = FE->mIns.begin(), EI = FE->mIns.end(); BI != EI; BI++) {
+      const clang::Type *T = (*BI)->getType().getCanonicalType().getTypePtr();
+      RSExportType *InExportType = RSExportType::Create(Context, T);
+
+      if (FE->mIsKernelStyle) {
+        slangAssert(InExportType != NULL);
+      }
+
+      FE->mInTypes.push_back(InExportType);
     }
   }
 
@@ -427,7 +441,7 @@ RSExportForEach *RSExportForEach::CreateDummyRoot(RSContext *Context) {
   return FE;
 }
 
-bool RSExportForEach::isGraphicsRootRSFunc(int targetAPI,
+bool RSExportForEach::isGraphicsRootRSFunc(unsigned int targetAPI,
                                            const clang::FunctionDecl *FD) {
   if (FD->hasAttr<clang::KernelAttr>()) {
     return false;
@@ -453,9 +467,9 @@ bool RSExportForEach::isGraphicsRootRSFunc(int targetAPI,
   return false;
 }
 
-bool RSExportForEach::isRSForEachFunc(int targetAPI,
-    slang::RSContext* Context,
-    const clang::FunctionDecl *FD) {
+bool RSExportForEach::isRSForEachFunc(unsigned int targetAPI,
+                                      slang::RSContext* Context,
+                                      const clang::FunctionDecl *FD) {
   slangAssert(Context && FD);
   bool hasKernelAttr = FD->hasAttr<clang::KernelAttr>();
 
@@ -503,7 +517,7 @@ bool RSExportForEach::isRSForEachFunc(int targetAPI,
 }
 
 bool
-RSExportForEach::validateSpecialFuncDecl(int targetAPI,
+RSExportForEach::validateSpecialFuncDecl(unsigned int targetAPI,
                                          slang::RSContext *Context,
                                          clang::FunctionDecl const *FD) {
   slangAssert(Context && FD);

@@ -178,13 +178,18 @@ void RSReflectionCpp::genTypeInstancesUsedInForEach() {
            E = mRSContext->export_foreach_end();
        I != E; I++) {
     const RSExportForEach *EF = *I;
-    const RSExportType *IET = EF->getInType();
     const RSExportType *OET = EF->getOutType();
-    if (IET) {
-      genTypeInstanceFromPointer(IET);
-    }
+
     if (OET) {
       genTypeInstanceFromPointer(OET);
+    }
+
+    const RSExportForEach::InTypeVec &InTypes = EF->getInTypes();
+
+    for (RSExportForEach::InTypeIter BI = InTypes.begin(),
+         EI = InTypes.end(); BI != EI; BI++) {
+
+      genTypeInstanceFromPointer(*BI);
     }
   }
 }
@@ -226,9 +231,12 @@ void RSReflectionCpp::genForEachDeclarations() {
     mOut.indent() << FunctionStart;
 
     ArgumentList Arguments;
-    if (ForEach->hasIn()) {
+    const RSExportForEach::InVec &Ins = ForEach->getIns();
+    for (RSExportForEach::InIter BI = Ins.begin(), EI = Ins.end();
+         BI != EI; BI++) {
+
       Arguments.push_back(std::make_pair(
-          "android::RSC::sp<const android::RSC::Allocation>", "ain"));
+        "android::RSC::sp<const android::RSC::Allocation>", (*BI)->getName()));
     }
 
     if (ForEach->hasOut() || ForEach->hasReturn()) {
@@ -348,7 +356,9 @@ bool RSReflectionCpp::writeImplementationFile() {
         "void " + mClassName + "::forEach_" + ef->getName() + "(";
     mOut.indent() << FunctionStart;
 
-    if (ef->hasIn()) {
+    if (ef->hasIns()) {
+      // FIXME: Add support for kernels with multiple inputs.
+      assert(ef->getIns().size() == 1);
       Arguments.push_back(std::make_pair(
           "android::RSC::sp<const android::RSC::Allocation>", "ain"));
     }
@@ -372,10 +382,12 @@ bool RSReflectionCpp::writeImplementationFile() {
     mOut << ")";
     mOut.startBlock();
 
-    const RSExportType *IET = ef->getInType();
     const RSExportType *OET = ef->getOutType();
-    if (IET) {
-      genTypeCheck(IET, "ain");
+    const RSExportForEach::InTypeVec &InTypes = ef->getInTypes();
+    if (ef->hasIns()) {
+      // FIXME: Add support for kernels with multiple inputs.
+      assert(ef->getIns().size() == 1);
+      genTypeCheck(InTypes[0], "ain");
     }
     if (OET) {
       genTypeCheck(OET, "aout");
@@ -392,7 +404,9 @@ bool RSReflectionCpp::writeImplementationFile() {
     }
     mOut.indent() << "forEach(" << slot << ", ";
 
-    if (ef->hasIn()) {
+    if (ef->hasIns()) {
+      // FIXME: Add support for kernels with multiple inputs.
+      assert(ef->getIns().size() == 1);
       mOut << "ain, ";
     } else {
       mOut << "NULL, ";

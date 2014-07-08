@@ -18,6 +18,7 @@
 #define _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_FOREACH_H_
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include "clang/AST/Decl.h"
@@ -36,16 +37,24 @@ namespace slang {
 // Base class for reflecting control-side forEach (currently for root()
 // functions that fit appropriate criteria)
 class RSExportForEach : public RSExportable {
+ public:
+
+  typedef llvm::SmallVectorImpl<const clang::ParmVarDecl*> InVec;
+  typedef llvm::SmallVectorImpl<const RSExportType*> InTypeVec;
+
+  typedef InVec::const_iterator InIter;
+  typedef InTypeVec::const_iterator InTypeIter;
+
  private:
   std::string mName;
   RSExportRecordType *mParamPacketType;
-  RSExportType *mInType;
+  llvm::SmallVector<const RSExportType*, 16> mInTypes;
   RSExportType *mOutType;
   size_t numParams;
 
   unsigned int mSignatureMetadata;
 
-  const clang::ParmVarDecl *mIn;
+  llvm::SmallVector<const clang::ParmVarDecl*, 16> mIns;
   const clang::ParmVarDecl *mOut;
   const clang::ParmVarDecl *mUsrData;
   const clang::ParmVarDecl *mX;
@@ -60,9 +69,9 @@ class RSExportForEach : public RSExportable {
   // TODO(all): Add support for LOD/face when we have them
   RSExportForEach(RSContext *Context, const llvm::StringRef &Name)
     : RSExportable(Context, RSExportable::EX_FOREACH),
-      mName(Name.data(), Name.size()), mParamPacketType(NULL), mInType(NULL),
+      mName(Name.data(), Name.size()), mParamPacketType(NULL),
       mOutType(NULL), numParams(0), mSignatureMetadata(0),
-      mIn(NULL), mOut(NULL), mUsrData(NULL), mX(NULL), mY(NULL),
+      mOut(NULL), mUsrData(NULL), mX(NULL), mY(NULL),
       mResultType(clang::QualType()), mHasReturnType(false),
       mIsKernelStyle(false), mDummyRoot(false) {
   }
@@ -96,8 +105,8 @@ class RSExportForEach : public RSExportable {
     return numParams;
   }
 
-  inline bool hasIn() const {
-    return (mIn != NULL);
+  inline bool hasIns() const {
+    return (!mIns.empty());
   }
 
   inline bool hasOut() const {
@@ -112,8 +121,12 @@ class RSExportForEach : public RSExportable {
     return mHasReturnType;
   }
 
-  inline const RSExportType *getInType() const {
-    return mInType;
+  inline const InVec& getIns() const {
+    return mIns;
+  }
+
+  inline const InTypeVec& getInTypes() const {
+    return mInTypes;
   }
 
   inline const RSExportType *getOutType() const {
@@ -173,19 +186,19 @@ class RSExportForEach : public RSExportable {
     return Name.equals(FuncDtor);
   }
 
-  static bool isGraphicsRootRSFunc(int targetAPI,
+  static bool isGraphicsRootRSFunc(unsigned int targetAPI,
                                    const clang::FunctionDecl *FD);
 
-  static bool isRSForEachFunc(int targetAPI, slang::RSContext *Context,
+  static bool isRSForEachFunc(unsigned int targetAPI, slang::RSContext *Context,
                               const clang::FunctionDecl *FD);
 
-  inline static bool isSpecialRSFunc(int targetAPI,
+  inline static bool isSpecialRSFunc(unsigned int targetAPI,
                                      const clang::FunctionDecl *FD) {
     return isGraphicsRootRSFunc(targetAPI, FD) || isInitRSFunc(FD) ||
            isDtorRSFunc(FD);
   }
 
-  static bool validateSpecialFuncDecl(int targetAPI,
+  static bool validateSpecialFuncDecl(unsigned int targetAPI,
                                       slang::RSContext *Context,
                                       const clang::FunctionDecl *FD);
 };  // RSExportForEach
