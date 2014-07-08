@@ -73,6 +73,9 @@ private:
   // This is set by startClass() and will change for the multiple classes generated.
   std::string mClassName;
 
+  // This is the token used for determining the size of a given ScriptField.Item.
+  std::string mItemSizeof;
+
   bool mEmbedBitcodeInJava;
 
   int mNextExportVarSlot;

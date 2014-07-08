@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2010-2014, The Android Open Source Project
  *
@@ -44,6 +45,9 @@
 #define RS_TYPE_CLASS_SUPER_CLASS_NAME ".Script.FieldBase"
 
 #define RS_TYPE_ITEM_CLASS_NAME "Item"
+
+#define RS_TYPE_ITEM_SIZEOF_LEGACY "Item.sizeof"
+#define RS_TYPE_ITEM_SIZEOF_CURRENT "mElement.getBytesSize()"
 
 #define RS_TYPE_ITEM_BUFFER_NAME "mItemArray"
 #define RS_TYPE_ITEM_BUFFER_PACKER_NAME "mIOBuffer"
@@ -300,6 +304,13 @@ RSReflectionJava::RSReflectionJava(const RSContext *Context,
   mOutputDirectory = RSSlangReflectUtils::ComputePackagedPath(
                          OutputBaseDirectory.c_str(), mPackageName.c_str()) +
                      OS_PATH_SEPARATOR_STR;
+
+  // mElement.getBytesSize only exists on JB+
+  if (mRSContext->getTargetAPI() >= SLANG_JB_TARGET_API) {
+      mItemSizeof = RS_TYPE_ITEM_SIZEOF_CURRENT;
+  } else {
+      mItemSizeof = RS_TYPE_ITEM_SIZEOF_LEGACY;
+  }
 }
 
 bool RSReflectionJava::genScriptClass(const std::string &ClassName,
@@ -1316,8 +1327,7 @@ void RSReflectionJava::genNewItemBufferIfNull(const char *Index) {
 void RSReflectionJava::genNewItemBufferPackerIfNull() {
   mOut.indent() << "if (" << RS_TYPE_ITEM_BUFFER_PACKER_NAME << " == null) ";
   mOut << RS_TYPE_ITEM_BUFFER_PACKER_NAME " = new FieldPacker("
-       << RS_TYPE_ITEM_CLASS_NAME
-       << ".sizeof * getType().getX()/* count */);\n";
+       <<  mItemSizeof << " * getType().getX()/* count */);\n";
 }
 
 /********************** Methods to generate type class  **********************/
@@ -1369,8 +1379,11 @@ void RSReflectionJava::genTypeItemClass(const RSExportRecordType *ERT) {
   mOut.indent() << "static public class " RS_TYPE_ITEM_CLASS_NAME;
   mOut.startBlock();
 
-  mOut.indent() << "public static final int sizeof = " << ERT->getAllocSize()
-                << ";\n";
+  // Sizeof should not be exposed for 64-bit; it is not accurate
+  if (mRSContext->getTargetAPI() < 21) {
+      mOut.indent() << "public static final int sizeof = " << ERT->getAllocSize()
+                    << ";\n";
+  }
 
   // Member elements
   mOut << "\n";
@@ -1520,7 +1533,7 @@ void RSReflectionJava::genTypeClassCopyToArray(const RSExportRecordType *ERT) {
 
   genNewItemBufferPackerIfNull();
   mOut.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME << ".reset(index * "
-                << RS_TYPE_ITEM_CLASS_NAME << ".sizeof);\n";
+                << mItemSizeof << ");\n";
 
   mOut.indent() << "copyToArrayLocal(i, " RS_TYPE_ITEM_BUFFER_PACKER_NAME
                    ");\n";
@@ -1549,8 +1562,7 @@ void RSReflectionJava::genTypeClassItemSetter(const RSExportRecordType *ERT) {
   mOut.startBlock();
 
   mOut.indent() << "copyToArray(i, index);\n";
-  mOut.indent() << "FieldPacker fp = new FieldPacker(" RS_TYPE_ITEM_CLASS_NAME
-                   ".sizeof);\n";
+  mOut.indent() << "FieldPacker fp = new FieldPacker(" << mItemSizeof << ");\n";
   mOut.indent() << "copyToArrayLocal(i, fp);\n";
   mOut.indent() << "mAllocation.setFromFieldPacker(index, fp);\n";
 
@@ -1592,11 +1604,11 @@ RSReflectionJava::genTypeClassComponentSetter(const RSExportRecordType *ERT) {
 
     if (FieldOffset > 0) {
       mOut.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME << ".reset(index * "
-                    << RS_TYPE_ITEM_CLASS_NAME << ".sizeof + " << FieldOffset
+                    << mItemSizeof << " + " << FieldOffset
                     << ");\n";
     } else {
       mOut.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME << ".reset(index * "
-                    << RS_TYPE_ITEM_CLASS_NAME << ".sizeof);\n";
+                    << mItemSizeof << ");\n";
     }
     genPackVarOfType(F->getType(), "v", RS_TYPE_ITEM_BUFFER_PACKER_NAME);
 
@@ -1660,8 +1672,7 @@ void RSReflectionJava::genTypeClassResize() {
 
   mOut.indent() << "if (" RS_TYPE_ITEM_BUFFER_PACKER_NAME
                    " != null) " RS_TYPE_ITEM_BUFFER_PACKER_NAME " = "
-                   "new FieldPacker(" RS_TYPE_ITEM_CLASS_NAME
-                   ".sizeof * getType().getX()/* count */);\n";
+                   "new FieldPacker(" << mItemSizeof << " * getType().getX()/* count */);\n";
 
   endFunction();
 }
