@@ -67,6 +67,9 @@ class RSContext {
   clang::Preprocessor &mPP;
   clang::ASTContext &mCtx;
   PragmaList *mPragmas;
+  // Precision specified via pragma, either rs_fp_full or rs_fp_relaxed. If
+  // empty, rs_fp_full is assumed.
+  std::string mPrecision;
   unsigned int mTargetAPI;
   bool mVerbose;
 
@@ -234,6 +237,8 @@ class RSContext {
   void addPragma(const std::string &T, const std::string &V) {
     mPragmas->push_back(make_pair(T, V));
   }
+  void setPrecision(const std::string &P) { mPrecision = P; }
+  std::string getPrecision() { return mPrecision; }
 
   // Report an error or a warning to the user.
   template <unsigned N>
