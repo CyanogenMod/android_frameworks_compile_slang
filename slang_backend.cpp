@@ -344,7 +344,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
       llvm::PassManager *BCEmitPM = new llvm::PassManager();
       std::string BCStr;
       llvm::raw_string_ostream Bitcode(BCStr);
-      int TargetAPI = getTargetAPI();
+      unsigned int TargetAPI = getTargetAPI();
       switch (TargetAPI) {
         case SLANG_HC_TARGET_API:
         case SLANG_HC_MR1_TARGET_API:
