@@ -69,7 +69,8 @@ static RSReflectionType gReflectionTypes[] = {
     {MatrixDataType, "MATRIX_3X3", NULL, 9*32, "rsMatrix_3x3", "Matrix3f", NULL, NULL, false},
     {MatrixDataType, "MATRIX_4X4", NULL, 16*32, "rsMatrix_4x4", "Matrix4f", NULL, NULL, false},
 
-    // TODO: For 64 bit, what will be the size of the objects??
+    // RS object types are 32 bits in 32-bit RS, but 256 bits in 64-bit RS.
+    // This is handled specially by the GetSizeInBits() method.
     {ObjectDataType, "RS_ELEMENT", "ELEMENT", 32, "Element", "Element", NULL, NULL, false},
     {ObjectDataType, "RS_TYPE", "TYPE", 32, "Type", "Type", NULL, NULL, false},
     {ObjectDataType, "RS_ALLOCATION", "ALLOCATION", 32, "Allocation", "Allocation", NULL, NULL, false},
@@ -1021,6 +1022,10 @@ size_t RSExportPrimitiveType::GetSizeInBits(const RSExportPrimitiveType *EPT) {
   int type = EPT->getType();
   slangAssert((type > DataTypeUnknown && type < DataTypeMax) &&
               "RSExportPrimitiveType::GetSizeInBits : unknown data type");
+  // All RS object types are 256 bits in 64-bit RS.
+  if (EPT->isRSObjectType() && EPT->getRSContext()->is64Bit()) {
+    return 256;
+  }
   return gReflectionTypes[type].size_in_bits;
 }
 
@@ -1096,8 +1101,15 @@ llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
     //
     if (RSObjectLLVMType == NULL) {
       std::vector<llvm::Type *> Elements;
-      Elements.push_back(llvm::ArrayType::get(llvm::Type::getInt32Ty(C), 1));
-      RSObjectLLVMType = llvm::StructType::get(C, Elements, true);
+      if (getRSContext()->is64Bit()) {
+        // 64-bit path
+        Elements.push_back(llvm::ArrayType::get(llvm::Type::getInt64Ty(C), 4));
+        RSObjectLLVMType = llvm::StructType::get(C, Elements, true);
+      } else {
+        // 32-bit legacy path
+        Elements.push_back(llvm::ArrayType::get(llvm::Type::getInt32Ty(C), 1));
+        RSObjectLLVMType = llvm::StructType::get(C, Elements, true);
+      }
     }
     return RSObjectLLVMType;
   }

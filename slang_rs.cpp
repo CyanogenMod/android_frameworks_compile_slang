@@ -82,11 +82,13 @@ bool SlangRS::generateJavaBitcodeAccessor(const std::string &OutputPathBase,
   RSSlangReflectUtils::BitCodeAccessorContext BCAccessorContext;
 
   BCAccessorContext.rsFileName = getInputFileName().c_str();
-  BCAccessorContext.bcFileName = getOutputFileName().c_str();
+  BCAccessorContext.bc32FileName = getOutput32FileName().c_str();
+  BCAccessorContext.bc64FileName = getOutputFileName().c_str();
   BCAccessorContext.reflectPath = OutputPathBase.c_str();
   BCAccessorContext.packageName = PackageName.c_str();
   BCAccessorContext.licenseNote = LicenseNote;
   BCAccessorContext.bcStorage = BCST_JAVA_CODE;   // Must be BCST_JAVA_CODE
+  BCAccessorContext.verbose = false;
 
   return RSSlangReflectUtils::GenerateJavaBitCodeAccessor(BCAccessorContext);
 }
@@ -270,22 +272,31 @@ SlangRS::SlangRS()
 }
 
 bool SlangRS::compile(
-    const std::list<std::pair<const char*, const char*> > &IOFiles,
+    const std::list<std::pair<const char*, const char*> > &IOFiles64,
+    const std::list<std::pair<const char*, const char*> > &IOFiles32,
     const std::list<std::pair<const char*, const char*> > &DepFiles,
     const RSCCOptions &Opts) {
-  if (IOFiles.empty())
+  if (IOFiles32.empty())
     return true;
 
-  if (Opts.mEmitDependency && (DepFiles.size() != IOFiles.size())) {
+  if (Opts.mEmitDependency && (DepFiles.size() != IOFiles32.size())) {
     getDiagnostics().Report(mDiagErrorInvalidOutputDepParameter);
+    return false;
+  }
+
+  if (Opts.mEmit3264 && (IOFiles64.size() != IOFiles32.size())) {
+    slangAssert(false && "Should have equal number of 32/64-bit files");
     return false;
   }
 
   std::string RealPackageName;
 
-  const char *InputFile, *OutputFile, *BCOutputFile, *DepOutputFile;
+  const char *InputFile, *Output64File, *Output32File, *BCOutputFile,
+             *DepOutputFile;
   std::list<std::pair<const char*, const char*> >::const_iterator
-      IOFileIter = IOFiles.begin(), DepFileIter = DepFiles.begin();
+      IOFile64Iter = IOFiles64.begin(),
+      IOFile32Iter = IOFiles32.begin(),
+      DepFileIter = DepFiles.begin();
 
   setIncludePaths(Opts.mIncludePaths);
   setOutputType(Opts.mOutputType);
@@ -314,17 +325,20 @@ bool SlangRS::compile(
   // a single pass over the input file.
   bool SuppressAllWarnings = (Opts.mOutputType != Slang::OT_Dependency);
 
-  for (unsigned i = 0, e = IOFiles.size(); i != e; i++) {
-    InputFile = IOFileIter->first;
-    OutputFile = IOFileIter->second;
+  for (unsigned i = 0, e = IOFiles32.size(); i != e; i++) {
+    InputFile = IOFile64Iter->first;
+    Output64File = IOFile64Iter->second;
+    Output32File = IOFile32Iter->second;
 
     reset();
 
     if (!setInputSource(InputFile))
       return false;
 
-    if (!setOutput(OutputFile))
+    if (!setOutput(Output64File))
       return false;
+
+    setOutput32(Output32File);
 
     mIsFilterscript = isFilterscript(InputFile);
 
@@ -337,7 +351,13 @@ bool SlangRS::compile(
     const std::string &RealPackageName =
         mRSContext->getReflectJavaPackageName();
 
-    if (Opts.mOutputType != Slang::OT_Dependency) {
+    bool doReflection = true;
+    if (Opts.mEmit3264 && (Opts.mBitWidth == 32)) {
+      // Skip reflection on the 32-bit path if we are going to emit it on the
+      // 64-bit path.
+      doReflection = false;
+    }
+    if (Opts.mOutputType != Slang::OT_Dependency && doReflection) {
 
       if (Opts.mBitcodeStorage == BCST_CPP_CODE) {
           RSReflectionCpp R(mRSContext, Opts.mJavaReflectionPathBase,
@@ -407,7 +427,8 @@ bool SlangRS::compile(
     if (!checkODR(InputFile))
       return false;
 
-    IOFileIter++;
+    IOFile64Iter++;
+    IOFile32Iter++;
   }
 
   return true;

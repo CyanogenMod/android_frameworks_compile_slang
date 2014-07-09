@@ -51,15 +51,8 @@ class RSCCOptions {
   // Allow user-defined functions prefixed with 'rs'.
   bool mAllowRSPrefix;
 
-  // The name of the target triple to compile for.
-  std::string mTriple;
-
-  // The name of the target CPU to generate code for.
-  std::string mCPU;
-
-  // The list of target specific features to enable or disable -- this should
-  // be a list of strings starting with by '+' or '-'.
-  std::vector<std::string> mFeatures;
+  // 32-bit or 64-bit target
+  uint32_t mBitWidth;
 
   // The path for storing reflected Java source files
   // (i.e. out/target/common/obj/APPS/.../src/renderscript/src).
@@ -102,12 +95,12 @@ class RSCCOptions {
   // Display verbose information about the compilation on stdout.
   bool mVerbose;
 
+  // Emit both 32-bit and 64-bit bitcode (embedded in the reflected sources).
+  bool mEmit3264;
+
   RSCCOptions() {
     mOutputType = slang::Slang::OT_Bitcode;
-    // Triple/CPU/Features must be hard-coded to our chosen portable ABI.
-    mTriple = "armv7-none-linux-gnueabi";
-    mCPU = "";
-    mFeatures.push_back("+long64");
+    mBitWidth = 32;
     mBitcodeStorage = slang::BCST_APK_RESOURCE;
     mEmitDependency = 0;
     mShowHelp = 0;
@@ -116,6 +109,7 @@ class RSCCOptions {
     mDebugEmission = 0;
     mOptimizationLevel = llvm::CodeGenOpt::Aggressive;
     mVerbose = false;
+    mEmit3264 = false;
   }
 };
 
