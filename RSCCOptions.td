@@ -137,5 +137,8 @@ def version : Flag<["-"], "version">,
   HelpText<"Print the assembler version">;
 def _version : Flag<["--"], "version">, Alias<version>;
 
+def emit_32_64 : Flag<["-"], "emit_32_64">,
+  HelpText<"Emit 32-bit and 64-bit bitcode in source files">;
+
 // Compatible with old slang
 def no_link : Flag<["-"], "no-link">;  // currently no effect

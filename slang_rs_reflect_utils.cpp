@@ -116,21 +116,23 @@ std::string RSSlangReflectUtils::JavaBitcodeClassNameFromRSFileName(
 
 static bool GenerateAccessorMethod(
     const RSSlangReflectUtils::BitCodeAccessorContext &context,
-    GeneratedFile &out) {
+    int bitwidth, GeneratedFile &out) {
   // the prototype of the accessor method
-  out.indent() << "// return byte array representation of the bitcode.\n";
-  out.indent() << "public static byte[] getBitCode32()";
+  out.indent() << "// return byte array representation of the " << bitwidth
+               << "-bit bitcode.\n";
+  out.indent() << "public static byte[] getBitCode" << bitwidth << "()";
   out.startBlock();
-  out.indent() << "return getBitCode32Internal();\n";
+  out.indent() << "return getBitCode" << bitwidth << "Internal();\n";
   out.endBlock(true);
   return true;
 }
 
 // Java method size must not exceed 64k,
 // so we have to split the bitcode into multiple segments.
-static bool GenerateSegmentMethod(const char *buff, int blen, int seg_num,
-                                  GeneratedFile &out) {
-  out.indent() << "private static byte[] getSegment32_" << seg_num << "()";
+static bool GenerateSegmentMethod(const char *buff, int blen, int bitwidth,
+                                  int seg_num, GeneratedFile &out) {
+  out.indent() << "private static byte[] getSegment" << bitwidth << "_"
+               << seg_num << "()";
   out.startBlock();
   out.indent() << "byte[] data = {";
   out.increaseIndent();
@@ -157,17 +159,23 @@ static bool GenerateSegmentMethod(const char *buff, int blen, int seg_num,
   return true;
 }
 
-static bool GenerateJavaCodeAccessorMethod(
+static bool GenerateJavaCodeAccessorMethodForBitwidth(
     const RSSlangReflectUtils::BitCodeAccessorContext &context,
-    GeneratedFile &out) {
-  FILE *pfin = fopen(context.bcFileName, "rb");
+    int bitwidth, GeneratedFile &out) {
+
+  std::string filename(context.bc32FileName);
+  if (bitwidth == 64) {
+    filename = context.bc64FileName;
+  }
+
+  FILE *pfin = fopen(filename.c_str(), "rb");
   if (pfin == NULL) {
-    fprintf(stderr, "Error: could not read file %s\n", context.bcFileName);
+    fprintf(stderr, "Error: could not read file %s\n", filename.c_str());
     return false;
   }
 
   // start the accessor method
-  GenerateAccessorMethod(context, out);
+  GenerateAccessorMethod(context, bitwidth, out);
 
   // output the data
   // make sure the generated function for a segment won't break the Javac
@@ -178,7 +186,7 @@ static bool GenerateJavaCodeAccessorMethod(
   int seg_num = 0;
   int total_length = 0;
   while ((read_length = fread(buff, 1, SEG_SIZE, pfin)) > 0) {
-    GenerateSegmentMethod(buff, read_length, seg_num, out);
+    GenerateSegmentMethod(buff, read_length, bitwidth, seg_num, out);
     ++seg_num;
     total_length += read_length;
   }
@@ -186,20 +194,36 @@ static bool GenerateJavaCodeAccessorMethod(
   fclose(pfin);
 
   // output the internal accessor method
-  out.indent() << "private static int bitCodeLength = " << total_length
-               << ";\n\n";
-  out.indent() << "private static byte[] getBitCode32Internal()";
+  out.indent() << "private static int bitCode" << bitwidth << "Length = "
+               << total_length << ";\n\n";
+  out.indent() << "private static byte[] getBitCode" << bitwidth
+               << "Internal()";
   out.startBlock();
-  out.indent() << "byte[] bc = new byte[bitCodeLength];\n";
+  out.indent() << "byte[] bc = new byte[bitCode" << bitwidth << "Length];\n";
   out.indent() << "int offset = 0;\n";
   out.indent() << "byte[] seg;\n";
   for (int i = 0; i < seg_num; ++i) {
-    out.indent() << "seg = getSegment32_" << i << "();\n";
+    out.indent() << "seg = getSegment" << bitwidth << "_" << i << "();\n";
     out.indent() << "System.arraycopy(seg, 0, bc, offset, seg.length);\n";
     out.indent() << "offset += seg.length;\n";
   }
   out.indent() << "return bc;\n";
   out.endBlock();
+
+  return true;
+}
+
+static bool GenerateJavaCodeAccessorMethod(
+    const RSSlangReflectUtils::BitCodeAccessorContext &context,
+    GeneratedFile &out) {
+  if (!GenerateJavaCodeAccessorMethodForBitwidth(context, 32, out)) {
+    slangAssert(false && "Couldn't generate 32-bit embedded bitcode!");
+    return false;
+  }
+  if (!GenerateJavaCodeAccessorMethodForBitwidth(context, 64, out)) {
+    slangAssert(false && "Couldn't generate 64-bit embedded bitcode!");
+    return false;
+  }
 
   return true;
 }

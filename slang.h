@@ -94,8 +94,7 @@ class Slang : public clang::ModuleLoader {
   // The target being compiled for
   llvm::IntrusiveRefCntPtr<clang::TargetOptions> mTargetOpts;
   llvm::OwningPtr<clang::TargetInfo> mTarget;
-  void createTarget(std::string const &Triple, std::string const &CPU,
-                    std::vector<std::string> const &Features);
+  void createTarget(uint32_t BitWidth);
 
 
   // File manager (for prepocessor doing the job such as header file search)
@@ -126,6 +125,7 @@ class Slang : public clang::ModuleLoader {
   // File names
   std::string mInputFileName;
   std::string mOutputFileName;
+  std::string mOutput32FileName;
 
   std::string mDepOutputFileName;
   std::string mDepTargetBCFileName;
@@ -171,9 +171,7 @@ class Slang : public clang::ModuleLoader {
 
   Slang();
 
-  void init(const std::string &Triple, const std::string &CPU,
-            const std::vector<std::string> &Features,
-            clang::DiagnosticsEngine *DiagEngine,
+  void init(uint32_t BitWidth, clang::DiagnosticsEngine *DiagEngine,
             DiagnosticBuffer *DiagClient);
 
   virtual clang::ModuleLoadResult loadModule(
@@ -197,8 +195,18 @@ class Slang : public clang::ModuleLoader {
 
   bool setOutput(const char *OutputFile);
 
+  // For use with 64-bit compilation/reflection. This only sets the filename of
+  // the 32-bit bitcode file, and doesn't actually verify it already exists.
+  void setOutput32(const char *OutputFile) {
+    mOutput32FileName = OutputFile;
+  }
+
   std::string const &getOutputFileName() const {
     return mOutputFileName;
+  }
+
+  std::string const &getOutput32FileName() const {
+    return mOutput32FileName;
   }
 
   bool setDepOutput(const char *OutputFile);
