@@ -87,6 +87,8 @@ class RSContext {
 
   llvm::OwningPtr<clang::MangleContext> mMangleCtx;
 
+  bool mIs64Bit;
+
   bool processExportVar(const clang::VarDecl *VD);
   bool processExportFunc(const clang::FunctionDecl *FD);
   bool processExportType(const llvm::StringRef &Name);
@@ -125,6 +127,9 @@ class RSContext {
 
   inline bool getVerbose() const {
     return mVerbose;
+  }
+  inline bool is64Bit() const {
+    return mIs64Bit;
   }
 
   inline void setLicenseNote(const std::string &S) {

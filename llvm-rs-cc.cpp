@@ -59,6 +59,7 @@ static void ExpandArgv(int argc, const char **argv,
                        std::set<std::string> &SavedStrings);
 
 static const char *DetermineOutputFile(const std::string &OutputDir,
+                                       const std::string &PathSuffix,
                                        const char *InputFile,
                                        slang::Slang::OutputType OutputType,
                                        std::set<std::string> &SavedStrings) {
@@ -71,6 +72,11 @@ static const char *DetermineOutputFile(const std::string &OutputDir,
   if (!OutputFile.empty() &&
       (OutputFile[OutputFile.size() - 1]) != OS_PATH_SEPARATOR)
     OutputFile.append(1, OS_PATH_SEPARATOR);
+
+  if (!PathSuffix.empty()) {
+    OutputFile.append(PathSuffix);
+    OutputFile.append(1, OS_PATH_SEPARATOR);
+  }
 
   if (OutputType == slang::Slang::OT_Dependency) {
     // The build system wants the .d file name stem to be exactly the same as
@@ -111,6 +117,77 @@ static const char *DetermineOutputFile(const std::string &OutputDir,
   return SaveStringInSet(SavedStrings, OutputFile);
 }
 
+typedef std::list<std::pair<const char*, const char*> > NamePairList;
+
+/*
+ * Compile the Inputs.
+ *
+ * Returns 0 on success and nonzero on failure.
+ *
+ * IOFiles - list of (foo.rs, foo.bc) pairs of input/output files.
+ * IOFiles32 - list of input/output pairs for 32-bit compilation.
+ * Inputs - input filenames.
+ * Opts - options controlling compilation.
+ * DiagEngine - Clang diagnostic engine (for creating diagnostics).
+ * DiagClient - Slang diagnostic consumer (collects and displays diagnostics).
+ * SavedStrings - expanded strings copied from argv source input files.
+ *
+ * We populate IOFiles dynamically while working through the list of Inputs.
+ * On any 64-bit compilation, we pass back in the 32-bit pairs of files as
+ * IOFiles32. This allows the 64-bit compiler to later bundle up both the
+ * 32-bit and 64-bit bitcode outputs to be included in the final reflected
+ * source code that is emitted.
+ */
+static int compileFiles(NamePairList *IOFiles, NamePairList *IOFiles32,
+    const llvm::SmallVector<const char*, 16> &Inputs, slang::RSCCOptions &Opts,
+    clang::DiagnosticsEngine *DiagEngine, slang::DiagnosticBuffer *DiagClient,
+    std::set<std::string> *SavedStrings) {
+  NamePairList DepFiles;
+  std::string PathSuffix = "";
+
+  // In our mixed 32/64-bit path, we need to suffix our files differently for
+  // both 32-bit and 64-bit versions.
+  if (Opts.mEmit3264) {
+    if (Opts.mBitWidth == 64) {
+      PathSuffix = "bc64";
+    } else {
+      PathSuffix = "bc32";
+    }
+  }
+
+  for (int i = 0, e = Inputs.size(); i != e; i++) {
+    const char *InputFile = Inputs[i];
+
+    const char *BCOutputFile = DetermineOutputFile(Opts.mBitcodeOutputDir,
+                                                   PathSuffix, InputFile,
+                                                   slang::Slang::OT_Bitcode,
+                                                   *SavedStrings);
+    const char *OutputFile = BCOutputFile;
+
+    if (Opts.mEmitDependency) {
+      // The dependency file is always emitted without a PathSuffix.
+      // Collisions between 32-bit and 64-bit files don't make a difference,
+      // because they share the same sources/dependencies.
+      const char *DepOutputFile =
+          DetermineOutputFile(Opts.mDependencyOutputDir, "", InputFile,
+                              slang::Slang::OT_Dependency, *SavedStrings);
+      if (Opts.mOutputType == slang::Slang::OT_Dependency) {
+        OutputFile = DepOutputFile;
+      }
+
+      DepFiles.push_back(std::make_pair(BCOutputFile, DepOutputFile));
+    }
+
+    IOFiles->push_back(std::make_pair(InputFile, OutputFile));
+  }
+
+  llvm::OwningPtr<slang::SlangRS> Compiler(new slang::SlangRS());
+  Compiler->init(Opts.mBitWidth, DiagEngine, DiagClient);
+  int CompileFailed = !Compiler->compile(*IOFiles, *IOFiles32, DepFiles, Opts);
+  Compiler->reset();
+  return CompileFailed;
+}
+
 #define str(s) #s
 #define wrap_str(s) str(s)
 static void llvm_rs_cc_VersionPrinter() {
@@ -137,7 +214,7 @@ int main(int argc, const char **argv) {
   llvm::SmallVector<const char*, 16> Inputs;
   std::string Argv0;
 
-  atexit(llvm::llvm_shutdown);
+  llvm::llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
   ExpandArgv(argc, argv, ArgVector, SavedStrings);
 
@@ -184,51 +261,18 @@ int main(int argc, const char **argv) {
   }
 
   // Prepare input data for RS compiler.
-  std::list<std::pair<const char*, const char*> > IOFiles;
-  std::list<std::pair<const char*, const char*> > DepFiles;
+  NamePairList IOFiles64;
+  NamePairList IOFiles32;
 
-  llvm::OwningPtr<slang::SlangRS> Compiler(new slang::SlangRS());
+  int CompileFailed = compileFiles(&IOFiles32, &IOFiles32, Inputs, Opts,
+                                   &DiagEngine, DiagClient, &SavedStrings);
 
-  Compiler->init(Opts.mTriple, Opts.mCPU, Opts.mFeatures, &DiagEngine,
-                 DiagClient);
-
-  for (int i = 0, e = Inputs.size(); i != e; i++) {
-    const char *InputFile = Inputs[i];
-    const char *OutputFile =
-        DetermineOutputFile(Opts.mBitcodeOutputDir, InputFile,
-                            Opts.mOutputType, SavedStrings);
-
-    if (Opts.mEmitDependency) {
-      const char *BCOutputFile, *DepOutputFile;
-
-      if (Opts.mOutputType == slang::Slang::OT_Bitcode)
-        BCOutputFile = OutputFile;
-      else
-        BCOutputFile = DetermineOutputFile(Opts.mDependencyOutputDir,
-                                           InputFile,
-                                           slang::Slang::OT_Bitcode,
-                                           SavedStrings);
-
-      if (Opts.mOutputType == slang::Slang::OT_Dependency)
-        DepOutputFile = OutputFile;
-      else
-        DepOutputFile = DetermineOutputFile(Opts.mDependencyOutputDir,
-                                            InputFile,
-                                            slang::Slang::OT_Dependency,
-                                            SavedStrings);
-
-      DepFiles.push_back(std::make_pair(BCOutputFile, DepOutputFile));
-    }
-
-    IOFiles.push_back(std::make_pair(InputFile, OutputFile));
+  // Handle the 64-bit case too!
+  if (Opts.mEmit3264 && !CompileFailed) {
+    Opts.mBitWidth = 64;
+    CompileFailed = compileFiles(&IOFiles64, &IOFiles32, Inputs, Opts,
+                                 &DiagEngine, DiagClient, &SavedStrings);
   }
-
-  // Let's rock!
-  int CompileFailed = !Compiler->compile(IOFiles,
-                                         DepFiles,
-                                         Opts);
-
-  Compiler->reset();
 
   return CompileFailed;
 }
