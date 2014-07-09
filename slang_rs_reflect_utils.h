@@ -29,7 +29,8 @@ class RSSlangReflectUtils {
 public:
   // Encode a binary bitcode file into a Java source file.
   // rsFileName: the original .rs file name (with or without path).
-  // bcFileName: where is the bit code file
+  // bc32FileName: path of the 32-bit bitcode file
+  // bc64FileName: path of the 64-bit bitcode file
   // reflectPath: where to output the generated Java file, no package name in
   // it.
   // packageName: the package of the output Java file.
@@ -37,7 +38,8 @@ public:
   // bcStorage: where to emit bitcode to (resource file or embedded).
   struct BitCodeAccessorContext {
     const char *rsFileName;
-    const char *bcFileName;
+    const char *bc32FileName;
+    const char *bc64FileName;
     const char *reflectPath;
     const char *packageName;
     const std::string *licenseNote;

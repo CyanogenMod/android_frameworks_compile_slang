@@ -107,7 +107,8 @@ class SlangRS : public Slang {
   //             with the same number of pairs given in @IOFiles.
   //
   // @Opts - Selection of options defined from invoking llvm-rs-cc
-  bool compile(const std::list<std::pair<const char*, const char*> > &IOFiles,
+  bool compile(const std::list<std::pair<const char*, const char*> > &IOFiles64,
+               const std::list<std::pair<const char*, const char*> > &IOFiles32,
                const std::list<std::pair<const char*, const char*> > &DepFiles,
                const RSCCOptions &Opts);
 

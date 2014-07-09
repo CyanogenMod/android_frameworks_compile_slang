@@ -58,7 +58,8 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mLicenseNote(NULL),
       mRSPackageName("android.renderscript"),
       version(0),
-      mMangleCtx(Ctx.createMangleContext()) {
+      mMangleCtx(Ctx.createMangleContext()),
+      mIs64Bit(Target.getPointerWidth(0) == 64) {
 
   // For #pragma rs export_type
   PP.AddPragmaHandler(
