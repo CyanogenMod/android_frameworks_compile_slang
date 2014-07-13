@@ -9,7 +9,7 @@
 #define RS_MSG_TEST_PASSED 100
 #define RS_MSG_TEST_FAILED 101
 
-void check(int version) {
+void check(unsigned int version) {
     if (version != RS_VERSION) {
         rsDebug("version: ", version);
         rsDebug("RS_VERSION: ", RS_VERSION);
