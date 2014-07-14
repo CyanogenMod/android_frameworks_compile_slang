@@ -206,6 +206,12 @@ void slang::ParseArguments(llvm::SmallVectorImpl<const char *> &ArgVector,
     Opts.mDebugEmission = Args->hasArg(OPT_emit_g);
     Opts.mVerbose = Args->hasArg(OPT_verbose);
 
+    // If we are emitting both 32-bit and 64-bit bitcode, we must embed it.
+    Opts.mEmit3264 = Args->hasArg(OPT_emit_32_64);
+    if (Opts.mEmit3264) {
+      Opts.mBitcodeStorage = slang::BCST_JAVA_CODE;
+    }
+
     size_t OptLevel =
         clang::getLastArgIntValue(*Args, OPT_optimization_level, 3, DiagEngine);
 
