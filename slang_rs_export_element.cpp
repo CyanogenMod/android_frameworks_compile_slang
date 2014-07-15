@@ -62,7 +62,7 @@ void RSExportElement::Init() {
       EI->vsize = DataElementInfoTable[i].vsize;
       llvm::StringRef Name(DataElementInfoTable[i].name);
       ElementInfoMap.insert(ElementInfoMapTy::value_type::Create(
-          Name.begin(), Name.end(), ElementInfoMap.getAllocator(), EI));
+          Name, ElementInfoMap.getAllocator(), EI));
     }
     Initialized = true;
   }
