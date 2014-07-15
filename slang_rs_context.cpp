@@ -264,8 +264,7 @@ bool RSContext::processExport() {
 bool RSContext::insertExportType(const llvm::StringRef &TypeName,
                                  RSExportType *ET) {
   ExportTypeMap::value_type *NewItem =
-      ExportTypeMap::value_type::Create(TypeName.begin(),
-                                        TypeName.end(),
+      ExportTypeMap::value_type::Create(TypeName,
                                         mExportTypes.getAllocator(),
                                         ET);
 

@@ -250,7 +250,7 @@ void RSPragmaHandler::handleOptionalStringLiteralParamPragma(
   PP.LexUnexpandedToken(PragmaToken);
   if (PragmaToken.isNot(clang::tok::r_paren)) {
     // Eat the whole string literal
-    clang::StringLiteralParser StringLiteral(&PragmaToken, 1, PP);
+    clang::StringLiteralParser StringLiteral(PragmaToken, PP);
     if (StringLiteral.hadError) {
       // Diagnostics will be generated automatically
       return;

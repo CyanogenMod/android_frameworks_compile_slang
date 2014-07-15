@@ -22,7 +22,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/OwningPtr.h"
 
 #include "llvm/Option/OptTable.h"
 #include "llvm/Support/CommandLine.h"
@@ -30,7 +29,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 #include "llvm/Target/TargetMachine.h"
 
 #include "rs_cc_options.h"
@@ -181,7 +179,7 @@ static int compileFiles(NamePairList *IOFiles, NamePairList *IOFiles32,
     IOFiles->push_back(std::make_pair(InputFile, OutputFile));
   }
 
-  llvm::OwningPtr<slang::SlangRS> Compiler(new slang::SlangRS());
+  std::unique_ptr<slang::SlangRS> Compiler(new slang::SlangRS());
   Compiler->init(Opts.mBitWidth, DiagEngine, DiagClient);
   int CompileFailed = !Compiler->compile(*IOFiles, *IOFiles32, DepFiles, Opts);
   Compiler->reset();
@@ -242,7 +240,7 @@ int main(int argc, const char **argv) {
   }
 
   if (Opts.mShowHelp) {
-    llvm::OwningPtr<llvm::opt::OptTable> OptTbl(slang::createRSCCOptTable());
+    std::unique_ptr<llvm::opt::OptTable> OptTbl(slang::createRSCCOptTable());
     OptTbl->PrintHelp(llvm::outs(), Argv0.c_str(),
                       "Renderscript source compiler");
     return 0;
@@ -284,12 +282,14 @@ static void ExpandArgsFromBuf(const char *Arg,
                               llvm::SmallVectorImpl<const char*> &ArgVector,
                               std::set<std::string> &SavedStrings) {
   const char *FName = Arg + 1;
-  std::unique_ptr<llvm::MemoryBuffer> MemBuf;
-  if (llvm::MemoryBuffer::getFile(FName, MemBuf)) {
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> MBOrErr =
+      llvm::MemoryBuffer::getFile(FName);
+  if (MBOrErr.getError()) {
     // Unable to open the file
     ArgVector.push_back(SaveStringInSet(SavedStrings, Arg));
     return;
   }
+  std::unique_ptr<llvm::MemoryBuffer> MemBuf = std::move(MBOrErr.get());
 
   const char *Buf = MemBuf->getBufferStart();
   char InQuote = ' ';

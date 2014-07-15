@@ -183,7 +183,7 @@ void Slang::createTarget(uint32_t BitWidth) {
   }
 
   mTarget.reset(clang::TargetInfo::CreateTargetInfo(*mDiagEngine,
-                                                    mTargetOpts.getPtr()));
+                                                    mTargetOpts));
 }
 
 void Slang::createFileManager() {
@@ -218,7 +218,7 @@ void Slang::createPreprocessor() {
   // Initialize the preprocessor
   mPP->Initialize(getTargetInfo());
   clang::FrontendOptions FEOpts;
-  clang::InitializePreprocessor(*mPP, *PPOpts, *HSOpts, FEOpts);
+  clang::InitializePreprocessor(*mPP, *PPOpts, FEOpts);
 
   mPragmas.clear();
   mPP->AddPragmaHandler(new PragmaRecorder(&mPragmas));
@@ -258,8 +258,8 @@ Slang::createBackend(const clang::CodeGenOptions& CodeGenOpts,
                      &mPragmas, OS, OT);
 }
 
-Slang::Slang() : mInitialized(false), mDiagClient(NULL), mOT(OT_Default) {
-  mTargetOpts = new clang::TargetOptions();
+Slang::Slang() : mInitialized(false), mDiagClient(NULL),
+  mTargetOpts(new clang::TargetOptions()), mOT(OT_Default) {
   GlobalInitialization();
 }
 
