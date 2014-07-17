@@ -61,20 +61,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mMangleCtx(Ctx.createMangleContext()),
       mIs64Bit(Target.getPointerWidth(0) == 64) {
 
-  // For #pragma rs export_type
-  PP.AddPragmaHandler(
-      "rs", RSPragmaHandler::CreatePragmaExportTypeHandler(this));
-
-  // For #pragma rs java_package_name
-  PP.AddPragmaHandler(
-      "rs", RSPragmaHandler::CreatePragmaJavaPackageNameHandler(this));
-
-  // For #pragma rs set_reflect_license
-  PP.AddPragmaHandler(
-      "rs", RSPragmaHandler::CreatePragmaReflectLicenseHandler(this));
-
-  // For #pragma version
-  PP.AddPragmaHandler(RSPragmaHandler::CreatePragmaVersionHandler(this));
+  AddPragmaHandlers(PP, this);
 
   // Prepare target data
   mDataLayout = new llvm::DataLayout(Target.getTargetDescription());
