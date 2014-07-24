@@ -15,7 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/AsmParser/Parser.h"
@@ -89,7 +88,7 @@ static void WriteOutputFile(const Module *M) {
   }
 
   std::string ErrorInfo;
-  OwningPtr<tool_output_file> Out
+  std::unique_ptr<tool_output_file> Out
   (new tool_output_file(OutputFilename.c_str(), ErrorInfo,
                         llvm::sys::fs::F_None));
   if (!ErrorInfo.empty()) {
@@ -128,7 +127,7 @@ int main(int argc, char **argv) {
 
   // Parse the file now...
   SMDiagnostic Err;
-  OwningPtr<Module> M(ParseAssemblyFile(InputFilename, Err, Context));
+  std::unique_ptr<Module> M(ParseAssemblyFile(InputFilename, Err, Context));
   if (M.get() == 0) {
     Err.print(argv[0], errs());
     return 1;
