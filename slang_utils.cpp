@@ -20,14 +20,13 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/system_error.h"
 
 namespace slang {
 
 bool SlangUtils::CreateDirectoryWithParents(llvm::StringRef Dir,
                                             std::string* Error) {
-  llvm::error_code EC = llvm::sys::fs::create_directories(Dir);
-  if (EC != llvm::errc::success) {
+  std::error_code EC = llvm::sys::fs::create_directories(Dir);
+  if (EC) {
     Error->assign(EC.message());
     return false;
   }

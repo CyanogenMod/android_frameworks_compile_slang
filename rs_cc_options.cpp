@@ -19,7 +19,6 @@
 #include "clang/Driver/Options.h"
 #include "clang/Frontend/Utils.h"
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
@@ -87,8 +86,8 @@ void slang::ParseArguments(llvm::SmallVectorImpl<const char *> &ArgVector,
     const char **ArgBegin = ArgVector.data() + 1;
     const char **ArgEnd = ArgVector.data() + ArgVector.size();
     unsigned MissingArgIndex, MissingArgCount;
-    llvm::OwningPtr<llvm::opt::OptTable> OptParser(slang::createRSCCOptTable());
-    llvm::OwningPtr<llvm::opt::InputArgList> Args(OptParser->ParseArgs(
+    std::unique_ptr<llvm::opt::OptTable> OptParser(slang::createRSCCOptTable());
+    std::unique_ptr<llvm::opt::InputArgList> Args(OptParser->ParseArgs(
         ArgBegin, ArgEnd, MissingArgIndex, MissingArgCount));
 
     // Check for missing argument error.
