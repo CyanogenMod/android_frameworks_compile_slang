@@ -28,7 +28,6 @@ using llvm::RefCountedBase;
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Lex/ModuleLoader.h"
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 
 #include "llvm/Target/TargetMachine.h"
@@ -82,7 +81,7 @@ class Slang : public clang::ModuleLoader {
   bool mInitialized;
 
   // Diagnostics Mediator (An interface for both Producer and Consumer)
-  llvm::OwningPtr<clang::Diagnostic> mDiag;
+  std::unique_ptr<clang::Diagnostic> mDiag;
 
   // Diagnostics Engine (Producer and Diagnostics Reporter)
   clang::DiagnosticsEngine *mDiagEngine;
@@ -92,34 +91,34 @@ class Slang : public clang::ModuleLoader {
   DiagnosticBuffer *mDiagClient;
 
   // The target being compiled for
-  llvm::IntrusiveRefCntPtr<clang::TargetOptions> mTargetOpts;
-  llvm::OwningPtr<clang::TargetInfo> mTarget;
+  std::shared_ptr<clang::TargetOptions> mTargetOpts;
+  std::unique_ptr<clang::TargetInfo> mTarget;
   void createTarget(uint32_t BitWidth);
 
 
   // File manager (for prepocessor doing the job such as header file search)
-  llvm::OwningPtr<clang::FileManager> mFileMgr;
-  llvm::OwningPtr<clang::FileSystemOptions> mFileSysOpt;
+  std::unique_ptr<clang::FileManager> mFileMgr;
+  std::unique_ptr<clang::FileSystemOptions> mFileSysOpt;
   void createFileManager();
 
 
   // Source manager (responsible for the source code handling)
-  llvm::OwningPtr<clang::SourceManager> mSourceMgr;
+  std::unique_ptr<clang::SourceManager> mSourceMgr;
   void createSourceManager();
 
 
   // Preprocessor (source code preprocessor)
-  llvm::OwningPtr<clang::Preprocessor> mPP;
+  std::unique_ptr<clang::Preprocessor> mPP;
   void createPreprocessor();
 
 
   // AST context (the context to hold long-lived AST nodes)
-  llvm::OwningPtr<clang::ASTContext> mASTContext;
+  std::unique_ptr<clang::ASTContext> mASTContext;
   void createASTContext();
 
 
   // AST consumer, responsible for code generation
-  llvm::OwningPtr<clang::ASTConsumer> mBackend;
+  std::unique_ptr<clang::ASTConsumer> mBackend;
 
 
   // File names
@@ -135,10 +134,10 @@ class Slang : public clang::ModuleLoader {
   OutputType mOT;
 
   // Output stream
-  llvm::OwningPtr<llvm::tool_output_file> mOS;
+  std::unique_ptr<llvm::tool_output_file> mOS;
 
   // Dependency output stream
-  llvm::OwningPtr<llvm::tool_output_file> mDOS;
+  std::unique_ptr<llvm::tool_output_file> mDOS;
 
   std::vector<std::string> mIncludePaths;
 
@@ -153,7 +152,7 @@ class Slang : public clang::ModuleLoader {
   clang::ASTContext &getASTContext() { return *mASTContext; }
 
   inline clang::TargetOptions const &getTargetOptions() const
-    { return *mTargetOpts.getPtr(); }
+    { return *mTargetOpts.get(); }
 
   virtual void initDiagnostic() {}
   virtual void initPreprocessor() {}

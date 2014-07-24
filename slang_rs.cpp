@@ -165,8 +165,7 @@ bool SlangRS::checkODR(const char *CurInputFile) {
       }
     } else {
       llvm::StringMapEntry<ReflectedDefinitionTy> *ME =
-          llvm::StringMapEntry<ReflectedDefinitionTy>::Create(RDKey.begin(),
-                                                              RDKey.end());
+          llvm::StringMapEntry<ReflectedDefinitionTy>::Create(RDKey);
       ME->setValue(std::make_pair(ERT, CurInputFile));
 
       if (!ReflectedDefinitions.insert(ME))
@@ -182,14 +181,14 @@ bool SlangRS::checkODR(const char *CurInputFile) {
 void SlangRS::initDiagnostic() {
   clang::DiagnosticsEngine &DiagEngine = getDiagnostics();
 
-  if (DiagEngine.setDiagnosticGroupMapping("implicit-function-declaration",
-                                           clang::diag::MAP_ERROR))
+  if (DiagEngine.setSeverityForGroup("implicit-function-declaration",
+                                     clang::diag::Severity::Error))
     DiagEngine.Report(clang::diag::warn_unknown_warning_option)
       << "implicit-function-declaration";
 
-  DiagEngine.setDiagnosticMapping(
+  DiagEngine.setSeverity(
     clang::diag::ext_typecheck_convert_discards_qualifiers,
-    clang::diag::MAP_ERROR,
+    clang::diag::Severity::Error,
     clang::SourceLocation());
 
   mDiagErrorInvalidOutputDepParameter =
