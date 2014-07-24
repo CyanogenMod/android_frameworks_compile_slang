@@ -21,7 +21,6 @@
 
 #include "clang/Basic/Diagnostic.h"
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -34,7 +33,7 @@ namespace slang {
 class DiagnosticBuffer : public clang::DiagnosticConsumer {
  private:
   std::string mDiags;
-  llvm::OwningPtr<llvm::raw_string_ostream> mSOS;
+  std::unique_ptr<llvm::raw_string_ostream> mSOS;
 
  public:
   DiagnosticBuffer();

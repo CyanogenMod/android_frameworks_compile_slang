@@ -25,7 +25,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/AST/Mangle.h"
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/StringMap.h"
 
@@ -88,7 +87,7 @@ class RSContext {
 
   int version;
 
-  llvm::OwningPtr<clang::MangleContext> mMangleCtx;
+  std::unique_ptr<clang::MangleContext> mMangleCtx;
 
   bool mIs64Bit;
 
