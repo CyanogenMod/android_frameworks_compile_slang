@@ -118,8 +118,9 @@ public:
                  const std::string *optionalLicense, bool isJava, bool verbose);
   void closeFile();
 
-  void increaseIndent(); // Increases the new line indentation by 4
-  void decreaseIndent(); // Decreases the new line indentation by 4
+  void increaseIndent(); // Increases the new line indentation by 4.
+  void decreaseIndent(); // Decreases the new line indentation by 4.
+  void comment(const std::string& s); // Outputs a multiline comment.
 
   // Starts a control block.  This works both for Java and C++.
   void startBlock() {
