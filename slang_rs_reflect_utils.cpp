@@ -394,4 +394,44 @@ void GeneratedFile::decreaseIndent() {
   mIndent.erase(0, 4);
 }
 
+void GeneratedFile::comment(const std::string &s) {
+  indent() << "/* ";
+  // +3 for the " * " starting each line.
+  std::size_t indentLength = mIndent.length() + 3;
+  std::size_t lengthOfCommentOnLine = 0;
+  const std::size_t maxPerLine = 80;
+  for (std::size_t start = 0, length = s.length(), nextStart = 0;
+       start < length; start = nextStart) {
+    std::size_t p = s.find_first_of(" \n", start);
+    std::size_t toCopy = 1;
+    bool forceBreak = false;
+    if (p == std::string::npos) {
+      toCopy = length - start;
+      nextStart = length;
+    } else {
+      toCopy = p - start;
+      nextStart = p + 1;
+      forceBreak = s[p] == '\n';
+    }
+    if (lengthOfCommentOnLine > 0) {
+      if (indentLength + lengthOfCommentOnLine + toCopy >= maxPerLine) {
+        *this << "\n";
+        indent() << " * ";
+        lengthOfCommentOnLine = 0;
+      } else {
+        *this << " ";
+      }
+    }
+
+    *this << s.substr(start, toCopy);
+    if (forceBreak) {
+      lengthOfCommentOnLine = maxPerLine;
+    } else {
+      lengthOfCommentOnLine += toCopy;
+    }
+  }
+  *this << "\n";
+  indent() << " */\n";
+}
+
 } // namespace slang
