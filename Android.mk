@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+LOCAL_PATH := $(call my-dir)
 
 # The prebuilt tools should be used when we are doing app-only build.
 ifeq ($(TARGET_BUILD_APPS),)
 
-LOCAL_PATH := $(call my-dir)
 
 local_cflags_for_slang := -Wno-sign-promo -Wall -Wno-unused-parameter -Wno-return-type -Werror
 ifeq ($(TARGET_BUILD_VARIANT),eng)
