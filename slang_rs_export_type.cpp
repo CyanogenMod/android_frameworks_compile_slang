@@ -907,8 +907,6 @@ RSExportType::~RSExportType() {
 llvm::ManagedStatic<RSExportPrimitiveType::RSSpecificTypeMapTy>
 RSExportPrimitiveType::RSSpecificTypeMap;
 
-llvm::Type *RSExportPrimitiveType::RSObjectLLVMType = NULL;
-
 bool RSExportPrimitiveType::IsPrimitiveType(const clang::Type *T) {
   if ((T != NULL) && (T->getTypeClass() == clang::Type::Builtin))
     return true;
@@ -1099,19 +1097,16 @@ llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
     //
     // <{ [1 x i32] }> in LLVM
     //
-    if (RSObjectLLVMType == NULL) {
-      std::vector<llvm::Type *> Elements;
-      if (getRSContext()->is64Bit()) {
-        // 64-bit path
-        Elements.push_back(llvm::ArrayType::get(llvm::Type::getInt64Ty(C), 4));
-        RSObjectLLVMType = llvm::StructType::get(C, Elements, true);
-      } else {
-        // 32-bit legacy path
-        Elements.push_back(llvm::ArrayType::get(llvm::Type::getInt32Ty(C), 1));
-        RSObjectLLVMType = llvm::StructType::get(C, Elements, true);
-      }
+    std::vector<llvm::Type *> Elements;
+    if (getRSContext()->is64Bit()) {
+      // 64-bit path
+      Elements.push_back(llvm::ArrayType::get(llvm::Type::getInt64Ty(C), 4));
+      return llvm::StructType::get(C, Elements, true);
+    } else {
+      // 32-bit legacy path
+      Elements.push_back(llvm::ArrayType::get(llvm::Type::getInt32Ty(C), 1));
+      return llvm::StructType::get(C, Elements, true);
     }
-    return RSObjectLLVMType;
   }
 
   switch (mType) {
