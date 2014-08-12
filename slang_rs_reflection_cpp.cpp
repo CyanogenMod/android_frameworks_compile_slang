@@ -56,7 +56,7 @@ static const char *GetMatrixTypeName(const RSExportMatrixType *EMT) {
     return MatrixTypeCNameMap[EMT->getDim() - 2];
 
   slangAssert(false && "GetMatrixTypeName : Unsupported matrix dimension");
-  return NULL;
+  return nullptr;
 }
 
 static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
@@ -304,7 +304,7 @@ void RSReflectionCpp::genExportFunctionDeclarations() {
 
 bool RSReflectionCpp::genEncodedBitCode() {
   FILE *pfin = fopen(mBitCodeFilePath.c_str(), "rb");
-  if (pfin == NULL) {
+  if (pfin == nullptr) {
     fprintf(stderr, "Error: could not read file %s\n",
             mBitCodeFilePath.c_str());
     return false;
@@ -431,7 +431,7 @@ bool RSReflectionCpp::writeImplementationFile() {
     std::string FieldPackerName = ef->getName() + "_fp";
     if (ERT) {
       if (genCreateFieldPacker(ERT, FieldPackerName.c_str())) {
-        genPackVarOfType(ERT, NULL, FieldPackerName.c_str());
+        genPackVarOfType(ERT, nullptr, FieldPackerName.c_str());
       }
     }
     mOut.indent() << "forEach(" << slot << ", ";
@@ -470,7 +470,7 @@ bool RSReflectionCpp::writeImplementationFile() {
     if (params) {
       param_len = params->getAllocSize();
       if (genCreateFieldPacker(params, "__fp")) {
-        genPackVarOfType(params, NULL, "__fp");
+        genPackVarOfType(params, nullptr, "__fp");
       }
     }
 
@@ -605,7 +605,7 @@ void RSReflectionCpp::genPointerTypeExportVariable(const RSExportVar *EV) {
 
 void RSReflectionCpp::genGetterAndSetter(const RSExportVectorType *EVT,
                                          const RSExportVar *EV) {
-  slangAssert(EVT != NULL);
+  slangAssert(EVT != nullptr);
 
   RSReflectionTypeData rtd;
   EVT->convertToRTD(&rtd);
@@ -767,7 +767,7 @@ void RSReflectionCpp::genPackVarOfType(const RSExportType *ET,
       size_t FieldStoreSize = T->getStoreSize();
       size_t FieldAllocSize = T->getAllocSize();
 
-      if (VarName != NULL)
+      if (VarName != nullptr)
         FieldName = VarName + ("." + F->getName());
       else
         FieldName = F->getName();
