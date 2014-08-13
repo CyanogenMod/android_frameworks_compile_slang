@@ -290,8 +290,6 @@ class RSExportPrimitiveType : public RSExportType {
   typedef llvm::StringMap<DataType> RSSpecificTypeMapTy;
   static llvm::ManagedStatic<RSSpecificTypeMapTy> RSSpecificTypeMap;
 
-  static llvm::Type *RSObjectLLVMType;
-
   static const size_t SizeOfDataTypeInBits[];
   // @T was normalized by calling RSExportType::NormalizeType() before calling
   // this.
