@@ -112,7 +112,7 @@ class SlangRS : public Slang {
                const std::list<std::pair<const char*, const char*> > &DepFiles,
                const RSCCOptions &Opts);
 
-  virtual void reset();
+  virtual void reset(bool SuppressWarnings = false);
 
   virtual ~SlangRS();
 
