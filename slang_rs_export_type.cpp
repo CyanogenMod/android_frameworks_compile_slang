@@ -113,8 +113,8 @@ BuiltinInfo BuiltinInfoTable[] = {
      {"ushort", "ushort2", "ushort3", "ushort4"}},
     {clang::BuiltinType::UInt, DataTypeUnsigned32,
      {"uint", "uint2", "uint3", "uint4"}},
-    {clang::BuiltinType::ULong, DataTypeUnsigned32,
-     {"uint", "uint2", "uint3", "uint4"}},
+    {clang::BuiltinType::ULong, DataTypeUnsigned64,
+     {"ulong", "ulong2", "ulong3", "ulong4"}},
     {clang::BuiltinType::ULongLong, DataTypeUnsigned64,
      {"ulong", "ulong2", "ulong3", "ulong4"}},
 
