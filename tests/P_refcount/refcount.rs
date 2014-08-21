@@ -1,8 +1,8 @@
 #pragma version(1)
 #pragma rs java_package_name(foo)
 
-rs_font globalAlloc;
-rs_font globalAlloc2;
+rs_allocation globalAlloc;
+rs_allocation globalAlloc2;
 
 struct hasMatrix {
     rs_matrix3x3 m;
@@ -10,11 +10,11 @@ struct hasMatrix {
 
 static void foo() {
 
-    rs_font fontUninit;
-    rs_font fontArr[10];
-    fontUninit = globalAlloc;
+    rs_allocation allocUninit;
+    rs_allocation allocArr[10];
+    allocUninit = globalAlloc;
     for (int i = 0; i < 10; i++) {
-        fontArr[i] = globalAlloc;
+        allocArr[i] = globalAlloc;
     }
 
     return;
