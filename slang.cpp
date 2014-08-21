@@ -470,8 +470,17 @@ void Slang::setOptimizationLevel(llvm::CodeGenOpt::Level OptimizationLevel) {
   CodeGenOpts.OptimizationLevel = OptimizationLevel;
 }
 
-void Slang::reset() {
-  llvm::errs() << mDiagClient->str();
+void Slang::reset(bool SuppressWarnings) {
+  // Always print diagnostics if we had an error occur, but don't print
+  // warnings if we suppressed them (i.e. we are doing the 64-bit compile after
+  // an existing 32-bit compile).
+  //
+  // TODO: This should really be removing duplicate identical warnings between
+  // the 32-bit and 64-bit compiles, but that is a more substantial feature.
+  // Bug: 17052573
+  if (!SuppressWarnings || mDiagEngine->hasErrorOccurred()) {
+    llvm::errs() << mDiagClient->str();
+  }
   mDiagEngine->Reset();
   mDiagClient->reset();
 }
