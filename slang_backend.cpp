@@ -117,7 +117,7 @@ bool Backend::CreateCodeGenPasses() {
   std::string Error;
   const llvm::Target* TargetInfo =
       llvm::TargetRegistry::lookupTarget(Triple, Error);
-  if (TargetInfo == NULL) {
+  if (TargetInfo == nullptr) {
     mDiagEngine.Report(clang::diag::err_fe_unable_to_create_target) << Error;
     return false;
   }
@@ -209,13 +209,13 @@ Backend::Backend(clang::DiagnosticsEngine *DiagEngine,
                  Slang::OutputType OT)
     : ASTConsumer(),
       mTargetOpts(TargetOpts),
-      mpModule(NULL),
+      mpModule(nullptr),
       mpOS(OS),
       mOT(OT),
-      mGen(NULL),
-      mPerFunctionPasses(NULL),
-      mPerModulePasses(NULL),
-      mCodeGenPasses(NULL),
+      mGen(nullptr),
+      mPerFunctionPasses(nullptr),
+      mPerModulePasses(nullptr),
+      mCodeGenPasses(nullptr),
       mLLVMContext(llvm::getGlobalContext()),
       mDiagEngine(*DiagEngine),
       mCodeGenOpts(CodeGenOpts),
@@ -268,7 +268,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
   llvm::Module *M = mGen->ReleaseModule();
   if (!M) {
     // The module has been released by IR gen on failures, do not double free.
-    mpModule = NULL;
+    mpModule = nullptr;
     return;
   }
 

@@ -42,8 +42,8 @@ RSObjectRefCount::RSClearObjectFD[DataTypeMax];
 
 void RSObjectRefCount::GetRSRefCountingFunctions(clang::ASTContext &C) {
   for (unsigned i = 0; i < DataTypeMax; i++) {
-    RSSetObjectFD[i] = NULL;
-    RSClearObjectFD[i] = NULL;
+    RSSetObjectFD[i] = nullptr;
+    RSClearObjectFD[i] = nullptr;
   }
 
   clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
@@ -151,7 +151,7 @@ static void AppendAfterStmt(clang::ASTContext &C,
   }
   slangAssert(Once <= 1);
 
-  // When S is NULL, we are appending to the end of the CompoundStmt.
+  // When S is nullptr, we are appending to the end of the CompoundStmt.
   if (!S) {
     slangAssert(Once == 0);
     std::list<clang::Stmt*>::const_iterator I = StmtList.begin();
@@ -218,7 +218,7 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
   // the replacement. It also finishes up by appending the destructor to the
   // current outermost CompoundStmt.
   void InsertDestructors() {
-    clang::Stmt *S = NULL;
+    clang::Stmt *S = nullptr;
     clang::SourceManager &SM = mCtx.getSourceManager();
     std::list<clang::Stmt *> StmtList;
     StmtList.push_back(mDtorStmt);
@@ -244,7 +244,7 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
     clang::CompoundStmt *CS =
       llvm::dyn_cast<clang::CompoundStmt>(mOuterStmt);
     slangAssert(CS);
-    AppendAfterStmt(mCtx, CS, NULL, StmtList);
+    AppendAfterStmt(mCtx, CS, nullptr, StmtList);
   }
 
   void VisitStmt(clang::Stmt *S);
@@ -358,7 +358,7 @@ clang::Expr *ClearSingleRSObject(clang::ASTContext &C,
               "Should not be destroying arrays with this function");
 
   clang::FunctionDecl *ClearObjectFD = RSObjectRefCount::GetRSClearObjectFD(T);
-  slangAssert((ClearObjectFD != NULL) &&
+  slangAssert((ClearObjectFD != nullptr) &&
               "rsClearObject doesn't cover all RS object types");
 
   clang::QualType ClearObjectFDType = ClearObjectFD->getType();
@@ -391,14 +391,14 @@ clang::Expr *ClearSingleRSObject(clang::ASTContext &C,
                                  ClearObjectFD->getLocation(),
                                  ClearObjectFDType,
                                  clang::VK_RValue,
-                                 NULL);
+                                 nullptr);
 
   clang::Expr *RSClearObjectFP =
       clang::ImplicitCastExpr::Create(C,
                                       C.getPointerType(ClearObjectFDType),
                                       clang::CK_FunctionToPointerDecay,
                                       RefRSClearObjectFD,
-                                      NULL,
+                                      nullptr,
                                       clang::VK_RValue);
 
   llvm::SmallVector<clang::Expr*, 1> ArgList;
@@ -445,11 +445,11 @@ static clang::Stmt *ClearArrayRSObject(
   // Actually extract out the base RS object type for use later
   BaseType = BaseType->getArrayElementTypeNoTypeQual();
 
-  clang::Stmt *StmtArray[2] = {NULL};
+  clang::Stmt *StmtArray[2] = {nullptr};
   int StmtCtr = 0;
 
   if (NumArrayElements <= 0) {
-    return NULL;
+    return nullptr;
   }
 
   // Example destructor loop for "rs_font fontArr[10];"
@@ -463,7 +463,7 @@ static clang::Stmt *ClearArrayRSObject(
   //     (BinaryOperator 'int' '<'
   //       (DeclRefExpr 'int' Var='rsIntIter')
   //       (IntegerLiteral 'int' 10)
-  //     NULL << CondVar >>
+  //     nullptr << CondVar >>
   //     (UnaryOperator 'int' postfix '++'
   //       (DeclRefExpr 'int' Var='rsIntIter'))
   //     (CallExpr 'void'
@@ -505,7 +505,7 @@ static clang::Stmt *ClearArrayRSObject(
                                  Loc,
                                  C.IntTy,
                                  clang::VK_RValue,
-                                 NULL);
+                                 nullptr);
 
   clang::Expr *Int0 = clang::IntegerLiteral::Create(C,
       llvm::APInt(C.getTypeSize(C.IntTy), 0), C.IntTy, Loc);
@@ -551,7 +551,7 @@ static clang::Stmt *ClearArrayRSObject(
           C.getPointerType(BaseType->getCanonicalTypeInternal()),
           clang::CK_ArrayToPointerDecay,
           RefRSArr,
-          NULL,
+          nullptr,
           clang::VK_RValue);
 
   clang::Expr *RefRSArrPtrSubscript =
@@ -564,7 +564,7 @@ static clang::Stmt *ClearArrayRSObject(
 
   DataType DT = RSExportPrimitiveType::GetRSSpecificType(BaseType);
 
-  clang::Stmt *RSClearObjectCall = NULL;
+  clang::Stmt *RSClearObjectCall = nullptr;
   if (BaseType->isArrayType()) {
     RSClearObjectCall =
         ClearArrayRSObject(C, DC, RefRSArrPtrSubscript, StartLoc, Loc);
@@ -579,7 +579,7 @@ static clang::Stmt *ClearArrayRSObject(
       new(C) clang::ForStmt(C,
                             Init,
                             Cond,
-                            NULL,  // no condVar
+                            nullptr,  // no condVar
                             Inc,
                             RSClearObjectCall,
                             Loc,
@@ -667,7 +667,7 @@ static clang::Stmt *ClearStructRSObject(
   unsigned StmtCount = 0;
   clang::Stmt **StmtArray = new clang::Stmt*[FieldsToDestroy];
   for (unsigned i = 0; i < FieldsToDestroy; i++) {
-    StmtArray[i] = NULL;
+    StmtArray[i] = nullptr;
   }
 
   // Populate StmtArray by creating a destructor for each RS object field
@@ -700,7 +700,7 @@ static clang::Stmt *ClearStructRSObject(
                                     FD,
                                     FoundDecl,
                                     clang::DeclarationNameInfo(),
-                                    NULL,
+                                    nullptr,
                                     OrigType->getCanonicalTypeInternal(),
                                     clang::VK_RValue,
                                     clang::OK_Ordinary);
@@ -733,7 +733,7 @@ static clang::Stmt *ClearStructRSObject(
                                     FD,
                                     FoundDecl,
                                     clang::DeclarationNameInfo(),
-                                    NULL,
+                                    nullptr,
                                     OrigType->getCanonicalTypeInternal(),
                                     clang::VK_RValue,
                                     clang::OK_Ordinary);
@@ -770,7 +770,7 @@ static clang::Stmt *CreateSingleRSSetObject(clang::ASTContext &C,
                                             clang::SourceLocation Loc) {
   const clang::Type *T = DstExpr->getType().getTypePtr();
   clang::FunctionDecl *SetObjectFD = RSObjectRefCount::GetRSSetObjectFD(T);
-  slangAssert((SetObjectFD != NULL) &&
+  slangAssert((SetObjectFD != nullptr) &&
               "rsSetObject doesn't cover all RS object types");
 
   clang::QualType SetObjectFDType = SetObjectFD->getType();
@@ -787,14 +787,14 @@ static clang::Stmt *CreateSingleRSSetObject(clang::ASTContext &C,
                                  Loc,
                                  SetObjectFDType,
                                  clang::VK_RValue,
-                                 NULL);
+                                 nullptr);
 
   clang::Expr *RSSetObjectFP =
       clang::ImplicitCastExpr::Create(C,
                                       C.getPointerType(SetObjectFDType),
                                       clang::CK_FunctionToPointerDecay,
                                       RefRSSetObjectFD,
-                                      NULL,
+                                      nullptr,
                                       clang::VK_RValue);
 
   llvm::SmallVector<clang::Expr*, 2> ArgList;
@@ -828,7 +828,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
                                            clang::Expr *SrcArr,
                                            clang::SourceLocation StartLoc,
                                            clang::SourceLocation Loc) {
-  clang::DeclContext *DC = NULL;
+  clang::DeclContext *DC = nullptr;
   const clang::Type *BaseType = DstArr->getType().getTypePtr();
   slangAssert(BaseType->isArrayType());
 
@@ -836,11 +836,11 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
   // Actually extract out the base RS object type for use later
   BaseType = BaseType->getArrayElementTypeNoTypeQual();
 
-  clang::Stmt *StmtArray[2] = {NULL};
+  clang::Stmt *StmtArray[2] = {nullptr};
   int StmtCtr = 0;
 
   if (NumArrayElements <= 0) {
-    return NULL;
+    return nullptr;
   }
 
   // Create helper variable for iterating through elements
@@ -872,7 +872,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
                                  Loc,
                                  C.IntTy,
                                  clang::VK_RValue,
-                                 NULL);
+                                 nullptr);
 
   clang::Expr *Int0 = clang::IntegerLiteral::Create(C,
       llvm::APInt(C.getTypeSize(C.IntTy), 0), C.IntTy, Loc);
@@ -916,7 +916,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
           C.getPointerType(BaseType->getCanonicalTypeInternal()),
           clang::CK_ArrayToPointerDecay,
           DstArr,
-          NULL,
+          nullptr,
           clang::VK_RValue);
 
   clang::Expr *DstArrPtrSubscript =
@@ -932,7 +932,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
           C.getPointerType(BaseType->getCanonicalTypeInternal()),
           clang::CK_ArrayToPointerDecay,
           SrcArr,
-          NULL,
+          nullptr,
           clang::VK_RValue);
 
   clang::Expr *SrcArrPtrSubscript =
@@ -945,7 +945,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
 
   DataType DT = RSExportPrimitiveType::GetRSSpecificType(BaseType);
 
-  clang::Stmt *RSSetObjectCall = NULL;
+  clang::Stmt *RSSetObjectCall = nullptr;
   if (BaseType->isArrayType()) {
     RSSetObjectCall = CreateArrayRSSetObject(C, DstArrPtrSubscript,
                                              SrcArrPtrSubscript,
@@ -964,7 +964,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
       new(C) clang::ForStmt(C,
                             Init,
                             Cond,
-                            NULL,  // no condVar
+                            nullptr,  // no condVar
                             Inc,
                             RSSetObjectCall,
                             Loc,
@@ -996,7 +996,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
   unsigned StmtCount = 0;
   clang::Stmt **StmtArray = new clang::Stmt*[FieldsToSet];
   for (unsigned i = 0; i < FieldsToSet; i++) {
-    StmtArray[i] = NULL;
+    StmtArray[i] = nullptr;
   }
 
   clang::RecordDecl *RD = T->getAsStructureType()->getDecl();
@@ -1026,7 +1026,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
                                   FD,
                                   FoundDecl,
                                   clang::DeclarationNameInfo(),
-                                  NULL,
+                                  nullptr,
                                   OrigType->getCanonicalTypeInternal(),
                                   clang::VK_RValue,
                                   clang::OK_Ordinary);
@@ -1040,7 +1040,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
                                   FD,
                                   FoundDecl,
                                   clang::DeclarationNameInfo(),
-                                  NULL,
+                                  nullptr,
                                   OrigType->getCanonicalTypeInternal(),
                                   clang::VK_RValue,
                                   clang::OK_Ordinary);
@@ -1104,7 +1104,7 @@ void RSObjectRefCount::Scope::ReplaceRSObjectAssignment(
 
   clang::SourceLocation Loc = AS->getExprLoc();
   clang::SourceLocation StartLoc = AS->getLHS()->getExprLoc();
-  clang::Stmt *UpdatedStmt = NULL;
+  clang::Stmt *UpdatedStmt = nullptr;
 
   if (!RSExportPrimitiveType::IsRSObjectType(QT.getTypePtr())) {
     // By definition, this is a struct assignment if we get here
@@ -1148,7 +1148,7 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
                                    Loc,
                                    T->getCanonicalTypeInternal(),
                                    clang::VK_RValue,
-                                   NULL);
+                                   nullptr);
 
     clang::Stmt *RSSetObjectOps =
         CreateStructRSSetObject(C, RefRSVar, InitExpr, StartLoc, Loc);
@@ -1160,7 +1160,7 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
   }
 
   clang::FunctionDecl *SetObjectFD = RSObjectRefCount::GetRSSetObjectFD(DT);
-  slangAssert((SetObjectFD != NULL) &&
+  slangAssert((SetObjectFD != nullptr) &&
               "rsSetObject doesn't cover all RS object types");
 
   clang::QualType SetObjectFDType = SetObjectFD->getType();
@@ -1177,14 +1177,14 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
                                  Loc,
                                  SetObjectFDType,
                                  clang::VK_RValue,
-                                 NULL);
+                                 nullptr);
 
   clang::Expr *RSSetObjectFP =
       clang::ImplicitCastExpr::Create(C,
                                       C.getPointerType(SetObjectFDType),
                                       clang::CK_FunctionToPointerDecay,
                                       RefRSSetObjectFD,
-                                      NULL,
+                                      nullptr,
                                       clang::VK_RValue);
 
   const clang::Type *T = RSExportType::GetTypeOfDecl(VD);
@@ -1197,7 +1197,7 @@ void RSObjectRefCount::Scope::AppendRSObjectInit(
                                  Loc,
                                  T->getCanonicalTypeInternal(),
                                  clang::VK_RValue,
-                                 NULL);
+                                 nullptr);
 
   llvm::SmallVector<clang::Expr*, 2> ArgList;
   ArgList.push_back(new(C) clang::UnaryOperator(RefRSVar,
@@ -1258,7 +1258,7 @@ clang::Stmt *RSObjectRefCount::Scope::ClearRSObject(
                                  Loc,
                                  T->getCanonicalTypeInternal(),
                                  clang::VK_RValue,
-                                 NULL);
+                                 nullptr);
 
   if (T->isArrayType()) {
     return ClearArrayRSObject(C, DC, RefRSVar, StartLoc, Loc);
@@ -1330,7 +1330,7 @@ clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
     DataType DT,
     clang::ASTContext &C,
     const clang::SourceLocation &Loc) {
-  clang::Expr *Res = NULL;
+  clang::Expr *Res = nullptr;
   switch (DT) {
     case DataTypeIsStruct:
     case DataTypeRSElement:
@@ -1354,7 +1354,7 @@ clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
                                           C.NullPtrTy,
                                           clang::CK_IntegralToPointer,
                                           Int0,
-                                          NULL,
+                                          nullptr,
                                           clang::VK_RValue);
 
       llvm::SmallVector<clang::Expr*, 1>InitList;
@@ -1441,7 +1441,7 @@ void RSObjectRefCount::VisitDeclStmt(clang::DeclStmt *DS) {
     if (D->getKind() == clang::Decl::Var) {
       clang::VarDecl *VD = static_cast<clang::VarDecl*>(D);
       DataType DT = DataTypeUnknown;
-      clang::Expr *InitExpr = NULL;
+      clang::Expr *InitExpr = nullptr;
       if (InitializeRSObject(VD, &DT, &InitExpr)) {
         // We need to zero-init all RS object types (including matrices), ...
         getCurrentScope()->AppendRSObjectInit(VD, DS, DT, InitExpr);
@@ -1505,7 +1505,7 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
   clang::FunctionProtoType::ExtProtoInfo EPI;
   clang::QualType T = mCtx.getFunctionType(mCtx.VoidTy,
       llvm::ArrayRef<clang::QualType>(), EPI);
-  clang::FunctionDecl *FD = NULL;
+  clang::FunctionDecl *FD = nullptr;
 
   // Generate rsClearObject() call chains for every global variable
   // (whether static or extern).
@@ -1517,7 +1517,7 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
       if (CountRSObjectTypes(mCtx, VD->getType().getTypePtr(), loc)) {
         if (!FD) {
           // Only create FD if we are going to use it.
-          FD = clang::FunctionDecl::Create(mCtx, DC, loc, loc, N, T, NULL,
+          FD = clang::FunctionDecl::Create(mCtx, DC, loc, loc, N, T, nullptr,
                                            clang::SC_None);
         }
         // Make sure to create any helpers within the function's DeclContext,
@@ -1530,7 +1530,7 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
 
   // Nothing needs to be destroyed, so don't emit a dtor.
   if (StmtList.empty()) {
-    return NULL;
+    return nullptr;
   }
 
   clang::CompoundStmt *CS = BuildCompoundStmt(mCtx, StmtList, loc);
