@@ -235,7 +235,7 @@ class Slang : public clang::ModuleLoader {
 
   // Reset the slang compiler state such that it can be reused to compile
   // another file
-  virtual void reset();
+  virtual void reset(bool SuppressWarnings = false);
 
   virtual ~Slang();
 };

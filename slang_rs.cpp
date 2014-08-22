@@ -324,12 +324,15 @@ bool SlangRS::compile(
   // a single pass over the input file.
   bool SuppressAllWarnings = (Opts.mOutputType != Slang::OT_Dependency);
 
+  bool CompileSecondTimeFor64Bit = Opts.mEmit3264 && Opts.mBitWidth == 64;
+
   for (unsigned i = 0, e = IOFiles32.size(); i != e; i++) {
     InputFile = IOFile64Iter->first;
     Output64File = IOFile64Iter->second;
     Output32File = IOFile32Iter->second;
 
-    reset();
+    // We suppress warnings (via reset) if we are doing a second compilation.
+    reset(CompileSecondTimeFor64Bit);
 
     if (!setInputSource(InputFile))
       return false;
@@ -433,11 +436,11 @@ bool SlangRS::compile(
   return true;
 }
 
-void SlangRS::reset() {
+void SlangRS::reset(bool SuppressWarnings) {
   delete mRSContext;
   mRSContext = nullptr;
   mGeneratedFileNames.clear();
-  Slang::reset();
+  Slang::reset(SuppressWarnings);
 }
 
 SlangRS::~SlangRS() {

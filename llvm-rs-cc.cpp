@@ -142,12 +142,14 @@ static int compileFiles(NamePairList *IOFiles, NamePairList *IOFiles32,
     std::set<std::string> *SavedStrings) {
   NamePairList DepFiles;
   std::string PathSuffix = "";
+  bool CompileSecondTimeFor64Bit = false;
 
   // In our mixed 32/64-bit path, we need to suffix our files differently for
   // both 32-bit and 64-bit versions.
   if (Opts.mEmit3264) {
     if (Opts.mBitWidth == 64) {
       PathSuffix = "bc64";
+      CompileSecondTimeFor64Bit = true;
     } else {
       PathSuffix = "bc32";
     }
@@ -182,7 +184,8 @@ static int compileFiles(NamePairList *IOFiles, NamePairList *IOFiles32,
   std::unique_ptr<slang::SlangRS> Compiler(new slang::SlangRS());
   Compiler->init(Opts.mBitWidth, DiagEngine, DiagClient);
   int CompileFailed = !Compiler->compile(*IOFiles, *IOFiles32, DepFiles, Opts);
-  Compiler->reset();
+  // We suppress warnings (via reset) if we are doing a second compilation.
+  Compiler->reset(CompileSecondTimeFor64Bit);
   return CompileFailed;
 }
 
