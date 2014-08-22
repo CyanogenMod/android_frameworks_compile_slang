@@ -59,31 +59,31 @@ static RSReflectionType gReflectionTypes[] = {
     {PrimitiveDataType, "UNSIGNED_32", "U32", 32, "uint32_t", "long", "UInt", "Long", true},
     {PrimitiveDataType, "UNSIGNED_64", "U64", 64, "uint64_t", "long", "ULong", "Long", false},
 
-    {PrimitiveDataType, "BOOLEAN", "BOOLEAN", 8, "bool", "boolean", NULL, NULL, false},
+    {PrimitiveDataType, "BOOLEAN", "BOOLEAN", 8, "bool", "boolean", nullptr, nullptr, false},
 
-    {PrimitiveDataType, "UNSIGNED_5_6_5", NULL, 16, NULL, NULL, NULL, NULL, false},
-    {PrimitiveDataType, "UNSIGNED_5_5_5_1", NULL, 16, NULL, NULL, NULL, NULL, false},
-    {PrimitiveDataType, "UNSIGNED_4_4_4_4", NULL, 16, NULL, NULL, NULL, NULL, false},
+    {PrimitiveDataType, "UNSIGNED_5_6_5", nullptr, 16, nullptr, nullptr, nullptr, nullptr, false},
+    {PrimitiveDataType, "UNSIGNED_5_5_5_1", nullptr, 16, nullptr, nullptr, nullptr, nullptr, false},
+    {PrimitiveDataType, "UNSIGNED_4_4_4_4", nullptr, 16, nullptr, nullptr, nullptr, nullptr, false},
 
-    {MatrixDataType, "MATRIX_2X2", NULL, 4*32, "rsMatrix_2x2", "Matrix2f", NULL, NULL, false},
-    {MatrixDataType, "MATRIX_3X3", NULL, 9*32, "rsMatrix_3x3", "Matrix3f", NULL, NULL, false},
-    {MatrixDataType, "MATRIX_4X4", NULL, 16*32, "rsMatrix_4x4", "Matrix4f", NULL, NULL, false},
+    {MatrixDataType, "MATRIX_2X2", nullptr, 4*32, "rsMatrix_2x2", "Matrix2f", nullptr, nullptr, false},
+    {MatrixDataType, "MATRIX_3X3", nullptr, 9*32, "rsMatrix_3x3", "Matrix3f", nullptr, nullptr, false},
+    {MatrixDataType, "MATRIX_4X4", nullptr, 16*32, "rsMatrix_4x4", "Matrix4f", nullptr, nullptr, false},
 
     // RS object types are 32 bits in 32-bit RS, but 256 bits in 64-bit RS.
     // This is handled specially by the GetSizeInBits() method.
-    {ObjectDataType, "RS_ELEMENT", "ELEMENT", 32, "Element", "Element", NULL, NULL, false},
-    {ObjectDataType, "RS_TYPE", "TYPE", 32, "Type", "Type", NULL, NULL, false},
-    {ObjectDataType, "RS_ALLOCATION", "ALLOCATION", 32, "Allocation", "Allocation", NULL, NULL, false},
-    {ObjectDataType, "RS_SAMPLER", "SAMPLER", 32, "Sampler", "Sampler", NULL, NULL, false},
-    {ObjectDataType, "RS_SCRIPT", "SCRIPT", 32, "Script", "Script", NULL, NULL, false},
-    {ObjectDataType, "RS_MESH", "MESH", 32, "Mesh", "Mesh", NULL, NULL, false},
-    {ObjectDataType, "RS_PATH", "PATH", 32, "Path", "Path", NULL, NULL, false},
+    {ObjectDataType, "RS_ELEMENT", "ELEMENT", 32, "Element", "Element", nullptr, nullptr, false},
+    {ObjectDataType, "RS_TYPE", "TYPE", 32, "Type", "Type", nullptr, nullptr, false},
+    {ObjectDataType, "RS_ALLOCATION", "ALLOCATION", 32, "Allocation", "Allocation", nullptr, nullptr, false},
+    {ObjectDataType, "RS_SAMPLER", "SAMPLER", 32, "Sampler", "Sampler", nullptr, nullptr, false},
+    {ObjectDataType, "RS_SCRIPT", "SCRIPT", 32, "Script", "Script", nullptr, nullptr, false},
+    {ObjectDataType, "RS_MESH", "MESH", 32, "Mesh", "Mesh", nullptr, nullptr, false},
+    {ObjectDataType, "RS_PATH", "PATH", 32, "Path", "Path", nullptr, nullptr, false},
 
-    {ObjectDataType, "RS_PROGRAM_FRAGMENT", "PROGRAM_FRAGMENT", 32, "ProgramFragment", "ProgramFragment", NULL, NULL, false},
-    {ObjectDataType, "RS_PROGRAM_VERTEX", "PROGRAM_VERTEX", 32, "ProgramVertex", "ProgramVertex", NULL, NULL, false},
-    {ObjectDataType, "RS_PROGRAM_RASTER", "PROGRAM_RASTER", 32, "ProgramRaster", "ProgramRaster", NULL, NULL, false},
-    {ObjectDataType, "RS_PROGRAM_STORE", "PROGRAM_STORE", 32, "ProgramStore", "ProgramStore", NULL, NULL, false},
-    {ObjectDataType, "RS_FONT", "FONT", 32, "Font", "Font", NULL, NULL, false}
+    {ObjectDataType, "RS_PROGRAM_FRAGMENT", "PROGRAM_FRAGMENT", 32, "ProgramFragment", "ProgramFragment", nullptr, nullptr, false},
+    {ObjectDataType, "RS_PROGRAM_VERTEX", "PROGRAM_VERTEX", 32, "ProgramVertex", "ProgramVertex", nullptr, nullptr, false},
+    {ObjectDataType, "RS_PROGRAM_RASTER", "PROGRAM_RASTER", 32, "ProgramRaster", "ProgramRaster", nullptr, nullptr, false},
+    {ObjectDataType, "RS_PROGRAM_STORE", "PROGRAM_STORE", 32, "ProgramStore", "ProgramStore", nullptr, nullptr, false},
+    {ObjectDataType, "RS_FONT", "FONT", 32, "Font", "Font", nullptr, nullptr, false}
 };
 
 const int kMaxVectorSize = 4;
@@ -201,7 +201,7 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
   if (ElementType->isArrayType()) {
     ReportTypeError(Context, VD, TopLevelRecord,
                     "multidimensional arrays cannot be exported: '%0'");
-    return NULL;
+    return nullptr;
   } else if (ElementType->isExtVectorType()) {
     const clang::ExtVectorType *EVT =
         static_cast<const clang::ExtVectorType*>(ElementType);
@@ -211,19 +211,19 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
     if (!RSExportPrimitiveType::IsPrimitiveType(BaseElementType)) {
       ReportTypeError(Context, VD, TopLevelRecord,
         "vectors of non-primitive types cannot be exported: '%0'");
-      return NULL;
+      return nullptr;
     }
 
     if (numElements == 3 && CAT->getSize() != 1) {
       ReportTypeError(Context, VD, TopLevelRecord,
         "arrays of width 3 vector types cannot be exported: '%0'");
-      return NULL;
+      return nullptr;
     }
   }
 
   if (TypeExportableHelper(ElementType, SPS, Context, VD,
-                           TopLevelRecord) == NULL) {
-    return NULL;
+                           TopLevelRecord) == nullptr) {
+    return nullptr;
   } else {
     return CAT;
   }
@@ -235,7 +235,7 @@ BuiltinInfo *FindBuiltinType(clang::BuiltinType::Kind builtinTypeKind) {
       return &BuiltinInfoTable[i];
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 static const clang::Type *TypeExportableHelper(
@@ -245,8 +245,8 @@ static const clang::Type *TypeExportableHelper(
     clang::VarDecl const *VD,
     clang::RecordDecl const *TopLevelRecord) {
   // Normalize first
-  if ((T = GetCanonicalType(T)) == NULL)
-    return NULL;
+  if ((T = GetCanonicalType(T)) == nullptr)
+    return nullptr;
 
   if (SPS.count(T))
     return T;
@@ -256,7 +256,7 @@ static const clang::Type *TypeExportableHelper(
   switch (T->getTypeClass()) {
     case clang::Type::Builtin: {
       const clang::BuiltinType *BT = static_cast<const clang::BuiltinType*>(CTI);
-      return FindBuiltinType(BT->getKind()) == NULL ? NULL : T;
+      return FindBuiltinType(BT->getKind()) == nullptr ? nullptr : T;
     }
     case clang::Type::Record: {
       if (RSExportPrimitiveType::GetRSSpecificType(T) != DataTypeUnknown) {
@@ -267,19 +267,19 @@ static const clang::Type *TypeExportableHelper(
       if (T->isUnionType()) {
         ReportTypeError(Context, VD, T->getAsUnionType()->getDecl(),
                         "unions cannot be exported: '%0'");
-        return NULL;
+        return nullptr;
       } else if (!T->isStructureType()) {
         slangAssert(false && "Unknown type cannot be exported");
-        return NULL;
+        return nullptr;
       }
 
       clang::RecordDecl *RD = T->getAsStructureType()->getDecl();
-      if (RD != NULL) {
+      if (RD != nullptr) {
         RD = RD->getDefinition();
-        if (RD == NULL) {
-          ReportTypeError(Context, NULL, T->getAsStructureType()->getDecl(),
+        if (RD == nullptr) {
+          ReportTypeError(Context, nullptr, T->getAsStructureType()->getDecl(),
                           "struct is not defined in this module");
-          return NULL;
+          return nullptr;
         }
       }
 
@@ -287,14 +287,14 @@ static const clang::Type *TypeExportableHelper(
         TopLevelRecord = RD;
       }
       if (RD->getName().empty()) {
-        ReportTypeError(Context, NULL, RD,
+        ReportTypeError(Context, nullptr, RD,
                         "anonymous structures cannot be exported");
-        return NULL;
+        return nullptr;
       }
 
       // Fast check
       if (RD->hasFlexibleArrayMember() || RD->hasObjectMember())
-        return NULL;
+        return nullptr;
 
       // Insert myself into checking set
       SPS.insert(T);
@@ -309,7 +309,7 @@ static const clang::Type *TypeExportableHelper(
         FT = GetCanonicalType(FT);
 
         if (!TypeExportableHelper(FT, SPS, Context, VD, TopLevelRecord)) {
-          return NULL;
+          return nullptr;
         }
 
         // We don't support bit fields yet
@@ -320,7 +320,7 @@ static const clang::Type *TypeExportableHelper(
               FD->getLocation(),
               "bit fields are not able to be exported: '%0.%1'")
               << RD->getName() << FD->getName();
-          return NULL;
+          return nullptr;
         }
       }
 
@@ -330,7 +330,7 @@ static const clang::Type *TypeExportableHelper(
       if (TopLevelRecord) {
         ReportTypeError(Context, VD, TopLevelRecord,
             "structures containing pointers cannot be exported: '%0'");
-        return NULL;
+        return nullptr;
       }
 
       const clang::PointerType *PT = static_cast<const clang::PointerType*>(CTI);
@@ -339,14 +339,14 @@ static const clang::Type *TypeExportableHelper(
       if (PointeeType->getTypeClass() == clang::Type::Pointer) {
         ReportTypeError(Context, VD, TopLevelRecord,
             "multiple levels of pointers cannot be exported: '%0'");
-        return NULL;
+        return nullptr;
       }
       // We don't support pointer with array-type pointee or unsupported pointee
       // type
       if (PointeeType->isArrayType() ||
           (TypeExportableHelper(PointeeType, SPS, Context, VD,
-                                TopLevelRecord) == NULL))
-        return NULL;
+                                TopLevelRecord) == nullptr))
+        return nullptr;
       else
         return T;
     }
@@ -355,15 +355,15 @@ static const clang::Type *TypeExportableHelper(
               static_cast<const clang::ExtVectorType*>(CTI);
       // Only vector with size 2, 3 and 4 are supported.
       if (EVT->getNumElements() < 2 || EVT->getNumElements() > 4)
-        return NULL;
+        return nullptr;
 
       // Check base element type
       const clang::Type *ElementType = GetExtVectorElementType(EVT);
 
       if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
           (TypeExportableHelper(ElementType, SPS, Context, VD,
-                                TopLevelRecord) == NULL))
-        return NULL;
+                                TopLevelRecord) == nullptr))
+        return nullptr;
       else
         return T;
     }
@@ -381,25 +381,26 @@ static const clang::Type *TypeExportableHelper(
     }
     default: {
       slangAssert(false && "Unknown type cannot be validated");
-      return NULL;
+      return nullptr;
     }
   }
 }
 
 // Return the type that can be used to create RSExportType, will always return
-// the canonical type
-// If the Type T is not exportable, this function returns NULL. DiagEngine is
-// used to generate proper Clang diagnostic messages when a
-// non-exportable type is detected. TopLevelRecord is used to capture the
-// highest struct (in the case of a nested hierarchy) for detecting other
-// types that cannot be exported (mostly pointers within a struct).
+// the canonical type.
+//
+// If the Type T is not exportable, this function returns nullptr. DiagEngine is
+// used to generate proper Clang diagnostic messages when a non-exportable type
+// is detected. TopLevelRecord is used to capture the highest struct (in the
+// case of a nested hierarchy) for detecting other types that cannot be exported
+// (mostly pointers within a struct).
 static const clang::Type *TypeExportable(const clang::Type *T,
                                          slang::RSContext *Context,
                                          const clang::VarDecl *VD) {
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  return TypeExportableHelper(T, SPS, Context, VD, NULL);
+  return TypeExportableHelper(T, SPS, Context, VD, nullptr);
 }
 
 static bool ValidateRSObjectInVarDecl(slang::RSContext *Context,
@@ -414,7 +415,7 @@ static bool ValidateRSObjectInVarDecl(slang::RSContext *Context,
         // Only if we are not a pointer to an object.
         const clang::Type *T = GetCanonicalType(VD->getType().getTypePtr());
         if (T->getTypeClass() != clang::Type::Pointer) {
-          ReportTypeError(Context, VD, NULL,
+          ReportTypeError(Context, VD, nullptr,
                           "arrays/structures containing RS object types "
                           "cannot be exported in target API < %1: '%0'",
                           SLANG_JB_TARGET_API);
@@ -452,7 +453,7 @@ static bool ValidateTypeHelper(
     clang::RecordDecl *UnionDecl,
     unsigned int TargetAPI,
     bool IsFilterscript) {
-  if ((T = GetCanonicalType(T)) == NULL)
+  if ((T = GetCanonicalType(T)) == nullptr)
     return true;
 
   if (SPS.count(T))
@@ -463,7 +464,7 @@ static bool ValidateTypeHelper(
   switch (T->getTypeClass()) {
     case clang::Type::Record: {
       if (RSExportPrimitiveType::IsRSObjectType(T)) {
-        clang::VarDecl *VD = (ND ? llvm::dyn_cast<clang::VarDecl>(ND) : NULL);
+        clang::VarDecl *VD = (ND ? llvm::dyn_cast<clang::VarDecl>(ND) : nullptr);
         if (VD && !ValidateRSObjectInVarDecl(Context, VD, InCompositeType,
                                              TargetAPI)) {
           return false;
@@ -474,13 +475,13 @@ static bool ValidateTypeHelper(
         if (!UnionDecl) {
           return true;
         } else if (RSExportPrimitiveType::IsRSObjectType(T)) {
-          ReportTypeError(Context, NULL, UnionDecl,
+          ReportTypeError(Context, nullptr, UnionDecl,
               "unions containing RS object types are not allowed");
           return false;
         }
       }
 
-      clang::RecordDecl *RD = NULL;
+      clang::RecordDecl *RD = nullptr;
 
       // Check internal struct
       if (T->isUnionType()) {
@@ -493,9 +494,9 @@ static bool ValidateTypeHelper(
         return false;
       }
 
-      if (RD != NULL) {
+      if (RD != nullptr) {
         RD = RD->getDefinition();
-        if (RD == NULL) {
+        if (RD == nullptr) {
           // FIXME
           return true;
         }
@@ -583,7 +584,7 @@ static bool ValidateTypeHelper(
           EVT->getNumElements() == 3 &&
           ND &&
           ND->getFormalLinkage() == clang::ExternalLinkage) {
-        ReportTypeError(Context, ND, NULL,
+        ReportTypeError(Context, ND, nullptr,
                         "structs containing vectors of dimension 3 cannot "
                         "be exported at this API level: '%0'");
         return false;
@@ -624,7 +625,7 @@ bool RSExportType::NormalizeType(const clang::Type *&T,
                                  llvm::StringRef &TypeName,
                                  RSContext *Context,
                                  const clang::VarDecl *VD) {
-  if ((T = TypeExportable(T, Context, VD)) == NULL) {
+  if ((T = TypeExportable(T, Context, VD)) == nullptr) {
     return false;
   }
   // Get type name
@@ -650,7 +651,7 @@ bool RSExportType::ValidateType(slang::RSContext *Context, clang::ASTContext &C,
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  return ValidateTypeHelper(Context, C, T, ND, Loc, SPS, false, NULL, TargetAPI,
+  return ValidateTypeHelper(Context, C, T, ND, Loc, SPS, false, nullptr, TargetAPI,
                             IsFilterscript);
   return true;
 }
@@ -668,16 +669,16 @@ const clang::Type
     clang::QualType T = DD->getType();
 
     if (T.isNull())
-      return NULL;
+      return nullptr;
     else
       return T.getTypePtr();
   }
-  return NULL;
+  return nullptr;
 }
 
 llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
   T = GetCanonicalType(T);
-  if (T == NULL)
+  if (T == nullptr)
     return llvm::StringRef();
 
   const clang::Type *CTI = T->getCanonicalTypeInternal().getTypePtr();
@@ -686,7 +687,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
     case clang::Type::Builtin: {
       const clang::BuiltinType *BT = static_cast<const clang::BuiltinType*>(CTI);
       BuiltinInfo *info = FindBuiltinType(BT->getKind());
-      if (info != NULL) {
+      if (info != nullptr) {
         return info->cname[0];
       }
       slangAssert(false && "Unknown data type of the builtin");
@@ -702,7 +703,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
 
       llvm::StringRef Name = RD->getName();
       if (Name.empty()) {
-        if (RD->getTypedefNameForAnonDecl() != NULL) {
+        if (RD->getTypedefNameForAnonDecl() != nullptr) {
           Name = RD->getTypedefNameForAnonDecl()->getName();
         }
 
@@ -712,7 +713,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
                    RE = RD->redecls_end();
                RI != RE;
                RI++) {
-            slangAssert(*RI != NULL && "cannot be NULL object");
+            slangAssert(*RI != nullptr && "cannot be NULL object");
 
             Name = (*RI)->getName();
             if (!Name.empty())
@@ -727,7 +728,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
       const clang::PointerType *P = static_cast<const clang::PointerType*>(CTI);
       const clang::Type *PT = GetPointeeType(P);
       llvm::StringRef PointeeName;
-      if (NormalizeType(PT, PointeeName, NULL, NULL)) {
+      if (NormalizeType(PT, PointeeName, nullptr, nullptr)) {
         char *Name = new char[ 1 /* * */ + PointeeName.size() + 1 ];
         Name[0] = '*';
         memcpy(Name + 1, PointeeName.data(), PointeeName.size());
@@ -768,7 +769,7 @@ RSExportType *RSExportType::Create(RSContext *Context,
 
   const clang::Type *CTI = T->getCanonicalTypeInternal().getTypePtr();
 
-  RSExportType *ET = NULL;
+  RSExportType *ET = nullptr;
   switch (T->getTypeClass()) {
     case clang::Type::Record: {
       DataType dt = RSExportPrimitiveType::GetRSSpecificType(TypeName);
@@ -848,10 +849,10 @@ RSExportType *RSExportType::Create(RSContext *Context,
 
 RSExportType *RSExportType::Create(RSContext *Context, const clang::Type *T) {
   llvm::StringRef TypeName;
-  if (NormalizeType(T, TypeName, Context, NULL)) {
+  if (NormalizeType(T, TypeName, Context, nullptr)) {
     return Create(Context, T, TypeName);
   } else {
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -876,7 +877,7 @@ RSExportType::RSExportType(RSContext *Context,
       // Make a copy on Name since memory stored @Name is either allocated in
       // ASTContext or allocated in GetTypeName which will be destroyed later.
       mName(Name.data(), Name.size()),
-      mLLVMType(NULL) {
+      mLLVMType(nullptr) {
   // Don't cache the type whose name start with '<'. Those type failed to
   // get their name since constructing their name in GetTypeName() requiring
   // complicated work.
@@ -891,7 +892,7 @@ bool RSExportType::keep() {
   if (!RSExportable::keep())
     return false;
   // Invalidate converted LLVM type.
-  mLLVMType = NULL;
+  mLLVMType = nullptr;
   return true;
 }
 
@@ -908,7 +909,7 @@ llvm::ManagedStatic<RSExportPrimitiveType::RSSpecificTypeMapTy>
 RSExportPrimitiveType::RSSpecificTypeMap;
 
 bool RSExportPrimitiveType::IsPrimitiveType(const clang::Type *T) {
-  if ((T != NULL) && (T->getTypeClass() == clang::Type::Builtin))
+  if ((T != nullptr) && (T->getTypeClass() == clang::Type::Builtin))
     return true;
   else
     return false;
@@ -935,7 +936,7 @@ RSExportPrimitiveType::GetRSSpecificType(const llvm::StringRef &TypeName) {
 
 DataType RSExportPrimitiveType::GetRSSpecificType(const clang::Type *T) {
   T = GetCanonicalType(T);
-  if ((T == NULL) || (T->getTypeClass() != clang::Type::Record))
+  if ((T == nullptr) || (T->getTypeClass() != clang::Type::Record))
     return DataTypeUnknown;
 
   return GetRSSpecificType( RSExportType::GetTypeName(T) );
@@ -1029,7 +1030,7 @@ size_t RSExportPrimitiveType::GetSizeInBits(const RSExportPrimitiveType *EPT) {
 
 DataType
 RSExportPrimitiveType::GetDataType(RSContext *Context, const clang::Type *T) {
-  if (T == NULL)
+  if (T == nullptr)
     return DataTypeUnknown;
 
   switch (T->getTypeClass()) {
@@ -1037,7 +1038,7 @@ RSExportPrimitiveType::GetDataType(RSContext *Context, const clang::Type *T) {
       const clang::BuiltinType *BT =
               static_cast<const clang::BuiltinType*>(T->getCanonicalTypeInternal().getTypePtr());
       BuiltinInfo *info = FindBuiltinType(BT->getKind());
-      if (info != NULL) {
+      if (info != nullptr) {
         return info->type;
       }
       // The size of type WChar depend on platform so we abandon the support
@@ -1068,7 +1069,7 @@ RSExportPrimitiveType
   DataType DT = GetDataType(Context, T);
 
   if ((DT == DataTypeUnknown) || TypeName.empty())
-    return NULL;
+    return nullptr;
   else
     return new RSExportPrimitiveType(Context, ExportClassPrimitive, TypeName,
                                      DT, Normalized);
@@ -1077,11 +1078,11 @@ RSExportPrimitiveType
 RSExportPrimitiveType *RSExportPrimitiveType::Create(RSContext *Context,
                                                      const clang::Type *T) {
   llvm::StringRef TypeName;
-  if (RSExportType::NormalizeType(T, TypeName, Context, NULL)
+  if (RSExportType::NormalizeType(T, TypeName, Context, nullptr)
       && IsPrimitiveType(T)) {
     return Create(Context, T, TypeName);
   } else {
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -1150,7 +1151,7 @@ llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 bool RSExportPrimitiveType::equals(const RSExportable *E) const {
@@ -1162,7 +1163,7 @@ RSReflectionType *RSExportPrimitiveType::getRSReflectionType(DataType DT) {
   if (DT > DataTypeUnknown && DT < DataTypeMax) {
     return &gReflectionTypes[DT];
   } else {
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -1183,9 +1184,9 @@ RSExportPointerType
                     Context->getASTContext().IntTy.getTypePtr());
   }
 
-  if (PointeeET == NULL) {
+  if (PointeeET == nullptr) {
     // Error diagnostic is emitted for corresponding pointee type
-    return NULL;
+    return nullptr;
   }
 
   return new RSExportPointerType(Context, TypeName, PointeeET);
@@ -1227,7 +1228,7 @@ RSExportVectorType::GetTypeName(const clang::ExtVectorType *EVT) {
     return name;
 
   BuiltinInfo *info = FindBuiltinType(BT->getKind());
-  if (info != NULL) {
+  if (info != nullptr) {
     int I = EVT->getNumElements() - 1;
     if (I < kMaxVectorSize) {
       name = info->cname[I];
@@ -1242,7 +1243,7 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
                                                const clang::ExtVectorType *EVT,
                                                const llvm::StringRef &TypeName,
                                                bool Normalized) {
-  slangAssert(EVT != NULL && EVT->getTypeClass() == clang::Type::ExtVector);
+  slangAssert(EVT != nullptr && EVT->getTypeClass() == clang::Type::ExtVector);
 
   const clang::Type *ElementType = GetExtVectorElementType(EVT);
   DataType DT = RSExportPrimitiveType::GetDataType(Context, ElementType);
@@ -1254,7 +1255,7 @@ RSExportVectorType *RSExportVectorType::Create(RSContext *Context,
                                   Normalized,
                                   EVT->getNumElements());
   else
-    return NULL;
+    return nullptr;
 }
 
 llvm::Type *RSExportVectorType::convertToLLVMType() const {
@@ -1273,37 +1274,37 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
                                                const clang::RecordType *RT,
                                                const llvm::StringRef &TypeName,
                                                unsigned Dim) {
-  slangAssert((RT != NULL) && (RT->getTypeClass() == clang::Type::Record));
+  slangAssert((RT != nullptr) && (RT->getTypeClass() == clang::Type::Record));
   slangAssert((Dim > 1) && "Invalid dimension of matrix");
 
   // Check whether the struct rs_matrix is in our expected form (but assume it's
   // correct if we're not sure whether it's correct or not)
   const clang::RecordDecl* RD = RT->getDecl();
   RD = RD->getDefinition();
-  if (RD != NULL) {
+  if (RD != nullptr) {
     // Find definition, perform further examination
     if (RD->field_empty()) {
       Context->ReportError(
           RD->getLocation(),
           "invalid matrix struct: must have 1 field for saving values: '%0'")
           << RD->getName();
-      return NULL;
+      return nullptr;
     }
 
     clang::RecordDecl::field_iterator FIT = RD->field_begin();
     const clang::FieldDecl *FD = *FIT;
     const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
-    if ((FT == NULL) || (FT->getTypeClass() != clang::Type::ConstantArray)) {
+    if ((FT == nullptr) || (FT->getTypeClass() != clang::Type::ConstantArray)) {
       Context->ReportError(RD->getLocation(),
                            "invalid matrix struct: first field should"
                            " be an array with constant size: '%0'")
           << RD->getName();
-      return NULL;
+      return nullptr;
     }
     const clang::ConstantArrayType *CAT =
       static_cast<const clang::ConstantArrayType *>(FT);
     const clang::Type *ElementType = GetConstantArrayElementType(CAT);
-    if ((ElementType == NULL) ||
+    if ((ElementType == nullptr) ||
         (ElementType->getTypeClass() != clang::Type::Builtin) ||
         (static_cast<const clang::BuiltinType *>(ElementType)->getKind() !=
          clang::BuiltinType::Float)) {
@@ -1311,7 +1312,7 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
                            "invalid matrix struct: first field "
                            "should be a float array: '%0'")
           << RD->getName();
-      return NULL;
+      return nullptr;
     }
 
     if (CAT->getSize() != Dim * Dim) {
@@ -1319,7 +1320,7 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
                            "invalid matrix struct: first field "
                            "should be an array with size %0: '%1'")
           << (Dim * Dim) << (RD->getName());
-      return NULL;
+      return nullptr;
     }
 
     FIT++;
@@ -1328,7 +1329,7 @@ RSExportMatrixType *RSExportMatrixType::Create(RSContext *Context,
                            "invalid matrix struct: must have "
                            "exactly 1 field: '%0'")
           << RD->getName();
-      return NULL;
+      return nullptr;
     }
   }
 
@@ -1356,7 +1357,7 @@ bool RSExportMatrixType::equals(const RSExportable *E) const {
 RSExportConstantArrayType
 *RSExportConstantArrayType::Create(RSContext *Context,
                                    const clang::ConstantArrayType *CAT) {
-  slangAssert(CAT != NULL && CAT->getTypeClass() == clang::Type::ConstantArray);
+  slangAssert(CAT != nullptr && CAT->getTypeClass() == clang::Type::ConstantArray);
 
   slangAssert((CAT->getSize().getActiveBits() < 32) && "array too large");
 
@@ -1366,8 +1367,8 @@ RSExportConstantArrayType
   const clang::Type *ElementType = GetConstantArrayElementType(CAT);
   RSExportType *ElementET = RSExportType::Create(Context, ElementType);
 
-  if (ElementET == NULL) {
-    return NULL;
+  if (ElementET == nullptr) {
+    return nullptr;
   }
 
   return new RSExportConstantArrayType(Context,
@@ -1399,22 +1400,22 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
                                                const clang::RecordType *RT,
                                                const llvm::StringRef &TypeName,
                                                bool mIsArtificial) {
-  slangAssert(RT != NULL && RT->getTypeClass() == clang::Type::Record);
+  slangAssert(RT != nullptr && RT->getTypeClass() == clang::Type::Record);
 
   const clang::RecordDecl *RD = RT->getDecl();
   slangAssert(RD->isStruct());
 
   RD = RD->getDefinition();
-  if (RD == NULL) {
+  if (RD == nullptr) {
     slangAssert(false && "struct is not defined in this module");
-    return NULL;
+    return nullptr;
   }
 
   // Struct layout construct by clang. We rely on this for obtaining the
   // alloc size of a struct and offset of every field in that struct.
   const clang::ASTRecordLayout *RL =
       &Context->getASTContext().getASTRecordLayout(RD);
-  slangAssert((RL != NULL) &&
+  slangAssert((RL != nullptr) &&
       "Failed to retrieve the struct layout from Clang.");
 
   RSExportRecordType *ERT =
@@ -1436,13 +1437,13 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
     clang::FieldDecl *FD = *FI;
 
     if (FD->isBitField()) {
-      return NULL;
+      return nullptr;
     }
 
     // Type
     RSExportType *ET = RSExportElement::CreateFromDecl(Context, FD);
 
-    if (ET != NULL) {
+    if (ET != nullptr) {
       ERT->mFields.push_back(
           new Field(ET, FD->getName(), ERT,
                     static_cast<size_t>(RL->getFieldOffset(Index) >> 3)));
@@ -1450,7 +1451,7 @@ RSExportRecordType *RSExportRecordType::Create(RSContext *Context,
       Context->ReportError(RD->getLocation(),
                            "field type cannot be exported: '%0.%1'")
           << RD->getName() << FD->getName();
-      return NULL;
+      return nullptr;
     }
   }
 
@@ -1475,10 +1476,10 @@ llvm::Type *RSExportRecordType::convertToLLVMType() const {
   llvm::StructType *ST = llvm::StructType::get(getRSContext()->getLLVMContext(),
                                                FieldTypes,
                                                mIsPacked);
-  if (ST != NULL) {
+  if (ST != nullptr) {
     return ST;
   } else {
-    return NULL;
+    return nullptr;
   }
 }
 

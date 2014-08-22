@@ -266,7 +266,7 @@ bool SlangRS::IsLocInRSHeaderFile(const clang::SourceLocation &Loc,
 }
 
 SlangRS::SlangRS()
-  : Slang(), mRSContext(NULL), mAllowRSPrefix(false), mTargetAPI(0),
+  : Slang(), mRSContext(nullptr), mAllowRSPrefix(false), mTargetAPI(0),
     mVerbose(false), mIsFilterscript(false) {
 }
 
@@ -435,7 +435,7 @@ bool SlangRS::compile(
 
 void SlangRS::reset() {
   delete mRSContext;
-  mRSContext = NULL;
+  mRSContext = nullptr;
   mGeneratedFileNames.clear();
   Slang::reset();
 }
