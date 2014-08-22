@@ -169,7 +169,7 @@ static bool GenerateJavaCodeAccessorMethodForBitwidth(
   }
 
   FILE *pfin = fopen(filename.c_str(), "rb");
-  if (pfin == NULL) {
+  if (pfin == nullptr) {
     fprintf(stderr, "Error: could not read file %s\n", filename.c_str());
     return false;
   }
@@ -262,7 +262,7 @@ bool RSSlangReflectUtils::GenerateJavaBitCodeAccessor(
   string output_path =
       ComputePackagedPath(context.reflectPath, context.packageName);
   if (!SlangUtils::CreateDirectoryWithParents(llvm::StringRef(output_path),
-                                              NULL)) {
+                                              nullptr)) {
     fprintf(stderr, "Error: could not create dir %s\n", output_path.c_str());
     return false;
   }
@@ -365,7 +365,7 @@ bool GeneratedFile::startFile(const string &outDirectory,
   }
 
   // Write the license.
-  if (optionalLicense != NULL) {
+  if (optionalLicense != nullptr) {
     *this << *optionalLicense;
   } else {
     *this << gApacheLicenseNote;

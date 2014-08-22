@@ -108,7 +108,7 @@ bool RSExportForEach::validateAndConstructOldStyleParams(
 
     // The only non-const pointer should be out.
     if (!QT->getPointeeType().isConstQualified()) {
-      if (mOut == NULL) {
+      if (mOut == nullptr) {
         mOut = PVD;
       } else {
         Context->ReportError(PVD->getLocation(),
@@ -119,9 +119,9 @@ bool RSExportForEach::validateAndConstructOldStyleParams(
         valid = false;
       }
     } else {
-      if (mIns.empty() && mOut == NULL) {
+      if (mIns.empty() && mOut == nullptr) {
         mIns.push_back(PVD);
-      } else if (mUsrData == NULL) {
+      } else if (mUsrData == nullptr) {
         mUsrData = PVD;
       } else {
         Context->ReportError(
@@ -227,8 +227,8 @@ bool RSExportForEach::validateAndConstructKernelParams(
 bool RSExportForEach::validateIterationParameters(
     RSContext *Context, const clang::FunctionDecl *FD,
     size_t *IndexOfFirstIterator) {
-  slangAssert(IndexOfFirstIterator != NULL);
-  slangAssert(mX == NULL && mY == NULL);
+  slangAssert(IndexOfFirstIterator != nullptr);
+  slangAssert(mX == nullptr && mY == nullptr);
   clang::ASTContext &C = Context->getASTContext();
 
   // Find the x and y parameters if present.
@@ -239,9 +239,9 @@ bool RSExportForEach::validateIterationParameters(
     const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
     llvm::StringRef ParamName = PVD->getName();
     if (ParamName.equals("x")) {
-      slangAssert(mX == NULL);  // We won't be invoked if two 'x' are present.
+      slangAssert(mX == nullptr);  // We won't be invoked if two 'x' are present.
       mX = PVD;
-      if (mY != NULL) {
+      if (mY != nullptr) {
         Context->ReportError(PVD->getLocation(),
                              "In compute kernel %0(), parameter 'x' should "
                              "be defined before parameter 'y'")
@@ -249,7 +249,7 @@ bool RSExportForEach::validateIterationParameters(
         valid = false;
       }
     } else if (ParamName.equals("y")) {
-      slangAssert(mY == NULL);  // We won't be invoked if two 'y' are present.
+      slangAssert(mY == nullptr);  // We won't be invoked if two 'y' are present.
       mY = PVD;
     } else {
       // It's neither x nor y.
@@ -278,7 +278,7 @@ bool RSExportForEach::validateIterationParameters(
     }
   }
   // Check that x and y have the same type.
-  if (mX != NULL and mY != NULL) {
+  if (mX != nullptr and mY != nullptr) {
     clang::QualType XType = mX->getType();
     clang::QualType YType = mY->getType();
 
@@ -299,8 +299,8 @@ bool RSExportForEach::setSignatureMetadata(RSContext *Context,
   bool valid = true;
 
   if (mIsKernelStyle) {
-    slangAssert(mOut == NULL);
-    slangAssert(mUsrData == NULL);
+    slangAssert(mOut == nullptr);
+    slangAssert(mUsrData == nullptr);
   } else {
     slangAssert(!mHasReturnType);
   }
@@ -345,7 +345,7 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
   FE = new RSExportForEach(Context, Name);
 
   if (!FE->validateAndConstructParams(Context, FD)) {
-    return NULL;
+    return nullptr;
   }
 
   clang::ASTContext &Ctx = Context->getASTContext();
@@ -364,7 +364,7 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
         C.VoidTy) {
       // In the case of using const void*, we can't reflect an appopriate
       // Java type, so we fall back to just reflecting the ain/aout parameters
-      FE->mUsrData = NULL;
+      FE->mUsrData = nullptr;
     } else {
       clang::RecordDecl *RD =
           clang::RecordDecl::Create(Ctx, clang::TTK_Struct,
@@ -380,8 +380,8 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
                                    clang::SourceLocation(),
                                    PVD->getIdentifier(),
                                    QT->getPointeeType(),
-                                   NULL,
-                                   /* BitWidth = */ NULL,
+                                   nullptr,
+                                   /* BitWidth = */ nullptr,
                                    /* Mutable = */ false,
                                    /* HasInit = */ clang::ICIS_NoInit);
       RD->addDecl(FD);
@@ -393,11 +393,11 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
 
       RSExportType *ET = RSExportType::Create(Context, T.getTypePtr());
 
-      if (ET == NULL) {
+      if (ET == nullptr) {
         fprintf(stderr, "Failed to export the function %s. There's at least "
                         "one parameter whose type is not supported by the "
                         "reflection\n", FE->getName().c_str());
-        return NULL;
+        return nullptr;
       }
 
       slangAssert((ET->getClass() == RSExportType::ExportClassRecord) &&
@@ -414,7 +414,7 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
       RSExportType *InExportType = RSExportType::Create(Context, T);
 
       if (FE->mIsKernelStyle) {
-        slangAssert(InExportType != NULL);
+        slangAssert(InExportType != nullptr);
       }
 
       FE->mInTypes.push_back(InExportType);

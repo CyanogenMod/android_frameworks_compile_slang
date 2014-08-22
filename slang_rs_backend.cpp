@@ -61,12 +61,12 @@ RSBackend::RSBackend(RSContext *Context,
     mSourceMgr(SourceMgr),
     mAllowRSPrefix(AllowRSPrefix),
     mIsFilterscript(IsFilterscript),
-    mExportVarMetadata(NULL),
-    mExportFuncMetadata(NULL),
-    mExportForEachNameMetadata(NULL),
-    mExportForEachSignatureMetadata(NULL),
-    mExportTypeMetadata(NULL),
-    mRSObjectSlotsMetadata(NULL),
+    mExportVarMetadata(nullptr),
+    mExportFuncMetadata(nullptr),
+    mExportForEachNameMetadata(nullptr),
+    mExportForEachSignatureMetadata(nullptr),
+    mExportTypeMetadata(nullptr),
+    mRSObjectSlotsMetadata(nullptr),
     mRefCount(mContext->getASTContext()),
     mASTChecker(Context, Context->getTargetAPI(), IsFilterscript) {
 }
@@ -88,7 +88,7 @@ bool RSBackend::HandleTopLevelDecl(clang::DeclGroupRef D) {
     for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end();
          I != E; I++) {
       clang::FunctionDecl *FD = llvm::dyn_cast<clang::FunctionDecl>(*I);
-      if (FD == NULL)
+      if (FD == nullptr)
         continue;
       if (!FD->getName().startswith("rs"))  // Check prefix
         continue;
@@ -182,7 +182,7 @@ void RSBackend::HandleTranslationUnitPre(clang::ASTContext &C) {
 ///////////////////////////////////////////////////////////////////////////////
 void RSBackend::dumpExportVarInfo(llvm::Module *M) {
   int slotCount = 0;
-  if (mExportVarMetadata == NULL)
+  if (mExportVarMetadata == nullptr)
     mExportVarMetadata = M->getOrInsertNamedMetadata(RS_EXPORT_VAR_MN);
 
   llvm::SmallVector<llvm::Value*, 2> ExportVarInfo;
@@ -251,7 +251,7 @@ void RSBackend::dumpExportVarInfo(llvm::Module *M) {
         llvm::MDNode::get(mLLVMContext, ExportVarInfo));
     ExportVarInfo.clear();
 
-    if (mRSObjectSlotsMetadata == NULL) {
+    if (mRSObjectSlotsMetadata == nullptr) {
       mRSObjectSlotsMetadata =
           M->getOrInsertNamedMetadata(RS_OBJECT_SLOTS_MN);
     }
@@ -266,7 +266,7 @@ void RSBackend::dumpExportVarInfo(llvm::Module *M) {
 }
 
 void RSBackend::dumpExportFunctionInfo(llvm::Module *M) {
-  if (mExportFuncMetadata == NULL)
+  if (mExportFuncMetadata == nullptr)
     mExportFuncMetadata =
         M->getOrInsertNamedMetadata(RS_EXPORT_FUNC_MN);
 
@@ -292,8 +292,9 @@ void RSBackend::dumpExportFunctionInfo(llvm::Module *M) {
 
       // Create helper function
       {
-        llvm::StructType *HelperFunctionParameterTy = NULL;
+        llvm::StructType *HelperFunctionParameterTy = nullptr;
         std::vector<bool> isStructInput;
+
         if (!F->getArgumentList().empty()) {
           std::vector<llvm::Type*> HelperFunctionParameterTys;
           for (llvm::Function::arg_iterator AI = F->arg_begin(),
@@ -405,11 +406,11 @@ void RSBackend::dumpExportFunctionInfo(llvm::Module *M) {
 }
 
 void RSBackend::dumpExportForEachInfo(llvm::Module *M) {
-  if (mExportForEachNameMetadata == NULL) {
+  if (mExportForEachNameMetadata == nullptr) {
     mExportForEachNameMetadata =
         M->getOrInsertNamedMetadata(RS_EXPORT_FOREACH_NAME_MN);
   }
-  if (mExportForEachSignatureMetadata == NULL) {
+  if (mExportForEachSignatureMetadata == nullptr) {
     mExportForEachSignatureMetadata =
         M->getOrInsertNamedMetadata(RS_EXPORT_FOREACH_MN);
   }
@@ -461,7 +462,7 @@ void RSBackend::dumpExportTypeInfo(llvm::Module *M) {
       const RSExportRecordType *ERT =
           static_cast<const RSExportRecordType*>(ET);
 
-      if (mExportTypeMetadata == NULL)
+      if (mExportTypeMetadata == nullptr)
         mExportTypeMetadata =
             M->getOrInsertNamedMetadata(RS_EXPORT_TYPE_MN);
 

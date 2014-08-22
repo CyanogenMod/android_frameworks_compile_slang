@@ -115,7 +115,7 @@ static const char *GetMatrixTypeName(const RSExportMatrixType *EMT) {
     return MatrixTypeJavaNameMap[EMT->getDim() - 2];
 
   slangAssert(false && "GetMatrixTypeName : Unsupported matrix dimension");
-  return NULL;
+  return nullptr;
 }
 
 static const char *GetVectorAccessor(unsigned Index) {
@@ -170,7 +170,7 @@ static const char *GetPackerAPIName(const RSExportPrimitiveType *EPT) {
     return PrimitiveTypePackerAPINameMap[EPT->getType()];
 
   slangAssert(false && "GetPackerAPIName : Unknown primitive data type");
-  return NULL;
+  return nullptr;
 }
 
 static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
@@ -358,7 +358,7 @@ void RSReflectionJava::genScriptClassConstructor() {
   // Generate a simple constructor with only a single parameter (the rest
   // can be inferred from information we already have).
   mOut.indent() << "// Constructor\n";
-  startFunction(AM_Public, false, NULL, getClassName(), 1, "RenderScript",
+  startFunction(AM_Public, false, nullptr, getClassName(), 1, "RenderScript",
                 "rs");
 
   if (getEmbedBitcodeInJava()) {
@@ -380,7 +380,7 @@ void RSReflectionJava::genScriptClassConstructor() {
     endFunction();
 
     // Alternate constructor (legacy) with 3 original parameters.
-    startFunction(AM_Public, false, NULL, getClassName(), 3, "RenderScript",
+    startFunction(AM_Public, false, nullptr, getClassName(), 3, "RenderScript",
                   "rs", "Resources", "resources", "int", "id");
     // Call constructor of super class
     mOut.indent() << "super(rs, resources, id);\n";
@@ -425,7 +425,7 @@ void RSReflectionJava::genScriptClassConstructor() {
     for (RSExportForEach::InTypeIter BI = InTypes.begin(), EI = InTypes.end();
          BI != EI; BI++) {
 
-      if (*BI != NULL) {
+      if (*BI != nullptr) {
         genTypeInstanceFromPointer(*BI);
       }
     }
@@ -640,7 +640,7 @@ void RSReflectionJava::genExportFunction(const RSExportFunc *EF) {
     std::string FieldPackerName = EF->getName() + "_fp";
 
     if (genCreateFieldPacker(ERT, FieldPackerName.c_str()))
-      genPackVarOfType(ERT, NULL, FieldPackerName.c_str());
+      genPackVarOfType(ERT, nullptr, FieldPackerName.c_str());
 
     mOut.indent() << "invoke(" << RS_EXPORT_FUNC_INDEX_PREFIX << EF->getName()
                   << ", " << FieldPackerName << ");\n";
@@ -764,7 +764,7 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
   startFunction(AM_Public, false, "void", "forEach_" + EF->getName(), Args);
 
   if (InTypes.size() == 1) {
-    if (InTypes.front() != NULL) {
+    if (InTypes.front() != nullptr) {
       genTypeCheck(InTypes.front(), "ain");
     }
 
@@ -773,7 +773,7 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
     for (RSExportForEach::InTypeIter BI = InTypes.begin(), EI = InTypes.end();
          BI != EI; BI++, ++Index) {
 
-      if (*BI != NULL) {
+      if (*BI != nullptr) {
         genTypeCheck(*BI, ("ain_" + Ins[Index]->getName()).str().c_str());
       }
     }
@@ -804,7 +804,7 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
   std::string FieldPackerName = EF->getName() + "_fp";
   if (ERT) {
     if (genCreateFieldPacker(ERT, FieldPackerName.c_str())) {
-      genPackVarOfType(ERT, NULL, FieldPackerName.c_str());
+      genPackVarOfType(ERT, nullptr, FieldPackerName.c_str());
     }
   }
   mOut.indent() << "forEach(" << RS_EXPORT_FOREACH_INDEX_PREFIX
@@ -1291,7 +1291,7 @@ void RSReflectionJava::genPackVarOfType(const RSExportType *ET,
       size_t FieldStoreSize = T->getStoreSize();
       size_t FieldAllocSize = T->getAllocSize();
 
-      if (VarName != NULL)
+      if (VarName != nullptr)
         FieldName = VarName + ("." + F->getName());
       else
         FieldName = F->getName();
@@ -1376,7 +1376,7 @@ void RSReflectionJava::genNewItemBufferIfNull(const char *Index) {
   mOut.indent() << "if (" << RS_TYPE_ITEM_BUFFER_NAME " == null) ";
   mOut << RS_TYPE_ITEM_BUFFER_NAME << " = new " << RS_TYPE_ITEM_CLASS_NAME
        << "[getType().getX() /* count */];\n";
-  if (Index != NULL) {
+  if (Index != nullptr) {
     mOut.indent() << "if (" << RS_TYPE_ITEM_BUFFER_NAME << "[" << Index
                   << "] == null) ";
     mOut << RS_TYPE_ITEM_BUFFER_NAME << "[" << Index << "] = new "
@@ -1495,7 +1495,7 @@ void RSReflectionJava::genTypeClassConstructor(const RSExportRecordType *ERT) {
   endFunction();
 
   // private with element
-  startFunction(AM_Private, false, NULL, getClassName(), 1, "RenderScript",
+  startFunction(AM_Private, false, nullptr, getClassName(), 1, "RenderScript",
                 RenderScriptVar);
   mOut.indent() << RS_TYPE_ITEM_BUFFER_NAME << " = null;\n";
   mOut.indent() << RS_TYPE_ITEM_BUFFER_PACKER_NAME << " = null;\n";
@@ -1503,7 +1503,7 @@ void RSReflectionJava::genTypeClassConstructor(const RSExportRecordType *ERT) {
   endFunction();
 
   // 1D without usage
-  startFunction(AM_Public, false, NULL, getClassName(), 2, "RenderScript",
+  startFunction(AM_Public, false, nullptr, getClassName(), 2, "RenderScript",
                 RenderScriptVar, "int", "count");
 
   mOut.indent() << RS_TYPE_ITEM_BUFFER_NAME << " = null;\n";
@@ -1514,7 +1514,7 @@ void RSReflectionJava::genTypeClassConstructor(const RSExportRecordType *ERT) {
   endFunction();
 
   // 1D with usage
-  startFunction(AM_Public, false, NULL, getClassName(), 3, "RenderScript",
+  startFunction(AM_Public, false, nullptr, getClassName(), 3, "RenderScript",
                 RenderScriptVar, "int", "count", "int", "usages");
 
   mOut.indent() << RS_TYPE_ITEM_BUFFER_NAME << " = null;\n";
@@ -1615,7 +1615,7 @@ void RSReflectionJava::genTypeClassItemSetter(const RSExportRecordType *ERT) {
   startFunction(AM_PublicSynchronized, false, "void", "set", 3,
                 RS_TYPE_ITEM_CLASS_NAME, "i", "int", "index", "boolean",
                 "copyNow");
-  genNewItemBufferIfNull(NULL);
+  genNewItemBufferIfNull(nullptr);
   mOut.indent() << RS_TYPE_ITEM_BUFFER_NAME << "[index] = i;\n";
 
   mOut.indent() << "if (copyNow) ";
@@ -2025,7 +2025,7 @@ bool RSReflectionJava::startClass(AccessModifier AM, bool IsStatic,
 
   mOut << AccessModifierStr(AM) << ((IsStatic) ? " static" : "") << " class "
        << ClassName;
-  if (SuperClassName != NULL)
+  if (SuperClassName != nullptr)
     mOut << " extends " << SuperClassName;
 
   mOut.startBlock();

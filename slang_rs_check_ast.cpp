@@ -260,7 +260,7 @@ void RSCheckAST::VisitExpr(clang::Expr *E) {
   E = E->IgnoreImpCasts();
   if (mIsFilterscript &&
       !SlangRS::IsLocInRSHeaderFile(E->getExprLoc(), mSM) &&
-      !RSExportType::ValidateType(Context, C, E->getType(), NULL, E->getExprLoc(),
+      !RSExportType::ValidateType(Context, C, E->getType(), nullptr, E->getExprLoc(),
                                   mTargetAPI, mIsFilterscript)) {
     mValid = false;
   } else {

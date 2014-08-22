@@ -85,8 +85,8 @@ struct ForceSlangLinking {
       return;
 
     // llvm-rs-link needs following functions existing in libslang.
-    llvm::parseBitcodeFile(NULL, llvm::getGlobalContext());
-    llvm::Linker::LinkModules(NULL, NULL, 0, NULL);
+    llvm::parseBitcodeFile(nullptr, llvm::getGlobalContext());
+    llvm::Linker::LinkModules(nullptr, nullptr, 0, nullptr);
 
     // llvm-rs-cc need this.
     new clang::TextDiagnosticPrinter(llvm::errs(),
@@ -115,14 +115,14 @@ OpenOutputFile(const char *OutputFile,
                llvm::sys::fs::OpenFlags Flags,
                std::string* Error,
                clang::DiagnosticsEngine *DiagEngine) {
-  slangAssert((OutputFile != NULL) && (Error != NULL) &&
-              (DiagEngine != NULL) && "Invalid parameter!");
+  slangAssert((OutputFile != nullptr) && (Error != nullptr) &&
+              (DiagEngine != nullptr) && "Invalid parameter!");
 
   if (SlangUtils::CreateDirectoryWithParents(
                         llvm::sys::path::parent_path(OutputFile), Error)) {
     llvm::tool_output_file *F =
           new llvm::tool_output_file(OutputFile, *Error, Flags);
-    if (F != NULL)
+    if (F != nullptr)
       return F;
   }
 
@@ -130,7 +130,7 @@ OpenOutputFile(const char *OutputFile,
   DiagEngine->Report(clang::diag::err_fe_error_opening)
     << OutputFile << *Error;
 
-  return NULL;
+  return nullptr;
 }
 
 void Slang::GlobalInitialization() {
@@ -213,7 +213,7 @@ void Slang::createPreprocessor() {
                                     *mSourceMgr,
                                     *HeaderInfo,
                                     *this,
-                                    NULL,
+                                    nullptr,
                                     /* OwnsHeaderSearch = */true));
   // Initialize the preprocessor
   mPP->Initialize(getTargetInfo());
@@ -258,7 +258,7 @@ Slang::createBackend(const clang::CodeGenOptions& CodeGenOpts,
                      &mPragmas, OS, OT);
 }
 
-Slang::Slang() : mInitialized(false), mDiagClient(NULL),
+Slang::Slang() : mInitialized(false), mDiagClient(nullptr),
   mTargetOpts(new clang::TargetOptions()), mOT(OT_Default) {
   GlobalInitialization();
 }
@@ -331,7 +331,7 @@ bool Slang::setInputSource(llvm::StringRef InputFile) {
 
 bool Slang::setOutput(const char *OutputFile) {
   std::string Error;
-  llvm::tool_output_file *OS = NULL;
+  llvm::tool_output_file *OS = nullptr;
 
   switch (mOT) {
     case OT_Dependency:
@@ -370,7 +370,7 @@ bool Slang::setDepOutput(const char *OutputFile) {
 
   mDOS.reset(
       OpenOutputFile(OutputFile, llvm::sys::fs::F_Text, &Error, mDiagEngine));
-  if (!Error.empty() || (mDOS.get() == NULL))
+  if (!Error.empty() || (mDOS.get() == nullptr))
     return false;
 
   mDepOutputFileName = OutputFile;
@@ -381,7 +381,7 @@ bool Slang::setDepOutput(const char *OutputFile) {
 int Slang::generateDepFile() {
   if (mDiagEngine->hasErrorOccurred())
     return 1;
-  if (mDOS.get() == NULL)
+  if (mDOS.get() == nullptr)
     return 1;
 
   // Initialize options for generating dependency file
@@ -428,7 +428,7 @@ int Slang::generateDepFile() {
 int Slang::compile() {
   if (mDiagEngine->hasErrorOccurred())
     return 1;
-  if (mOS.get() == NULL)
+  if (mOS.get() == nullptr)
     return 1;
 
   // Here is per-compilation needed initialization
