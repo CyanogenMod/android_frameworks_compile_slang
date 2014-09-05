@@ -744,7 +744,7 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
     }
     case clang::Type::ConstantArray : {
       // Construct name for a constant array is too complicated.
-      return CreateDummyName("ConstantArray", std::string());
+      return "<ConstantArray>";
     }
     default: {
       break;
