@@ -476,9 +476,7 @@ class RSExportConstantArrayType : public RSExportType {
   RSExportConstantArrayType(RSContext *Context,
                             const RSExportType *ElementType,
                             unsigned Size)
-    : RSExportType(Context,
-                   ExportClassConstantArray,
-                   CreateDummyName("ConstantArray", std::string())),
+    : RSExportType(Context, ExportClassConstantArray, "<ConstantArray>"),
       mElementType(ElementType),
       mSize(Size) {
   }
