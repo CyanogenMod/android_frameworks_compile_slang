@@ -362,11 +362,13 @@ bool SlangRS::compile(
     if (Opts.mOutputType != Slang::OT_Dependency && doReflection) {
 
       if (Opts.mBitcodeStorage == BCST_CPP_CODE) {
-          RSReflectionCpp R(mRSContext, Opts.mJavaReflectionPathBase,
-                            getInputFileName(), getOutputFileName());
-          if (!R.reflect()) {
+        const std::string &outputFileName = (Opts.mBitWidth == 64) ?
+            getOutputFileName() : getOutput32FileName();
+        RSReflectionCpp R(mRSContext, Opts.mJavaReflectionPathBase,
+                          getInputFileName(), outputFileName);
+        if (!R.reflect()) {
             return false;
-          }
+        }
       } else {
         if (!Opts.mRSPackageName.empty()) {
           mRSContext->setRSPackageName(Opts.mRSPackageName);

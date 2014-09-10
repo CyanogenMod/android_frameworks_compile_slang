@@ -186,6 +186,7 @@ void slang::ParseArguments(llvm::SmallVectorImpl<const char *> &ArgVector,
           << OptParser->getOptionName(OPT_bitcode_storage)
           << BitcodeStorageValue;
 
+    llvm::opt::Arg *lastBitwidthArg = Args->getLastArg(OPT_m32, OPT_m64);
     if (Args->hasArg(OPT_reflect_cpp)) {
       Opts.mBitcodeStorage = slang::BCST_CPP_CODE;
       // mJavaReflectionPathBase can be set for C++ reflected builds.
@@ -193,6 +194,20 @@ void slang::ParseArguments(llvm::SmallVectorImpl<const char *> &ArgVector,
       if (Opts.mJavaReflectionPathBase.empty()) {
         Opts.mJavaReflectionPathBase = Opts.mBitcodeOutputDir;
       }
+
+      // Check for bitwidth arguments.
+      if (lastBitwidthArg) {
+        if (lastBitwidthArg->getOption().matches(OPT_m32)) {
+          Opts.mBitWidth = 32;
+        } else {
+          Opts.mBitWidth = 64;
+        }
+      }
+    } else if (lastBitwidthArg) {
+      // -m32/-m64 are forbidden for non-C++ reflection paths.
+      DiagEngine.Report(DiagEngine.getCustomDiagID(
+          clang::DiagnosticsEngine::Error,
+          "cannot use -m32/-m64 without specifying C++ reflection (-reflect-c++)"));
     }
 
     Opts.mDependencyOutputDir =
@@ -220,11 +235,9 @@ void slang::ParseArguments(llvm::SmallVectorImpl<const char *> &ArgVector,
       Opts.mTargetAPI = UINT_MAX;
     }
 
-    Opts.mEmit3264 = Opts.mTargetAPI >= 21;
+    Opts.mEmit3264 = (Opts.mTargetAPI >= 21) && (Opts.mBitcodeStorage != slang::BCST_CPP_CODE);
     if (Opts.mEmit3264) {
-      if (Opts.mBitcodeStorage != slang::BCST_CPP_CODE) {
         Opts.mBitcodeStorage = slang::BCST_JAVA_CODE;
-      }
     }
   }
 }

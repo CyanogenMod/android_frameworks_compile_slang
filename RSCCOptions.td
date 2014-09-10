@@ -60,6 +60,9 @@ def emit_nothing : Flag<["-"], "emit-nothing">,
   HelpText<"Build ASTs then convert to LLVM, but emit nothing">;
 }
 
+def m32 : Flag<["-"], "m32">, HelpText<"Emit 32-bit C++ code">;
+def m64 : Flag<["-"], "m64">, HelpText<"Emit 64-bit C++ code">;
+
 def emit_g : Flag<["-"], "g">,
   HelpText<"Emit LLVM Debug Metadata">;
 
