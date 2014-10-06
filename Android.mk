@@ -79,7 +79,7 @@ LOCAL_C_INCLUDES += frameworks/compile/libbcc/include
 
 LOCAL_LDLIBS := -ldl -lpthread
 ifneq ($(HOST_OS),windows)
-LOCAL_LDLIBS += -lc++
+LOCAL_CXX_STL := libc++
 endif
 
 include $(CLANG_HOST_BUILD_MK)
