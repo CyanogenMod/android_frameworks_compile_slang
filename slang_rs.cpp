@@ -180,11 +180,14 @@ bool SlangRS::checkODR(const char *CurInputFile) {
 
 void SlangRS::initDiagnostic() {
   clang::DiagnosticsEngine &DiagEngine = getDiagnostics();
+  const auto Flavor = clang::diag::Flavor::WarningOrError;
 
-  if (DiagEngine.setSeverityForGroup("implicit-function-declaration",
-                                     clang::diag::Severity::Error))
-    DiagEngine.Report(clang::diag::warn_unknown_warning_option)
+  if (DiagEngine.setSeverityForGroup(Flavor, "implicit-function-declaration",
+                                     clang::diag::Severity::Error)) {
+    DiagEngine.Report(clang::diag::warn_unknown_diag_option)
+      << /* clang::diag::Flavor::WarningOrError */ 0
       << "implicit-function-declaration";
+  }
 
   DiagEngine.setSeverity(
     clang::diag::ext_typecheck_convert_discards_qualifiers,

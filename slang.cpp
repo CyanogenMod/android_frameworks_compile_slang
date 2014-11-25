@@ -68,31 +68,11 @@
 
 #include "slang_assert.h"
 #include "slang_backend.h"
-#include "slang_utils.h"
 
 namespace {
 
 static const char *kRSTriple32 = "armv7-none-linux-gnueabi";
 static const char *kRSTriple64 = "aarch64-none-linux-gnueabi";
-
-struct ForceSlangLinking {
-  ForceSlangLinking() {
-    // We must reference the functions in such a way that compilers will not
-    // delete it all as dead code, even with whole program optimization,
-    // yet is effectively a NO-OP. As the compiler isn't smart enough
-    // to know that getenv() never returns -1, this will do the job.
-    if (std::getenv("bar") != reinterpret_cast<char*>(-1))
-      return;
-
-    // llvm-rs-link needs following functions existing in libslang.
-    llvm::parseBitcodeFile(nullptr, llvm::getGlobalContext());
-    llvm::Linker::LinkModules(nullptr, nullptr, 0, nullptr);
-
-    // llvm-rs-cc need this.
-    new clang::TextDiagnosticPrinter(llvm::errs(),
-                                     new clang::DiagnosticOptions());
-  }
-} ForceSlangLinking;
 
 }  // namespace
 
@@ -113,22 +93,23 @@ const llvm::StringRef Slang::PragmaMetadataName = "#pragma";
 static inline llvm::tool_output_file *
 OpenOutputFile(const char *OutputFile,
                llvm::sys::fs::OpenFlags Flags,
-               std::string* Error,
+               std::error_code &EC,
                clang::DiagnosticsEngine *DiagEngine) {
-  slangAssert((OutputFile != nullptr) && (Error != nullptr) &&
+  slangAssert((OutputFile != nullptr) &&
               (DiagEngine != nullptr) && "Invalid parameter!");
 
-  if (SlangUtils::CreateDirectoryWithParents(
-                        llvm::sys::path::parent_path(OutputFile), Error)) {
+  EC = llvm::sys::fs::create_directories(
+      llvm::sys::path::parent_path(OutputFile));
+  if (!EC) {
     llvm::tool_output_file *F =
-          new llvm::tool_output_file(OutputFile, *Error, Flags);
+          new llvm::tool_output_file(OutputFile, EC, Flags);
     if (F != nullptr)
       return F;
   }
 
   // Report error here.
   DiagEngine->Report(clang::diag::err_fe_error_opening)
-    << OutputFile << *Error;
+    << OutputFile << EC.message();
 
   return nullptr;
 }
@@ -299,9 +280,9 @@ bool Slang::setInputSource(llvm::StringRef InputFile,
   mSourceMgr->clearIDTables();
 
   // Load the source
-  llvm::MemoryBuffer *SB =
+  std::unique_ptr<llvm::MemoryBuffer> SB =
       llvm::MemoryBuffer::getMemBuffer(Text, Text + TextLength);
-  mSourceMgr->setMainFileID(mSourceMgr->createFileID(SB));
+  mSourceMgr->setMainFileID(mSourceMgr->createFileID(std::move(SB)));
 
   if (mSourceMgr->getMainFileID().isInvalid()) {
     mDiagEngine->Report(clang::diag::err_fe_error_reading) << InputFile;
@@ -330,15 +311,14 @@ bool Slang::setInputSource(llvm::StringRef InputFile) {
 }
 
 bool Slang::setOutput(const char *OutputFile) {
-  std::string Error;
+  std::error_code EC;
   llvm::tool_output_file *OS = nullptr;
 
   switch (mOT) {
     case OT_Dependency:
     case OT_Assembly:
     case OT_LLVMAssembly: {
-      OS = OpenOutputFile(OutputFile, llvm::sys::fs::F_Text, &Error,
-          mDiagEngine);
+      OS = OpenOutputFile(OutputFile, llvm::sys::fs::F_Text, EC, mDiagEngine);
       break;
     }
     case OT_Nothing: {
@@ -346,8 +326,7 @@ bool Slang::setOutput(const char *OutputFile) {
     }
     case OT_Object:
     case OT_Bitcode: {
-      OS = OpenOutputFile(OutputFile, llvm::sys::fs::F_None,
-                          &Error, mDiagEngine);
+      OS = OpenOutputFile(OutputFile, llvm::sys::fs::F_None, EC, mDiagEngine);
       break;
     }
     default: {
@@ -355,7 +334,7 @@ bool Slang::setOutput(const char *OutputFile) {
     }
   }
 
-  if (!Error.empty())
+  if (EC)
     return false;
 
   mOS.reset(OS);
@@ -366,11 +345,11 @@ bool Slang::setOutput(const char *OutputFile) {
 }
 
 bool Slang::setDepOutput(const char *OutputFile) {
-  std::string Error;
+  std::error_code EC;
 
   mDOS.reset(
-      OpenOutputFile(OutputFile, llvm::sys::fs::F_Text, &Error, mDiagEngine));
-  if (!Error.empty() || (mDOS.get() == nullptr))
+      OpenOutputFile(OutputFile, llvm::sys::fs::F_Text, EC, mDiagEngine));
+  if (EC || (mDOS.get() == nullptr))
     return false;
 
   mDepOutputFileName = OutputFile;

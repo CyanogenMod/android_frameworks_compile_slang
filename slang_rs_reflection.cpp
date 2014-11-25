@@ -37,7 +37,6 @@
 #include "slang_rs_export_func.h"
 #include "slang_rs_reflect_utils.h"
 #include "slang_version.h"
-#include "slang_utils.h"
 
 #define RS_SCRIPT_CLASS_NAME_PREFIX "ScriptC_"
 #define RS_SCRIPT_CLASS_SUPER_CLASS_NAME "ScriptC"
