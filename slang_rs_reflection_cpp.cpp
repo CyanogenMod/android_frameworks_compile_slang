@@ -34,7 +34,6 @@
 #include "slang_rs_export_func.h"
 #include "slang_rs_reflect_utils.h"
 #include "slang_version.h"
-#include "slang_utils.h"
 
 #include "slang_rs_reflection_cpp.h"
 

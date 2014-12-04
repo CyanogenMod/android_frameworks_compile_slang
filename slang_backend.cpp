@@ -65,7 +65,7 @@ namespace slang {
 void Backend::CreateFunctionPasses() {
   if (!mPerFunctionPasses) {
     mPerFunctionPasses = new llvm::FunctionPassManager(mpModule);
-    mPerFunctionPasses->add(new llvm::DataLayoutPass(mpModule));
+    mPerFunctionPasses->add(new llvm::DataLayoutPass());
 
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
@@ -76,7 +76,7 @@ void Backend::CreateFunctionPasses() {
 void Backend::CreateModulePasses() {
   if (!mPerModulePasses) {
     mPerModulePasses = new llvm::PassManager();
-    mPerModulePasses->add(new llvm::DataLayoutPass(mpModule));
+    mPerModulePasses->add(new llvm::DataLayoutPass());
 
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
@@ -108,7 +108,7 @@ bool Backend::CreateCodeGenPasses() {
     return true;
   } else {
     mCodeGenPasses = new llvm::FunctionPassManager(mpModule);
-    mCodeGenPasses->add(new llvm::DataLayoutPass(mpModule));
+    mCodeGenPasses->add(new llvm::DataLayoutPass());
   }
 
   // Create the TargetMachine for generating code.
