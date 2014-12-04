@@ -922,8 +922,8 @@ RSExportPrimitiveType::GetRSSpecificType(const llvm::StringRef &TypeName) {
 
   if (RSSpecificTypeMap->empty()) {
     for (int i = 0; i < MatrixAndObjectDataTypesCount; i++) {
-      RSSpecificTypeMap->GetOrCreateValue(MatrixAndObjectDataTypes[i].name,
-                                          MatrixAndObjectDataTypes[i].dataType);
+      (*RSSpecificTypeMap)[MatrixAndObjectDataTypes[i].name] =
+          MatrixAndObjectDataTypes[i].dataType;
     }
   }
 
