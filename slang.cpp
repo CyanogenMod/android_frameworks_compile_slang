@@ -116,17 +116,10 @@ OpenOutputFile(const char *OutputFile,
 
 void Slang::GlobalInitialization() {
   if (!GlobalInitialized) {
-    // We only support x86, x64 and ARM target
 
-    // For ARM
     LLVMInitializeARMTargetInfo();
     LLVMInitializeARMTarget();
     LLVMInitializeARMAsmPrinter();
-
-    // For x86 and x64
-    LLVMInitializeX86TargetInfo();
-    LLVMInitializeX86Target();
-    LLVMInitializeX86AsmPrinter();
 
     // Please refer to include/clang/Basic/LangOptions.h to setup
     // the options.
