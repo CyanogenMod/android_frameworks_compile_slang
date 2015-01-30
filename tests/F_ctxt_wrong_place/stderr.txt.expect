@@ -1,0 +1,1 @@
+F_ctxt_wrong_place.rs:9:57: error: In compute kernel bad(), parameter 'ctxt' must be defined before parameter 'x'.
