@@ -460,6 +460,10 @@ void Slang::reset(bool SuppressWarnings) {
   }
   mDiagEngine->Reset();
   mDiagClient->reset();
+
+  // remove fatal error handler.  slang::init needs to be called before another
+  // compilation, which will re-install the error handler.
+  llvm::remove_fatal_error_handler();
 }
 
 Slang::~Slang() {
