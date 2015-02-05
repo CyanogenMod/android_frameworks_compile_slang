@@ -625,6 +625,16 @@ void RSReflectionJava::genExportFunction(const RSExportFunc *EF) {
     }
   }
 
+  if (mRSContext->getTargetAPI() >= SLANG_DEVELOPMENT_TARGET_API) {
+    startFunction(AM_Public, false, "Script.InvokeID",
+                  "getInvokeID_" + EF->getName(), 0);
+
+    mOut.indent() << "return createInvokeID(" << RS_EXPORT_FUNC_INDEX_PREFIX
+                  << EF->getName() << ");\n";
+
+    endFunction();
+  }
+
   startFunction(AM_Public, false, "void",
                 "invoke_" + EF->getName(/*Mangle=*/false),
                 // We are using un-mangled name since Java
