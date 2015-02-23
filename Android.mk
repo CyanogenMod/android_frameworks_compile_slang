@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 LOCAL_PATH := $(call my-dir)
+SLANG_ENABLE_ASSERTIONS := false
 
 # The prebuilt tools should be used when we are doing app-only build.
 ifeq ($(TARGET_BUILD_APPS),)
@@ -33,6 +34,10 @@ local_cflags_for_slang += -DTARGET_BUILD_VARIANT=$(TARGET_BUILD_VARIANT)
 
 include $(LOCAL_PATH)/rs_version.mk
 local_cflags_for_slang += $(RS_VERSION_DEFINE)
+
+ifeq ($(SLANG_ENABLE_ASSERTIONS),true)
+local_cflags_for_slang += -D_DEBUG -UNDEBUG
+endif
 
 static_libraries_needed_by_slang := \
 	libLLVMBitWriter_2_9 \
