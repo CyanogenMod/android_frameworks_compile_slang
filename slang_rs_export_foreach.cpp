@@ -84,7 +84,7 @@ std::string listSpecialParameters(unsigned int api) {
   return ret;
 }
 
-};
+}
 
 namespace slang {
 
