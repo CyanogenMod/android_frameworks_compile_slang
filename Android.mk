@@ -157,6 +157,8 @@ LOCAL_SRC_FILES :=	\
 	slang_rs_reflect_utils.cpp \
 	strip_unknown_attributes.cpp
 
+LOCAL_C_INCLUDES += frameworks/compile/libbcc/include
+
 LOCAL_STATIC_LIBRARIES :=	\
 	libslang \
 	$(static_libraries_needed_by_slang)

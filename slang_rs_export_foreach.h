@@ -57,8 +57,9 @@ class RSExportForEach : public RSExportable {
   llvm::SmallVector<const clang::ParmVarDecl*, 16> mIns;
   const clang::ParmVarDecl *mOut;
   const clang::ParmVarDecl *mUsrData;
-  const clang::ParmVarDecl *mX;
-  const clang::ParmVarDecl *mY;
+
+  // Accumulator for metadata bits corresponding to special parameters.
+  unsigned int mSpecialParameterSignatureMetadata;
 
   clang::QualType mResultType;  // return type (if present).
   bool mHasReturnType;  // does this kernel have a return type?
@@ -71,7 +72,7 @@ class RSExportForEach : public RSExportable {
     : RSExportable(Context, RSExportable::EX_FOREACH),
       mName(Name.data(), Name.size()), mParamPacketType(nullptr),
       mOutType(nullptr), numParams(0), mSignatureMetadata(0),
-      mOut(nullptr), mUsrData(nullptr), mX(nullptr), mY(nullptr),
+      mOut(nullptr), mUsrData(nullptr), mSpecialParameterSignatureMetadata(0),
       mResultType(clang::QualType()), mHasReturnType(false),
       mIsKernelStyle(false), mDummyRoot(false) {
   }
@@ -85,9 +86,9 @@ class RSExportForEach : public RSExportable {
   bool validateAndConstructKernelParams(RSContext *Context,
                                         const clang::FunctionDecl *FD);
 
-  bool validateIterationParameters(RSContext *Context,
-                                   const clang::FunctionDecl *FD,
-                                   size_t *IndexOfFirstIterator);
+  bool validateSpecialParameters(RSContext *Context,
+                                 const clang::FunctionDecl *FD,
+                                 size_t *IndexOfFirstSpecialParameter);
 
   bool setSignatureMetadata(RSContext *Context,
                             const clang::FunctionDecl *FD);

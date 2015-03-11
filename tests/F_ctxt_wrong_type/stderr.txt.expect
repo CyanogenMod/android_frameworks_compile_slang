@@ -1,0 +1,1 @@
+F_ctxt_wrong_type.rs:13:53: error: Parameter 'ctxt' must be of type 'rs_kernel_context'. It is of type 'const rs_kernel_context *'.
