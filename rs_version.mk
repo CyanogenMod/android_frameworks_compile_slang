@@ -14,14 +14,7 @@
 # limitations under the License.
 #
 
-ifeq "REL" "$(PLATFORM_VERSION_CODENAME)"
-  RS_VERSION := $(PLATFORM_SDK_VERSION)
-else
-  # Increment by 1 whenever this is not a final release build, since we want to
-  # be able to see the RS version number change during development.
-  # See build/core/version_defaults.mk for more information about this.
-  RS_VERSION := "(1 + $(PLATFORM_SDK_VERSION))"
-endif
+RS_VERSION := 23
 RS_VERSION_DEFINE := -DRS_VERSION=$(RS_VERSION)
 
 # Use RS_VERSION_DEFINE as part of your LOCAL_CFLAGS to have the proper value.
