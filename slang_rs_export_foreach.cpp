@@ -34,6 +34,8 @@
 
 namespace {
 
+const size_t RS_KERNEL_INPUT_LIMIT = 8; // see frameworks/base/libs/rs/cpu_ref/rsCpuCoreRuntime.h
+
 enum SpecialParameterKind {
   SPK_INT,  // 'int' or 'unsigned int'
   SPK_CTXT, // rs_kernel_context
@@ -243,7 +245,17 @@ bool RSExportForEach::validateAndConstructKernelParams(
      *        multi-input feature is officially supported.
      */
     if (Context->getTargetAPI() == SLANG_DEVELOPMENT_TARGET_API || i == 0) {
-      mIns.push_back(PVD);
+      if (i >= RS_KERNEL_INPUT_LIMIT) {
+        Context->ReportError(PVD->getLocation(),
+                             "Invalid parameter '%0' for compute kernel %1(). "
+                             "Kernels targeting SDK levels %2-%3 may not use "
+                             "more than %4 input parameters.") << PVD->getName() <<
+                             FD->getName() << SLANG_MINIMUM_TARGET_API <<
+                             SLANG_MAXIMUM_TARGET_API << int(RS_KERNEL_INPUT_LIMIT);
+
+      } else {
+        mIns.push_back(PVD);
+      }
     } else {
       Context->ReportError(PVD->getLocation(),
                            "Invalid parameter '%0' for compute kernel %1(). "
