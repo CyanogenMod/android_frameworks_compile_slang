@@ -48,23 +48,23 @@ namespace slang {
 
 /* RS_HEADER_ENTRY(name) */
 #define ENUM_RS_HEADER()  \
-  RS_HEADER_ENTRY(rs_allocation_data) \
+  RS_HEADER_ENTRY(rs_allocation) \
   RS_HEADER_ENTRY(rs_atomic) \
-  RS_HEADER_ENTRY(rs_convert) \
+  RS_HEADER_ENTRY(rs_cl) \
   RS_HEADER_ENTRY(rs_core) \
+  RS_HEADER_ENTRY(rs_core_math) \
   RS_HEADER_ENTRY(rs_debug) \
-  RS_HEADER_ENTRY(rs_for_each) \
+  RS_HEADER_ENTRY(rs_element) \
   RS_HEADER_ENTRY(rs_graphics) \
-  RS_HEADER_ENTRY(rs_graphics_types) \
-  RS_HEADER_ENTRY(rs_io) \
   RS_HEADER_ENTRY(rs_math) \
+  RS_HEADER_ENTRY(rs_mesh) \
   RS_HEADER_ENTRY(rs_matrix) \
-  RS_HEADER_ENTRY(rs_object_info) \
-  RS_HEADER_ENTRY(rs_object_types) \
+  RS_HEADER_ENTRY(rs_object) \
+  RS_HEADER_ENTRY(rs_program) \
   RS_HEADER_ENTRY(rs_quaternion) \
+  RS_HEADER_ENTRY(rs_sampler) \
   RS_HEADER_ENTRY(rs_time) \
-  RS_HEADER_ENTRY(rs_value_types) \
-  RS_HEADER_ENTRY(rs_vector_math) \
+  RS_HEADER_ENTRY(rs_types) \
 
 // Returns true if \p Filename ends in ".fs".
 bool SlangRS::isFilterscript(const char *Filename) {
