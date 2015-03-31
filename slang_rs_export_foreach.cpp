@@ -276,12 +276,14 @@ bool RSExportForEach::validateAndConstructKernelParams(
   }
 
   // Check that we have at least one allocation to use for dimensions.
-  if (valid && mIns.empty() && !mHasReturnType) {
+  if (valid && mIns.empty() && !mHasReturnType && Context->getTargetAPI() < SLANG_23_TARGET_API) {
     Context->ReportError(FD->getLocation(),
-                         "Compute kernel %0() must have at least one "
+                         "Compute kernel %0() targeting SDK levels "
+                         "%1-%2 must have at least one "
                          "input parameter or a non-void return "
                          "type")
-        << FD->getName();
+        << FD->getName() << SLANG_MINIMUM_TARGET_API
+        << (SLANG_23_TARGET_API - 1);
     valid = false;
   }
 
