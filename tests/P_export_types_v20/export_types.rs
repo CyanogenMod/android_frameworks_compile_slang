@@ -22,7 +22,6 @@ rs_allocation allocation;
 rs_sampler sampler;
 rs_script script;
 rs_mesh mesh;
-rs_path path;
 rs_program_fragment program_fragment;
 rs_program_vertex program_vertex;
 rs_program_raster program_raster;
