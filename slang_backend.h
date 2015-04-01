@@ -19,7 +19,7 @@
 
 #include "clang/AST/ASTConsumer.h"
 
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 
 #include "llvm/Support/FormattedStream.h"
 
@@ -60,11 +60,11 @@ class Backend : public clang::ASTConsumer {
   // Passes
 
   // Passes apply on function scope in a translation unit
-  llvm::FunctionPassManager *mPerFunctionPasses;
+  llvm::legacy::FunctionPassManager *mPerFunctionPasses;
   // Passes apply on module scope
-  llvm::PassManager *mPerModulePasses;
+  llvm::legacy::PassManager *mPerModulePasses;
   // Passes for code emission
-  llvm::FunctionPassManager *mCodeGenPasses;
+  llvm::legacy::FunctionPassManager *mCodeGenPasses;
 
   llvm::formatted_raw_ostream FormattedOutStream;
 

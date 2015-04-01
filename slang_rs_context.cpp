@@ -132,10 +132,10 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
     //             found
     return false;
 
-  clang::DeclContext::lookup_const_result R = TUDecl->lookup(II);
+  clang::DeclContext::lookup_result R = TUDecl->lookup(II);
   RSExportType *ET = nullptr;
 
-  for (clang::DeclContext::lookup_const_iterator I = R.begin(), E = R.end();
+  for (clang::DeclContext::lookup_iterator I = R.begin(), E = R.end();
        I != E;
        I++) {
     clang::NamedDecl *const ND = *I;
