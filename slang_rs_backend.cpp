@@ -185,7 +185,7 @@ void RSBackend::dumpExportVarInfo(llvm::Module *M) {
   if (mExportVarMetadata == nullptr)
     mExportVarMetadata = M->getOrInsertNamedMetadata(RS_EXPORT_VAR_MN);
 
-  llvm::SmallVector<llvm::Value*, 2> ExportVarInfo;
+  llvm::SmallVector<llvm::Metadata *, 2> ExportVarInfo;
 
   // We emit slot information (#rs_object_slots) for any reference counted
   // RS type or pointer (which can also be bound).
@@ -270,7 +270,7 @@ void RSBackend::dumpExportFunctionInfo(llvm::Module *M) {
     mExportFuncMetadata =
         M->getOrInsertNamedMetadata(RS_EXPORT_FUNC_MN);
 
-  llvm::SmallVector<llvm::Value*, 1> ExportFuncInfo;
+  llvm::SmallVector<llvm::Metadata *, 1> ExportFuncInfo;
 
   for (RSContext::const_export_func_iterator
           I = mContext->export_funcs_begin(),
@@ -415,8 +415,8 @@ void RSBackend::dumpExportForEachInfo(llvm::Module *M) {
         M->getOrInsertNamedMetadata(RS_EXPORT_FOREACH_MN);
   }
 
-  llvm::SmallVector<llvm::Value*, 1> ExportForEachName;
-  llvm::SmallVector<llvm::Value*, 1> ExportForEachInfo;
+  llvm::SmallVector<llvm::Metadata *, 1> ExportForEachName;
+  llvm::SmallVector<llvm::Metadata *, 1> ExportForEachInfo;
 
   for (RSContext::const_export_foreach_iterator
           I = mContext->export_foreach_begin(),
@@ -443,7 +443,7 @@ void RSBackend::dumpExportForEachInfo(llvm::Module *M) {
 }
 
 void RSBackend::dumpExportTypeInfo(llvm::Module *M) {
-  llvm::SmallVector<llvm::Value*, 1> ExportTypeInfo;
+  llvm::SmallVector<llvm::Metadata *, 1> ExportTypeInfo;
 
   for (RSContext::const_export_type_iterator
           I = mContext->export_types_begin(),
@@ -474,7 +474,7 @@ void RSBackend::dumpExportTypeInfo(llvm::Module *M) {
       StructInfoMetadataName.append(ET->getName());
       llvm::NamedMDNode *StructInfoMetadata =
           M->getOrInsertNamedMetadata(StructInfoMetadataName);
-      llvm::SmallVector<llvm::Value*, 3> FieldInfo;
+      llvm::SmallVector<llvm::Metadata *, 3> FieldInfo;
 
       slangAssert(StructInfoMetadata->getNumOperands() == 0 &&
                   "Metadata with same name was created before");

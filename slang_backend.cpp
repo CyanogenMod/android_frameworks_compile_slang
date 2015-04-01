@@ -64,7 +64,7 @@ namespace slang {
 
 void Backend::CreateFunctionPasses() {
   if (!mPerFunctionPasses) {
-    mPerFunctionPasses = new llvm::FunctionPassManager(mpModule);
+    mPerFunctionPasses = new llvm::legacy::FunctionPassManager(mpModule);
     mPerFunctionPasses->add(new llvm::DataLayoutPass());
 
     llvm::PassManagerBuilder PMBuilder;
@@ -75,7 +75,7 @@ void Backend::CreateFunctionPasses() {
 
 void Backend::CreateModulePasses() {
   if (!mPerModulePasses) {
-    mPerModulePasses = new llvm::PassManager();
+    mPerModulePasses = new llvm::legacy::PassManager();
     mPerModulePasses->add(new llvm::DataLayoutPass());
 
     llvm::PassManagerBuilder PMBuilder;
@@ -107,7 +107,7 @@ bool Backend::CreateCodeGenPasses() {
   if (mCodeGenPasses) {
     return true;
   } else {
-    mCodeGenPasses = new llvm::FunctionPassManager(mpModule);
+    mCodeGenPasses = new llvm::legacy::FunctionPassManager(mpModule);
     mCodeGenPasses->add(new llvm::DataLayoutPass());
   }
 
@@ -222,8 +222,7 @@ Backend::Backend(clang::DiagnosticsEngine *DiagEngine,
       mPragmas(Pragmas) {
   FormattedOutStream.setStream(*mpOS,
                                llvm::formatted_raw_ostream::PRESERVE_STREAM);
-  mGen = CreateLLVMCodeGen(mDiagEngine, "", mCodeGenOpts,
-                           mTargetOpts, mLLVMContext);
+  mGen = CreateLLVMCodeGen(mDiagEngine, "", mCodeGenOpts, mLLVMContext);
 }
 
 void Backend::Initialize(clang::ASTContext &Ctx) {
@@ -282,7 +281,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
     for (PragmaList::const_iterator I = mPragmas->begin(), E = mPragmas->end();
          I != E;
          I++) {
-      llvm::SmallVector<llvm::Value*, 2> Pragma;
+      llvm::SmallVector<llvm::Metadata*, 2> Pragma;
       // Name goes first
       Pragma.push_back(llvm::MDString::get(mLLVMContext, I->first));
       // And then value
@@ -335,13 +334,13 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
       break;
     }
     case Slang::OT_LLVMAssembly: {
-      llvm::PassManager *LLEmitPM = new llvm::PassManager();
+      llvm::legacy::PassManager *LLEmitPM = new llvm::legacy::PassManager();
       LLEmitPM->add(llvm::createPrintModulePass(FormattedOutStream));
       LLEmitPM->run(*mpModule);
       break;
     }
     case Slang::OT_Bitcode: {
-      llvm::PassManager *BCEmitPM = new llvm::PassManager();
+      llvm::legacy::PassManager *BCEmitPM = new llvm::legacy::PassManager();
       std::string BCStr;
       llvm::raw_string_ostream Bitcode(BCStr);
       unsigned int TargetAPI = getTargetAPI();
