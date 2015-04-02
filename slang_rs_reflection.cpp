@@ -692,17 +692,18 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
 
   // forEach_*()
   ArgTy Args;
-
-  slangAssert(EF->getNumParameters() > 0 || EF->hasReturn());
+  bool HasAllocation = false; // at least one in/out allocation?
 
   const RSExportForEach::InVec     &Ins     = EF->getIns();
   const RSExportForEach::InTypeVec &InTypes = EF->getInTypes();
   const RSExportType               *OET     = EF->getOutType();
 
   if (Ins.size() == 1) {
+    HasAllocation = true;
     Args.push_back(std::make_pair("Allocation", "ain"));
 
   } else if (Ins.size() > 1) {
+    HasAllocation = true;
     for (RSExportForEach::InIter BI = Ins.begin(), EI = Ins.end(); BI != EI;
          BI++) {
 
@@ -711,8 +712,10 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
     }
   }
 
-  if (EF->hasOut() || EF->hasReturn())
+  if (EF->hasOut() || EF->hasReturn()) {
+    HasAllocation = true;
     Args.push_back(std::make_pair("Allocation", "aout"));
+  }
 
   const RSExportRecordType *ERT = EF->getParamPacketType();
   if (ERT) {
@@ -737,34 +740,36 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
   }
 
   if (mRSContext->getTargetAPI() >= SLANG_JB_MR2_TARGET_API) {
-    startFunction(AM_Public, false, "void", "forEach_" + EF->getName(), Args);
+    if (HasAllocation) {
+      startFunction(AM_Public, false, "void", "forEach_" + EF->getName(), Args);
 
-    mOut.indent() << "forEach_" << EF->getName();
-    mOut << "(";
+      mOut.indent() << "forEach_" << EF->getName();
+      mOut << "(";
 
-    if (Ins.size() == 1) {
-      mOut << "ain, ";
+      if (Ins.size() == 1) {
+        mOut << "ain, ";
 
-    } else if (Ins.size() > 1) {
-      for (RSExportForEach::InIter BI = Ins.begin(), EI = Ins.end(); BI != EI;
-           BI++) {
+      } else if (Ins.size() > 1) {
+        for (RSExportForEach::InIter BI = Ins.begin(), EI = Ins.end(); BI != EI;
+             BI++) {
 
-        mOut << "ain_" << (*BI)->getName().str() << ", ";
+          mOut << "ain_" << (*BI)->getName().str() << ", ";
+        }
       }
+
+      if (EF->hasOut() || EF->hasReturn()) {
+        mOut << "aout, ";
+      }
+
+      if (EF->hasUsrData()) {
+        mOut << Args.back().second << ", ";
+      }
+
+      // No clipped bounds to pass in.
+      mOut << "null);\n";
+
+      endFunction();
     }
-
-    if (EF->hasOut() || EF->hasReturn()) {
-      mOut << "aout, ";
-    }
-
-    if (EF->hasUsrData()) {
-      mOut << Args.back().second << ", ";
-    }
-
-    // No clipped bounds to pass in.
-    mOut << "null);\n";
-
-    endFunction();
 
     // Add the clipped kernel parameters to the Args list.
     Args.push_back(std::make_pair("Script.LaunchOptions", "sc"));
