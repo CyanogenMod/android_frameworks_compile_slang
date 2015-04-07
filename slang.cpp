@@ -731,6 +731,11 @@ bool Slang::compile(
     return false;
   }
 
+  if (mTargetAPI >= SLANG_23_TARGET_API) {
+    LangOpts.NativeHalfType = 1;
+    LangOpts.HalfArgsAndReturns = 1;
+  }
+
   mVerbose = Opts.mVerbose;
 
   // Skip generation of warnings a second time if we are doing more than just
