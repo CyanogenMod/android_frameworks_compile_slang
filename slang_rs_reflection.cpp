@@ -132,7 +132,7 @@ static const char *GetVectorAccessor(unsigned Index) {
 
 static const char *GetPackerAPIName(const RSExportPrimitiveType *EPT) {
   static const char *PrimitiveTypePackerAPINameMap[] = {
-      "",           // DataTypeFloat16
+      "addF16",     // DataTypeFloat16
       "addF32",     // DataTypeFloat32
       "addF64",     // DataTypeFloat64
       "addI8",      // DataTypeSigned8
