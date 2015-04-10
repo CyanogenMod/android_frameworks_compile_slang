@@ -65,7 +65,6 @@ namespace slang {
 void Backend::CreateFunctionPasses() {
   if (!mPerFunctionPasses) {
     mPerFunctionPasses = new llvm::legacy::FunctionPassManager(mpModule);
-    mPerFunctionPasses->add(new llvm::DataLayoutPass());
 
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
@@ -76,7 +75,6 @@ void Backend::CreateFunctionPasses() {
 void Backend::CreateModulePasses() {
   if (!mPerModulePasses) {
     mPerModulePasses = new llvm::legacy::PassManager();
-    mPerModulePasses->add(new llvm::DataLayoutPass());
 
     llvm::PassManagerBuilder PMBuilder;
     PMBuilder.OptLevel = mCodeGenOpts.OptimizationLevel;
@@ -108,7 +106,6 @@ bool Backend::CreateCodeGenPasses() {
     return true;
   } else {
     mCodeGenPasses = new llvm::legacy::FunctionPassManager(mpModule);
-    mCodeGenPasses->add(new llvm::DataLayoutPass());
   }
 
   // Create the TargetMachine for generating code.
@@ -144,7 +141,7 @@ bool Backend::CreateCodeGenPasses() {
   // This is set for the linker (specify how large of the virtual addresses we
   // can access for all unknown symbols.)
   llvm::CodeModel::Model CM;
-  if (mpModule->getDataLayout()->getPointerSize() == 4) {
+  if (mpModule->getDataLayout().getPointerSize() == 4) {
     CM = llvm::CodeModel::Small;
   } else {
     // The target may have pointer size greater than 32 (e.g. x86_64
