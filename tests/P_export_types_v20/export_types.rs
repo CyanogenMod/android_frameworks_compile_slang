@@ -2,6 +2,8 @@
 #pragma version(1)
 #pragma rs java_package_name(foo)
 
+#include "rs_graphics.rsh"
+
 float f = 9.9999f;
 double d = 7.0;
 char c = 'a';
