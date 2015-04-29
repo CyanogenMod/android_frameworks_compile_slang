@@ -3,6 +3,6 @@
 
 void foo() {
   rs_allocation a;
-  rs_mesh m;
-  a = m;
+  rs_element e;
+  a = e;
 }
