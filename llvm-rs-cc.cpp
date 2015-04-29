@@ -160,7 +160,7 @@ static int compileFiles(NamePairList *IOFiles, NamePairList *IOFiles32,
 
     const char *BCOutputFile = DetermineOutputFile(Opts.mBitcodeOutputDir,
                                                    PathSuffix, InputFile,
-                                                   slang::Slang::OT_Bitcode,
+                                                   Opts.mOutputType,
                                                    *SavedStrings);
     const char *OutputFile = BCOutputFile;
 
