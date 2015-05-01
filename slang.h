@@ -32,7 +32,9 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 using llvm::RefCountedBase;
 
+#include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetOptions.h"
+#include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Lex/ModuleLoader.h"
 
 #include "llvm/ADT/StringRef.h"
@@ -81,21 +83,13 @@ class Slang : public clang::ModuleLoader {
   };
 
  private:
-  static clang::LangOptions LangOpts;
-  static clang::CodeGenOptions CodeGenOpts;
-
-  static bool GlobalInitialized;
-
-  static void LLVMErrorHandler(void *UserData, const std::string &Message,
-                               bool GenCrashDialog);
+  // Language options (define the language feature for compiler such as C99)
+  clang::LangOptions LangOpts;
+  // Code generation options for the compiler
+  clang::CodeGenOptions CodeGenOpts;
 
   // Returns true if this is a Filterscript file.
   static bool isFilterscript(const char *Filename);
-
-  bool mInitialized;
-
-  // Diagnostics Mediator (An interface for both Producer and Consumer)
-  std::unique_ptr<clang::Diagnostic> mDiag;
 
   // Diagnostics Engine (Producer and Diagnostics Reporter)
   clang::DiagnosticsEngine *mDiagEngine;
@@ -159,11 +153,6 @@ class Slang : public clang::ModuleLoader {
 
   bool mIsFilterscript;
 
-  // Custom diagnostic identifiers
-  unsigned mDiagErrorInvalidOutputDepParameter;
-  unsigned mDiagErrorODR;
-  unsigned mDiagErrorTargetAPIRange;
-
   // Collect generated filenames (without the .java) for dependency generation
   std::vector<std::string> mGeneratedFileNames;
 
@@ -197,13 +186,12 @@ class Slang : public clang::ModuleLoader {
   inline clang::TargetOptions const &getTargetOptions() const
     { return *mTargetOpts.get(); }
 
-  void initDiagnostic();
   void initPreprocessor();
   void initASTContext();
 
   clang::ASTConsumer *createBackend(const clang::CodeGenOptions &CodeGenOpts,
                                     llvm::raw_ostream *OS,
-                                    Slang::OutputType OT);
+                                    OutputType OT);
 
  public:
   static const llvm::StringRef PragmaMetadataName;
@@ -217,11 +205,10 @@ class Slang : public clang::ModuleLoader {
   static bool IsLocInRSHeaderFile(const clang::SourceLocation &Loc,
                                   const clang::SourceManager &SourceMgr);
 
-  Slang();
-  virtual ~Slang();
+  Slang(uint32_t BitWidth, clang::DiagnosticsEngine *DiagEngine,
+        DiagnosticBuffer *DiagClient);
 
-  void init(uint32_t BitWidth, clang::DiagnosticsEngine *DiagEngine,
-            DiagnosticBuffer *DiagClient);
+  virtual ~Slang();
 
   bool setInputSource(llvm::StringRef InputFile);
 
@@ -234,20 +221,6 @@ class Slang : public clang::ModuleLoader {
   void setOutputType(OutputType OT) { mOT = OT; }
 
   bool setOutput(const char *OutputFile);
-
-  // For use with 64-bit compilation/reflection. This only sets the filename of
-  // the 32-bit bitcode file, and doesn't actually verify it already exists.
-  void setOutput32(const char *OutputFile) {
-    mOutput32FileName = OutputFile;
-  }
-
-  std::string const &getOutputFileName() const {
-    return mOutputFileName;
-  }
-
-  std::string const &getOutput32FileName() const {
-    return mOutput32FileName;
-  }
 
   bool setDepOutput(const char *OutputFile);
 
@@ -274,10 +247,6 @@ class Slang : public clang::ModuleLoader {
 
   void setOptimizationLevel(llvm::CodeGenOpt::Level OptimizationLevel);
 
-  // Reset the slang compiler state such that it can be reused to compile
-  // another file
-  void reset(bool SuppressWarnings = false);
-
   // Compile bunch of RS files given in the llvm-rs-cc arguments. Return true if
   // all given input files are successfully compiled without errors.
   //
@@ -292,7 +261,8 @@ class Slang : public clang::ModuleLoader {
   compile(const std::list<std::pair<const char *, const char *>> &IOFiles64,
           const std::list<std::pair<const char *, const char *>> &IOFiles32,
           const std::list<std::pair<const char *, const char *>> &DepFiles,
-          const RSCCOptions &Opts);
+          const RSCCOptions &Opts,
+          clang::DiagnosticOptions &DiagOpts);
 
   clang::ModuleLoadResult loadModule(clang::SourceLocation ImportLoc,
                                      clang::ModuleIdPath Path,
