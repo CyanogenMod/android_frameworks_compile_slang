@@ -26,7 +26,7 @@
 #include "clang/AST/StmtVisitor.h"
 
 #include "slang_assert.h"
-#include "slang_rs.h"
+#include "slang.h"
 #include "slang_rs_ast_replace.h"
 #include "slang_rs_export_type.h"
 
