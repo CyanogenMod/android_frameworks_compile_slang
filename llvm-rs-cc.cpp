@@ -35,7 +35,6 @@
 #include "slang.h"
 #include "slang_assert.h"
 #include "slang_diagnostic_buffer.h"
-#include "slang_rs.h"
 #include "slang_rs_reflect_utils.h"
 
 #include <list>
@@ -181,7 +180,7 @@ static int compileFiles(NamePairList *IOFiles, NamePairList *IOFiles32,
     IOFiles->push_back(std::make_pair(InputFile, OutputFile));
   }
 
-  std::unique_ptr<slang::SlangRS> Compiler(new slang::SlangRS());
+  std::unique_ptr<slang::Slang> Compiler(new slang::Slang());
   Compiler->init(Opts.mBitWidth, DiagEngine, DiagClient);
   int CompileFailed = !Compiler->compile(*IOFiles, *IOFiles32, DepFiles, Opts);
   // We suppress warnings (via reset) if we are doing a second compilation.

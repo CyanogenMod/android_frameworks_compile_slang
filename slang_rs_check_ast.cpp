@@ -17,7 +17,7 @@
 #include "slang_rs_check_ast.h"
 
 #include "slang_assert.h"
-#include "slang_rs.h"
+#include "slang.h"
 #include "slang_rs_export_foreach.h"
 #include "slang_rs_export_type.h"
 
@@ -218,7 +218,7 @@ void RSCheckAST::ValidateVarDecl(clang::VarDecl *VD) {
 
 
 void RSCheckAST::VisitDeclStmt(clang::DeclStmt *DS) {
-  if (!SlangRS::IsLocInRSHeaderFile(DS->getLocStart(), mSM)) {
+  if (!Slang::IsLocInRSHeaderFile(DS->getLocStart(), mSM)) {
     for (clang::DeclStmt::decl_iterator I = DS->decl_begin(),
                                         E = DS->decl_end();
          I != E;
@@ -259,7 +259,7 @@ void RSCheckAST::VisitExpr(clang::Expr *E) {
   // array accesses rely heavily on them and they are valid.
   E = E->IgnoreImpCasts();
   if (mIsFilterscript &&
-      !SlangRS::IsLocInRSHeaderFile(E->getExprLoc(), mSM) &&
+      !Slang::IsLocInRSHeaderFile(E->getExprLoc(), mSM) &&
       !RSExportType::ValidateType(Context, C, E->getType(), nullptr, E->getExprLoc(),
                                   mTargetAPI, mIsFilterscript)) {
     mValid = false;
@@ -276,7 +276,7 @@ bool RSCheckAST::Validate() {
           DE = TUDecl->decls_end();
        DI != DE;
        DI++) {
-    if (!SlangRS::IsLocInRSHeaderFile(DI->getLocStart(), mSM)) {
+    if (!Slang::IsLocInRSHeaderFile(DI->getLocStart(), mSM)) {
       if (clang::VarDecl *VD = llvm::dyn_cast<clang::VarDecl>(*DI)) {
         ValidateVarDecl(VD);
       } else if (clang::FunctionDecl *FD =
