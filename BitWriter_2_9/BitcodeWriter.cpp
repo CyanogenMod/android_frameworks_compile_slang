@@ -1376,7 +1376,7 @@ static void WriteFunction(const Function &F, llvm_2_9::ValueEnumerator &VE,
 
   bool NeedsMetadataAttachment = false;
 
-  DebugLoc LastDL;
+  MDLocation *LastDL = nullptr;;
 
   // Finally, emit all the instructions, in order.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
@@ -1391,25 +1391,26 @@ static void WriteFunction(const Function &F, llvm_2_9::ValueEnumerator &VE,
       NeedsMetadataAttachment |= I->hasMetadataOtherThanDebugLoc();
 
       // If the instruction has a debug location, emit it.
-      DebugLoc DL = I->getDebugLoc();
-      if (DL.isUnknown()) {
-        // nothing todo.
-      } else if (DL == LastDL) {
+      MDLocation *DL = I->getDebugLoc();
+      if (!DL)
+        continue;
+
+      if (DL == LastDL) {
         // Just repeat the same debug loc as last time.
         Stream.EmitRecord(bitc::FUNC_CODE_DEBUG_LOC_AGAIN, Vals);
-      } else {
-        MDNode *Scope, *IA;
-        DL.getScopeAndInlinedAt(Scope, IA, I->getContext());
-
-        Vals.push_back(DL.getLine());
-        Vals.push_back(DL.getCol());
-        Vals.push_back(VE.getMetadataOrNullID(Scope));
-        Vals.push_back(VE.getMetadataOrNullID(IA));
-        Stream.EmitRecord(FUNC_CODE_DEBUG_LOC_2_7, Vals);
-        Vals.clear();
-
-        LastDL = DL;
+        continue;
       }
+
+      Vals.push_back(DL->getLine());
+      Vals.push_back(DL->getColumn());
+      Vals.push_back(VE.getMetadataOrNullID(DL->getScope()));
+      Vals.push_back(VE.getMetadataOrNullID(DL->getInlinedAt()));
+      Stream.EmitRecord(FUNC_CODE_DEBUG_LOC_2_7, Vals);
+      Vals.clear();
+
+      // Fixme(pirama): The following line is missing from upstream
+      // https://llvm.org/bugs/show_bug.cgi?id=23436
+      LastDL = DL;
     }
 
   // Emit names for all the instructions etc.
