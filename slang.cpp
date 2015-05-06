@@ -787,7 +787,8 @@ bool Slang::compile(
           mRSContext->setRSPackageName(Opts.mRSPackageName);
         }
 
-        RSReflectionJava R(mRSContext, &mGeneratedFileNames,
+        std::vector<std::string> generatedFileNames;
+        RSReflectionJava R(mRSContext, &generatedFileNames,
                            Opts.mJavaReflectionPathBase, getInputFileName(),
                            getOutputFileName(),
                            Opts.mBitcodeStorage == BCST_JAVA_CODE);
@@ -801,7 +802,7 @@ bool Slang::compile(
         }
 
         for (std::vector<std::string>::const_iterator
-                 I = mGeneratedFileNames.begin(), E = mGeneratedFileNames.end();
+                 I = generatedFileNames.begin(), E = generatedFileNames.end();
              I != E;
              I++) {
           std::string ReflectedName = RSSlangReflectUtils::ComputePackagedPath(
