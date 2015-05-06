@@ -144,12 +144,10 @@ TBLGEN_TABLES :=    \
 LOCAL_SRC_FILES :=	\
 	llvm-rs-cc.cpp	\
 	rs_cc_options.cpp \
-	slang_rs.cpp	\
 	slang_rs_ast_replace.cpp	\
 	slang_rs_check_ast.cpp	\
 	slang_rs_context.cpp	\
 	slang_rs_pragma_handler.cpp	\
-	slang_rs_backend.cpp	\
 	slang_rs_exportable.cpp	\
 	slang_rs_export_type.cpp	\
 	slang_rs_export_element.cpp	\
