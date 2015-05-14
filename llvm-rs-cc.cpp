@@ -41,25 +41,23 @@
 #include <set>
 #include <string>
 
-// SaveStringInSet, ExpandArgsFromBuf and ExpandArgv are all copied from
-// $(CLANG_ROOT)/tools/driver/driver.cpp for processing argc/argv passed in
-// main().
-static inline const char *SaveStringInSet(std::set<std::string> &SavedStrings,
-                                          llvm::StringRef S) {
-  return SavedStrings.insert(S).first->c_str();
+namespace {
+class StringSet : public llvm::cl::StringSaver {
+public:
+  const char *SaveString(const char *Str) override {
+    return Strings.insert(Str).first->c_str();
+  }
+
+private:
+  std::set<std::string> Strings;
+};
 }
-static void ExpandArgsFromBuf(const char *Arg,
-                              llvm::SmallVectorImpl<const char*> &ArgVector,
-                              std::set<std::string> &SavedStrings);
-static void ExpandArgv(int argc, const char **argv,
-                       llvm::SmallVectorImpl<const char*> &ArgVector,
-                       std::set<std::string> &SavedStrings);
 
 static const char *DetermineOutputFile(const std::string &OutputDir,
                                        const std::string &PathSuffix,
                                        const char *InputFile,
                                        slang::Slang::OutputType OutputType,
-                                       std::set<std::string> &SavedStrings) {
+                                       StringSet *SavedStrings) {
   if (OutputType == slang::Slang::OT_Nothing)
     return "/dev/null";
 
@@ -111,7 +109,7 @@ static const char *DetermineOutputFile(const std::string &OutputDir,
     }
   }
 
-  return SaveStringInSet(SavedStrings, OutputFile);
+  return SavedStrings->SaveString(OutputFile.c_str());
 }
 
 typedef std::list<std::pair<const char*, const char*> > NamePairList;
@@ -138,7 +136,7 @@ typedef std::list<std::pair<const char*, const char*> > NamePairList;
 static int compileFiles(NamePairList *IOFiles, NamePairList *IOFiles32,
     const llvm::SmallVector<const char*, 16> &Inputs, slang::RSCCOptions &Opts,
     clang::DiagnosticsEngine *DiagEngine, slang::DiagnosticBuffer *DiagClient,
-    std::set<std::string> *SavedStrings) {
+    StringSet *SavedStrings) {
   NamePairList DepFiles;
   std::string PathSuffix = "";
   bool CompileSecondTimeFor64Bit = false;
@@ -160,7 +158,7 @@ static int compileFiles(NamePairList *IOFiles, NamePairList *IOFiles32,
     const char *BCOutputFile = DetermineOutputFile(Opts.mBitcodeOutputDir,
                                                    PathSuffix, InputFile,
                                                    Opts.mOutputType,
-                                                   *SavedStrings);
+                                                   SavedStrings);
     const char *OutputFile = BCOutputFile;
 
     if (Opts.mEmitDependency) {
@@ -169,7 +167,7 @@ static int compileFiles(NamePairList *IOFiles, NamePairList *IOFiles32,
       // because they share the same sources/dependencies.
       const char *DepOutputFile =
           DetermineOutputFile(Opts.mDependencyOutputDir, "", InputFile,
-                              slang::Slang::OT_Dependency, *SavedStrings);
+                              slang::Slang::OT_Dependency, SavedStrings);
       if (Opts.mOutputType == slang::Slang::OT_Dependency) {
         OutputFile = DepOutputFile;
       }
@@ -208,18 +206,18 @@ static void llvm_rs_cc_VersionPrinter() {
 #undef str
 
 int main(int argc, const char **argv) {
-  std::set<std::string> SavedStrings;
-  llvm::SmallVector<const char*, 256> ArgVector;
-  slang::RSCCOptions Opts;
-  llvm::SmallVector<const char*, 16> Inputs;
-  std::string Argv0;
-
   llvm::llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
-  ExpandArgv(argc, argv, ArgVector, SavedStrings);
+  // Populate a vector with the command line arguments, expanding command files
+  // that have been included by via the '@' argument.
+  llvm::SmallVector<const char*, 256> ArgVector;
+  StringSet SavedStrings;  // Keeps track of strings to be destroyed at the end.
+  const auto& ArgsIn(llvm::makeArrayRef(argv, argc));
+  ArgVector.append(ArgsIn.begin(), ArgsIn.end());
+  llvm::cl::ExpandResponseFiles(SavedStrings, llvm::cl::TokenizeGNUCommandLine,
+                                ArgVector, false);
 
-  // Argv0
-  Argv0 = llvm::sys::path::stem(ArgVector[0]);
+  const std::string Argv0 = llvm::sys::path::stem(ArgVector[0]);
 
   // Setup diagnostic engine
   slang::DiagnosticBuffer *DiagClient = new slang::DiagnosticBuffer();
@@ -233,6 +231,8 @@ int main(int argc, const char **argv) {
 
   slang::Slang::GlobalInitialization();
 
+  slang::RSCCOptions Opts;
+  llvm::SmallVector<const char*, 16> Inputs;
   slang::ParseArguments(ArgVector, Inputs, Opts, DiagEngine);
 
   // Exits when there's any error occurred during parsing the arguments
@@ -275,82 +275,4 @@ int main(int argc, const char **argv) {
   }
 
   return CompileFailed;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-// ExpandArgsFromBuf -
-static void ExpandArgsFromBuf(const char *Arg,
-                              llvm::SmallVectorImpl<const char*> &ArgVector,
-                              std::set<std::string> &SavedStrings) {
-  const char *FName = Arg + 1;
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> MBOrErr =
-      llvm::MemoryBuffer::getFile(FName);
-  if (MBOrErr.getError()) {
-    // Unable to open the file
-    ArgVector.push_back(SaveStringInSet(SavedStrings, Arg));
-    return;
-  }
-  std::unique_ptr<llvm::MemoryBuffer> MemBuf = std::move(MBOrErr.get());
-
-  const char *Buf = MemBuf->getBufferStart();
-  char InQuote = ' ';
-  std::string CurArg;
-
-  for (const char *P = Buf; ; ++P) {
-    if (*P == '\0' || (isspace(*P) && InQuote == ' ')) {
-      if (!CurArg.empty()) {
-        if (CurArg[0] != '@') {
-          ArgVector.push_back(SaveStringInSet(SavedStrings, CurArg));
-        } else {
-          ExpandArgsFromBuf(CurArg.c_str(), ArgVector, SavedStrings);
-        }
-
-        CurArg = "";
-      }
-      if (*P == '\0')
-        break;
-      else
-        continue;
-    }
-
-    if (isspace(*P)) {
-      if (InQuote != ' ')
-        CurArg.push_back(*P);
-      continue;
-    }
-
-    if (*P == '"' || *P == '\'') {
-      if (InQuote == *P)
-        InQuote = ' ';
-      else if (InQuote == ' ')
-        InQuote = *P;
-      else
-        CurArg.push_back(*P);
-      continue;
-    }
-
-    if (*P == '\\') {
-      ++P;
-      if (*P != '\0')
-        CurArg.push_back(*P);
-      continue;
-    }
-    CurArg.push_back(*P);
-  }
-}
-
-// ExpandArgsFromBuf -
-static void ExpandArgv(int argc, const char **argv,
-                       llvm::SmallVectorImpl<const char*> &ArgVector,
-                       std::set<std::string> &SavedStrings) {
-  for (int i = 0; i < argc; ++i) {
-    const char *Arg = argv[i];
-    if (Arg[0] != '@') {
-      ArgVector.push_back(SaveStringInSet(SavedStrings, std::string(Arg)));
-      continue;
-    }
-
-    ExpandArgsFromBuf(Arg, ArgVector, SavedStrings);
-  }
 }
