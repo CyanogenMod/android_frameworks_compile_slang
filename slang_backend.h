@@ -21,7 +21,7 @@
 
 #include "llvm/IR/LegacyPassManager.h"
 
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "slang.h"
 #include "slang_pragma_recorder.h"
@@ -30,7 +30,7 @@
 #include "slang_version.h"
 
 namespace llvm {
-  class formatted_raw_ostream;
+  class buffer_ostream;
   class LLVMContext;
   class NamedMDNode;
   class Module;
@@ -75,7 +75,7 @@ class Backend : public clang::ASTConsumer {
   // Passes for code emission
   llvm::legacy::FunctionPassManager *mCodeGenPasses;
 
-  llvm::formatted_raw_ostream FormattedOutStream;
+  llvm::buffer_ostream mBufferOutStream;
 
   void CreateFunctionPasses();
   void CreateModulePasses();
