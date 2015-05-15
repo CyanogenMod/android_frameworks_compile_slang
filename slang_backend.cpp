@@ -205,7 +205,7 @@ bool Backend::CreateCodeGenPasses() {
   if (mOT == Slang::OT_Object) {
     CGFT = llvm::TargetMachine::CGFT_ObjectFile;
   }
-  if (TM->addPassesToEmitFile(*mCodeGenPasses, FormattedOutStream,
+  if (TM->addPassesToEmitFile(*mCodeGenPasses, mBufferOutStream,
                               CGFT, OptLevel)) {
     mDiagEngine.Report(clang::diag::err_fe_unable_to_interface_with_target);
     return false;
@@ -222,7 +222,8 @@ Backend::Backend(RSContext *Context, clang::DiagnosticsEngine *DiagEngine,
                  bool IsFilterscript)
     : ASTConsumer(), mTargetOpts(TargetOpts), mpModule(nullptr), mpOS(OS),
       mOT(OT), mGen(nullptr), mPerFunctionPasses(nullptr),
-      mPerModulePasses(nullptr), mCodeGenPasses(nullptr), mContext(Context),
+      mPerModulePasses(nullptr), mCodeGenPasses(nullptr),
+      mBufferOutStream(*mpOS), mContext(Context),
       mSourceMgr(SourceMgr), mAllowRSPrefix(AllowRSPrefix),
       mIsFilterscript(IsFilterscript), mExportVarMetadata(nullptr),
       mExportFuncMetadata(nullptr), mExportForEachNameMetadata(nullptr),
@@ -231,8 +232,6 @@ Backend::Backend(RSContext *Context, clang::DiagnosticsEngine *DiagEngine,
       mASTChecker(Context, Context->getTargetAPI(), IsFilterscript),
       mLLVMContext(llvm::getGlobalContext()), mDiagEngine(*DiagEngine),
       mCodeGenOpts(CodeGenOpts), mPragmas(Pragmas) {
-  FormattedOutStream.setStream(*mpOS,
-                               llvm::formatted_raw_ostream::PRESERVE_STREAM);
   mGen = CreateLLVMCodeGen(mDiagEngine, "", mCodeGenOpts, mLLVMContext);
 }
 
@@ -252,10 +251,10 @@ void Backend::WrapBitcode(llvm::raw_string_ostream &Bitcode) {
   slangAssert(actualWrapperLen > 0);
 
   // Write out the bitcode wrapper.
-  FormattedOutStream.write(reinterpret_cast<char*>(&wrapper), actualWrapperLen);
+  mBufferOutStream.write(reinterpret_cast<char*>(&wrapper), actualWrapperLen);
 
   // Write out the actual encoded bitcode.
-  FormattedOutStream << Bitcode.str();
+  mBufferOutStream << Bitcode.str();
 }
 
 void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
@@ -342,7 +341,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
     }
     case Slang::OT_LLVMAssembly: {
       llvm::legacy::PassManager *LLEmitPM = new llvm::legacy::PassManager();
-      LLEmitPM->add(llvm::createPrintModulePass(FormattedOutStream));
+      LLEmitPM->add(llvm::createPrintModulePass(mBufferOutStream));
       LLEmitPM->run(*mpModule);
       break;
     }
@@ -391,7 +390,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
     }
   }
 
-  FormattedOutStream.flush();
+  mBufferOutStream.flush();
 }
 
 void Backend::HandleTagDeclDefinition(clang::TagDecl *D) {
