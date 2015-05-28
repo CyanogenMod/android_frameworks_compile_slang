@@ -17,6 +17,8 @@
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
+#include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 
@@ -24,11 +26,11 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 
 #include "llvm/Option/OptTable.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Target/TargetMachine.h"
 
 #include "rs_cc_options.h"
@@ -133,20 +135,15 @@ typedef std::list<std::pair<const char*, const char*> > NamePairList;
  * 32-bit and 64-bit bitcode outputs to be included in the final reflected
  * source code that is emitted.
  */
-static int compileFiles(NamePairList *IOFiles, NamePairList *IOFiles32,
+static void makeFileList(NamePairList *IOFiles, NamePairList *DepFiles,
     const llvm::SmallVector<const char*, 16> &Inputs, slang::RSCCOptions &Opts,
-    clang::DiagnosticsEngine *DiagEngine, slang::DiagnosticBuffer *DiagClient,
     StringSet *SavedStrings) {
-  NamePairList DepFiles;
   std::string PathSuffix = "";
-  bool CompileSecondTimeFor64Bit = false;
-
   // In our mixed 32/64-bit path, we need to suffix our files differently for
   // both 32-bit and 64-bit versions.
   if (Opts.mEmit3264) {
     if (Opts.mBitWidth == 64) {
       PathSuffix = "bc64";
-      CompileSecondTimeFor64Bit = true;
     } else {
       PathSuffix = "bc32";
     }
@@ -172,18 +169,11 @@ static int compileFiles(NamePairList *IOFiles, NamePairList *IOFiles32,
         OutputFile = DepOutputFile;
       }
 
-      DepFiles.push_back(std::make_pair(BCOutputFile, DepOutputFile));
+      DepFiles->push_back(std::make_pair(BCOutputFile, DepOutputFile));
     }
 
     IOFiles->push_back(std::make_pair(InputFile, OutputFile));
   }
-
-  std::unique_ptr<slang::Slang> Compiler(new slang::Slang());
-  Compiler->init(Opts.mBitWidth, DiagEngine, DiagClient);
-  int CompileFailed = !Compiler->compile(*IOFiles, *IOFiles32, DepFiles, Opts);
-  // We suppress warnings (via reset) if we are doing a second compilation.
-  Compiler->reset(CompileSecondTimeFor64Bit);
-  return CompileFailed;
 }
 
 #define str(s) #s
@@ -205,74 +195,94 @@ static void llvm_rs_cc_VersionPrinter() {
 #undef wrap_str
 #undef str
 
+static void LLVMErrorHandler(void *UserData, const std::string &Message,
+                             bool GenCrashDialog) {
+  clang::DiagnosticsEngine *DiagEngine =
+      static_cast<clang::DiagnosticsEngine *>(UserData);
+
+  DiagEngine->Report(clang::diag::err_fe_error_backend) << Message;
+
+  // Run the interrupt handlers to make sure any special cleanups get done, in
+  // particular that we remove files registered with RemoveFileOnSignal.
+  llvm::sys::RunInterruptHandlers();
+
+  exit(1);
+}
+
 int main(int argc, const char **argv) {
-  llvm::llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+  llvm::llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
+  LLVMInitializeARMTargetInfo();
+  LLVMInitializeARMTarget();
+  LLVMInitializeARMAsmPrinter();
 
-  // Populate a vector with the command line arguments, expanding command files
-  // that have been included by via the '@' argument.
-  llvm::SmallVector<const char*, 256> ArgVector;
-  StringSet SavedStrings;  // Keeps track of strings to be destroyed at the end.
-  const auto& ArgsIn(llvm::makeArrayRef(argv, argc));
-  ArgVector.append(ArgsIn.begin(), ArgsIn.end());
-  llvm::cl::ExpandResponseFiles(SavedStrings, llvm::cl::TokenizeGNUCommandLine,
-                                ArgVector, false);
+  StringSet SavedStrings; // Keeps track of strings to be destroyed at the end.
 
-  const std::string Argv0 = llvm::sys::path::stem(ArgVector[0]);
-
-  // Setup diagnostic engine
-  slang::DiagnosticBuffer *DiagClient = new slang::DiagnosticBuffer();
-
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagIDs(
-    new clang::DiagnosticIDs());
-
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
-    new clang::DiagnosticOptions());
-  clang::DiagnosticsEngine DiagEngine(DiagIDs, &*DiagOpts, DiagClient, true);
-
-  slang::Slang::GlobalInitialization();
-
+  // Parse the command line arguments and respond to show help & version
+  // commands.
+  llvm::SmallVector<const char *, 16> Inputs;
   slang::RSCCOptions Opts;
-  llvm::SmallVector<const char*, 16> Inputs;
-  slang::ParseArguments(ArgVector, Inputs, Opts, DiagEngine);
-
-  // Exits when there's any error occurred during parsing the arguments
-  if (DiagEngine.hasErrorOccurred()) {
-    llvm::errs() << DiagClient->str();
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts =
+      new clang::DiagnosticOptions();
+  if (!slang::ParseArguments(llvm::makeArrayRef(argv, argc), Inputs, Opts,
+                             *DiagOpts, SavedStrings)) {
+    // Exits when there's any error occurred during parsing the arguments
     return 1;
   }
-
   if (Opts.mShowHelp) {
     std::unique_ptr<llvm::opt::OptTable> OptTbl(slang::createRSCCOptTable());
+    const std::string Argv0 = llvm::sys::path::stem(argv[0]);
     OptTbl->PrintHelp(llvm::outs(), Argv0.c_str(),
                       "Renderscript source compiler");
     return 0;
   }
-
   if (Opts.mShowVersion) {
     llvm_rs_cc_VersionPrinter();
     return 0;
   }
 
-  // No input file
+  // Initialize the diagnostic objects
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagIDs(
+      new clang::DiagnosticIDs());
+  slang::DiagnosticBuffer DiagsBuffer;
+  clang::DiagnosticsEngine DiagEngine(DiagIDs, &*DiagOpts, &DiagsBuffer, false);
+  clang::ProcessWarningOptions(DiagEngine, *DiagOpts);
+  (void)DiagEngine.setSeverityForGroup(clang::diag::Flavor::WarningOrError,
+                                       "implicit-function-declaration",
+                                       clang::diag::Severity::Error);
+
+  // Report error if no input file
   if (Inputs.empty()) {
     DiagEngine.Report(clang::diag::err_drv_no_input_files);
-    llvm::errs() << DiagClient->str();
+    llvm::errs() << DiagsBuffer.str();
     return 1;
   }
 
-  // Prepare input data for RS compiler.
-  NamePairList IOFiles64;
-  NamePairList IOFiles32;
+  llvm::install_fatal_error_handler(LLVMErrorHandler, &DiagEngine);
 
-  int CompileFailed = compileFiles(&IOFiles32, &IOFiles32, Inputs, Opts,
-                                   &DiagEngine, DiagClient, &SavedStrings);
+  // Compile the 32 bit version
+  NamePairList IOFiles32;
+  NamePairList DepFiles32;
+  makeFileList(&IOFiles32, &DepFiles32, Inputs, Opts, &SavedStrings);
+
+  std::unique_ptr<slang::Slang> Compiler(
+      new slang::Slang(32, &DiagEngine, &DiagsBuffer));
+  int CompileFailed =
+      !Compiler->compile(IOFiles32, IOFiles32, DepFiles32, Opts, *DiagOpts);
 
   // Handle the 64-bit case too!
   if (Opts.mEmit3264 && !CompileFailed) {
     Opts.mBitWidth = 64;
-    CompileFailed = compileFiles(&IOFiles64, &IOFiles32, Inputs, Opts,
-                                 &DiagEngine, DiagClient, &SavedStrings);
+    NamePairList IOFiles64;
+    NamePairList DepFiles64;
+    makeFileList(&IOFiles64, &DepFiles64, Inputs, Opts, &SavedStrings);
+
+    std::unique_ptr<slang::Slang> Compiler(
+        new slang::Slang(64, &DiagEngine, &DiagsBuffer));
+    CompileFailed =
+        !Compiler->compile(IOFiles64, IOFiles32, DepFiles64, Opts, *DiagOpts);
   }
 
+  llvm::errs() << DiagsBuffer.str();
+  llvm::remove_fatal_error_handler();
   return CompileFailed;
 }
