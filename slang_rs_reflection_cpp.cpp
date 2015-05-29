@@ -389,7 +389,7 @@ bool RSReflectionCpp::writeImplementationFile() {
 
     if (ef->hasIns()) {
       // FIXME: Add support for kernels with multiple inputs.
-      assert(ef->getIns().size() == 1);
+      slangAssert(ef->getIns().size() == 1);
       Arguments.push_back(std::make_pair(
           "android::RSC::sp<const android::RSC::Allocation>", "ain"));
     }
@@ -417,7 +417,7 @@ bool RSReflectionCpp::writeImplementationFile() {
     const RSExportForEach::InTypeVec &InTypes = ef->getInTypes();
     if (ef->hasIns()) {
       // FIXME: Add support for kernels with multiple inputs.
-      assert(ef->getIns().size() == 1);
+      slangAssert(ef->getIns().size() == 1);
       genTypeCheck(InTypes[0], "ain");
     }
     if (OET) {
@@ -437,7 +437,7 @@ bool RSReflectionCpp::writeImplementationFile() {
 
     if (ef->hasIns()) {
       // FIXME: Add support for kernels with multiple inputs.
-      assert(ef->getIns().size() == 1);
+      slangAssert(ef->getIns().size() == 1);
       mOut << "ain, ";
     } else {
       mOut << "NULL, ";
