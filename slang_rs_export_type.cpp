@@ -47,7 +47,7 @@ namespace {
  * as specified by the corresponding DataType enum.
  */
 static RSReflectionType gReflectionTypes[] = {
-    {PrimitiveDataType, "FLOAT_16", "F16", 16, "half", "half", "Half", "Half", false},
+    {PrimitiveDataType, "FLOAT_16", "F16", 16, "half", "short", "Half", "Half", false},
     {PrimitiveDataType, "FLOAT_32", "F32", 32, "float", "float", "Float", "Float", false},
     {PrimitiveDataType, "FLOAT_64", "F64", 64, "double", "double", "Double", "Double",false},
     {PrimitiveDataType, "SIGNED_8", "I8", 8, "int8_t", "byte", "Byte", "Byte", false},
@@ -130,6 +130,8 @@ BuiltinInfo BuiltinInfoTable[] = {
      {"long", "long2", "long3", "long4"}},
     {clang::BuiltinType::LongLong, DataTypeSigned64,
      {"long", "long2", "long3", "long4"}},
+    {clang::BuiltinType::Half, DataTypeFloat16,
+     {"half", "half2", "half3", "half4"}},
     {clang::BuiltinType::Float, DataTypeFloat32,
      {"float", "float2", "float3", "float4"}},
     {clang::BuiltinType::Double, DataTypeFloat64,
@@ -1111,6 +1113,10 @@ llvm::Type *RSExportPrimitiveType::convertToLLVMType() const {
   }
 
   switch (mType) {
+    case DataTypeFloat16: {
+      return llvm::Type::getHalfTy(C);
+      break;
+    }
     case DataTypeFloat32: {
       return llvm::Type::getFloatTy(C);
       break;
