@@ -669,6 +669,8 @@ bool Slang::compile(
 
     mIsFilterscript = isFilterscript(InputFile);
 
+    CodeGenOpts.MainFileName = mInputFileName;
+
     if (Slang::compile() > 0)
       return false;
 
