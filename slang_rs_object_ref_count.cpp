@@ -486,6 +486,8 @@ static clang::Stmt *ClearArrayRSObject(
                              C.IntTy,
                              C.getTrivialTypeSourceInfo(C.IntTy),
                              clang::SC_None);
+  // Mark "rsIntIter" as used
+  IIVD->markUsed(C);
   clang::Decl *IID = (clang::Decl *)IIVD;
 
   clang::DeclGroupRef DGR = clang::DeclGroupRef::Create(C, &IID, 1);
@@ -688,6 +690,11 @@ static clang::Stmt *ClearStructRSObject(
       IsArrayType = true;
     }
 
+    // Pass a DeclarationNameInfo with a valid DeclName, since name equality
+    // gets asserted during CodeGen.
+    clang::DeclarationNameInfo FDDeclNameInfo(FD->getDeclName(),
+                                              FD->getLocation());
+
     if (RSExportPrimitiveType::IsRSObjectType(FT)) {
       clang::DeclAccessPair FoundDecl =
           clang::DeclAccessPair::make(FD, clang::AS_none);
@@ -700,7 +707,7 @@ static clang::Stmt *ClearStructRSObject(
                                     clang::SourceLocation(),
                                     FD,
                                     FoundDecl,
-                                    clang::DeclarationNameInfo(),
+                                    FDDeclNameInfo,
                                     nullptr,
                                     OrigType->getCanonicalTypeInternal(),
                                     clang::VK_RValue,
@@ -1233,7 +1240,12 @@ void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
     clang::VarDecl *VD = *I;
     clang::Stmt *RSClearObjectCall = ClearRSObject(VD, VD->getDeclContext());
     if (RSClearObjectCall) {
-      DestructorVisitor DV((*mRSO.begin())->getASTContext(),
+      clang::ASTContext &C = (*mRSO.begin())->getASTContext();
+      // Mark VD as used.  It might be unused, except for the destructor.
+      // 'markUsed' has side-effects that are caused only if VD is not already
+      // used.  Hence no need for an extra check here.
+      VD->markUsed(C);
+      DestructorVisitor DV(C,
                            mCS,
                            RSClearObjectCall,
                            VD->getSourceRange().getBegin());
@@ -1524,6 +1536,10 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
           FD = clang::FunctionDecl::Create(mCtx, DC, loc, loc, N, T, nullptr,
                                            clang::SC_None);
         }
+        // Mark VD as used.  It might be unused, except for the destructor.
+        // 'markUsed' has side-effects that are caused only if VD is not already
+        // used.  Hence no need for an extra check here.
+        VD->markUsed(mCtx);
         // Make sure to create any helpers within the function's DeclContext,
         // not the one associated with the global translation unit.
         clang::Stmt *RSClearObjectCall = Scope::ClearRSObject(VD, FD);
