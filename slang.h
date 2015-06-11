@@ -305,10 +305,16 @@ class Slang : public clang::ModuleLoader {
                          bool Complain = false) override {}
 
   clang::GlobalModuleIndex *
-  loadGlobalModuleIndex(clang::SourceLocation TriggerLoc) override {}
+  loadGlobalModuleIndex(clang::SourceLocation TriggerLoc) override {
+    // We don't support C++ modules for RenderScript.
+    return nullptr;
+  }
 
   bool lookupMissingImports(llvm::StringRef Name,
-                            clang::SourceLocation TriggerLoc) override {}
+                            clang::SourceLocation TriggerLoc) override {
+    // We don't support C++ modules for RenderScript.
+    return false;
+  }
 };
 
 } // namespace slang
