@@ -20,8 +20,7 @@ SLANG_ENABLE_ASSERTIONS := false
 ifeq ($(TARGET_BUILD_APPS),)
 
 
-local_cflags_for_slang := -Wno-sign-promo -Wall -Wno-unused-parameter \
-                          -Wno-return-type -Werror -std=c++11
+local_cflags_for_slang := -Wall -Werror -std=c++11
 ifeq ($(TARGET_BUILD_VARIANT),eng)
 local_cflags_for_slang += -O0
 else
