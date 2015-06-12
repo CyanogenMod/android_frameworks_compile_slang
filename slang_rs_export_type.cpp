@@ -331,7 +331,9 @@ static const clang::Type *TypeExportableHelper(
     case clang::Type::Pointer: {
       if (TopLevelRecord) {
         ReportTypeError(Context, VD, TopLevelRecord,
-            "structures containing pointers cannot be exported: '%0'");
+            "structures containing pointers cannot be used as the type of "
+            "an exported global variable or the parameter to an exported "
+            "function: '%0'");
         return nullptr;
       }
 
@@ -444,6 +446,8 @@ static bool ValidateRSObjectInVarDecl(slang::RSContext *Context,
 // UnionDecl - set if we are in a sub-type of a union.
 // TargetAPI - target SDK API level.
 // IsFilterscript - whether or not we are compiling for Filterscript
+// IsExtern - is this type externally visible (i.e. extern global or parameter
+//                                             to an extern function)
 static bool ValidateTypeHelper(
     slang::RSContext *Context,
     clang::ASTContext &C,
@@ -454,7 +458,8 @@ static bool ValidateTypeHelper(
     bool InCompositeType,
     clang::RecordDecl *UnionDecl,
     unsigned int TargetAPI,
-    bool IsFilterscript) {
+    bool IsFilterscript,
+    bool IsExtern) {
   if ((T = GetCanonicalType(T)) == nullptr)
     return true;
 
@@ -521,7 +526,7 @@ static bool ValidateTypeHelper(
         FT = GetCanonicalType(FT);
 
         if (!ValidateTypeHelper(Context, C, FT, ND, Loc, SPS, true, UnionDecl,
-                                TargetAPI, IsFilterscript)) {
+                                TargetAPI, IsFilterscript, IsExtern)) {
           return false;
         }
       }
@@ -569,12 +574,29 @@ static bool ValidateTypeHelper(
         }
       }
 
+      // Forbid pointers in structures that are externally visible.
+      if (InCompositeType && IsExtern) {
+        if (ND) {
+          Context->ReportError(Loc,
+              "structures containing pointers cannot be used as the type of "
+              "an exported global variable or the parameter to an exported "
+              "function: '%0'")
+            << ND->getName();
+        } else {
+          Context->ReportError(Loc,
+              "structures containing pointers cannot be used as the type of "
+              "an exported global variable or the parameter to an exported "
+              "function");
+        }
+        return false;
+      }
+
       const clang::PointerType *PT = static_cast<const clang::PointerType*>(CTI);
       const clang::Type *PointeeType = GetPointeeType(PT);
 
       return ValidateTypeHelper(Context, C, PointeeType, ND, Loc, SPS,
                                 InCompositeType, UnionDecl, TargetAPI,
-                                IsFilterscript);
+                                IsFilterscript, IsExtern);
     }
 
     case clang::Type::ExtVector: {
@@ -592,14 +614,14 @@ static bool ValidateTypeHelper(
         return false;
       }
       return ValidateTypeHelper(Context, C, ElementType, ND, Loc, SPS, true,
-                                UnionDecl, TargetAPI, IsFilterscript);
+                                UnionDecl, TargetAPI, IsFilterscript, IsExtern);
     }
 
     case clang::Type::ConstantArray: {
       const clang::ConstantArrayType *CAT = static_cast<const clang::ConstantArrayType*>(CTI);
       const clang::Type *ElementType = GetConstantArrayElementType(CAT);
       return ValidateTypeHelper(Context, C, ElementType, ND, Loc, SPS, true,
-                                UnionDecl, TargetAPI, IsFilterscript);
+                                UnionDecl, TargetAPI, IsFilterscript, IsExtern);
     }
 
     default: {
@@ -648,21 +670,31 @@ bool RSExportType::NormalizeType(const clang::Type *&T,
 bool RSExportType::ValidateType(slang::RSContext *Context, clang::ASTContext &C,
                                 clang::QualType QT, clang::NamedDecl *ND,
                                 clang::SourceLocation Loc,
-                                unsigned int TargetAPI, bool IsFilterscript) {
+                                unsigned int TargetAPI, bool IsFilterscript,
+                                bool IsExtern) {
   const clang::Type *T = QT.getTypePtr();
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
+  // If this is an externally visible variable declaration, we check if the
+  // type is able to be exported first.
+  if (auto VD = llvm::dyn_cast<clang::VarDecl>(ND)) {
+    if (VD->getFormalLinkage() == clang::ExternalLinkage) {
+      if (!TypeExportable(T, Context, VD)) {
+        return false;
+      }
+    }
+  }
   return ValidateTypeHelper(Context, C, T, ND, Loc, SPS, false, nullptr, TargetAPI,
-                            IsFilterscript);
-  return true;
+                            IsFilterscript, IsExtern);
 }
 
 bool RSExportType::ValidateVarDecl(slang::RSContext *Context,
                                    clang::VarDecl *VD, unsigned int TargetAPI,
                                    bool IsFilterscript) {
   return ValidateType(Context, VD->getASTContext(), VD->getType(), VD,
-                      VD->getLocation(), TargetAPI, IsFilterscript);
+                      VD->getLocation(), TargetAPI, IsFilterscript,
+                      (VD->getFormalLinkage() == clang::ExternalLinkage));
 }
 
 const clang::Type

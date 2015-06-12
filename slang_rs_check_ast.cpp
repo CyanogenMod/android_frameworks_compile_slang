@@ -148,26 +148,23 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
     return;
   }
 
-  if (mIsFilterscript) {
-    // Validate parameters for Filterscript.
-    size_t numParams = FD->getNumParams();
+  clang::QualType resultType = FD->getReturnType().getCanonicalType();
+  bool isExtern = (FD->getFormalLinkage() == clang::ExternalLinkage);
 
-    clang::QualType resultType = FD->getReturnType().getCanonicalType();
+  // We use FD as our NamedDecl in the case of a bad return type.
+  if (!RSExportType::ValidateType(Context, C, resultType, FD,
+                                  FD->getLocStart(), mTargetAPI,
+                                  mIsFilterscript, isExtern)) {
+    mValid = false;
+  }
 
-    // We use FD as our NamedDecl in the case of a bad return type.
-    if (!RSExportType::ValidateType(Context, C, resultType, FD,
-                                    FD->getLocStart(), mTargetAPI,
-                                    mIsFilterscript)) {
+  size_t numParams = FD->getNumParams();
+  for (size_t i = 0; i < numParams; i++) {
+    clang::ParmVarDecl *PVD = FD->getParamDecl(i);
+    clang::QualType QT = PVD->getType().getCanonicalType();
+    if (!RSExportType::ValidateType(Context, C, QT, PVD, PVD->getLocStart(),
+                                    mTargetAPI, mIsFilterscript, isExtern)) {
       mValid = false;
-    }
-
-    for (size_t i = 0; i < numParams; i++) {
-      clang::ParmVarDecl *PVD = FD->getParamDecl(i);
-      clang::QualType QT = PVD->getType().getCanonicalType();
-      if (!RSExportType::ValidateType(Context, C, QT, PVD, PVD->getLocStart(),
-                                      mTargetAPI, mIsFilterscript)) {
-        mValid = false;
-      }
     }
   }
 
@@ -258,10 +255,14 @@ void RSCheckAST::VisitExpr(clang::Expr *E) {
   // First we skip implicit casts (things like function calls and explicit
   // array accesses rely heavily on them and they are valid.
   E = E->IgnoreImpCasts();
+
+  // Expressions at this point in the checker are not externally visible.
+  static const bool kIsExtern = false;
+
   if (mIsFilterscript &&
       !Slang::IsLocInRSHeaderFile(E->getExprLoc(), mSM) &&
       !RSExportType::ValidateType(Context, C, E->getType(), nullptr, E->getExprLoc(),
-                                  mTargetAPI, mIsFilterscript)) {
+                                  mTargetAPI, mIsFilterscript, kIsExtern)) {
     mValid = false;
   } else {
     // Only visit sub-expressions if we haven't already seen a violation.
