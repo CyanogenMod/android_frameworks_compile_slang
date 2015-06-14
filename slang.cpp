@@ -32,13 +32,11 @@
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemOptions.h"
-#include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
 
-#include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendOptions.h"
@@ -78,7 +76,6 @@
 #include "slang_assert.h"
 #include "slang_backend.h"
 
-#include "slang_backend.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
 
@@ -121,14 +118,6 @@ namespace slang {
   RS_HEADER_ENTRY(rs_vector_math) \
 
 
-bool Slang::GlobalInitialized = false;
-
-// Language option (define the language feature for compiler such as C99)
-clang::LangOptions Slang::LangOpts;
-
-// Code generation option for the compiler
-clang::CodeGenOptions Slang::CodeGenOpts;
-
 // The named of metadata node that pragma resides (should be synced with
 // bcc.cpp)
 const llvm::StringRef Slang::PragmaMetadataName = "#pragma";
@@ -155,36 +144,6 @@ OpenOutputFile(const char *OutputFile,
     << OutputFile << EC.message();
 
   return nullptr;
-}
-
-void Slang::GlobalInitialization() {
-  if (!GlobalInitialized) {
-
-    LLVMInitializeARMTargetInfo();
-    LLVMInitializeARMTarget();
-    LLVMInitializeARMAsmPrinter();
-
-    // Please refer to include/clang/Basic/LangOptions.h to setup
-    // the options.
-    LangOpts.RTTI = 0;  // Turn off the RTTI information support
-    LangOpts.C99 = 1;
-    LangOpts.Renderscript = 1;
-    LangOpts.LaxVectorConversions = 0;  // Do not bitcast vectors!
-    LangOpts.CharIsSigned = 1;  // Signed char is our default.
-
-    CodeGenOpts.OptimizationLevel = 3;
-
-    GlobalInitialized = true;
-  }
-}
-
-void Slang::LLVMErrorHandler(void *UserData, const std::string &Message,
-                             bool GenCrashDialog) {
-  clang::DiagnosticsEngine* DiagEngine =
-    static_cast<clang::DiagnosticsEngine *>(UserData);
-
-  DiagEngine->Report(clang::diag::err_fe_error_backend) << Message;
-  exit(1);
 }
 
 void Slang::createTarget(uint32_t BitWidth) {
@@ -268,18 +227,32 @@ void Slang::createASTContext() {
 
 clang::ASTConsumer *
 Slang::createBackend(const clang::CodeGenOptions &CodeGenOpts,
-                     llvm::raw_ostream *OS, Slang::OutputType OT) {
+                     llvm::raw_ostream *OS, OutputType OT) {
   return new Backend(mRSContext, &getDiagnostics(), CodeGenOpts,
                      getTargetOptions(), &mPragmas, OS, OT, getSourceManager(),
                      mAllowRSPrefix, mIsFilterscript);
 }
 
-Slang::Slang()
-    : mInitialized(false), mDiagClient(nullptr),
+Slang::Slang(uint32_t BitWidth, clang::DiagnosticsEngine *DiagEngine,
+             DiagnosticBuffer *DiagClient)
+    : mDiagEngine(DiagEngine), mDiagClient(DiagClient),
       mTargetOpts(new clang::TargetOptions()), mOT(OT_Default),
       mRSContext(nullptr), mAllowRSPrefix(false), mTargetAPI(0),
       mVerbose(false), mIsFilterscript(false) {
-  GlobalInitialization();
+  // Please refer to include/clang/Basic/LangOptions.h to setup
+  // the options.
+  LangOpts.RTTI = 0;  // Turn off the RTTI information support
+  LangOpts.LineComment = 1;
+  LangOpts.C99 = 1;
+  LangOpts.Renderscript = 1;
+  LangOpts.LaxVectorConversions = 0;  // Do not bitcast vectors!
+  LangOpts.CharIsSigned = 1;  // Signed char is our default.
+
+  CodeGenOpts.OptimizationLevel = 3;
+
+  createTarget(BitWidth);
+  createFileManager();
+  createSourceManager();
 }
 
 Slang::~Slang() {
@@ -289,24 +262,6 @@ Slang::~Slang() {
        I != E; I++) {
     delete I->getValue().first;
   }
-}
-
-void Slang::init(uint32_t BitWidth, clang::DiagnosticsEngine *DiagEngine,
-                 DiagnosticBuffer *DiagClient) {
-  if (mInitialized)
-    return;
-
-  mDiagEngine = DiagEngine;
-  mDiagClient = DiagClient;
-  mDiag.reset(new clang::Diagnostic(mDiagEngine));
-  initDiagnostic();
-  llvm::install_fatal_error_handler(LLVMErrorHandler, mDiagEngine);
-
-  createTarget(BitWidth);
-  createFileManager();
-  createSourceManager();
-
-  mInitialized = true;
 }
 
 clang::ModuleLoadResult Slang::loadModule(
@@ -474,30 +429,6 @@ void Slang::setOptimizationLevel(llvm::CodeGenOpt::Level OptimizationLevel) {
   CodeGenOpts.OptimizationLevel = OptimizationLevel;
 }
 
-void Slang::reset(bool SuppressWarnings) {
-  delete mRSContext;
-  mRSContext = nullptr;
-  mGeneratedFileNames.clear();
-
-  // Always print diagnostics if we had an error occur, but don't print
-  // warnings if we suppressed them (i.e. we are doing the 64-bit compile after
-  // an existing 32-bit compile).
-  //
-  // TODO: This should really be removing duplicate identical warnings between
-  // the 32-bit and 64-bit compiles, but that is a more substantial feature.
-  // Bug: 17052573
-  if (!SuppressWarnings || mDiagEngine->hasErrorOccurred()) {
-    llvm::errs() << mDiagClient->str();
-  }
-  mDiagEngine->Reset();
-  mDiagClient->reset();
-
-  // remove fatal error handler.  slang::init needs to be called before another
-  // compilation, which will re-install the error handler.
-  llvm::remove_fatal_error_handler();
-}
-
-// Returns true if \p Filename ends in ".fs".
 bool Slang::isFilterscript(const char *Filename) {
   const char *c = strrchr(Filename, '.');
   if (c && !strncmp(FS_SUFFIX, c + 1, strlen(FS_SUFFIX) + 1)) {
@@ -513,8 +444,8 @@ bool Slang::generateJavaBitcodeAccessor(const std::string &OutputPathBase,
   RSSlangReflectUtils::BitCodeAccessorContext BCAccessorContext;
 
   BCAccessorContext.rsFileName = getInputFileName().c_str();
-  BCAccessorContext.bc32FileName = getOutput32FileName().c_str();
-  BCAccessorContext.bc64FileName = getOutputFileName().c_str();
+  BCAccessorContext.bc32FileName = mOutput32FileName.c_str();
+  BCAccessorContext.bc64FileName = mOutputFileName.c_str();
   BCAccessorContext.reflectPath = OutputPathBase.c_str();
   BCAccessorContext.packageName = PackageName.c_str();
   BCAccessorContext.licenseNote = LicenseNote;
@@ -589,9 +520,13 @@ bool Slang::checkODR(const char *CurInputFile) {
       }
 
       if (!PassODR) {
-        getDiagnostics().Report(mDiagErrorODR) << Reflected->getName()
-                                               << getInputFileName()
-                                               << RD->getValue().second;
+        unsigned DiagID = mDiagEngine->getCustomDiagID(
+            clang::DiagnosticsEngine::Error,
+            "type '%0' in different translation unit (%1 v.s. %2) "
+            "has incompatible type definition");
+        getDiagnostics().Report(DiagID) << Reflected->getName()
+                                        << getInputFileName()
+                                        << RD->getValue().second;
         return false;
       }
     } else {
@@ -607,39 +542,6 @@ bool Slang::checkODR(const char *CurInputFile) {
     }
   }
   return true;
-}
-
-void Slang::initDiagnostic() {
-  clang::DiagnosticsEngine &DiagEngine = getDiagnostics();
-  const auto Flavor = clang::diag::Flavor::WarningOrError;
-
-  if (DiagEngine.setSeverityForGroup(Flavor, "implicit-function-declaration",
-                                     clang::diag::Severity::Error)) {
-    DiagEngine.Report(clang::diag::warn_unknown_diag_option)
-      << /* clang::diag::Flavor::WarningOrError */ 0
-      << "implicit-function-declaration";
-  }
-
-  DiagEngine.setSeverity(
-    clang::diag::ext_typecheck_convert_discards_qualifiers,
-    clang::diag::Severity::Error,
-    clang::SourceLocation());
-
-  mDiagErrorInvalidOutputDepParameter =
-    DiagEngine.getCustomDiagID(
-      clang::DiagnosticsEngine::Error,
-      "invalid parameter for output dependencies files.");
-
-  mDiagErrorODR =
-    DiagEngine.getCustomDiagID(
-      clang::DiagnosticsEngine::Error,
-      "type '%0' in different translation unit (%1 v.s. %2) "
-      "has incompatible type definition");
-
-  mDiagErrorTargetAPIRange =
-    DiagEngine.getCustomDiagID(
-      clang::DiagnosticsEngine::Error,
-      "target API level '%0' is out of range ('%1' - '%2')");
 }
 
 void Slang::initPreprocessor() {
@@ -687,12 +589,16 @@ bool Slang::compile(
     const std::list<std::pair<const char*, const char*> > &IOFiles64,
     const std::list<std::pair<const char*, const char*> > &IOFiles32,
     const std::list<std::pair<const char*, const char*> > &DepFiles,
-    const RSCCOptions &Opts) {
+    const RSCCOptions &Opts,
+    clang::DiagnosticOptions &DiagOpts) {
   if (IOFiles32.empty())
     return true;
 
   if (Opts.mEmitDependency && (DepFiles.size() != IOFiles32.size())) {
-    getDiagnostics().Report(mDiagErrorInvalidOutputDepParameter);
+    unsigned DiagID = mDiagEngine->getCustomDiagID(
+        clang::DiagnosticsEngine::Error,
+        "invalid parameter for output dependencies files.");
+    getDiagnostics().Report(DiagID);
     return false;
   }
 
@@ -705,10 +611,6 @@ bool Slang::compile(
 
   const char *InputFile, *Output64File, *Output32File, *BCOutputFile,
              *DepOutputFile;
-  std::list<std::pair<const char*, const char*> >::const_iterator
-      IOFile64Iter = IOFiles64.begin(),
-      IOFile32Iter = IOFiles32.begin(),
-      DepFileIter = DepFiles.begin();
 
   setIncludePaths(Opts.mIncludePaths);
   setOutputType(Opts.mOutputType);
@@ -726,8 +628,11 @@ bool Slang::compile(
   if (mTargetAPI != SLANG_DEVELOPMENT_TARGET_API &&
       (mTargetAPI < SLANG_MINIMUM_TARGET_API ||
        mTargetAPI > SLANG_MAXIMUM_TARGET_API)) {
-    getDiagnostics().Report(mDiagErrorTargetAPIRange) << mTargetAPI
-        << SLANG_MINIMUM_TARGET_API << SLANG_MAXIMUM_TARGET_API;
+    unsigned DiagID = mDiagEngine->getCustomDiagID(
+        clang::DiagnosticsEngine::Error,
+        "target API level '%0' is out of range ('%1' - '%2')");
+    getDiagnostics().Report(DiagID) << mTargetAPI << SLANG_MINIMUM_TARGET_API
+                                    << SLANG_MAXIMUM_TARGET_API;
     return false;
   }
 
@@ -742,15 +647,15 @@ bool Slang::compile(
   // a single pass over the input file.
   bool SuppressAllWarnings = (Opts.mOutputType != Slang::OT_Dependency);
 
-  bool CompileSecondTimeFor64Bit = Opts.mEmit3264 && Opts.mBitWidth == 64;
+  std::list<std::pair<const char*, const char*> >::const_iterator
+      IOFile64Iter = IOFiles64.begin(),
+      IOFile32Iter = IOFiles32.begin(),
+      DepFileIter = DepFiles.begin();
 
   for (unsigned i = 0, e = IOFiles32.size(); i != e; i++) {
     InputFile = IOFile64Iter->first;
     Output64File = IOFile64Iter->second;
     Output32File = IOFile32Iter->second;
-
-    // We suppress warnings (via reset) if we are doing a second compilation.
-    reset(CompileSecondTimeFor64Bit);
 
     if (!setInputSource(InputFile))
       return false;
@@ -758,7 +663,9 @@ bool Slang::compile(
     if (!setOutput(Output64File))
       return false;
 
-    setOutput32(Output32File);
+    // For use with 64-bit compilation/reflection. This only sets the filename of
+    // the 32-bit bitcode file, and doesn't actually verify it already exists.
+    mOutput32FileName = Output32File;
 
     mIsFilterscript = isFilterscript(InputFile);
 
@@ -781,7 +688,7 @@ bool Slang::compile(
 
       if (Opts.mBitcodeStorage == BCST_CPP_CODE) {
         const std::string &outputFileName = (Opts.mBitWidth == 64) ?
-            getOutputFileName() : getOutput32FileName();
+                                            mOutputFileName : mOutput32FileName;
         RSReflectionCpp R(mRSContext, Opts.mJavaReflectionPathBase,
                           getInputFileName(), outputFileName);
         if (!R.reflect()) {
@@ -795,7 +702,7 @@ bool Slang::compile(
         std::vector<std::string> generatedFileNames;
         RSReflectionJava R(mRSContext, &generatedFileNames,
                            Opts.mJavaReflectionPathBase, getInputFileName(),
-                           getOutputFileName(),
+                           mOutputFileName,
                            Opts.mBitcodeStorage == BCST_JAVA_CODE);
         if (!R.reflect()) {
           // TODO Is this needed or will the error message have been printed
@@ -853,7 +760,6 @@ bool Slang::compile(
     IOFile64Iter++;
     IOFile32Iter++;
   }
-
   return true;
 }
 
