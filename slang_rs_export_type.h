@@ -237,7 +237,7 @@ class RSExportType : public RSExportable {
   static bool ValidateType(slang::RSContext *Context, clang::ASTContext &C,
                            clang::QualType QT, clang::NamedDecl *ND,
                            clang::SourceLocation Loc, unsigned int TargetAPI,
-                           bool IsFilterscript);
+                           bool IsFilterscript, bool IsExtern);
 
   // This function ensures that the VarDecl can be properly handled by RS.
   // If it cannot, this function returns false. Otherwise it returns true.
