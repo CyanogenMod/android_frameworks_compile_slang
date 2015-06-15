@@ -508,12 +508,7 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
 
       RSExportType *ET = RSExportType::Create(Context, T.getTypePtr());
 
-      if (ET == nullptr) {
-        fprintf(stderr, "Failed to export the function %s. There's at least "
-                        "one parameter whose type is not supported by the "
-                        "reflection\n", FE->getName().c_str());
-        return nullptr;
-      }
+      slangAssert(ET && "Failed to export a kernel");
 
       slangAssert((ET->getClass() == RSExportType::ExportClassRecord) &&
                   "Parameter packet must be a record");
