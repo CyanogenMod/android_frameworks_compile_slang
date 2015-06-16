@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "clang/AST/Attr.h"
+
 #include "slang_rs_check_ast.h"
 
 #include "slang_assert.h"
@@ -148,6 +150,16 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
     return;
   }
 
+  // Validate that the kernel attribute is not used with static.
+  if (FD->hasAttr<clang::KernelAttr>() &&
+      FD->getStorageClass() == clang::SC_Static) {
+    Context->ReportError(FD->getLocation(),
+                         "Invalid use of attribute kernel with "
+                         "static function declaration: %0")
+        << FD->getName();
+    mValid = false;
+  }
+
   clang::QualType resultType = FD->getReturnType().getCanonicalType();
   bool isExtern = (FD->getFormalLinkage() == clang::ExternalLinkage);
 
@@ -169,7 +181,7 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
   }
 
   bool saveKernel = mInKernel;
-  mInKernel = RSExportForEach::isRSForEachFunc(mTargetAPI, Context, FD);
+  mInKernel = RSExportForEach::isRSForEachFunc(mTargetAPI, FD);
 
   if (clang::Stmt *Body = FD->getBody()) {
     Visit(Body);

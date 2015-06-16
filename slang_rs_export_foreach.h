@@ -190,7 +190,7 @@ class RSExportForEach : public RSExportable {
   static bool isGraphicsRootRSFunc(unsigned int targetAPI,
                                    const clang::FunctionDecl *FD);
 
-  static bool isRSForEachFunc(unsigned int targetAPI, slang::RSContext *Context,
+  static bool isRSForEachFunc(unsigned int targetAPI,
                               const clang::FunctionDecl *FD);
 
   inline static bool isSpecialRSFunc(unsigned int targetAPI,
