@@ -101,7 +101,7 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
   if (RSExportForEach::isSpecialRSFunc(mTargetAPI, FD)) {
     // Do not reflect specialized functions like init, dtor, or graphics root.
     return RSExportForEach::validateSpecialFuncDecl(mTargetAPI, this, FD);
-  } else if (RSExportForEach::isRSForEachFunc(mTargetAPI, this, FD)) {
+  } else if (RSExportForEach::isRSForEachFunc(mTargetAPI, FD)) {
     RSExportForEach *EFE = RSExportForEach::Create(this, FD);
     if (EFE == nullptr)
       return false;
