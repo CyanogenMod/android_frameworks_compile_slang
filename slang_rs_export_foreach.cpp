@@ -30,6 +30,7 @@
 #include "slang_assert.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_type.h"
+#include "slang_rs_special_func.h"
 #include "slang_version.h"
 
 namespace {
@@ -86,7 +87,14 @@ std::string listSpecialParameters(unsigned int api) {
   return ret;
 }
 
+bool isRootRSFunc(const clang::FunctionDecl *FD) {
+  if (!FD) {
+    return false;
+  }
+  return FD->getName().equals("root");
 }
+
+} // end anonymous namespace
 
 namespace slang {
 
@@ -551,32 +559,6 @@ RSExportForEach *RSExportForEach::CreateDummyRoot(RSContext *Context) {
   return FE;
 }
 
-bool RSExportForEach::isGraphicsRootRSFunc(unsigned int targetAPI,
-                                           const clang::FunctionDecl *FD) {
-  if (FD->hasAttr<clang::KernelAttr>()) {
-    return false;
-  }
-
-  if (!isRootRSFunc(FD)) {
-    return false;
-  }
-
-  if (FD->getNumParams() == 0) {
-    // Graphics root function
-    return true;
-  }
-
-  // Check for legacy graphics root function (with single parameter).
-  if ((targetAPI < SLANG_ICS_TARGET_API) && (FD->getNumParams() == 1)) {
-    const clang::QualType &IntType = FD->getASTContext().IntTy;
-    if (FD->getReturnType().getCanonicalType() == IntType) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 bool RSExportForEach::isRSForEachFunc(unsigned int targetAPI,
                                       const clang::FunctionDecl *FD) {
   slangAssert(FD);
@@ -586,7 +568,7 @@ bool RSExportForEach::isRSForEachFunc(unsigned int targetAPI,
     return true;
   }
 
-  if (isGraphicsRootRSFunc(targetAPI, FD)) {
+  if (RSSpecialFunc::isGraphicsRootRSFunc(targetAPI, FD)) {
     return false;
   }
 
@@ -612,59 +594,6 @@ bool RSExportForEach::isRSForEachFunc(unsigned int targetAPI,
   }
 
   return false;
-}
-
-bool
-RSExportForEach::validateSpecialFuncDecl(unsigned int targetAPI,
-                                         slang::RSContext *Context,
-                                         clang::FunctionDecl const *FD) {
-  slangAssert(Context && FD);
-  bool valid = true;
-  const clang::ASTContext &C = FD->getASTContext();
-  const clang::QualType &IntType = FD->getASTContext().IntTy;
-
-  if (isGraphicsRootRSFunc(targetAPI, FD)) {
-    if ((targetAPI < SLANG_ICS_TARGET_API) && (FD->getNumParams() == 1)) {
-      // Legacy graphics root function
-      const clang::ParmVarDecl *PVD = FD->getParamDecl(0);
-      clang::QualType QT = PVD->getType().getCanonicalType();
-      if (QT != IntType) {
-        Context->ReportError(PVD->getLocation(),
-                             "invalid parameter type for legacy "
-                             "graphics root() function: %0")
-            << PVD->getType();
-        valid = false;
-      }
-    }
-
-    // Graphics root function, so verify that it returns an int
-    if (FD->getReturnType().getCanonicalType() != IntType) {
-      Context->ReportError(FD->getLocation(),
-                           "root() is required to return "
-                           "an int for graphics usage");
-      valid = false;
-    }
-  } else if (isInitRSFunc(FD) || isDtorRSFunc(FD)) {
-    if (FD->getNumParams() != 0) {
-      Context->ReportError(FD->getLocation(),
-                           "%0(void) is required to have no "
-                           "parameters")
-          << FD->getName();
-      valid = false;
-    }
-
-    if (FD->getReturnType().getCanonicalType() != C.VoidTy) {
-      Context->ReportError(FD->getLocation(),
-                           "%0(void) is required to have a void "
-                           "return type")
-          << FD->getName();
-      valid = false;
-    }
-  } else {
-    slangAssert(false && "must be called on root, init or .rs.dtor function!");
-  }
-
-  return valid;
 }
 
 }  // namespace slang
