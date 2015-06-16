@@ -678,7 +678,7 @@ bool RSExportType::ValidateType(slang::RSContext *Context, clang::ASTContext &C,
 
   // If this is an externally visible variable declaration, we check if the
   // type is able to be exported first.
-  if (auto VD = llvm::dyn_cast<clang::VarDecl>(ND)) {
+  if (auto VD = llvm::dyn_cast_or_null<clang::VarDecl>(ND)) {
     if (VD->getFormalLinkage() == clang::ExternalLinkage) {
       if (!TypeExportable(T, Context, VD)) {
         return false;
