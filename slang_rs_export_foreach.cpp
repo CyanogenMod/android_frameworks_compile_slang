@@ -578,23 +578,11 @@ bool RSExportForEach::isGraphicsRootRSFunc(unsigned int targetAPI,
 }
 
 bool RSExportForEach::isRSForEachFunc(unsigned int targetAPI,
-                                      slang::RSContext* Context,
                                       const clang::FunctionDecl *FD) {
-  slangAssert(Context && FD);
-  bool hasKernelAttr = FD->hasAttr<clang::KernelAttr>();
-
-  if (FD->getStorageClass() == clang::SC_Static) {
-    if (hasKernelAttr) {
-      Context->ReportError(FD->getLocation(),
-                           "Invalid use of attribute kernel with "
-                           "static function declaration: %0")
-          << FD->getName();
-    }
-    return false;
-  }
+  slangAssert(FD);
 
   // Anything tagged as a kernel is definitely used with ForEach.
-  if (hasKernelAttr) {
+  if (FD->hasAttr<clang::KernelAttr>()) {
     return true;
   }
 
