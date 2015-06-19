@@ -14,7 +14,18 @@
 # limitations under the License.
 #
 LOCAL_PATH := $(call my-dir)
-SLANG_ENABLE_ASSERTIONS := false
+
+FORCE_BUILD_LLVM_DISABLE_NDEBUG ?= false
+# Legality check: FORCE_BUILD_LLVM_DISABLE_NDEBUG should consist of one word -- either "true" or "false".
+ifneq "$(words $(FORCE_BUILD_LLVM_DISABLE_NDEBUG))$(words $(filter-out true false,$(FORCE_BUILD_LLVM_DISABLE_NDEBUG)))" "10"
+  $(error FORCE_BUILD_LLVM_DISABLE_NDEBUG may only be true, false, or unset)
+endif
+
+FORCE_BUILD_LLVM_DEBUG ?= false
+# Legality check: FORCE_BUILD_LLVM_DEBUG should consist of one word -- either "true" or "false".
+ifneq "$(words $(FORCE_BUILD_LLVM_DEBUG))$(words $(filter-out true false,$(FORCE_BUILD_LLVM_DEBUG)))" "10"
+  $(error FORCE_BUILD_LLVM_DEBUG may only be true, false, or unset)
+endif
 
 # The prebuilt tools should be used when we are doing app-only build.
 ifeq ($(TARGET_BUILD_APPS),)
@@ -33,10 +44,6 @@ local_cflags_for_slang += -DTARGET_BUILD_VARIANT=$(TARGET_BUILD_VARIANT)
 
 include $(LOCAL_PATH)/rs_version.mk
 local_cflags_for_slang += $(RS_VERSION_DEFINE)
-
-ifeq ($(SLANG_ENABLE_ASSERTIONS),true)
-local_cflags_for_slang += -D_DEBUG -UNDEBUG
-endif
 
 static_libraries_needed_by_slang := \
 	libLLVMBitWriter_2_9 \
