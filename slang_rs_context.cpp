@@ -39,6 +39,7 @@
 #include "slang_rs_exportable.h"
 #include "slang_rs_pragma_handler.h"
 #include "slang_rs_reflection.h"
+#include "slang_rs_special_func.h"
 
 namespace slang {
 
@@ -98,9 +99,9 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     return false;
   }
 
-  if (RSExportForEach::isSpecialRSFunc(mTargetAPI, FD)) {
+  if (RSSpecialFunc::isSpecialRSFunc(mTargetAPI, FD)) {
     // Do not reflect specialized functions like init, dtor, or graphics root.
-    return RSExportForEach::validateSpecialFuncDecl(mTargetAPI, this, FD);
+    return RSSpecialFunc::validateSpecialFuncDecl(mTargetAPI, this, FD);
   } else if (RSExportForEach::isRSForEachFunc(mTargetAPI, FD)) {
     RSExportForEach *EFE = RSExportForEach::Create(this, FD);
     if (EFE == nullptr)
