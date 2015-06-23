@@ -525,40 +525,27 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
     }
   }
 
-  // Construct type information about inputs and outputs. Return null when
-  // there is an error exporting types.
-
-  bool TypeExportError = false;
-
   if (FE->hasIns()) {
+
     for (InIter BI = FE->mIns.begin(), EI = FE->mIns.end(); BI != EI; BI++) {
       const clang::Type *T = (*BI)->getType().getCanonicalType().getTypePtr();
       RSExportType *InExportType = RSExportType::Create(Context, T);
 
-      if (!InExportType) {
-        TypeExportError = true;
+      if (FE->mIsKernelStyle) {
+        slangAssert(InExportType != nullptr);
       }
 
       FE->mInTypes.push_back(InExportType);
     }
   }
 
-  const clang::Type *OutType = nullptr;
   if (FE->mIsKernelStyle && FE->mHasReturnType) {
-    OutType = FE->mResultType.getTypePtr();
+    const clang::Type *T = FE->mResultType.getTypePtr();
+    FE->mOutType = RSExportType::Create(Context, T);
+    slangAssert(FE->mOutType);
   } else if (FE->mOut) {
-    OutType = FE->mOut->getType().getCanonicalType().getTypePtr();
-  }
-
-  if (OutType) {
-    FE->mOutType = RSExportType::Create(Context, OutType);
-    TypeExportError |= !FE->mOutType;
-  }
-
-  if (TypeExportError) {
-     slangAssert(Context->getDiagnostics()->hasErrorOccurred() &&
-                 "Error exporting type but no diagnostic message issued!");
-     return nullptr;
+    const clang::Type *T = FE->mOut->getType().getCanonicalType().getTypePtr();
+    FE->mOutType = RSExportType::Create(Context, T);
   }
 
   return FE;
