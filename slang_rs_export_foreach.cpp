@@ -525,14 +525,20 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
     }
   }
 
-  if (FE->hasIns()) {
+  // Construct type information about inputs and outputs. Return null when
+  // there is an error exporting types.
 
+  bool TypeExportError = false;
+
+  if (FE->hasIns()) {
     for (InIter BI = FE->mIns.begin(), EI = FE->mIns.end(); BI != EI; BI++) {
       const clang::Type *T = (*BI)->getType().getCanonicalType().getTypePtr();
       RSExportType *InExportType = RSExportType::Create(Context, T);
 
-      if (FE->mIsKernelStyle) {
-        slangAssert(InExportType != nullptr);
+      // It is not an error if we don't export an input type for legacy
+      // kernels. This can happen in the case of a void pointer.
+      if (FE->mIsKernelStyle && !InExportType) {
+        TypeExportError = true;
       }
 
       FE->mInTypes.push_back(InExportType);
@@ -540,12 +546,21 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
   }
 
   if (FE->mIsKernelStyle && FE->mHasReturnType) {
-    const clang::Type *T = FE->mResultType.getTypePtr();
-    FE->mOutType = RSExportType::Create(Context, T);
-    slangAssert(FE->mOutType);
+    const clang::Type *ReturnType = FE->mResultType.getTypePtr();
+    FE->mOutType = RSExportType::Create(Context, ReturnType);
+    TypeExportError |= !FE->mOutType;
   } else if (FE->mOut) {
-    const clang::Type *T = FE->mOut->getType().getCanonicalType().getTypePtr();
-    FE->mOutType = RSExportType::Create(Context, T);
+    const clang::Type *OutType =
+        FE->mOut->getType().getCanonicalType().getTypePtr();
+    FE->mOutType = RSExportType::Create(Context, OutType);
+    // It is not an error if we don't export an output type.
+    // This can happen in the case of a void pointer.
+  }
+
+  if (TypeExportError) {
+    slangAssert(Context->getDiagnostics()->hasErrorOccurred() &&
+                "Error exporting type but no diagnostic message issued!");
+    return nullptr;
   }
 
   return FE;
