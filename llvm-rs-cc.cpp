@@ -264,13 +264,20 @@ int main(int argc, const char **argv) {
   NamePairList DepFiles32;
   makeFileList(&IOFiles32, &DepFiles32, Inputs, Opts, &SavedStrings);
 
-  std::unique_ptr<slang::Slang> Compiler(
-      new slang::Slang(32, &DiagEngine, &DiagsBuffer));
-  int CompileFailed =
-      !Compiler->compile(IOFiles32, IOFiles32, DepFiles32, Opts, *DiagOpts);
+  int CompileFailed = 0;
+  // Handle 32-bit case for Java and C++ reflection.
+  // For Java, both 32bit and 64bit will be generated.
+  // For C++, either 64bit or 32bit will be generated based on the target.
+  if (Opts.mEmit3264 || Opts.mBitWidth == 32) {
+      std::unique_ptr<slang::Slang> Compiler(
+          new slang::Slang(32, &DiagEngine, &DiagsBuffer));
+      CompileFailed =
+          !Compiler->compile(IOFiles32, IOFiles32, DepFiles32, Opts, *DiagOpts);
+  }
 
   // Handle the 64-bit case too!
-  if (Opts.mEmit3264 && !CompileFailed) {
+  bool needEmit64 = Opts.mEmit3264 || Opts.mBitWidth == 64;
+  if (needEmit64 && !CompileFailed) {
     Opts.mBitWidth = 64;
     NamePairList IOFiles64;
     NamePairList DepFiles64;
