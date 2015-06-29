@@ -86,7 +86,7 @@ llvm::opt::OptTable *createRSCCOptTable() { return new RSCCOptTable(); }
 bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
                     llvm::SmallVectorImpl<const char *> &Inputs,
                     RSCCOptions &Opts, clang::DiagnosticOptions &DiagOpts,
-                    llvm::cl::StringSaver &StringSaver) {
+                    llvm::StringSaver &StringSaver) {
   // We use a different diagnostic engine for argument parsing from the rest of
   // the work.  This mimics what's done in clang.  I believe it is so the
   // argument parsing errors are well formatted while the full errors can be

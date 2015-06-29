@@ -614,7 +614,7 @@ static void WriteModuleMetadata(const Module *M,
   }
 
   unsigned MDLocationAbbrev = 0;
-  if (VE.hasMDLocation()) {
+  if (VE.hasDILocation()) {
     // TODO(srhines): Should be unreachable for RenderScript.
     // Abbrev for METADATA_LOCATION.
     //
@@ -1281,7 +1281,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     if (cast<StoreInst>(I).isAtomic())
       Code = bitc::FUNC_CODE_INST_STOREATOMIC;
     else
-      Code = bitc::FUNC_CODE_INST_STORE;
+      Code = bitc::FUNC_CODE_INST_STORE_OLD;
     PushValueAndType(I.getOperand(1), InstID, Vals, VE);  // ptrty + ptr
     Vals.push_back(VE.getValueID(I.getOperand(0)));       // val.
     Vals.push_back(Log2_32(cast<StoreInst>(I).getAlignment())+1);
@@ -1438,7 +1438,7 @@ static void WriteFunction(const Function &F, llvm_2_9_func::ValueEnumerator &VE,
 
   bool NeedsMetadataAttachment = false;
 
-  MDLocation *LastDL = nullptr;
+  DILocation *LastDL = nullptr;
 
   // Finally, emit all the instructions, in order.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
@@ -1453,7 +1453,7 @@ static void WriteFunction(const Function &F, llvm_2_9_func::ValueEnumerator &VE,
       NeedsMetadataAttachment |= I->hasMetadataOtherThanDebugLoc();
 
       // If the instruction has a debug location, emit it.
-      MDLocation *DL = I->getDebugLoc();
+      DILocation *DL = I->getDebugLoc();
       if (!DL)
         continue;
 

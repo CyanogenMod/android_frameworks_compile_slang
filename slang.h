@@ -271,8 +271,7 @@ class Slang : public clang::ModuleLoader {
 
   void makeModuleVisible(clang::Module *Mod,
                          clang::Module::NameVisibilityKind Visibility,
-                         clang::SourceLocation ImportLoc,
-                         bool Complain = false) override {}
+                         clang::SourceLocation ImportLoc) override {}
 
   clang::GlobalModuleIndex *
   loadGlobalModuleIndex(clang::SourceLocation TriggerLoc) override {
