@@ -661,14 +661,12 @@ void RSReflectionCpp::makeFunctionSignature(bool isDefinition,
     for (RSExportFunc::const_param_iterator i = ef->params_begin(),
                                             e = ef->params_end();
          i != e; i++) {
-      RSReflectionTypeData rtd;
-      (*i)->getType()->convertToRTD(&rtd);
       if (!FirstArg) {
         mOut << ", ";
       } else {
         FirstArg = false;
       }
-      mOut << rtd.type->c_name << " " << (*i)->getName();
+      mOut << GetTypeName((*i)->getType(), false) << " " << (*i)->getName();
     }
   }
 
