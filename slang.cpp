@@ -534,8 +534,9 @@ bool Slang::checkODR(const char *CurInputFile) {
           llvm::StringMapEntry<ReflectedDefinitionTy>::Create(RDKey);
       ME->setValue(std::make_pair(ERT, CurInputFile));
 
-      if (!ReflectedDefinitions.insert(ME))
-        delete ME;
+      if (!ReflectedDefinitions.insert(ME)) {
+        slangAssert(false && "Type shouldn't be in map yet!");
+      }
 
       // Take the ownership of ERT such that it won't be freed in ~RSContext().
       ERT->keep();
