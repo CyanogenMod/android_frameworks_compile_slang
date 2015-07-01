@@ -138,15 +138,10 @@ bool Backend::CreateCodeGenPasses() {
   // Target Machine Options
   llvm::TargetOptions Options;
 
-  // Use hardware FPU.
-  //
-  // FIXME: Need to detect the CPU capability and decide whether to use softfp.
-  // To use softfp, change following 2 lines to
-  //
-  // Options.FloatABIType = llvm::FloatABI::Soft;
-  // Options.UseSoftFloat = true;
-  Options.FloatABIType = llvm::FloatABI::Hard;
-  Options.UseSoftFloat = false;
+  // Use soft-float ABI for ARM (which is the target used by Slang during code
+  // generation).  Codegen still uses hardware FPU by default.  To use software
+  // floating point, add 'soft-float' feature to FeaturesStr below.
+  Options.FloatABIType = llvm::FloatABI::Soft;
 
   // BCC needs all unknown symbols resolved at compilation time. So we don't
   // need any relocation model.
