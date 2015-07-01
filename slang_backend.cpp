@@ -138,8 +138,6 @@ bool Backend::CreateCodeGenPasses() {
   // Target Machine Options
   llvm::TargetOptions Options;
 
-  Options.NoFramePointerElim = mCodeGenOpts.DisableFPElim;
-
   // Use hardware FPU.
   //
   // FIXME: Need to detect the CPU capability and decide whether to use softfp.
