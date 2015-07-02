@@ -259,7 +259,7 @@ bool RSContext::insertExportType(const llvm::StringRef &TypeName,
   if (mExportTypes.insert(NewItem)) {
     return true;
   } else {
-    free(NewItem);
+    NewItem->Destroy(mExportTypes.getAllocator());
     return false;
   }
 }
