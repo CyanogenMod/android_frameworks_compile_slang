@@ -501,9 +501,16 @@ void RSBackend::dumpExportTypeInfo(llvm::Module *M) {
 }
 
 void RSBackend::HandleTranslationUnitPost(llvm::Module *M) {
+
+  if (!mContext->is64Bit()) {
+    M->setDataLayout("e-p:32:32-i64:64-v128:64:128-n32-S64");
+  }
+
   if (!mContext->processExport()) {
     return;
   }
+
+
 
   if (mContext->hasExportVar())
     dumpExportVarInfo(M);
