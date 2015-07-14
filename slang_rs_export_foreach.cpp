@@ -51,10 +51,10 @@ struct SpecialParameter {
 
 // Table entries are in the order parameters must occur in a kernel parameter list.
 const SpecialParameter specialParameterTable[] = {
-  { "ctxt", bcinfo::MD_SIG_Ctxt, SPK_CTXT, SLANG_23_TARGET_API },
+  { "ctxt", bcinfo::MD_SIG_Ctxt, SPK_CTXT, SLANG_M_TARGET_API },
   { "x", bcinfo::MD_SIG_X, SPK_INT, SLANG_MINIMUM_TARGET_API },
   { "y", bcinfo::MD_SIG_Y, SPK_INT, SLANG_MINIMUM_TARGET_API },
-  { "z", bcinfo::MD_SIG_Z, SPK_INT, SLANG_23_TARGET_API },
+  { "z", bcinfo::MD_SIG_Z, SPK_INT, SLANG_M_TARGET_API },
   { nullptr, bcinfo::MD_SIG_None, SPK_INT, SLANG_MINIMUM_TARGET_API }, // marks end of table
 };
 
@@ -248,18 +248,14 @@ bool RSExportForEach::validateAndConstructKernelParams(
   for (size_t i = 0; i < IndexOfFirstSpecialParameter; i++) {
     const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
 
-    /*
-     * FIXME: Change this to a test against an actual API version when the
-     *        multi-input feature is officially supported.
-     */
-    if (Context->getTargetAPI() == SLANG_DEVELOPMENT_TARGET_API || i == 0) {
+    if (Context->getTargetAPI() >= SLANG_M_TARGET_API || i == 0) {
       if (i >= RS_KERNEL_INPUT_LIMIT) {
         Context->ReportError(PVD->getLocation(),
                              "Invalid parameter '%0' for compute kernel %1(). "
-                             "Kernels targeting SDK levels %2-%3 may not use "
-                             "more than %4 input parameters.") << PVD->getName() <<
-                             FD->getName() << SLANG_MINIMUM_TARGET_API <<
-                             SLANG_MAXIMUM_TARGET_API << int(RS_KERNEL_INPUT_LIMIT);
+                             "Kernels targeting SDK levels %2+ may not use "
+                             "more than %3 input parameters.") << PVD->getName() <<
+                             FD->getName() << SLANG_M_TARGET_API <<
+                             int(RS_KERNEL_INPUT_LIMIT);
 
       } else {
         mIns.push_back(PVD);
@@ -270,7 +266,7 @@ bool RSExportForEach::validateAndConstructKernelParams(
                            "Kernels targeting SDK levels %2-%3 may not use "
                            "multiple input parameters.") << PVD->getName() <<
                            FD->getName() << SLANG_MINIMUM_TARGET_API <<
-                           SLANG_MAXIMUM_TARGET_API;
+                           (SLANG_M_TARGET_API - 1);
       valid = false;
     }
     clang::QualType QT = PVD->getType().getCanonicalType();
@@ -284,14 +280,14 @@ bool RSExportForEach::validateAndConstructKernelParams(
   }
 
   // Check that we have at least one allocation to use for dimensions.
-  if (valid && mIns.empty() && !mHasReturnType && Context->getTargetAPI() < SLANG_23_TARGET_API) {
+  if (valid && mIns.empty() && !mHasReturnType && Context->getTargetAPI() < SLANG_M_TARGET_API) {
     Context->ReportError(FD->getLocation(),
                          "Compute kernel %0() targeting SDK levels "
                          "%1-%2 must have at least one "
                          "input parameter or a non-void return "
                          "type")
         << FD->getName() << SLANG_MINIMUM_TARGET_API
-        << (SLANG_23_TARGET_API - 1);
+        << (SLANG_M_TARGET_API - 1);
     valid = false;
   }
 
