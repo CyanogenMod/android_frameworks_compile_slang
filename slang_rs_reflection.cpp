@@ -625,7 +625,7 @@ void RSReflectionJava::genExportFunction(const RSExportFunc *EF) {
     }
   }
 
-  if (mRSContext->getTargetAPI() >= SLANG_23_TARGET_API) {
+  if (mRSContext->getTargetAPI() >= SLANG_M_TARGET_API) {
     startFunction(AM_Public, false, "Script.InvokeID",
                   "getInvokeID_" + EF->getName(), 0);
 
