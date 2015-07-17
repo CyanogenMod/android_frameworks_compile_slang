@@ -81,6 +81,7 @@ TBLGEN_TABLES :=    \
 
 LOCAL_SRC_FILES :=	\
 	slang.cpp	\
+	slang_bitcode_gen.cpp	\
 	slang_backend.cpp	\
 	slang_pragma_recorder.cpp	\
 	slang_diagnostic_buffer.cpp
