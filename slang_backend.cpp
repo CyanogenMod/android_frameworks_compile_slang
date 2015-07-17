@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "bcinfo/BitcodeWrapper.h"
-
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclGroup.h"
@@ -64,6 +62,7 @@
 
 #include "slang_assert.h"
 #include "slang.h"
+#include "slang_bitcode_gen.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_foreach.h"
 #include "slang_rs_export_func.h"
@@ -72,9 +71,6 @@
 #include "slang_rs_metadata.h"
 
 #include "strip_unknown_attributes.h"
-#include "BitWriter_2_9/ReaderWriter_2_9.h"
-#include "BitWriter_2_9_func/ReaderWriter_2_9_func.h"
-#include "BitWriter_3_2/ReaderWriter_3_2.h"
 
 namespace slang {
 
@@ -234,22 +230,6 @@ void Backend::Initialize(clang::ASTContext &Ctx) {
   mpModule = mGen->GetModule();
 }
 
-// Encase the Bitcode in a wrapper containing RS version information.
-void Backend::WrapBitcode(llvm::raw_string_ostream &Bitcode) {
-  bcinfo::AndroidBitcodeWrapper wrapper;
-  size_t actualWrapperLen = bcinfo::writeAndroidBitcodeWrapper(
-      &wrapper, Bitcode.str().length(), getTargetAPI(),
-      SlangVersion::CURRENT, mCodeGenOpts.OptimizationLevel);
-
-  slangAssert(actualWrapperLen > 0);
-
-  // Write out the bitcode wrapper.
-  mBufferOutStream.write(reinterpret_cast<char*>(&wrapper), actualWrapperLen);
-
-  // Write out the actual encoded bitcode.
-  mBufferOutStream << Bitcode.str();
-}
-
 void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
   HandleTranslationUnitPre(Ctx);
 
@@ -339,40 +319,8 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
       break;
     }
     case Slang::OT_Bitcode: {
-      llvm::legacy::PassManager *BCEmitPM = new llvm::legacy::PassManager();
-      std::string BCStr;
-      llvm::raw_string_ostream Bitcode(BCStr);
-      unsigned int TargetAPI = getTargetAPI();
-      switch (TargetAPI) {
-        case SLANG_HC_TARGET_API:
-        case SLANG_HC_MR1_TARGET_API:
-        case SLANG_HC_MR2_TARGET_API: {
-          // Pre-ICS targets must use the LLVM 2.9 BitcodeWriter
-          BCEmitPM->add(llvm_2_9::createBitcodeWriterPass(Bitcode));
-          break;
-        }
-        case SLANG_ICS_TARGET_API:
-        case SLANG_ICS_MR1_TARGET_API: {
-          // ICS targets must use the LLVM 2.9_func BitcodeWriter
-          BCEmitPM->add(llvm_2_9_func::createBitcodeWriterPass(Bitcode));
-          break;
-        }
-        default: {
-          if (TargetAPI != SLANG_DEVELOPMENT_TARGET_API &&
-              (TargetAPI < SLANG_MINIMUM_TARGET_API ||
-               TargetAPI > SLANG_MAXIMUM_TARGET_API)) {
-            slangAssert(false && "Invalid target API value");
-          }
-          // Switch to the 3.2 BitcodeWriter by default, and don't use
-          // LLVM's included BitcodeWriter at all (for now).
-          BCEmitPM->add(llvm_3_2::createBitcodeWriterPass(Bitcode));
-          //BCEmitPM->add(llvm::createBitcodeWriterPass(Bitcode));
-          break;
-        }
-      }
-
-      BCEmitPM->run(*mpModule);
-      WrapBitcode(Bitcode);
+      writeBitcode(mBufferOutStream, *mpModule, getTargetAPI(),
+                   mCodeGenOpts.OptimizationLevel);
       break;
     }
     case Slang::OT_Nothing: {
