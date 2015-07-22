@@ -102,6 +102,7 @@ def M_Group : OptionGroup<"M group>">;
 let Group = M_Group in {
 
   def MD : Flag<["-"], "MD">, HelpText<"Emit .d dependency files">;
+  def MP : Flag<["-"], "MP">, HelpText<"Also emit phony target for dependency files">;
 
   def M : Flag<["-"], "M">;
   def emit_dep : Flag<["-"], "emit-dep">, Alias<M>;
