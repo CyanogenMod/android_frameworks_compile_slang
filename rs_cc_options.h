@@ -75,6 +75,10 @@ class RSCCOptions {
   // Emit output dependency file for each input file.
   bool mEmitDependency;
 
+  // Emit phony targets for each header dependency, which can avoid make errors
+  // when the header gets deleted. See -MP option of cc.
+  bool mEmitPhonyDependency;
+
   // The output directory for writing dependency files
   // (i.e. out/target/common/obj/APPS/.../src/renderscript).
   std::string mDependencyOutputDir;
@@ -106,6 +110,7 @@ class RSCCOptions {
     mBitWidth = 32;
     mBitcodeStorage = slang::BCST_APK_RESOURCE;
     mEmitDependency = 0;
+    mEmitPhonyDependency = 0;
     mShowHelp = 0;
     mShowVersion = 0;
     mTargetAPI = RS_VERSION;

@@ -339,7 +339,7 @@ bool Slang::setDepOutput(const char *OutputFile) {
   return true;
 }
 
-int Slang::generateDepFile() {
+int Slang::generateDepFile(bool PhonyTarget) {
   if (mDiagEngine->hasErrorOccurred())
     return 1;
   if (mDOS.get() == nullptr)
@@ -348,6 +348,8 @@ int Slang::generateDepFile() {
   // Initialize options for generating dependency file
   clang::DependencyOutputOptions DepOpts;
   DepOpts.IncludeSystemHeaders = 1;
+  if (PhonyTarget)
+    DepOpts.UsePhonyTargets = 1;
   DepOpts.OutputFile = mDepOutputFileName;
   DepOpts.Targets = mAdditionalDepTargets;
   DepOpts.Targets.push_back(mDepTargetBCFileName);
@@ -748,7 +750,7 @@ bool Slang::compile(
       if (SuppressAllWarnings) {
         getDiagnostics().setSuppressAllDiagnostics(true);
       }
-      if (generateDepFile() > 0)
+      if (generateDepFile(Opts.mEmitPhonyDependency) > 0)
         return false;
       if (SuppressAllWarnings) {
         getDiagnostics().setSuppressAllDiagnostics(false);
