@@ -237,7 +237,7 @@ class Slang : public clang::ModuleLoader {
     mGeneratedFileNames.push_back(GeneratedFileName);
   }
 
-  int generateDepFile();
+  int generateDepFile(bool PhonyTarget);
 
   int compile();
 
