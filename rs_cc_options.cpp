@@ -153,6 +153,12 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
       Opts.mOutputType = Slang::OT_Bitcode;
       break;
     }
+    case OPT_MP: {
+      Opts.mEmitDependency = true;
+      Opts.mOutputType = Slang::OT_Bitcode;
+      Opts.mEmitPhonyDependency = true;
+      break;
+    }
     default: { slangAssert(false && "Invalid option in M group!"); }
     }
   }
