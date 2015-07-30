@@ -33,6 +33,7 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Target/TargetMachine.h"
 
+#include "os_sep.h"
 #include "rs_cc_options.h"
 #include "slang.h"
 #include "slang_assert.h"
