@@ -20,6 +20,7 @@
 #include <string>
 
 #include "clang/AST/Attr.h"
+#include "clang/AST/ASTContext.h"
 
 #include "slang_assert.h"
 #include "slang_rs_context.h"
@@ -60,6 +61,8 @@ bool RSExportReduce::validateAndConstructParams(
     RSContext *Context, const clang::FunctionDecl *FD) {
   slangAssert(Context && FD);
   bool Valid = true;
+
+  clang::ASTContext &ASTCtx = FD->getASTContext();
 
   // Validate API version.
   if (!haveReduceInTargetAPI(Context->getTargetAPI())) {
@@ -116,7 +119,7 @@ bool RSExportReduce::validateAndConstructParams(
     }
 
     // Check for type mismatch between this parameter and the return type.
-    if (ParamTy != ReturnTy) {
+    if (!ASTCtx.hasSameUnqualifiedType(ReturnTy, ParamTy)) {
       Context->ReportError(FD->getLocation(),
                            "Reduce-style kernel %0() return type '%1' is not "
                            "the same type as parameter '%2' (type '%3')")
