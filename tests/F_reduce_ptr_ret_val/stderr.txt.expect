@@ -1,0 +1,3 @@
+reduce_ptr_ret_val.rs:5:40: error: Reduce-style kernel kernel() cannot return a pointer type: int *
+reduce_ptr_ret_val.rs:5:40: error: Reduce-style kernel kernel() return type 'int *' is not the same type as parameter 'arg1' (type 'int')
+reduce_ptr_ret_val.rs:5:40: error: Reduce-style kernel kernel() return type 'int *' is not the same type as parameter 'arg2' (type 'int')
