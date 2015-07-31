@@ -574,9 +574,9 @@ bool RSExportForEach::isRSForEachFunc(unsigned int targetAPI,
                                       const clang::FunctionDecl *FD) {
   slangAssert(FD);
 
-  // Anything tagged as a kernel is definitely used with ForEach.
-  if (FD->hasAttr<clang::KernelAttr>()) {
-    return true;
+  // Anything tagged as a kernel("") is definitely used with ForEach.
+  if (auto *Kernel = FD->getAttr<clang::KernelAttr>()) {
+    return Kernel->getKernelKind().empty();
   }
 
   if (RSSpecialFunc::isGraphicsRootRSFunc(targetAPI, FD)) {

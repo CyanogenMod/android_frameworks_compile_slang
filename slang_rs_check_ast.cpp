@@ -21,6 +21,7 @@
 #include "slang_assert.h"
 #include "slang.h"
 #include "slang_rs_export_foreach.h"
+#include "slang_rs_export_reduce.h"
 #include "slang_rs_export_type.h"
 
 namespace slang {
@@ -150,14 +151,29 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
     return;
   }
 
-  // Validate that the kernel attribute is not used with static.
-  if (FD->hasAttr<clang::KernelAttr>() &&
-      FD->getStorageClass() == clang::SC_Static) {
-    Context->ReportError(FD->getLocation(),
-                         "Invalid use of attribute kernel with "
-                         "static function declaration: %0")
+  if (FD->hasAttr<clang::KernelAttr>()) {
+    // Validate that the kernel attribute is not used with static.
+    if (FD->getStorageClass() == clang::SC_Static) {
+      Context->ReportError(FD->getLocation(),
+                           "Invalid use of attribute kernel with "
+                           "static function declaration: %0")
         << FD->getName();
-    mValid = false;
+      mValid = false;
+    }
+
+    // We allow no arguments to the attribute, or an expected single
+    // argument. If there is an expected single argument, we verify
+    // that it is one of the recognized kernel kinds.
+    llvm::StringRef KernelKind =
+      FD->getAttr<clang::KernelAttr>()->getKernelKind();
+
+    if (!KernelKind.empty() && !KernelKind.equals("reduce")) {
+      Context->ReportError(FD->getLocation(),
+                           "Unknown kernel attribute argument '%0' "
+                           "in declaration of function '%1'")
+        << KernelKind << FD->getName();
+      mValid = false;
+    }
   }
 
   clang::QualType resultType = FD->getReturnType().getCanonicalType();
@@ -181,7 +197,8 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
   }
 
   bool saveKernel = mInKernel;
-  mInKernel = RSExportForEach::isRSForEachFunc(mTargetAPI, FD);
+  mInKernel = RSExportForEach::isRSForEachFunc(mTargetAPI, FD) ||
+              RSExportReduce::isRSReduceFunc(mTargetAPI, FD);
 
   if (clang::Stmt *Body = FD->getBody()) {
     Visit(Body);

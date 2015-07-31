@@ -93,6 +93,7 @@ class Backend : public clang::ASTConsumer {
   llvm::NamedMDNode *mExportFuncMetadata;
   llvm::NamedMDNode *mExportForEachNameMetadata;
   llvm::NamedMDNode *mExportForEachSignatureMetadata;
+  llvm::NamedMDNode *mExportReduceMetadata;
   llvm::NamedMDNode *mExportTypeMetadata;
   llvm::NamedMDNode *mRSObjectSlotsMetadata;
 
@@ -105,6 +106,7 @@ class Backend : public clang::ASTConsumer {
   void dumpExportVarInfo(llvm::Module *M);
   void dumpExportFunctionInfo(llvm::Module *M);
   void dumpExportForEachInfo(llvm::Module *M);
+  void dumpExportReduceInfo(llvm::Module *M);
   void dumpExportTypeInfo(llvm::Module *M);
 
  protected:
