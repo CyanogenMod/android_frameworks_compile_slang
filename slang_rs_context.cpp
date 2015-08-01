@@ -34,6 +34,7 @@
 #include "slang_assert.h"
 #include "slang_rs_export_foreach.h"
 #include "slang_rs_export_func.h"
+#include "slang_rs_export_reduce.h"
 #include "slang_rs_export_type.h"
 #include "slang_rs_export_var.h"
 #include "slang_rs_exportable.h"
@@ -99,25 +100,37 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     return false;
   }
 
+  // Specialized function
   if (RSSpecialFunc::isSpecialRSFunc(mTargetAPI, FD)) {
     // Do not reflect specialized functions like init, dtor, or graphics root.
     return RSSpecialFunc::validateSpecialFuncDecl(mTargetAPI, this, FD);
-  } else if (RSExportForEach::isRSForEachFunc(mTargetAPI, FD)) {
-    RSExportForEach *EFE = RSExportForEach::Create(this, FD);
-    if (EFE == nullptr)
-      return false;
-    else
+  }
+
+  // Foreach kernel
+  if (RSExportForEach::isRSForEachFunc(mTargetAPI, FD)) {
+    if (auto *EFE = RSExportForEach::Create(this, FD)) {
       mExportForEach.push_back(EFE);
+      return true;
+    }
+    return false;
+  }
+
+  // Reduce kernel
+  if (RSExportReduce::isRSReduceFunc(mTargetAPI, FD)) {
+    if (auto *ER = RSExportReduce::Create(this, FD)) {
+      mExportReduce.push_back(ER);
+      return true;
+    }
+    return false;
+  }
+
+  // Invokable
+  if (auto *EF = RSExportFunc::Create(this, FD)) {
+    mExportFuncs.push_back(EF);
     return true;
   }
 
-  RSExportFunc *EF = RSExportFunc::Create(this, FD);
-  if (EF == nullptr)
-    return false;
-  else
-    mExportFuncs.push_back(EF);
-
-  return true;
+  return false;
 }
 
 

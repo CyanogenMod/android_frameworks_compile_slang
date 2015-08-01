@@ -66,6 +66,7 @@
 #include "slang_rs_context.h"
 #include "slang_rs_export_foreach.h"
 #include "slang_rs_export_func.h"
+#include "slang_rs_export_reduce.h"
 #include "slang_rs_export_type.h"
 #include "slang_rs_export_var.h"
 #include "slang_rs_metadata.h"
@@ -216,8 +217,9 @@ Backend::Backend(RSContext *Context, clang::DiagnosticsEngine *DiagEngine,
       mSourceMgr(SourceMgr), mAllowRSPrefix(AllowRSPrefix),
       mIsFilterscript(IsFilterscript), mExportVarMetadata(nullptr),
       mExportFuncMetadata(nullptr), mExportForEachNameMetadata(nullptr),
-      mExportForEachSignatureMetadata(nullptr), mExportTypeMetadata(nullptr),
-      mRSObjectSlotsMetadata(nullptr), mRefCount(mContext->getASTContext()),
+      mExportForEachSignatureMetadata(nullptr), mExportReduceMetadata(nullptr),
+      mExportTypeMetadata(nullptr), mRSObjectSlotsMetadata(nullptr),
+      mRefCount(mContext->getASTContext()),
       mASTChecker(Context, Context->getTargetAPI(), IsFilterscript),
       mLLVMContext(llvm::getGlobalContext()), mDiagEngine(*DiagEngine),
       mCodeGenOpts(CodeGenOpts), mPragmas(Pragmas) {
@@ -719,6 +721,26 @@ void Backend::dumpExportForEachInfo(llvm::Module *M) {
   }
 }
 
+void Backend::dumpExportReduceInfo(llvm::Module *M) {
+  if (!mExportReduceMetadata) {
+    mExportReduceMetadata = M->getOrInsertNamedMetadata(RS_EXPORT_REDUCE_MN);
+  }
+
+  llvm::SmallVector<llvm::Metadata *, 1> ExportReduceInfo;
+
+  // Add the names of the reduce-style kernel functions to the metadata node.
+  for (auto I = mContext->export_reduce_begin(),
+            E = mContext->export_reduce_end(); I != E; ++I) {
+    ExportReduceInfo.clear();
+
+    ExportReduceInfo.push_back(
+      llvm::MDString::get(mLLVMContext, (*I)->getName().c_str()));
+
+    mExportReduceMetadata->addOperand(
+      llvm::MDNode::get(mLLVMContext, ExportReduceInfo));
+  }
+}
+
 void Backend::dumpExportTypeInfo(llvm::Module *M) {
   llvm::SmallVector<llvm::Metadata *, 1> ExportTypeInfo;
 
@@ -796,6 +818,9 @@ void Backend::HandleTranslationUnitPost(llvm::Module *M) {
 
   if (mContext->hasExportForEach())
     dumpExportForEachInfo(M);
+
+  if (mContext->hasExportReduce())
+    dumpExportReduceInfo(M);
 
   if (mContext->hasExportType())
     dumpExportTypeInfo(M);

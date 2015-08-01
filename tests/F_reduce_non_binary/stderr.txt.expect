@@ -1,0 +1,4 @@
+reduce_non_binary.rs:7:39: error: Reduce-style kernel kernel0() must take 2 parameters (found 0).
+reduce_non_binary.rs:13:39: error: Reduce-style kernel kernel1() must take 2 parameters (found 1).
+reduce_non_binary.rs:19:39: error: Reduce-style kernel kernel3() must take 2 parameters (found 3).
+reduce_non_binary.rs:25:39: error: Reduce-style kernel kernel4() must take 2 parameters (found 4).
