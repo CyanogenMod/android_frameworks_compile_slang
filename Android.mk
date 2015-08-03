@@ -33,7 +33,7 @@ ifeq ($(TARGET_BUILD_APPS),)
 
 local_cflags_for_slang := -Wall -Werror -std=c++11
 ifeq ($(TARGET_BUILD_VARIANT),eng)
-local_cflags_for_slang += -O0
+local_cflags_for_slang += -O0 -D__ENABLE_INTERNAL_OPTIONS
 else
 ifeq ($(TARGET_BUILD_VARIANT),userdebug)
 else

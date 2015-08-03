@@ -222,11 +222,22 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
       }
     }
   } else if (lastBitwidthArg) {
-    // -m32/-m64 are forbidden for non-C++ reflection paths.
-    DiagEngine.Report(
-        DiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                   "cannot use -m32/-m64 without specifying "
-                                   "C++ reflection (-reflect-c++)"));
+      // -m32/-m64 are forbidden for non-C++ reflection paths for non-eng builds
+      // (they would make it too easy for a developer to accidentally create and
+      // release an APK that has 32-bit or 64-bit bitcode but not both).
+#ifdef __ENABLE_INTERNAL_OPTIONS
+      if (lastBitwidthArg->getOption().matches(OPT_m32)) {
+        Opts.mBitWidth = 32;
+      } else {
+        Opts.mBitWidth = 64;
+      }
+      Opts.mEmit3264 = false;
+#else
+      DiagEngine.Report(
+          DiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                     "cannot use -m32/-m64 without specifying "
+                                     "C++ reflection (-reflect-c++)"));
+#endif
   }
 
   Opts.mDependencyOutputDir =
@@ -237,6 +248,25 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
   Opts.mShowVersion = Args->hasArg(OPT_version);
   Opts.mDebugEmission = Args->hasArg(OPT_emit_g);
   Opts.mVerbose = Args->hasArg(OPT_verbose);
+  Opts.mASTPrint = Args->hasArg(OPT_ast_print);
+
+  // Delegate options
+
+  std::vector<std::string> DelegatedStrings;
+  for (int Opt : std::vector<unsigned>{OPT_debug, OPT_print_after_all, OPT_print_before_all}) {
+    if (Args->hasArg(Opt)) {
+      // TODO: Don't assume that the option begins with "-"; determine this programmatically instead.
+      DelegatedStrings.push_back(std::string("-") + std::string(OptParser->getOptionName(Opt)));
+      slangAssert(OptParser->getOptionKind(Opt) == llvm::opt::Option::FlagClass);
+    }
+  }
+  if (DelegatedStrings.size()) {
+    std::vector<const char *> DelegatedCStrs;
+    DelegatedCStrs.push_back(*ArgVector.data()); // program name
+    std::for_each(DelegatedStrings.cbegin(), DelegatedStrings.cend(),
+                  [&DelegatedCStrs](const std::string &String) { DelegatedCStrs.push_back(String.c_str()); });
+    llvm::cl::ParseCommandLineOptions(DelegatedCStrs.size(), DelegatedCStrs.data());
+  }
 
   // If we are emitting both 32-bit and 64-bit bitcode, we must embed it.
 
@@ -253,11 +283,10 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
     Opts.mTargetAPI = UINT_MAX;
   }
 
-  Opts.mEmit3264 =
-      (Opts.mTargetAPI >= 21) && (Opts.mBitcodeStorage != BCST_CPP_CODE);
-  if (Opts.mEmit3264) {
+  if ((Opts.mTargetAPI < 21) || (Opts.mBitcodeStorage == BCST_CPP_CODE))
+    Opts.mEmit3264 = false;
+  if (Opts.mEmit3264)
     Opts.mBitcodeStorage = BCST_JAVA_CODE;
-  }
 
   if (DiagEngine.hasErrorOccurred()) {
     llvm::errs() << DiagsBuffer.str();

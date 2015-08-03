@@ -60,8 +60,8 @@ def emit_nothing : Flag<["-"], "emit-nothing">,
   HelpText<"Build ASTs then convert to LLVM, but emit nothing">;
 }
 
-def m32 : Flag<["-"], "m32">, HelpText<"Emit 32-bit C++ code">;
-def m64 : Flag<["-"], "m64">, HelpText<"Emit 64-bit C++ code">;
+def m32 : Flag<["-"], "m32">, HelpText<"Emit 32-bit code (only for C++, unless eng build)">;
+def m64 : Flag<["-"], "m64">, HelpText<"Emit 64-bit code (only for C++, unless eng build)">;
 
 def emit_g : Flag<["-"], "g">,
   HelpText<"Emit LLVM Debug Metadata">;
@@ -121,6 +121,21 @@ def _additional_dep_target : Separate<["-"], "a">, Alias<additional_dep_target>;
 
 def reflect_cpp : Flag<["-"], "reflect-c++">,
   HelpText<"Reflect C++ classes">;
+
+//===----------------------------------------------------------------------===//
+// Diagnostic Options
+//===----------------------------------------------------------------------===//
+
+def ast_print : Flag<["-"], "ast-print">,
+  HelpText<"Print clang AST prior to llvm IR generation">;
+
+def debug : Flag<["-"], "debug">,
+  HelpText<"Enable debug output">;
+
+def print_after_all : Flag<["-"], "print-after-all">,
+  HelpText<"Print llvm IR after each pass">;
+def print_before_all : Flag<["-"], "print-before-all">,
+  HelpText<"Print llvm IR before each pass">;
 
 //===----------------------------------------------------------------------===//
 // Misc Options

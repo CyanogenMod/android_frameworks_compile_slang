@@ -71,6 +71,8 @@
 #include "slang_rs_export_var.h"
 #include "slang_rs_metadata.h"
 
+#include "rs_cc_options.h"
+
 #include "strip_unknown_attributes.h"
 #include "BitWriter_2_9/ReaderWriter_2_9.h"
 #include "BitWriter_2_9_func/ReaderWriter_2_9_func.h"
@@ -208,7 +210,7 @@ bool Backend::CreateCodeGenPasses() {
 }
 
 Backend::Backend(RSContext *Context, clang::DiagnosticsEngine *DiagEngine,
-                 const clang::CodeGenOptions &CodeGenOpts,
+                 const RSCCOptions &Opts, const clang::CodeGenOptions &CodeGenOpts,
                  const clang::TargetOptions &TargetOpts, PragmaList *Pragmas,
                  llvm::raw_ostream *OS, Slang::OutputType OT,
                  clang::SourceManager &SourceMgr, bool AllowRSPrefix,
@@ -217,7 +219,7 @@ Backend::Backend(RSContext *Context, clang::DiagnosticsEngine *DiagEngine,
       mOT(OT), mGen(nullptr), mPerFunctionPasses(nullptr),
       mPerModulePasses(nullptr), mCodeGenPasses(nullptr),
       mBufferOutStream(*mpOS), mContext(Context),
-      mSourceMgr(SourceMgr), mAllowRSPrefix(AllowRSPrefix),
+      mSourceMgr(SourceMgr), mASTPrint(Opts.mASTPrint), mAllowRSPrefix(AllowRSPrefix),
       mIsFilterscript(IsFilterscript), mExportVarMetadata(nullptr),
       mExportFuncMetadata(nullptr), mExportForEachNameMetadata(nullptr),
       mExportForEachSignatureMetadata(nullptr), mExportTypeMetadata(nullptr),
@@ -252,6 +254,9 @@ void Backend::WrapBitcode(llvm::raw_string_ostream &Bitcode) {
 
 void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
   HandleTranslationUnitPre(Ctx);
+
+  if (mASTPrint)
+    Ctx.getTranslationUnitDecl()->dump();
 
   mGen->HandleTranslationUnit(Ctx);
 

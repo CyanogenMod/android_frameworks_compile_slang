@@ -226,9 +226,9 @@ void Slang::createASTContext() {
 }
 
 clang::ASTConsumer *
-Slang::createBackend(const clang::CodeGenOptions &CodeGenOpts,
+Slang::createBackend(const RSCCOptions &Opts, const clang::CodeGenOptions &CodeGenOpts,
                      llvm::raw_ostream *OS, OutputType OT) {
-  return new Backend(mRSContext, &getDiagnostics(), CodeGenOpts,
+  return new Backend(mRSContext, &getDiagnostics(), Opts, CodeGenOpts,
                      getTargetOptions(), &mPragmas, OS, OT, getSourceManager(),
                      mAllowRSPrefix, mIsFilterscript);
 }
@@ -386,7 +386,7 @@ int Slang::generateDepFile() {
   return mDiagEngine->hasErrorOccurred() ? 1 : 0;
 }
 
-int Slang::compile() {
+int Slang::compile(const RSCCOptions &Opts) {
   if (mDiagEngine->hasErrorOccurred())
     return 1;
   if (mOS.get() == nullptr)
@@ -396,7 +396,7 @@ int Slang::compile() {
   createPreprocessor();
   createASTContext();
 
-  mBackend.reset(createBackend(CodeGenOpts, &mOS->os(), mOT));
+  mBackend.reset(createBackend(Opts, CodeGenOpts, &mOS->os(), mOT));
 
   // Inform the diagnostic client we are processing a source file
   mDiagClient->BeginSourceFile(LangOpts, mPP.get());
@@ -670,7 +670,7 @@ bool Slang::compile(
 
     mIsFilterscript = isFilterscript(InputFile);
 
-    if (Slang::compile() > 0)
+    if (Slang::compile(Opts) > 0)
       return false;
 
     if (!Opts.mJavaReflectionPackageName.empty()) {
