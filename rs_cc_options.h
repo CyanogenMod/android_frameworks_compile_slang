@@ -102,6 +102,9 @@ class RSCCOptions {
   // Display verbose information about the compilation on stdout.
   bool mVerbose;
 
+  // Display AST.
+  bool mASTPrint;
+
   // Emit both 32-bit and 64-bit bitcode (embedded in the reflected sources).
   bool mEmit3264;
 
@@ -117,7 +120,8 @@ class RSCCOptions {
     mDebugEmission = 0;
     mOptimizationLevel = llvm::CodeGenOpt::Aggressive;
     mVerbose = false;
-    mEmit3264 = false;
+    mASTPrint = false;
+    mEmit3264 = true;
   }
 };
 
