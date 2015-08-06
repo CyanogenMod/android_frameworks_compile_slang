@@ -189,7 +189,8 @@ class Slang : public clang::ModuleLoader {
   void initPreprocessor();
   void initASTContext();
 
-  clang::ASTConsumer *createBackend(const clang::CodeGenOptions &CodeGenOpts,
+  clang::ASTConsumer *createBackend(const RSCCOptions &Opts,
+                                    const clang::CodeGenOptions &CodeGenOpts,
                                     llvm::raw_ostream *OS,
                                     OutputType OT);
 
@@ -239,7 +240,7 @@ class Slang : public clang::ModuleLoader {
 
   int generateDepFile(bool PhonyTarget);
 
-  int compile();
+  int compile(const RSCCOptions &Opts);
 
   char const *getErrorMessage() { return mDiagClient->str().c_str(); }
 
