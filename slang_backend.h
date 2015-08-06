@@ -85,6 +85,8 @@ class Backend : public clang::ASTConsumer {
 
   clang::SourceManager &mSourceMgr;
 
+  bool mASTPrint;
+
   bool mAllowRSPrefix;
 
   bool mIsFilterscript;
@@ -136,6 +138,7 @@ class Backend : public clang::ASTConsumer {
  public:
   Backend(RSContext *Context,
             clang::DiagnosticsEngine *DiagEngine,
+            const RSCCOptions &Opts,
             const clang::CodeGenOptions &CodeGenOpts,
             const clang::TargetOptions &TargetOpts,
             PragmaList *Pragmas,
