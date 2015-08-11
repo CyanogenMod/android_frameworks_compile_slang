@@ -4702,7 +4702,7 @@ char buf4678[200];
 char buf4679[200];
 char buf4680[200];
 
-void RS_KERNEL test(int in, rs_kernel_context ctxt) {
+void RS_KERNEL test(int in, rs_kernel_context context) {
     *(uchar*)buf0 = abs(*(char*)buf1);
     *(uchar2*)buf2 = abs(*(char2*)buf3);
     *(uchar3*)buf4 = abs(*(char3*)buf5);
@@ -5901,19 +5901,19 @@ void RS_KERNEL test(int in, rs_kernel_context ctxt) {
     rsForEach(*(rs_script*)buf3173, *(rs_allocation*)buf3174, *(rs_allocation*)buf3175);
     *(float*)buf3176 = rsFrac(*(float*)buf3177);
     *(rs_allocation*)buf3178 = rsGetAllocation((const void*) buf3179);
-    *(uint32_t*)buf3180 = rsGetArray0(ctxt);
-    *(uint32_t*)buf3181 = rsGetArray1(ctxt);
-    *(uint32_t*)buf3182 = rsGetArray2(ctxt);
-    *(uint32_t*)buf3183 = rsGetArray3(ctxt);
-    *(uint32_t*)buf3184 = rsGetDimArray0(ctxt);
-    *(uint32_t*)buf3185 = rsGetDimArray1(ctxt);
-    *(uint32_t*)buf3186 = rsGetDimArray2(ctxt);
-    *(uint32_t*)buf3187 = rsGetDimArray3(ctxt);
-    *(bool*)buf3188 = rsGetDimHasFaces(ctxt);
-    *(uint32_t*)buf3189 = rsGetDimLod(ctxt);
-    *(uint32_t*)buf3190 = rsGetDimX(ctxt);
-    *(uint32_t*)buf3191 = rsGetDimY(ctxt);
-    *(uint32_t*)buf3192 = rsGetDimZ(ctxt);
+    *(uint32_t*)buf3180 = rsGetArray0(context);
+    *(uint32_t*)buf3181 = rsGetArray1(context);
+    *(uint32_t*)buf3182 = rsGetArray2(context);
+    *(uint32_t*)buf3183 = rsGetArray3(context);
+    *(uint32_t*)buf3184 = rsGetDimArray0(context);
+    *(uint32_t*)buf3185 = rsGetDimArray1(context);
+    *(uint32_t*)buf3186 = rsGetDimArray2(context);
+    *(uint32_t*)buf3187 = rsGetDimArray3(context);
+    *(bool*)buf3188 = rsGetDimHasFaces(context);
+    *(uint32_t*)buf3189 = rsGetDimLod(context);
+    *(uint32_t*)buf3190 = rsGetDimX(context);
+    *(uint32_t*)buf3191 = rsGetDimY(context);
+    *(uint32_t*)buf3192 = rsGetDimZ(context);
     *(float*)buf3193 = rsGetDt();
     *(const void**)buf3194 = rsGetElementAt(*(rs_allocation*)buf3195, *(uint32_t*)buf3196);
     *(const void**)buf3197 = rsGetElementAt(*(rs_allocation*)buf3198, *(uint32_t*)buf3199, *(uint32_t*)buf3200);
@@ -6053,8 +6053,8 @@ void RS_KERNEL test(int in, rs_kernel_context ctxt) {
     *(uchar*)buf3734 = rsGetElementAtYuv_uchar_U(*(rs_allocation*)buf3735, *(uint32_t*)buf3736, *(uint32_t*)buf3737);
     *(uchar*)buf3738 = rsGetElementAtYuv_uchar_V(*(rs_allocation*)buf3739, *(uint32_t*)buf3740, *(uint32_t*)buf3741);
     *(uchar*)buf3742 = rsGetElementAtYuv_uchar_Y(*(rs_allocation*)buf3743, *(uint32_t*)buf3744, *(uint32_t*)buf3745);
-    *(rs_allocation_cubemap_face*)buf3746 = rsGetFace(ctxt);
-    *(uint32_t*)buf3747 = rsGetLod(ctxt);
+    *(rs_allocation_cubemap_face*)buf3746 = rsGetFace(context);
+    *(uint32_t*)buf3747 = rsGetLod(context);
     *(bool*)buf3748 = rsIsObject(*(rs_element*)buf3749);
     *(bool*)buf3750 = rsIsObject(*(rs_type*)buf3751);
     *(bool*)buf3752 = rsIsObject(*(rs_allocation*)buf3753);
