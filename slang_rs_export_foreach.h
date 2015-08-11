@@ -86,9 +86,9 @@ class RSExportForEach : public RSExportable {
   bool validateAndConstructKernelParams(RSContext *Context,
                                         const clang::FunctionDecl *FD);
 
-  bool validateSpecialParameters(RSContext *Context,
-                                 const clang::FunctionDecl *FD,
-                                 size_t *IndexOfFirstSpecialParameter);
+  bool processSpecialParameters(RSContext *Context,
+                                const clang::FunctionDecl *FD,
+                                size_t *IndexOfFirstSpecialParameter);
 
   bool setSignatureMetadata(RSContext *Context,
                             const clang::FunctionDecl *FD);
