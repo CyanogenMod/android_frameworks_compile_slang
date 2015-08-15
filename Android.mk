@@ -62,11 +62,15 @@ include $(CLANG_ROOT_PATH)/clang.mk
 
 LOCAL_MODULE := libslang
 LOCAL_MODULE_TAGS := optional
-ifneq ($(HOST_OS),windows)
-LOCAL_CLANG := true
-endif
 
 LOCAL_CFLAGS += $(local_cflags_for_slang)
+
+ifeq ($(HOST_OS),windows)
+# Skip missing-field-initializer warnings for mingw.
+LOCAL_CFLAGS += -Wno-error=missing-field-initializers
+else
+LOCAL_CLANG := true
+endif
 
 TBLGEN_TABLES :=    \
 	AttrList.inc	\
@@ -126,14 +130,18 @@ include $(CLEAR_TBLGEN_VARS)
 
 LOCAL_IS_HOST_MODULE := true
 LOCAL_MODULE := llvm-rs-cc
-ifneq ($(HOST_OS),windows)
+
+LOCAL_CFLAGS += $(local_cflags_for_slang)
+
+ifeq ($(HOST_OS),windows)
+# Skip missing-field-initializer warnings for mingw.
+LOCAL_CFLAGS += -Wno-error=missing-field-initializers
+else
 LOCAL_CLANG := true
 endif
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE_CLASS := EXECUTABLES
-
-LOCAL_CFLAGS += $(local_cflags_for_slang)
 
 TBLGEN_TABLES :=    \
 	AttrList.inc    \
