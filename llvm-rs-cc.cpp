@@ -26,11 +26,13 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 
 #include "llvm/Option/OptTable.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/StringSaver.h"
 #include "llvm/Target/TargetMachine.h"
 
 #include "os_sep.h"
@@ -45,14 +47,17 @@
 #include <string>
 
 namespace {
-class StringSet : public llvm::cl::StringSaver {
+class StringSet : public llvm::StringSaver {
 public:
-  const char *SaveString(const char *Str) override {
-    return Strings.insert(Str).first->c_str();
+  const char *saveImpl(llvm::StringRef Str) override {
+    return Strings.insert(Str.str()).first->c_str();
   }
+
+  StringSet() : llvm::StringSaver(A), A() {}
 
 private:
   std::set<std::string> Strings;
+  llvm::BumpPtrAllocator A;
 };
 }
 
@@ -112,7 +117,7 @@ static const char *DetermineOutputFile(const std::string &OutputDir,
     }
   }
 
-  return SavedStrings->SaveString(OutputFile.c_str());
+  return SavedStrings->save(OutputFile.c_str());
 }
 
 typedef std::list<std::pair<const char*, const char*> > NamePairList;
