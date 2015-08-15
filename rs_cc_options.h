@@ -141,7 +141,7 @@ llvm::opt::OptTable *createRSCCOptTable();
 bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
                     llvm::SmallVectorImpl<const char *> &Inputs,
                     RSCCOptions &Opts, clang::DiagnosticOptions &DiagOpts,
-                    llvm::cl::StringSaver &StringSaver);
+                    llvm::StringSaver &StringSaver);
 
 } // namespace slang
 

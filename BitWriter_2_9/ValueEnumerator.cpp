@@ -33,7 +33,7 @@ static bool isIntOrIntVectorValue(const std::pair<const Value*, unsigned> &V) {
 
 /// ValueEnumerator - Enumerate module-level information.
 ValueEnumerator::ValueEnumerator(const llvm::Module &M)
-    : HasMDString(false), HasMDLocation(false) {
+    : HasMDString(false), HasDILocation(false) {
   // Enumerate the global variables.
   for (llvm::Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
@@ -111,7 +111,7 @@ ValueEnumerator::ValueEnumerator(const llvm::Module &M)
 
         // Don't enumerate the location directly -- it has a special record
         // type -- but enumerate its operands.
-        if (MDLocation *L = I.getDebugLoc())
+        if (DILocation *L = I.getDebugLoc())
           EnumerateMDNodeOperands(L);
       }
   }
@@ -277,7 +277,7 @@ void ValueEnumerator::EnumerateMetadata(const llvm::Metadata *MD) {
     EnumerateValue(C->getValue());
 
   HasMDString |= isa<MDString>(MD);
-  HasMDLocation |= isa<MDLocation>(MD);
+  HasDILocation |= isa<DILocation>(MD);
 
   // Replace the dummy ID inserted above with the correct one.  MDValueMap may
   // have changed by inserting operands, so we need a fresh lookup here.
