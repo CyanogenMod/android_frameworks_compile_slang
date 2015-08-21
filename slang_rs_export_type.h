@@ -136,14 +136,26 @@ enum DataType {
 };
 
 typedef struct {
+    // The data type category
     DataTypeCategory category;
+    // The element name in RenderScript
     const char * rs_type;
+    // The short element name in RenderScript
     const char * rs_short_type;
+    // The size of the type in bits
     uint32_t size_in_bits;
+    // The reflected name in C code
     const char * c_name;
+    // The reflected name in Java code
     const char * java_name;
+    // The array type that is compatible with Allocations of our type,
+    // for use with copyTo(), copyFrom()
+    const char * java_array_element_name;
+    // The prefix for C vector types
     const char * rs_c_vector_prefix;
+    // The prefix for Java vector types
     const char * rs_java_vector_prefix;
+    // Indicates an unsigned type undergoing Java promotion
     bool java_promotion;
 } RSReflectionType;
 
