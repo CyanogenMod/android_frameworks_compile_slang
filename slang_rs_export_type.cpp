@@ -41,49 +41,59 @@ namespace slang {
 
 namespace {
 
-/* For the data types we support, their category, names, and size (in bits).
- *
- * IMPORTANT: The data types in this table should be at the same index
- * as specified by the corresponding DataType enum.
- */
+// For the data types we support:
+//  Category      - data type category
+//  RsType        - element name in RenderScript
+//  RsShortType   - short element name in RenderScript
+//  SizeInBits    - size in bits
+//  CName         - reflected C name
+//  JavaName      - reflected Java name
+//  JavaArrayElementName - reflected name in Java arrays
+//  CVecName      - prefix for C vector types
+//  JavaVecName   - prefix for Java vector type
+//  JavaPromotion - unsigned type undergoing Java promotion
+//
+// IMPORTANT: The data types in this table should be at the same index as
+// specified by the corresponding DataType enum.
+//
+// TODO: Pull this information out into a separate file.
 static RSReflectionType gReflectionTypes[] = {
-    {PrimitiveDataType, "FLOAT_16", "F16", 16, "half", "short", "Half", "Half", false},
-    {PrimitiveDataType, "FLOAT_32", "F32", 32, "float", "float", "Float", "Float", false},
-    {PrimitiveDataType, "FLOAT_64", "F64", 64, "double", "double", "Double", "Double",false},
-    {PrimitiveDataType, "SIGNED_8", "I8", 8, "int8_t", "byte", "Byte", "Byte", false},
-    {PrimitiveDataType, "SIGNED_16", "I16", 16, "int16_t", "short", "Short", "Short", false},
-    {PrimitiveDataType, "SIGNED_32", "I32", 32, "int32_t", "int", "Int", "Int", false},
-    {PrimitiveDataType, "SIGNED_64", "I64", 64, "int64_t", "long", "Long", "Long", false},
-    {PrimitiveDataType, "UNSIGNED_8", "U8", 8, "uint8_t", "short", "UByte", "Short", true},
-    {PrimitiveDataType, "UNSIGNED_16", "U16", 16, "uint16_t", "int", "UShort", "Int", true},
-    {PrimitiveDataType, "UNSIGNED_32", "U32", 32, "uint32_t", "long", "UInt", "Long", true},
-    {PrimitiveDataType, "UNSIGNED_64", "U64", 64, "uint64_t", "long", "ULong", "Long", false},
+#define _ nullptr
+{PrimitiveDataType,         "FLOAT_16",     "F16", 16,     "half",   "short",        _,   "Half",   "Half", false},
+{PrimitiveDataType,         "FLOAT_32",     "F32", 32,    "float",   "float",  "float",  "Float",  "Float", false},
+{PrimitiveDataType,         "FLOAT_64",     "F64", 64,   "double",  "double", "double", "Double", "Double", false},
+{PrimitiveDataType,         "SIGNED_8",      "I8",  8,   "int8_t",    "byte",   "byte",   "Byte",   "Byte", false},
+{PrimitiveDataType,        "SIGNED_16",     "I16", 16,  "int16_t",   "short",  "short",  "Short",  "Short", false},
+{PrimitiveDataType,        "SIGNED_32",     "I32", 32,  "int32_t",     "int",    "int",    "Int",    "Int", false},
+{PrimitiveDataType,        "SIGNED_64",     "I64", 64,  "int64_t",    "long",   "long",   "Long",   "Long", false},
+{PrimitiveDataType,       "UNSIGNED_8",      "U8",  8,  "uint8_t",   "short",   "byte",  "UByte",  "Short",  true},
+{PrimitiveDataType,      "UNSIGNED_16",     "U16", 16, "uint16_t",     "int",  "short", "UShort",    "Int",  true},
+{PrimitiveDataType,      "UNSIGNED_32",     "U32", 32, "uint32_t",    "long",    "int",   "UInt",   "Long",  true},
+{PrimitiveDataType,      "UNSIGNED_64",     "U64", 64, "uint64_t",    "long",   "long",  "ULong",   "Long", false},
+{PrimitiveDataType,          "BOOLEAN", "BOOLEAN",  8,     "bool", "boolean",   "byte",        _,        _, false},
+{PrimitiveDataType,   "UNSIGNED_5_6_5",         _, 16,          _,         _,        _,        _,        _, false},
+{PrimitiveDataType, "UNSIGNED_5_5_5_1",         _, 16,          _,         _,        _,        _,        _, false},
+{PrimitiveDataType, "UNSIGNED_4_4_4_4",         _, 16,          _,         _,        _,        _,        _, false},
 
-    {PrimitiveDataType, "BOOLEAN", "BOOLEAN", 8, "bool", "boolean", nullptr, nullptr, false},
+{MatrixDataType, "MATRIX_2X2", _,  4*32, "rsMatrix_2x2", "Matrix2f", _, _, _, false},
+{MatrixDataType, "MATRIX_3X3", _,  9*32, "rsMatrix_3x3", "Matrix3f", _, _, _, false},
+{MatrixDataType, "MATRIX_4X4", _, 16*32, "rsMatrix_4x4", "Matrix4f", _, _, _, false},
 
-    {PrimitiveDataType, "UNSIGNED_5_6_5", nullptr, 16, nullptr, nullptr, nullptr, nullptr, false},
-    {PrimitiveDataType, "UNSIGNED_5_5_5_1", nullptr, 16, nullptr, nullptr, nullptr, nullptr, false},
-    {PrimitiveDataType, "UNSIGNED_4_4_4_4", nullptr, 16, nullptr, nullptr, nullptr, nullptr, false},
-
-    {MatrixDataType, "MATRIX_2X2", nullptr, 4*32, "rsMatrix_2x2", "Matrix2f", nullptr, nullptr, false},
-    {MatrixDataType, "MATRIX_3X3", nullptr, 9*32, "rsMatrix_3x3", "Matrix3f", nullptr, nullptr, false},
-    {MatrixDataType, "MATRIX_4X4", nullptr, 16*32, "rsMatrix_4x4", "Matrix4f", nullptr, nullptr, false},
-
-    // RS object types are 32 bits in 32-bit RS, but 256 bits in 64-bit RS.
-    // This is handled specially by the GetSizeInBits() method.
-    {ObjectDataType, "RS_ELEMENT", "ELEMENT", 32, "Element", "Element", nullptr, nullptr, false},
-    {ObjectDataType, "RS_TYPE", "TYPE", 32, "Type", "Type", nullptr, nullptr, false},
-    {ObjectDataType, "RS_ALLOCATION", "ALLOCATION", 32, "Allocation", "Allocation", nullptr, nullptr, false},
-    {ObjectDataType, "RS_SAMPLER", "SAMPLER", 32, "Sampler", "Sampler", nullptr, nullptr, false},
-    {ObjectDataType, "RS_SCRIPT", "SCRIPT", 32, "Script", "Script", nullptr, nullptr, false},
-    {ObjectDataType, "RS_MESH", "MESH", 32, "Mesh", "Mesh", nullptr, nullptr, false},
-    {ObjectDataType, "RS_PATH", "PATH", 32, "Path", "Path", nullptr, nullptr, false},
-
-    {ObjectDataType, "RS_PROGRAM_FRAGMENT", "PROGRAM_FRAGMENT", 32, "ProgramFragment", "ProgramFragment", nullptr, nullptr, false},
-    {ObjectDataType, "RS_PROGRAM_VERTEX", "PROGRAM_VERTEX", 32, "ProgramVertex", "ProgramVertex", nullptr, nullptr, false},
-    {ObjectDataType, "RS_PROGRAM_RASTER", "PROGRAM_RASTER", 32, "ProgramRaster", "ProgramRaster", nullptr, nullptr, false},
-    {ObjectDataType, "RS_PROGRAM_STORE", "PROGRAM_STORE", 32, "ProgramStore", "ProgramStore", nullptr, nullptr, false},
-    {ObjectDataType, "RS_FONT", "FONT", 32, "Font", "Font", nullptr, nullptr, false}
+// RS object types are 32 bits in 32-bit RS, but 256 bits in 64-bit RS.
+// This is handled specially by the GetSizeInBits(}, method.
+{ObjectDataType,          "RS_ELEMENT",          "ELEMENT", 32,         "Element",         "Element", _, _, _, false},
+{ObjectDataType,             "RS_TYPE",             "TYPE", 32,            "Type",            "Type", _, _, _, false},
+{ObjectDataType,       "RS_ALLOCATION",       "ALLOCATION", 32,      "Allocation",      "Allocation", _, _, _, false},
+{ObjectDataType,          "RS_SAMPLER",          "SAMPLER", 32,         "Sampler",         "Sampler", _, _, _, false},
+{ObjectDataType,           "RS_SCRIPT",           "SCRIPT", 32,          "Script",          "Script", _, _, _, false},
+{ObjectDataType,             "RS_MESH",             "MESH", 32,            "Mesh",            "Mesh", _, _, _, false},
+{ObjectDataType,             "RS_PATH",             "PATH", 32,            "Path",            "Path", _, _, _, false},
+{ObjectDataType, "RS_PROGRAM_FRAGMENT", "PROGRAM_FRAGMENT", 32, "ProgramFragment", "ProgramFragment", _, _, _, false},
+{ObjectDataType,   "RS_PROGRAM_VERTEX",   "PROGRAM_VERTEX", 32,   "ProgramVertex",   "ProgramVertex", _, _, _, false},
+{ObjectDataType,   "RS_PROGRAM_RASTER",   "PROGRAM_RASTER", 32,   "ProgramRaster",   "ProgramRaster", _, _, _, false},
+{ObjectDataType,    "RS_PROGRAM_STORE",    "PROGRAM_STORE", 32,    "ProgramStore",    "ProgramStore", _, _, _, false},
+{ObjectDataType,             "RS_FONT",             "FONT", 32,            "Font",            "Font", _, _, _, false},
+#undef _
 };
 
 const int kMaxVectorSize = 4;

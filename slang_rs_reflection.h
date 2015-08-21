@@ -81,6 +81,7 @@ private:
   int mNextExportVarSlot;
   int mNextExportFuncSlot;
   int mNextExportForEachSlot;
+  int mNextExportReduceSlot;
 
   GeneratedFile mOut;
 
@@ -101,6 +102,7 @@ private:
     mNextExportVarSlot = 0;
     mNextExportFuncSlot = 0;
     mNextExportForEachSlot = 0;
+    mNextExportReduceSlot = 0;
   }
 
 public:
@@ -127,6 +129,7 @@ public:
   inline int getNextExportVarSlot() { return mNextExportVarSlot++; }
   inline int getNextExportFuncSlot() { return mNextExportFuncSlot++; }
   inline int getNextExportForEachSlot() { return mNextExportForEachSlot++; }
+  inline int getNextExportReduceSlot() { return mNextExportReduceSlot++; }
 
   bool startClass(AccessModifier AM, bool IsStatic,
                   const std::string &ClassName, const char *SuperClassName,
@@ -197,6 +200,12 @@ private:
 
   void genExportForEach(const RSExportForEach *EF);
 
+  void genExportReduce(const RSExportReduce *ER);
+  void genExportReduceAllocationVariant(const RSExportType *Type,
+                                        const std::string &KernelName);
+  void genExportReduceArrayVariant(const RSExportType *Type,
+                                   const std::string &KernelName);
+
   void genTypeCheck(const RSExportType *ET, const char *VarName);
 
   void genTypeInstanceFromPointer(const RSExportType *ET);
@@ -234,6 +243,9 @@ private:
   void genNewItemBufferPackerIfNull();
 
   void genPairwiseDimCheck(std::string name0, std::string name1);
+  void genVectorLengthCompatibilityCheck(const std::string &ArrayName, unsigned VecSize);
+  void genNullOrEmptyArrayCheck(const std::string &ArrayName);
+  void gen1DCheck(const std::string &Name);
 
 public:
   RSReflectionJava(const RSContext *Context,
