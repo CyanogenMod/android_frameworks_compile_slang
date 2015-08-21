@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2010-2014, The Android Open Source Project
  *
@@ -35,6 +34,7 @@
 #include "slang_rs_export_var.h"
 #include "slang_rs_export_foreach.h"
 #include "slang_rs_export_func.h"
+#include "slang_rs_export_reduce.h"
 #include "slang_rs_reflect_utils.h"
 #include "slang_version.h"
 
@@ -66,9 +66,12 @@
 
 #define RS_EXPORT_FUNC_INDEX_PREFIX "mExportFuncIdx_"
 #define RS_EXPORT_FOREACH_INDEX_PREFIX "mExportForEachIdx_"
+#define RS_EXPORT_REDUCE_INDEX_PREFIX "mExportReduceIdx_"
 
 #define RS_EXPORT_VAR_ALLOCATION_PREFIX "mAlloction_"
 #define RS_EXPORT_VAR_DATA_STORAGE_PREFIX "mData_"
+
+#define SAVED_RS_REFERENCE "mRSLocal"
 
 namespace slang {
 
@@ -278,6 +281,57 @@ static std::string GetBuiltinElementConstruct(const RSExportType *ET) {
   return "";
 }
 
+// If FromIntegerType == DestIntegerType, then Value is returned.
+// Otherwise, return a Java expression that zero-extends the value
+// Value, assumed to be of type FromIntegerType, to the integer type
+// DestIntegerType.
+//
+// Intended operations:
+//  byte  -> {byte,int,short,long}
+//  short -> {short,int,long}
+//  int   -> {int,long}
+//  long  -> long
+static std::string ZeroExtendValue(const std::string &Value,
+                                   const std::string &FromIntegerType,
+                                   const std::string &DestIntegerType) {
+#ifndef __DISABLE_ASSERTS
+  // Integer types arranged in increasing order by width
+  const std::vector<std::string> ValidTypes{"byte", "short", "int", "long"};
+  auto FromTypeLoc = std::find(ValidTypes.begin(), ValidTypes.end(), FromIntegerType);
+  auto DestTypeLoc = std::find(ValidTypes.begin(), ValidTypes.end(), DestIntegerType);
+  // Check that both types are valid.
+  slangAssert(FromTypeLoc != ValidTypes.end());
+  slangAssert(DestTypeLoc != ValidTypes.end());
+  // Check that DestIntegerType is at least as wide as FromIntegerType.
+  slangAssert(FromTypeLoc - ValidTypes.begin() <= DestTypeLoc - ValidTypes.begin());
+#endif
+
+  if (FromIntegerType == DestIntegerType) {
+    return Value;
+  }
+
+  std::string Mask, MaskLiteralType;
+  if (FromIntegerType == "byte") {
+    Mask = "0xff";
+    MaskLiteralType = "int";
+  } else if (FromIntegerType == "short") {
+    Mask = "0xffff";
+    MaskLiteralType = "int";
+  } else if (FromIntegerType == "int") {
+    Mask = "0xffffffffL";
+    MaskLiteralType = "long";
+  } else {
+    // long -> long casts should have already been handled.
+    slangAssert(false && "Unknown integer type");
+  }
+
+  // Cast the mask to the appropriate type.
+  if (MaskLiteralType != DestIntegerType) {
+    Mask = "(" + DestIntegerType + ") " + Mask;
+  }
+  return "((" + DestIntegerType + ") ((" + Value + ") & " + Mask + "))";
+}
+
 /********************** Methods to generate script class **********************/
 RSReflectionJava::RSReflectionJava(const RSContext *Context,
                                    std::vector<std::string> *GeneratedFileNames,
@@ -295,7 +349,8 @@ RSReflectionJava::RSReflectionJava(const RSContext *Context,
                        RSSlangReflectUtils::JavaClassNameFromRSFileName(
                            mRSSourceFileName.c_str())),
       mEmbedBitcodeInJava(EmbedBitcodeInJava), mNextExportVarSlot(0),
-      mNextExportFuncSlot(0), mNextExportForEachSlot(0), mLastError(""),
+      mNextExportFuncSlot(0), mNextExportForEachSlot(0),
+      mNextExportReduceSlot(0), mLastError(""),
       mGeneratedFileNames(GeneratedFileNames), mFieldIndex(0) {
   slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
   slangAssert(!mPackageName.empty() && mPackageName != "-");
@@ -320,26 +375,31 @@ bool RSReflectionJava::genScriptClass(const std::string &ClassName,
 
   genScriptClassConstructor();
 
-  // Reflect export variable
-  for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
-                                            E = mRSContext->export_vars_end();
+  // Reflect exported variables
+  for (auto I = mRSContext->export_vars_begin(),
+            E = mRSContext->export_vars_end();
        I != E; I++)
     genExportVariable(*I);
 
-  // Reflect export for each functions (only available on ICS+)
+  // Reflect exported forEach functions (only available on ICS+)
   if (mRSContext->getTargetAPI() >= SLANG_ICS_TARGET_API) {
-    for (RSContext::const_export_foreach_iterator
-             I = mRSContext->export_foreach_begin(),
-             E = mRSContext->export_foreach_end();
-         I != E; I++)
+    for (auto I = mRSContext->export_foreach_begin(),
+              E = mRSContext->export_foreach_end();
+         I != E; I++) {
       genExportForEach(*I);
+    }
   }
 
-  // Reflect export function
-  for (RSContext::const_export_func_iterator
-           I = mRSContext->export_funcs_begin(),
-           E = mRSContext->export_funcs_end();
-       I != E; I++)
+  // Reflect exported reduce functions
+  for (auto I = mRSContext->export_reduce_begin(),
+            E = mRSContext->export_reduce_end();
+       I != E; ++I)
+    genExportReduce(*I);
+
+  // Reflect exported functions (invokable)
+  for (auto I = mRSContext->export_funcs_begin(),
+            E = mRSContext->export_funcs_end();
+       I != E; ++I)
     genExportFunction(*I);
 
   endClass();
@@ -359,6 +419,9 @@ void RSReflectionJava::genScriptClassConstructor() {
   mOut.indent() << "// Constructor\n";
   startFunction(AM_Public, false, nullptr, getClassName(), 1, "RenderScript",
                 "rs");
+
+  const bool haveReduceExportables =
+    mRSContext->export_reduce_begin() != mRSContext->export_reduce_end();
 
   if (getEmbedBitcodeInJava()) {
     // Call new single argument Java-only constructor
@@ -387,8 +450,8 @@ void RSReflectionJava::genScriptClassConstructor() {
 
   // If an exported variable has initial value, reflect it
 
-  for (RSContext::const_export_var_iterator I = mRSContext->export_vars_begin(),
-                                            E = mRSContext->export_vars_end();
+  for (auto I = mRSContext->export_vars_begin(),
+            E = mRSContext->export_vars_end();
        I != E; I++) {
     const RSExportVar *EV = *I;
     if (!EV->getInit().isUninit()) {
@@ -414,9 +477,14 @@ void RSReflectionJava::genScriptClassConstructor() {
     genFieldPackerInstance(EV->getType());
   }
 
-  for (RSContext::const_export_foreach_iterator
-           I = mRSContext->export_foreach_begin(),
-           E = mRSContext->export_foreach_end();
+  if (haveReduceExportables) {
+    mOut.indent() << SAVED_RS_REFERENCE << " = rs;\n";
+  }
+
+  // Reflect argument / return types in kernels
+
+  for (auto I = mRSContext->export_foreach_begin(),
+            E = mRSContext->export_foreach_end();
        I != E; I++) {
     const RSExportForEach *EF = *I;
 
@@ -435,6 +503,13 @@ void RSReflectionJava::genScriptClassConstructor() {
     }
   }
 
+  for (auto I = mRSContext->export_reduce_begin(),
+            E = mRSContext->export_reduce_end();
+       I != E; I++) {
+    const RSExportReduce *ER = *I;
+    genTypeInstance(ER->getType());
+  }
+
   endFunction();
 
   for (std::set<std::string>::iterator I = mTypesToCheck.begin(),
@@ -447,6 +522,12 @@ void RSReflectionJava::genScriptClassConstructor() {
                                        E = mFieldPackerTypes.end();
        I != E; I++) {
     mOut.indent() << "private FieldPacker " RS_FP_PREFIX << *I << ";\n";
+  }
+
+  if (haveReduceExportables) {
+    // We save a private copy of rs in order to create temporary
+    // allocations in the reduce_* entry points.
+    mOut.indent() << "private RenderScript " << SAVED_RS_REFERENCE << ";\n";
   }
 }
 
@@ -676,6 +757,43 @@ void RSReflectionJava::genPairwiseDimCheck(std::string name0,
   mOut.indent() << "}\n\n";
 }
 
+void RSReflectionJava::genNullOrEmptyArrayCheck(const std::string &ArrayName) {
+  mOut.indent() << "// Verify that \"" << ArrayName << "\" is non-null.\n";
+  mOut.indent() << "if (" << ArrayName << " == null) {\n";
+  mOut.indent() << "    throw new RSIllegalArgumentException(\"Array \\\""
+                << ArrayName << "\\\" is null!\");\n";
+  mOut.indent() << "}\n";
+  mOut.indent() << "// Verify that \"" << ArrayName << "\" is non-empty.\n";
+  mOut.indent() << "if (" << ArrayName << ".length == 0) {\n";
+  mOut.indent() << "    throw new RSIllegalArgumentException(\"Array \\\""
+                << ArrayName << "\\\" is zero-length!\");\n";
+  mOut.indent() << "}\n";
+}
+
+void RSReflectionJava::genVectorLengthCompatibilityCheck(const std::string &ArrayName,
+                                                         unsigned VecSize) {
+  mOut.indent() << "// Verify that the array length is a multiple of the vector size.\n";
+  mOut.indent() << "if (" << ArrayName << ".length % " << std::to_string(VecSize)
+                << " != 0) {\n";
+  mOut.indent() << "    throw new RSIllegalArgumentException(\"Array \\\"" << ArrayName
+                << "\\\" is not a multiple of " << std::to_string(VecSize)
+                << " in length!\");\n";
+  mOut.indent() << "}\n";
+}
+
+void RSReflectionJava::gen1DCheck(const std::string &Name) {
+  // TODO: Check that t0.getArrayCount() == 0, when / if this API is
+  // un-hidden.
+  mOut.indent() << "Type t0 = " << Name << ".getType();\n";
+  mOut.indent() << "// Verify " << Name << " is 1D\n";
+  mOut.indent() << "if (t0.getY() != 0  ||\n";
+  mOut.indent() << "    t0.hasFaces()   ||\n";
+  mOut.indent() << "    t0.hasMipmaps()) {\n";
+  mOut.indent() << "    throw new RSIllegalArgumentException(\"Parameter "
+                << Name << " is not 1D!\");\n";
+  mOut.indent() << "}\n\n";
+}
+
 void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
   if (EF->isDummyRoot()) {
     // Skip reflection for dummy root() kernels. Note that we have to
@@ -853,6 +971,209 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
     mOut << ", sc);\n";
   } else {
     mOut << ");\n";
+  }
+
+  endFunction();
+}
+
+void RSReflectionJava::genExportReduce(const RSExportReduce *ER) {
+  // Generate the reflected function index.
+  mOut.indent() << "private final static int " << RS_EXPORT_REDUCE_INDEX_PREFIX
+                << ER->getName() << " = " << getNextExportReduceSlot()
+                << ";\n";
+
+  // Two variants of reduce_* entry points get generated:
+  // Array variant:
+  //   ty' reduce_foo(ty[] input)
+  //   ty' reduce_foo(ty[] input, int x1, int x2)
+  // Allocation variant:
+  //   void reduce_foo(Allocation ain, Allocation aout)
+  //   void reduce_foo(Allocation ain, Allocation aout, Script.LaunchOptions sc)
+
+  const RSExportType *Type = ER->getType();
+  const std::string Name = ER->getName();
+
+  genExportReduceArrayVariant(Type, Name);
+  genExportReduceAllocationVariant(Type, Name);
+}
+
+void RSReflectionJava::genExportReduceAllocationVariant(const RSExportType *Type,
+                                                        const std::string &KernelName) {
+  const std::string FuncName = "reduce_" + KernelName;
+
+  // void reduce_foo(Allocation ain, Allocation aout)
+  startFunction(AM_Public, false, "void", FuncName, 2,
+                "Allocation", "ain",
+                "Allocation", "aout");
+  mOut.indent() << FuncName << "(ain, aout, null);\n";
+  endFunction();
+
+  // void reduce_foo(Allocation ain, Allocation aout, Script.LaunchOptions sc)
+  startFunction(AM_Public, false, "void", FuncName, 3,
+                "Allocation", "ain",
+                "Allocation", "aout",
+                "Script.LaunchOptions", "sc");
+
+  // Type checking
+  genTypeCheck(Type, "ain");
+  genTypeCheck(Type, "aout");
+
+  // Check that the input is 1D
+  gen1DCheck("ain");
+
+  // Call backend
+
+  // Script.reduce has the signature
+  //
+  // protected void
+  // reduce(int slot, Allocation ain, Allocation aout, Script.LaunchOptions sc)
+  mOut.indent() << "reduce("
+                << RS_EXPORT_REDUCE_INDEX_PREFIX << KernelName
+                << ", ain, aout, sc);\n";
+
+  endFunction();
+}
+
+void RSReflectionJava::genExportReduceArrayVariant(const RSExportType *Type,
+                                                   const std::string &KernelName) {
+  // Determine if the array variant can be generated. Some type
+  // classes cannot be reflected in Java.
+  auto Class = Type->getClass();
+  if (Class != RSExportType::ExportClassPrimitive &&
+      Class != RSExportType::ExportClassVector) {
+    return;
+  }
+
+  RSReflectionTypeData TypeData;
+  Type->convertToRTD(&TypeData);
+
+  // Check if the type supports reading back from an Allocation and
+  // returning as a first class Java type. If not, the helper cannot
+  // be generated.
+  if (!TypeData.type->java_name || !TypeData.type->java_array_element_name ||
+      (TypeData.vecSize > 1 && !TypeData.type->rs_java_vector_prefix)) {
+    return;
+  }
+
+  const std::string FuncName = "reduce_" + KernelName;
+  const std::string TypeName = GetTypeName(Type);
+  const std::string ReflectedScalarType = TypeData.type->java_name;
+  const std::string ArrayElementType = TypeData.type->java_array_element_name;
+  const std::string ArrayType = ArrayElementType + "[]";
+  const std::string ElementName = Type->getElementName();
+
+  const uint32_t VecSize = TypeData.vecSize;
+
+  std::string InLength = "in.length";
+  // Adjust the length so that it corresponds to the number of
+  // elements in the allocation.
+  if (VecSize > 1) {
+    InLength += " / " + std::to_string(VecSize);
+  }
+
+  // TypeName reduce_foo(ArrayElementType[] in)
+  startFunction(AM_Public, false, TypeName.c_str(), FuncName, 1,
+                ArrayType.c_str(), "in");
+  genNullOrEmptyArrayCheck("in");
+  if (VecSize > 1) {
+    genVectorLengthCompatibilityCheck("in", VecSize);
+  }
+  mOut.indent() << "return " << FuncName << "(in, 0, "
+                << InLength << ");\n";
+  endFunction();
+
+  // TypeName reduce_foo(ArrayElementType[] in, int x1, int x2)
+
+  startFunction(AM_Public, false, TypeName.c_str(), FuncName, 3,
+                ArrayType.c_str(), "in",
+                "int", "x1",
+                "int", "x2");
+
+  genNullOrEmptyArrayCheck("in");
+  if (VecSize > 1) {
+    genVectorLengthCompatibilityCheck("in", VecSize);
+  }
+  // Check that 0 <= x1 and x1 < x2 and x2 <= InLength
+  mOut.indent() << "// Bounds check passed x1 and x2\n";
+  mOut.indent() << "if (x1 < 0 || x1 >= x2 || x2 > " << InLength << ") {\n";
+  mOut.indent() << "    throw new RSRuntimeException("
+                << "\"Input bounds are invalid!\");\n";
+  mOut.indent() << "}\n";
+
+  // Create a temporary input allocation.
+  mOut.indent() << "Allocation ain = Allocation.createSized("
+                << SAVED_RS_REFERENCE << ", "
+                << RS_ELEM_PREFIX << ElementName << ", "
+                << "x2 - x1);\n";
+  mOut.indent() << "ain.setAutoPadding(true);\n";
+  mOut.indent() << "ain.copy1DRangeFrom(x1, x2 - x1, in);\n";
+
+  // Create a temporary output allocation.
+  mOut.indent() << "Allocation aout = Allocation.createSized("
+                << SAVED_RS_REFERENCE << ", "
+                << RS_ELEM_PREFIX << ElementName << ", "
+                << "1);\n";
+  mOut.indent() << "aout.setAutoPadding(true);\n";
+
+  mOut.indent() << FuncName << "(ain, aout, null);\n";
+
+  if (VecSize > 1) {
+    // An allocation with vector elements is represented as an array
+    // of primitives, so we have to extract the output from the
+    // element array and rebuild the vector.
+    //
+    // E.g. for int2
+    //
+    // Allocation outArray = new int[2];
+    // aout.copyTo(outArray);
+    // int elem0 = outArray[0];
+    // int elem1 = outArray[1];
+    // return new Int2(elem0, elem1);
+
+    mOut.indent() << ArrayType << " outArray = new "
+                  << ArrayElementType << "[" << VecSize << "];\n";
+
+    mOut.indent() << "aout.copy1DRangeTo(0, 1, outArray);\n";
+
+    for (unsigned Elem = 0; Elem < VecSize; ++Elem) {
+      mOut.indent() << ReflectedScalarType << " elem" << Elem << " = ";
+      std::string Index = "outArray[" + std::to_string(Elem) + "]";
+
+      if (ReflectedScalarType == ArrayElementType) {
+        mOut << Index << ";\n";
+      } else {
+        mOut << ZeroExtendValue(Index, ArrayElementType, ReflectedScalarType) << ";\n";
+      }
+    }
+
+    mOut.indent() << "return new " << TypeName << "(";
+    for (unsigned Elem = 0; Elem < VecSize; ++Elem) {
+      if (Elem > 0) mOut << ", ";
+      mOut << "elem" << Elem;
+    }
+    mOut << ");\n";
+  } else {
+    // Scalar handling.
+    //
+    // E.g. for int
+    // Allocation outArray = new int[1];
+    // aout.copyTo(outArray);
+    // return outArray[0];
+    mOut.indent() << ArrayType << " outArray = new " << ArrayElementType
+                  << "[1];\n";
+    mOut.indent() << "aout.copyTo(outArray);\n";
+
+    if (ReflectedScalarType == "boolean") {
+      mOut.indent() << "return outArray[0] != 0;\n";
+    } else if (ReflectedScalarType == ArrayElementType) {
+      mOut.indent() << "return outArray[0];\n";
+    } else {
+      mOut.indent() << "return "
+                    << ZeroExtendValue("outArray[0]",
+                                       ArrayElementType,
+                                       ReflectedScalarType)
+                    << ";\n";
+    }
   }
 
   endFunction();
