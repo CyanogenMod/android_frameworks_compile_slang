@@ -2497,6 +2497,24 @@ char buf2471[200];
 char buf2472[200];
 char buf2473[200];
 char buf2474[200];
+char buf2475[200];
+char buf2476[200];
+char buf2477[200];
+char buf2478[200];
+char buf2479[200];
+char buf2480[200];
+char buf2481[200];
+char buf2482[200];
+char buf2483[200];
+char buf2484[200];
+char buf2485[200];
+char buf2486[200];
+char buf2487[200];
+char buf2488[200];
+char buf2489[200];
+char buf2490[200];
+char buf2491[200];
+char buf2492[200];
 
 void root(const int* in) {
     *(uchar*)buf0 = abs(*(char*)buf1);
@@ -2896,645 +2914,651 @@ void root(const int* in) {
     *(float2*)buf886 = max(*(float2*)buf887, *(float2*)buf888);
     *(float3*)buf889 = max(*(float3*)buf890, *(float3*)buf891);
     *(float4*)buf892 = max(*(float4*)buf893, *(float4*)buf894);
-    *(char*)buf895 = max(*(char*)buf896, *(char*)buf897);
-    *(uchar*)buf898 = max(*(uchar*)buf899, *(uchar*)buf900);
-    *(short*)buf901 = max(*(short*)buf902, *(short*)buf903);
-    *(ushort*)buf904 = max(*(ushort*)buf905, *(ushort*)buf906);
-    *(int*)buf907 = max(*(int*)buf908, *(int*)buf909);
-    *(uint*)buf910 = max(*(uint*)buf911, *(uint*)buf912);
-    *(char2*)buf913 = max(*(char2*)buf914, *(char2*)buf915);
-    *(uchar2*)buf916 = max(*(uchar2*)buf917, *(uchar2*)buf918);
-    *(short2*)buf919 = max(*(short2*)buf920, *(short2*)buf921);
-    *(ushort2*)buf922 = max(*(ushort2*)buf923, *(ushort2*)buf924);
-    *(int2*)buf925 = max(*(int2*)buf926, *(int2*)buf927);
-    *(uint2*)buf928 = max(*(uint2*)buf929, *(uint2*)buf930);
-    *(char3*)buf931 = max(*(char3*)buf932, *(char3*)buf933);
-    *(uchar3*)buf934 = max(*(uchar3*)buf935, *(uchar3*)buf936);
-    *(short3*)buf937 = max(*(short3*)buf938, *(short3*)buf939);
-    *(ushort3*)buf940 = max(*(ushort3*)buf941, *(ushort3*)buf942);
-    *(int3*)buf943 = max(*(int3*)buf944, *(int3*)buf945);
-    *(uint3*)buf946 = max(*(uint3*)buf947, *(uint3*)buf948);
-    *(char4*)buf949 = max(*(char4*)buf950, *(char4*)buf951);
-    *(uchar4*)buf952 = max(*(uchar4*)buf953, *(uchar4*)buf954);
-    *(short4*)buf955 = max(*(short4*)buf956, *(short4*)buf957);
-    *(ushort4*)buf958 = max(*(ushort4*)buf959, *(ushort4*)buf960);
-    *(int4*)buf961 = max(*(int4*)buf962, *(int4*)buf963);
-    *(uint4*)buf964 = max(*(uint4*)buf965, *(uint4*)buf966);
-    *(float*)buf967 = min(*(float*)buf968, *(float*)buf969);
-    *(float2*)buf970 = min(*(float2*)buf971, *(float2*)buf972);
-    *(float3*)buf973 = min(*(float3*)buf974, *(float3*)buf975);
-    *(float4*)buf976 = min(*(float4*)buf977, *(float4*)buf978);
-    *(char*)buf979 = min(*(char*)buf980, *(char*)buf981);
-    *(uchar*)buf982 = min(*(uchar*)buf983, *(uchar*)buf984);
-    *(short*)buf985 = min(*(short*)buf986, *(short*)buf987);
-    *(ushort*)buf988 = min(*(ushort*)buf989, *(ushort*)buf990);
-    *(int*)buf991 = min(*(int*)buf992, *(int*)buf993);
-    *(uint*)buf994 = min(*(uint*)buf995, *(uint*)buf996);
-    *(char2*)buf997 = min(*(char2*)buf998, *(char2*)buf999);
-    *(uchar2*)buf1000 = min(*(uchar2*)buf1001, *(uchar2*)buf1002);
-    *(short2*)buf1003 = min(*(short2*)buf1004, *(short2*)buf1005);
-    *(ushort2*)buf1006 = min(*(ushort2*)buf1007, *(ushort2*)buf1008);
-    *(int2*)buf1009 = min(*(int2*)buf1010, *(int2*)buf1011);
-    *(uint2*)buf1012 = min(*(uint2*)buf1013, *(uint2*)buf1014);
-    *(char3*)buf1015 = min(*(char3*)buf1016, *(char3*)buf1017);
-    *(uchar3*)buf1018 = min(*(uchar3*)buf1019, *(uchar3*)buf1020);
-    *(short3*)buf1021 = min(*(short3*)buf1022, *(short3*)buf1023);
-    *(ushort3*)buf1024 = min(*(ushort3*)buf1025, *(ushort3*)buf1026);
-    *(int3*)buf1027 = min(*(int3*)buf1028, *(int3*)buf1029);
-    *(uint3*)buf1030 = min(*(uint3*)buf1031, *(uint3*)buf1032);
-    *(char4*)buf1033 = min(*(char4*)buf1034, *(char4*)buf1035);
-    *(uchar4*)buf1036 = min(*(uchar4*)buf1037, *(uchar4*)buf1038);
-    *(short4*)buf1039 = min(*(short4*)buf1040, *(short4*)buf1041);
-    *(ushort4*)buf1042 = min(*(ushort4*)buf1043, *(ushort4*)buf1044);
-    *(int4*)buf1045 = min(*(int4*)buf1046, *(int4*)buf1047);
-    *(uint4*)buf1048 = min(*(uint4*)buf1049, *(uint4*)buf1050);
-    *(float*)buf1051 = mix(*(float*)buf1052, *(float*)buf1053, *(float*)buf1054);
-    *(float2*)buf1055 = mix(*(float2*)buf1056, *(float2*)buf1057, *(float2*)buf1058);
-    *(float3*)buf1059 = mix(*(float3*)buf1060, *(float3*)buf1061, *(float3*)buf1062);
-    *(float4*)buf1063 = mix(*(float4*)buf1064, *(float4*)buf1065, *(float4*)buf1066);
-    *(float2*)buf1067 = mix(*(float2*)buf1068, *(float2*)buf1069, *(float*)buf1070);
-    *(float3*)buf1071 = mix(*(float3*)buf1072, *(float3*)buf1073, *(float*)buf1074);
-    *(float4*)buf1075 = mix(*(float4*)buf1076, *(float4*)buf1077, *(float*)buf1078);
-    *(float*)buf1079 = modf(*(float*)buf1080, (float*) buf1081);
-    *(float2*)buf1082 = modf(*(float2*)buf1083, (float2*) buf1084);
-    *(float3*)buf1085 = modf(*(float3*)buf1086, (float3*) buf1087);
-    *(float4*)buf1088 = modf(*(float4*)buf1089, (float4*) buf1090);
-    *(float*)buf1091 = nan(*(uint*)buf1092);
-    *(float*)buf1093 = nextafter(*(float*)buf1094, *(float*)buf1095);
-    *(float2*)buf1096 = nextafter(*(float2*)buf1097, *(float2*)buf1098);
-    *(float3*)buf1099 = nextafter(*(float3*)buf1100, *(float3*)buf1101);
-    *(float4*)buf1102 = nextafter(*(float4*)buf1103, *(float4*)buf1104);
-    *(float*)buf1105 = normalize(*(float*)buf1106);
-    *(float2*)buf1107 = normalize(*(float2*)buf1108);
-    *(float3*)buf1109 = normalize(*(float3*)buf1110);
-    *(float4*)buf1111 = normalize(*(float4*)buf1112);
-    *(float*)buf1113 = pow(*(float*)buf1114, *(float*)buf1115);
-    *(float2*)buf1116 = pow(*(float2*)buf1117, *(float2*)buf1118);
-    *(float3*)buf1119 = pow(*(float3*)buf1120, *(float3*)buf1121);
-    *(float4*)buf1122 = pow(*(float4*)buf1123, *(float4*)buf1124);
-    *(float*)buf1125 = pown(*(float*)buf1126, *(int*)buf1127);
-    *(float2*)buf1128 = pown(*(float2*)buf1129, *(int2*)buf1130);
-    *(float3*)buf1131 = pown(*(float3*)buf1132, *(int3*)buf1133);
-    *(float4*)buf1134 = pown(*(float4*)buf1135, *(int4*)buf1136);
-    *(float*)buf1137 = powr(*(float*)buf1138, *(float*)buf1139);
-    *(float2*)buf1140 = powr(*(float2*)buf1141, *(float2*)buf1142);
-    *(float3*)buf1143 = powr(*(float3*)buf1144, *(float3*)buf1145);
-    *(float4*)buf1146 = powr(*(float4*)buf1147, *(float4*)buf1148);
-    *(float*)buf1149 = radians(*(float*)buf1150);
-    *(float2*)buf1151 = radians(*(float2*)buf1152);
-    *(float3*)buf1153 = radians(*(float3*)buf1154);
-    *(float4*)buf1155 = radians(*(float4*)buf1156);
-    *(float*)buf1157 = remainder(*(float*)buf1158, *(float*)buf1159);
-    *(float2*)buf1160 = remainder(*(float2*)buf1161, *(float2*)buf1162);
-    *(float3*)buf1163 = remainder(*(float3*)buf1164, *(float3*)buf1165);
-    *(float4*)buf1166 = remainder(*(float4*)buf1167, *(float4*)buf1168);
-    *(float*)buf1169 = remquo(*(float*)buf1170, *(float*)buf1171, (int*) buf1172);
-    *(float2*)buf1173 = remquo(*(float2*)buf1174, *(float2*)buf1175, (int2*) buf1176);
-    *(float3*)buf1177 = remquo(*(float3*)buf1178, *(float3*)buf1179, (int3*) buf1180);
-    *(float4*)buf1181 = remquo(*(float4*)buf1182, *(float4*)buf1183, (int4*) buf1184);
-    *(float*)buf1185 = rint(*(float*)buf1186);
-    *(float2*)buf1187 = rint(*(float2*)buf1188);
-    *(float3*)buf1189 = rint(*(float3*)buf1190);
-    *(float4*)buf1191 = rint(*(float4*)buf1192);
-    *(float*)buf1193 = rootn(*(float*)buf1194, *(int*)buf1195);
-    *(float2*)buf1196 = rootn(*(float2*)buf1197, *(int2*)buf1198);
-    *(float3*)buf1199 = rootn(*(float3*)buf1200, *(int3*)buf1201);
-    *(float4*)buf1202 = rootn(*(float4*)buf1203, *(int4*)buf1204);
-    *(float*)buf1205 = round(*(float*)buf1206);
-    *(float2*)buf1207 = round(*(float2*)buf1208);
-    *(float3*)buf1209 = round(*(float3*)buf1210);
-    *(float4*)buf1211 = round(*(float4*)buf1212);
-    rsAllocationCopy1DRange(*(rs_allocation*)buf1213, *(uint32_t*)buf1214, *(uint32_t*)buf1215, *(uint32_t*)buf1216, *(rs_allocation*)buf1217, *(uint32_t*)buf1218, *(uint32_t*)buf1219);
-    rsAllocationCopy2DRange(*(rs_allocation*)buf1220, *(uint32_t*)buf1221, *(uint32_t*)buf1222, *(uint32_t*)buf1223, *(rs_allocation_cubemap_face*)buf1224, *(uint32_t*)buf1225, *(uint32_t*)buf1226, *(rs_allocation*)buf1227, *(uint32_t*)buf1228, *(uint32_t*)buf1229, *(uint32_t*)buf1230, *(rs_allocation_cubemap_face*)buf1231);
-    *(uint32_t*)buf1232 = rsAllocationGetDimFaces(*(rs_allocation*)buf1233);
-    *(uint32_t*)buf1234 = rsAllocationGetDimLOD(*(rs_allocation*)buf1235);
-    *(uint32_t*)buf1236 = rsAllocationGetDimX(*(rs_allocation*)buf1237);
-    *(uint32_t*)buf1238 = rsAllocationGetDimY(*(rs_allocation*)buf1239);
-    *(uint32_t*)buf1240 = rsAllocationGetDimZ(*(rs_allocation*)buf1241);
-    *(rs_element*)buf1242 = rsAllocationGetElement(*(rs_allocation*)buf1243);
-    rsAllocationIoReceive(*(rs_allocation*)buf1244);
-    rsAllocationIoSend(*(rs_allocation*)buf1245);
-    *(int32_t*)buf1246 = rsAtomicAdd((volatile int32_t*) buf1247, *(int32_t*)buf1248);
-    *(int32_t*)buf1249 = rsAtomicAnd((volatile int32_t*) buf1250, *(int32_t*)buf1251);
-    *(int32_t*)buf1252 = rsAtomicCas((volatile int32_t*) buf1253, *(int32_t*)buf1254, *(int32_t*)buf1255);
-    *(uint32_t*)buf1256 = rsAtomicCas((volatile uint32_t*) buf1257, *(uint32_t*)buf1258, *(uint32_t*)buf1259);
-    *(int32_t*)buf1260 = rsAtomicDec((volatile int32_t*) buf1261);
-    *(int32_t*)buf1262 = rsAtomicInc((volatile int32_t*) buf1263);
-    *(uint32_t*)buf1264 = rsAtomicMax((volatile uint32_t*) buf1265, *(uint32_t*)buf1266);
-    *(int32_t*)buf1267 = rsAtomicMax((volatile int32_t*) buf1268, *(int32_t*)buf1269);
-    *(uint32_t*)buf1270 = rsAtomicMin((volatile uint32_t*) buf1271, *(uint32_t*)buf1272);
-    *(int32_t*)buf1273 = rsAtomicMin((volatile int32_t*) buf1274, *(int32_t*)buf1275);
-    *(int32_t*)buf1276 = rsAtomicOr((volatile int32_t*) buf1277, *(int32_t*)buf1278);
-    *(int32_t*)buf1279 = rsAtomicSub((volatile int32_t*) buf1280, *(int32_t*)buf1281);
-    *(int32_t*)buf1282 = rsAtomicXor((volatile int32_t*) buf1283, *(int32_t*)buf1284);
-    *(char*)buf1285 = rsClamp(*(char*)buf1286, *(char*)buf1287, *(char*)buf1288);
-    *(uchar*)buf1289 = rsClamp(*(uchar*)buf1290, *(uchar*)buf1291, *(uchar*)buf1292);
-    *(short*)buf1293 = rsClamp(*(short*)buf1294, *(short*)buf1295, *(short*)buf1296);
-    *(ushort*)buf1297 = rsClamp(*(ushort*)buf1298, *(ushort*)buf1299, *(ushort*)buf1300);
-    *(int*)buf1301 = rsClamp(*(int*)buf1302, *(int*)buf1303, *(int*)buf1304);
-    *(uint*)buf1305 = rsClamp(*(uint*)buf1306, *(uint*)buf1307, *(uint*)buf1308);
-    rsClearObject((rs_element*) buf1309);
-    rsClearObject((rs_type*) buf1310);
-    rsClearObject((rs_allocation*) buf1311);
-    rsClearObject((rs_sampler*) buf1312);
-    rsClearObject((rs_script*) buf1313);
+    *(float2*)buf895 = max(*(float2*)buf896, *(float*)buf897);
+    *(float3*)buf898 = max(*(float3*)buf899, *(float*)buf900);
+    *(float4*)buf901 = max(*(float4*)buf902, *(float*)buf903);
+    *(char*)buf904 = max(*(char*)buf905, *(char*)buf906);
+    *(uchar*)buf907 = max(*(uchar*)buf908, *(uchar*)buf909);
+    *(short*)buf910 = max(*(short*)buf911, *(short*)buf912);
+    *(ushort*)buf913 = max(*(ushort*)buf914, *(ushort*)buf915);
+    *(int*)buf916 = max(*(int*)buf917, *(int*)buf918);
+    *(uint*)buf919 = max(*(uint*)buf920, *(uint*)buf921);
+    *(char2*)buf922 = max(*(char2*)buf923, *(char2*)buf924);
+    *(uchar2*)buf925 = max(*(uchar2*)buf926, *(uchar2*)buf927);
+    *(short2*)buf928 = max(*(short2*)buf929, *(short2*)buf930);
+    *(ushort2*)buf931 = max(*(ushort2*)buf932, *(ushort2*)buf933);
+    *(int2*)buf934 = max(*(int2*)buf935, *(int2*)buf936);
+    *(uint2*)buf937 = max(*(uint2*)buf938, *(uint2*)buf939);
+    *(char3*)buf940 = max(*(char3*)buf941, *(char3*)buf942);
+    *(uchar3*)buf943 = max(*(uchar3*)buf944, *(uchar3*)buf945);
+    *(short3*)buf946 = max(*(short3*)buf947, *(short3*)buf948);
+    *(ushort3*)buf949 = max(*(ushort3*)buf950, *(ushort3*)buf951);
+    *(int3*)buf952 = max(*(int3*)buf953, *(int3*)buf954);
+    *(uint3*)buf955 = max(*(uint3*)buf956, *(uint3*)buf957);
+    *(char4*)buf958 = max(*(char4*)buf959, *(char4*)buf960);
+    *(uchar4*)buf961 = max(*(uchar4*)buf962, *(uchar4*)buf963);
+    *(short4*)buf964 = max(*(short4*)buf965, *(short4*)buf966);
+    *(ushort4*)buf967 = max(*(ushort4*)buf968, *(ushort4*)buf969);
+    *(int4*)buf970 = max(*(int4*)buf971, *(int4*)buf972);
+    *(uint4*)buf973 = max(*(uint4*)buf974, *(uint4*)buf975);
+    *(float*)buf976 = min(*(float*)buf977, *(float*)buf978);
+    *(float2*)buf979 = min(*(float2*)buf980, *(float2*)buf981);
+    *(float3*)buf982 = min(*(float3*)buf983, *(float3*)buf984);
+    *(float4*)buf985 = min(*(float4*)buf986, *(float4*)buf987);
+    *(float2*)buf988 = min(*(float2*)buf989, *(float*)buf990);
+    *(float3*)buf991 = min(*(float3*)buf992, *(float*)buf993);
+    *(float4*)buf994 = min(*(float4*)buf995, *(float*)buf996);
+    *(char*)buf997 = min(*(char*)buf998, *(char*)buf999);
+    *(uchar*)buf1000 = min(*(uchar*)buf1001, *(uchar*)buf1002);
+    *(short*)buf1003 = min(*(short*)buf1004, *(short*)buf1005);
+    *(ushort*)buf1006 = min(*(ushort*)buf1007, *(ushort*)buf1008);
+    *(int*)buf1009 = min(*(int*)buf1010, *(int*)buf1011);
+    *(uint*)buf1012 = min(*(uint*)buf1013, *(uint*)buf1014);
+    *(char2*)buf1015 = min(*(char2*)buf1016, *(char2*)buf1017);
+    *(uchar2*)buf1018 = min(*(uchar2*)buf1019, *(uchar2*)buf1020);
+    *(short2*)buf1021 = min(*(short2*)buf1022, *(short2*)buf1023);
+    *(ushort2*)buf1024 = min(*(ushort2*)buf1025, *(ushort2*)buf1026);
+    *(int2*)buf1027 = min(*(int2*)buf1028, *(int2*)buf1029);
+    *(uint2*)buf1030 = min(*(uint2*)buf1031, *(uint2*)buf1032);
+    *(char3*)buf1033 = min(*(char3*)buf1034, *(char3*)buf1035);
+    *(uchar3*)buf1036 = min(*(uchar3*)buf1037, *(uchar3*)buf1038);
+    *(short3*)buf1039 = min(*(short3*)buf1040, *(short3*)buf1041);
+    *(ushort3*)buf1042 = min(*(ushort3*)buf1043, *(ushort3*)buf1044);
+    *(int3*)buf1045 = min(*(int3*)buf1046, *(int3*)buf1047);
+    *(uint3*)buf1048 = min(*(uint3*)buf1049, *(uint3*)buf1050);
+    *(char4*)buf1051 = min(*(char4*)buf1052, *(char4*)buf1053);
+    *(uchar4*)buf1054 = min(*(uchar4*)buf1055, *(uchar4*)buf1056);
+    *(short4*)buf1057 = min(*(short4*)buf1058, *(short4*)buf1059);
+    *(ushort4*)buf1060 = min(*(ushort4*)buf1061, *(ushort4*)buf1062);
+    *(int4*)buf1063 = min(*(int4*)buf1064, *(int4*)buf1065);
+    *(uint4*)buf1066 = min(*(uint4*)buf1067, *(uint4*)buf1068);
+    *(float*)buf1069 = mix(*(float*)buf1070, *(float*)buf1071, *(float*)buf1072);
+    *(float2*)buf1073 = mix(*(float2*)buf1074, *(float2*)buf1075, *(float2*)buf1076);
+    *(float3*)buf1077 = mix(*(float3*)buf1078, *(float3*)buf1079, *(float3*)buf1080);
+    *(float4*)buf1081 = mix(*(float4*)buf1082, *(float4*)buf1083, *(float4*)buf1084);
+    *(float2*)buf1085 = mix(*(float2*)buf1086, *(float2*)buf1087, *(float*)buf1088);
+    *(float3*)buf1089 = mix(*(float3*)buf1090, *(float3*)buf1091, *(float*)buf1092);
+    *(float4*)buf1093 = mix(*(float4*)buf1094, *(float4*)buf1095, *(float*)buf1096);
+    *(float*)buf1097 = modf(*(float*)buf1098, (float*) buf1099);
+    *(float2*)buf1100 = modf(*(float2*)buf1101, (float2*) buf1102);
+    *(float3*)buf1103 = modf(*(float3*)buf1104, (float3*) buf1105);
+    *(float4*)buf1106 = modf(*(float4*)buf1107, (float4*) buf1108);
+    *(float*)buf1109 = nan(*(uint*)buf1110);
+    *(float*)buf1111 = nextafter(*(float*)buf1112, *(float*)buf1113);
+    *(float2*)buf1114 = nextafter(*(float2*)buf1115, *(float2*)buf1116);
+    *(float3*)buf1117 = nextafter(*(float3*)buf1118, *(float3*)buf1119);
+    *(float4*)buf1120 = nextafter(*(float4*)buf1121, *(float4*)buf1122);
+    *(float*)buf1123 = normalize(*(float*)buf1124);
+    *(float2*)buf1125 = normalize(*(float2*)buf1126);
+    *(float3*)buf1127 = normalize(*(float3*)buf1128);
+    *(float4*)buf1129 = normalize(*(float4*)buf1130);
+    *(float*)buf1131 = pow(*(float*)buf1132, *(float*)buf1133);
+    *(float2*)buf1134 = pow(*(float2*)buf1135, *(float2*)buf1136);
+    *(float3*)buf1137 = pow(*(float3*)buf1138, *(float3*)buf1139);
+    *(float4*)buf1140 = pow(*(float4*)buf1141, *(float4*)buf1142);
+    *(float*)buf1143 = pown(*(float*)buf1144, *(int*)buf1145);
+    *(float2*)buf1146 = pown(*(float2*)buf1147, *(int2*)buf1148);
+    *(float3*)buf1149 = pown(*(float3*)buf1150, *(int3*)buf1151);
+    *(float4*)buf1152 = pown(*(float4*)buf1153, *(int4*)buf1154);
+    *(float*)buf1155 = powr(*(float*)buf1156, *(float*)buf1157);
+    *(float2*)buf1158 = powr(*(float2*)buf1159, *(float2*)buf1160);
+    *(float3*)buf1161 = powr(*(float3*)buf1162, *(float3*)buf1163);
+    *(float4*)buf1164 = powr(*(float4*)buf1165, *(float4*)buf1166);
+    *(float*)buf1167 = radians(*(float*)buf1168);
+    *(float2*)buf1169 = radians(*(float2*)buf1170);
+    *(float3*)buf1171 = radians(*(float3*)buf1172);
+    *(float4*)buf1173 = radians(*(float4*)buf1174);
+    *(float*)buf1175 = remainder(*(float*)buf1176, *(float*)buf1177);
+    *(float2*)buf1178 = remainder(*(float2*)buf1179, *(float2*)buf1180);
+    *(float3*)buf1181 = remainder(*(float3*)buf1182, *(float3*)buf1183);
+    *(float4*)buf1184 = remainder(*(float4*)buf1185, *(float4*)buf1186);
+    *(float*)buf1187 = remquo(*(float*)buf1188, *(float*)buf1189, (int*) buf1190);
+    *(float2*)buf1191 = remquo(*(float2*)buf1192, *(float2*)buf1193, (int2*) buf1194);
+    *(float3*)buf1195 = remquo(*(float3*)buf1196, *(float3*)buf1197, (int3*) buf1198);
+    *(float4*)buf1199 = remquo(*(float4*)buf1200, *(float4*)buf1201, (int4*) buf1202);
+    *(float*)buf1203 = rint(*(float*)buf1204);
+    *(float2*)buf1205 = rint(*(float2*)buf1206);
+    *(float3*)buf1207 = rint(*(float3*)buf1208);
+    *(float4*)buf1209 = rint(*(float4*)buf1210);
+    *(float*)buf1211 = rootn(*(float*)buf1212, *(int*)buf1213);
+    *(float2*)buf1214 = rootn(*(float2*)buf1215, *(int2*)buf1216);
+    *(float3*)buf1217 = rootn(*(float3*)buf1218, *(int3*)buf1219);
+    *(float4*)buf1220 = rootn(*(float4*)buf1221, *(int4*)buf1222);
+    *(float*)buf1223 = round(*(float*)buf1224);
+    *(float2*)buf1225 = round(*(float2*)buf1226);
+    *(float3*)buf1227 = round(*(float3*)buf1228);
+    *(float4*)buf1229 = round(*(float4*)buf1230);
+    rsAllocationCopy1DRange(*(rs_allocation*)buf1231, *(uint32_t*)buf1232, *(uint32_t*)buf1233, *(uint32_t*)buf1234, *(rs_allocation*)buf1235, *(uint32_t*)buf1236, *(uint32_t*)buf1237);
+    rsAllocationCopy2DRange(*(rs_allocation*)buf1238, *(uint32_t*)buf1239, *(uint32_t*)buf1240, *(uint32_t*)buf1241, *(rs_allocation_cubemap_face*)buf1242, *(uint32_t*)buf1243, *(uint32_t*)buf1244, *(rs_allocation*)buf1245, *(uint32_t*)buf1246, *(uint32_t*)buf1247, *(uint32_t*)buf1248, *(rs_allocation_cubemap_face*)buf1249);
+    *(uint32_t*)buf1250 = rsAllocationGetDimFaces(*(rs_allocation*)buf1251);
+    *(uint32_t*)buf1252 = rsAllocationGetDimLOD(*(rs_allocation*)buf1253);
+    *(uint32_t*)buf1254 = rsAllocationGetDimX(*(rs_allocation*)buf1255);
+    *(uint32_t*)buf1256 = rsAllocationGetDimY(*(rs_allocation*)buf1257);
+    *(uint32_t*)buf1258 = rsAllocationGetDimZ(*(rs_allocation*)buf1259);
+    *(rs_element*)buf1260 = rsAllocationGetElement(*(rs_allocation*)buf1261);
+    rsAllocationIoReceive(*(rs_allocation*)buf1262);
+    rsAllocationIoSend(*(rs_allocation*)buf1263);
+    *(int32_t*)buf1264 = rsAtomicAdd((volatile int32_t*) buf1265, *(int32_t*)buf1266);
+    *(int32_t*)buf1267 = rsAtomicAnd((volatile int32_t*) buf1268, *(int32_t*)buf1269);
+    *(int32_t*)buf1270 = rsAtomicCas((volatile int32_t*) buf1271, *(int32_t*)buf1272, *(int32_t*)buf1273);
+    *(uint32_t*)buf1274 = rsAtomicCas((volatile uint32_t*) buf1275, *(uint32_t*)buf1276, *(uint32_t*)buf1277);
+    *(int32_t*)buf1278 = rsAtomicDec((volatile int32_t*) buf1279);
+    *(int32_t*)buf1280 = rsAtomicInc((volatile int32_t*) buf1281);
+    *(uint32_t*)buf1282 = rsAtomicMax((volatile uint32_t*) buf1283, *(uint32_t*)buf1284);
+    *(int32_t*)buf1285 = rsAtomicMax((volatile int32_t*) buf1286, *(int32_t*)buf1287);
+    *(uint32_t*)buf1288 = rsAtomicMin((volatile uint32_t*) buf1289, *(uint32_t*)buf1290);
+    *(int32_t*)buf1291 = rsAtomicMin((volatile int32_t*) buf1292, *(int32_t*)buf1293);
+    *(int32_t*)buf1294 = rsAtomicOr((volatile int32_t*) buf1295, *(int32_t*)buf1296);
+    *(int32_t*)buf1297 = rsAtomicSub((volatile int32_t*) buf1298, *(int32_t*)buf1299);
+    *(int32_t*)buf1300 = rsAtomicXor((volatile int32_t*) buf1301, *(int32_t*)buf1302);
+    *(char*)buf1303 = rsClamp(*(char*)buf1304, *(char*)buf1305, *(char*)buf1306);
+    *(uchar*)buf1307 = rsClamp(*(uchar*)buf1308, *(uchar*)buf1309, *(uchar*)buf1310);
+    *(short*)buf1311 = rsClamp(*(short*)buf1312, *(short*)buf1313, *(short*)buf1314);
+    *(ushort*)buf1315 = rsClamp(*(ushort*)buf1316, *(ushort*)buf1317, *(ushort*)buf1318);
+    *(int*)buf1319 = rsClamp(*(int*)buf1320, *(int*)buf1321, *(int*)buf1322);
+    *(uint*)buf1323 = rsClamp(*(uint*)buf1324, *(uint*)buf1325, *(uint*)buf1326);
+    rsClearObject((rs_element*) buf1327);
+    rsClearObject((rs_type*) buf1328);
+    rsClearObject((rs_allocation*) buf1329);
+    rsClearObject((rs_sampler*) buf1330);
+    rsClearObject((rs_script*) buf1331);
 #ifndef __LP64__
-    rsClearObject((rs_mesh*) buf1314);
-    rsClearObject((rs_program_fragment*) buf1315);
-    rsClearObject((rs_program_vertex*) buf1316);
-    rsClearObject((rs_program_raster*) buf1317);
-    rsClearObject((rs_program_store*) buf1318);
-    rsClearObject((rs_font*) buf1319);
+    rsClearObject((rs_mesh*) buf1332);
+    rsClearObject((rs_program_fragment*) buf1333);
+    rsClearObject((rs_program_vertex*) buf1334);
+    rsClearObject((rs_program_raster*) buf1335);
+    rsClearObject((rs_program_store*) buf1336);
+    rsClearObject((rs_font*) buf1337);
 #endif
-    rsDebug((const char*) buf1320, *(double*)buf1321);
-    rsDebug((const char*) buf1322, *(int*)buf1323);
-    rsDebug((const char*) buf1324, *(uint*)buf1325);
-    rsDebug((const char*) buf1326, *(long*)buf1327);
-    rsDebug((const char*) buf1328, *(ulong*)buf1329);
-    rsDebug((const char*) buf1330, *(float*)buf1331);
-    rsDebug((const char*) buf1332, *(float2*)buf1333);
-    rsDebug((const char*) buf1334, *(float3*)buf1335);
-    rsDebug((const char*) buf1336, *(float4*)buf1337);
-    rsDebug((const char*) buf1338, *(float*)buf1339, *(float*)buf1340);
-    rsDebug((const char*) buf1341, *(float*)buf1342, *(float*)buf1343, *(float*)buf1344);
-    rsDebug((const char*) buf1345, *(float*)buf1346, *(float*)buf1347, *(float*)buf1348, *(float*)buf1349);
-    rsDebug((const char*) buf1350, *(long long*)buf1351);
-    rsDebug((const char*) buf1352, *(unsigned long long*)buf1353);
-    rsDebug((const char*) buf1354, (const void*) buf1355);
-    rsDebug((const char*) buf1356, (const rs_matrix4x4*) buf1357);
-    rsDebug((const char*) buf1358, (const rs_matrix3x3*) buf1359);
-    rsDebug((const char*) buf1360, (const rs_matrix2x2*) buf1361);
-    *(uint32_t*)buf1362 = rsElementGetBytesSize(*(rs_element*)buf1363);
-    *(rs_data_kind*)buf1364 = rsElementGetDataKind(*(rs_element*)buf1365);
-    *(rs_data_type*)buf1366 = rsElementGetDataType(*(rs_element*)buf1367);
-    *(rs_element*)buf1368 = rsElementGetSubElement(*(rs_element*)buf1369, *(uint32_t*)buf1370);
-    *(uint32_t*)buf1371 = rsElementGetSubElementArraySize(*(rs_element*)buf1372, *(uint32_t*)buf1373);
-    *(uint32_t*)buf1374 = rsElementGetSubElementCount(*(rs_element*)buf1375);
-    *(uint32_t*)buf1376 = rsElementGetSubElementName(*(rs_element*)buf1377, *(uint32_t*)buf1378, (char*) buf1379, *(uint32_t*)buf1380);
-    *(uint32_t*)buf1381 = rsElementGetSubElementNameLength(*(rs_element*)buf1382, *(uint32_t*)buf1383);
-    *(uint32_t*)buf1384 = rsElementGetSubElementOffsetBytes(*(rs_element*)buf1385, *(uint32_t*)buf1386);
-    *(uint32_t*)buf1387 = rsElementGetVectorSize(*(rs_element*)buf1388);
-    rsExtractFrustumPlanes((const rs_matrix4x4*) buf1389, (float4*) buf1390, (float4*) buf1391, (float4*) buf1392, (float4*) buf1393, (float4*) buf1394, (float4*) buf1395);
-    rsForEach(*(rs_script*)buf1396, *(rs_allocation*)buf1397, *(rs_allocation*)buf1398, (const void*) buf1399, *(size_t*)buf1400, (const rs_script_call_t*) buf1401);
-    rsForEach(*(rs_script*)buf1402, *(rs_allocation*)buf1403, *(rs_allocation*)buf1404, (const void*) buf1405, *(size_t*)buf1406);
-    rsForEach(*(rs_script*)buf1407, *(rs_allocation*)buf1408, *(rs_allocation*)buf1409);
-    *(float*)buf1410 = rsFrac(*(float*)buf1411);
-    *(rs_allocation*)buf1412 = rsGetAllocation((const void*) buf1413);
-    *(float*)buf1414 = rsGetDt();
-    *(const void**)buf1415 = rsGetElementAt(*(rs_allocation*)buf1416, *(uint32_t*)buf1417);
-    *(const void**)buf1418 = rsGetElementAt(*(rs_allocation*)buf1419, *(uint32_t*)buf1420, *(uint32_t*)buf1421);
-    *(const void**)buf1422 = rsGetElementAt(*(rs_allocation*)buf1423, *(uint32_t*)buf1424, *(uint32_t*)buf1425, *(uint32_t*)buf1426);
-    *(float*)buf1427 = rsGetElementAt_float(*(rs_allocation*)buf1428, *(uint32_t*)buf1429);
-    *(float2*)buf1430 = rsGetElementAt_float2(*(rs_allocation*)buf1431, *(uint32_t*)buf1432);
-    *(float3*)buf1433 = rsGetElementAt_float3(*(rs_allocation*)buf1434, *(uint32_t*)buf1435);
-    *(float4*)buf1436 = rsGetElementAt_float4(*(rs_allocation*)buf1437, *(uint32_t*)buf1438);
-    *(double*)buf1439 = rsGetElementAt_double(*(rs_allocation*)buf1440, *(uint32_t*)buf1441);
-    *(double2*)buf1442 = rsGetElementAt_double2(*(rs_allocation*)buf1443, *(uint32_t*)buf1444);
-    *(double3*)buf1445 = rsGetElementAt_double3(*(rs_allocation*)buf1446, *(uint32_t*)buf1447);
-    *(double4*)buf1448 = rsGetElementAt_double4(*(rs_allocation*)buf1449, *(uint32_t*)buf1450);
-    *(char*)buf1451 = rsGetElementAt_char(*(rs_allocation*)buf1452, *(uint32_t*)buf1453);
-    *(char2*)buf1454 = rsGetElementAt_char2(*(rs_allocation*)buf1455, *(uint32_t*)buf1456);
-    *(char3*)buf1457 = rsGetElementAt_char3(*(rs_allocation*)buf1458, *(uint32_t*)buf1459);
-    *(char4*)buf1460 = rsGetElementAt_char4(*(rs_allocation*)buf1461, *(uint32_t*)buf1462);
-    *(uchar*)buf1463 = rsGetElementAt_uchar(*(rs_allocation*)buf1464, *(uint32_t*)buf1465);
-    *(uchar2*)buf1466 = rsGetElementAt_uchar2(*(rs_allocation*)buf1467, *(uint32_t*)buf1468);
-    *(uchar3*)buf1469 = rsGetElementAt_uchar3(*(rs_allocation*)buf1470, *(uint32_t*)buf1471);
-    *(uchar4*)buf1472 = rsGetElementAt_uchar4(*(rs_allocation*)buf1473, *(uint32_t*)buf1474);
-    *(short*)buf1475 = rsGetElementAt_short(*(rs_allocation*)buf1476, *(uint32_t*)buf1477);
-    *(short2*)buf1478 = rsGetElementAt_short2(*(rs_allocation*)buf1479, *(uint32_t*)buf1480);
-    *(short3*)buf1481 = rsGetElementAt_short3(*(rs_allocation*)buf1482, *(uint32_t*)buf1483);
-    *(short4*)buf1484 = rsGetElementAt_short4(*(rs_allocation*)buf1485, *(uint32_t*)buf1486);
-    *(ushort*)buf1487 = rsGetElementAt_ushort(*(rs_allocation*)buf1488, *(uint32_t*)buf1489);
-    *(ushort2*)buf1490 = rsGetElementAt_ushort2(*(rs_allocation*)buf1491, *(uint32_t*)buf1492);
-    *(ushort3*)buf1493 = rsGetElementAt_ushort3(*(rs_allocation*)buf1494, *(uint32_t*)buf1495);
-    *(ushort4*)buf1496 = rsGetElementAt_ushort4(*(rs_allocation*)buf1497, *(uint32_t*)buf1498);
-    *(int*)buf1499 = rsGetElementAt_int(*(rs_allocation*)buf1500, *(uint32_t*)buf1501);
-    *(int2*)buf1502 = rsGetElementAt_int2(*(rs_allocation*)buf1503, *(uint32_t*)buf1504);
-    *(int3*)buf1505 = rsGetElementAt_int3(*(rs_allocation*)buf1506, *(uint32_t*)buf1507);
-    *(int4*)buf1508 = rsGetElementAt_int4(*(rs_allocation*)buf1509, *(uint32_t*)buf1510);
-    *(uint*)buf1511 = rsGetElementAt_uint(*(rs_allocation*)buf1512, *(uint32_t*)buf1513);
-    *(uint2*)buf1514 = rsGetElementAt_uint2(*(rs_allocation*)buf1515, *(uint32_t*)buf1516);
-    *(uint3*)buf1517 = rsGetElementAt_uint3(*(rs_allocation*)buf1518, *(uint32_t*)buf1519);
-    *(uint4*)buf1520 = rsGetElementAt_uint4(*(rs_allocation*)buf1521, *(uint32_t*)buf1522);
-    *(long*)buf1523 = rsGetElementAt_long(*(rs_allocation*)buf1524, *(uint32_t*)buf1525);
-    *(long2*)buf1526 = rsGetElementAt_long2(*(rs_allocation*)buf1527, *(uint32_t*)buf1528);
-    *(long3*)buf1529 = rsGetElementAt_long3(*(rs_allocation*)buf1530, *(uint32_t*)buf1531);
-    *(long4*)buf1532 = rsGetElementAt_long4(*(rs_allocation*)buf1533, *(uint32_t*)buf1534);
-    *(ulong*)buf1535 = rsGetElementAt_ulong(*(rs_allocation*)buf1536, *(uint32_t*)buf1537);
-    *(ulong2*)buf1538 = rsGetElementAt_ulong2(*(rs_allocation*)buf1539, *(uint32_t*)buf1540);
-    *(ulong3*)buf1541 = rsGetElementAt_ulong3(*(rs_allocation*)buf1542, *(uint32_t*)buf1543);
-    *(ulong4*)buf1544 = rsGetElementAt_ulong4(*(rs_allocation*)buf1545, *(uint32_t*)buf1546);
-    *(float*)buf1547 = rsGetElementAt_float(*(rs_allocation*)buf1548, *(uint32_t*)buf1549, *(uint32_t*)buf1550);
-    *(float2*)buf1551 = rsGetElementAt_float2(*(rs_allocation*)buf1552, *(uint32_t*)buf1553, *(uint32_t*)buf1554);
-    *(float3*)buf1555 = rsGetElementAt_float3(*(rs_allocation*)buf1556, *(uint32_t*)buf1557, *(uint32_t*)buf1558);
-    *(float4*)buf1559 = rsGetElementAt_float4(*(rs_allocation*)buf1560, *(uint32_t*)buf1561, *(uint32_t*)buf1562);
-    *(double*)buf1563 = rsGetElementAt_double(*(rs_allocation*)buf1564, *(uint32_t*)buf1565, *(uint32_t*)buf1566);
-    *(double2*)buf1567 = rsGetElementAt_double2(*(rs_allocation*)buf1568, *(uint32_t*)buf1569, *(uint32_t*)buf1570);
-    *(double3*)buf1571 = rsGetElementAt_double3(*(rs_allocation*)buf1572, *(uint32_t*)buf1573, *(uint32_t*)buf1574);
-    *(double4*)buf1575 = rsGetElementAt_double4(*(rs_allocation*)buf1576, *(uint32_t*)buf1577, *(uint32_t*)buf1578);
-    *(char*)buf1579 = rsGetElementAt_char(*(rs_allocation*)buf1580, *(uint32_t*)buf1581, *(uint32_t*)buf1582);
-    *(char2*)buf1583 = rsGetElementAt_char2(*(rs_allocation*)buf1584, *(uint32_t*)buf1585, *(uint32_t*)buf1586);
-    *(char3*)buf1587 = rsGetElementAt_char3(*(rs_allocation*)buf1588, *(uint32_t*)buf1589, *(uint32_t*)buf1590);
-    *(char4*)buf1591 = rsGetElementAt_char4(*(rs_allocation*)buf1592, *(uint32_t*)buf1593, *(uint32_t*)buf1594);
-    *(uchar*)buf1595 = rsGetElementAt_uchar(*(rs_allocation*)buf1596, *(uint32_t*)buf1597, *(uint32_t*)buf1598);
-    *(uchar2*)buf1599 = rsGetElementAt_uchar2(*(rs_allocation*)buf1600, *(uint32_t*)buf1601, *(uint32_t*)buf1602);
-    *(uchar3*)buf1603 = rsGetElementAt_uchar3(*(rs_allocation*)buf1604, *(uint32_t*)buf1605, *(uint32_t*)buf1606);
-    *(uchar4*)buf1607 = rsGetElementAt_uchar4(*(rs_allocation*)buf1608, *(uint32_t*)buf1609, *(uint32_t*)buf1610);
-    *(short*)buf1611 = rsGetElementAt_short(*(rs_allocation*)buf1612, *(uint32_t*)buf1613, *(uint32_t*)buf1614);
-    *(short2*)buf1615 = rsGetElementAt_short2(*(rs_allocation*)buf1616, *(uint32_t*)buf1617, *(uint32_t*)buf1618);
-    *(short3*)buf1619 = rsGetElementAt_short3(*(rs_allocation*)buf1620, *(uint32_t*)buf1621, *(uint32_t*)buf1622);
-    *(short4*)buf1623 = rsGetElementAt_short4(*(rs_allocation*)buf1624, *(uint32_t*)buf1625, *(uint32_t*)buf1626);
-    *(ushort*)buf1627 = rsGetElementAt_ushort(*(rs_allocation*)buf1628, *(uint32_t*)buf1629, *(uint32_t*)buf1630);
-    *(ushort2*)buf1631 = rsGetElementAt_ushort2(*(rs_allocation*)buf1632, *(uint32_t*)buf1633, *(uint32_t*)buf1634);
-    *(ushort3*)buf1635 = rsGetElementAt_ushort3(*(rs_allocation*)buf1636, *(uint32_t*)buf1637, *(uint32_t*)buf1638);
-    *(ushort4*)buf1639 = rsGetElementAt_ushort4(*(rs_allocation*)buf1640, *(uint32_t*)buf1641, *(uint32_t*)buf1642);
-    *(int*)buf1643 = rsGetElementAt_int(*(rs_allocation*)buf1644, *(uint32_t*)buf1645, *(uint32_t*)buf1646);
-    *(int2*)buf1647 = rsGetElementAt_int2(*(rs_allocation*)buf1648, *(uint32_t*)buf1649, *(uint32_t*)buf1650);
-    *(int3*)buf1651 = rsGetElementAt_int3(*(rs_allocation*)buf1652, *(uint32_t*)buf1653, *(uint32_t*)buf1654);
-    *(int4*)buf1655 = rsGetElementAt_int4(*(rs_allocation*)buf1656, *(uint32_t*)buf1657, *(uint32_t*)buf1658);
-    *(uint*)buf1659 = rsGetElementAt_uint(*(rs_allocation*)buf1660, *(uint32_t*)buf1661, *(uint32_t*)buf1662);
-    *(uint2*)buf1663 = rsGetElementAt_uint2(*(rs_allocation*)buf1664, *(uint32_t*)buf1665, *(uint32_t*)buf1666);
-    *(uint3*)buf1667 = rsGetElementAt_uint3(*(rs_allocation*)buf1668, *(uint32_t*)buf1669, *(uint32_t*)buf1670);
-    *(uint4*)buf1671 = rsGetElementAt_uint4(*(rs_allocation*)buf1672, *(uint32_t*)buf1673, *(uint32_t*)buf1674);
-    *(long*)buf1675 = rsGetElementAt_long(*(rs_allocation*)buf1676, *(uint32_t*)buf1677, *(uint32_t*)buf1678);
-    *(long2*)buf1679 = rsGetElementAt_long2(*(rs_allocation*)buf1680, *(uint32_t*)buf1681, *(uint32_t*)buf1682);
-    *(long3*)buf1683 = rsGetElementAt_long3(*(rs_allocation*)buf1684, *(uint32_t*)buf1685, *(uint32_t*)buf1686);
-    *(long4*)buf1687 = rsGetElementAt_long4(*(rs_allocation*)buf1688, *(uint32_t*)buf1689, *(uint32_t*)buf1690);
-    *(ulong*)buf1691 = rsGetElementAt_ulong(*(rs_allocation*)buf1692, *(uint32_t*)buf1693, *(uint32_t*)buf1694);
-    *(ulong2*)buf1695 = rsGetElementAt_ulong2(*(rs_allocation*)buf1696, *(uint32_t*)buf1697, *(uint32_t*)buf1698);
-    *(ulong3*)buf1699 = rsGetElementAt_ulong3(*(rs_allocation*)buf1700, *(uint32_t*)buf1701, *(uint32_t*)buf1702);
-    *(ulong4*)buf1703 = rsGetElementAt_ulong4(*(rs_allocation*)buf1704, *(uint32_t*)buf1705, *(uint32_t*)buf1706);
-    *(float*)buf1707 = rsGetElementAt_float(*(rs_allocation*)buf1708, *(uint32_t*)buf1709, *(uint32_t*)buf1710, *(uint32_t*)buf1711);
-    *(float2*)buf1712 = rsGetElementAt_float2(*(rs_allocation*)buf1713, *(uint32_t*)buf1714, *(uint32_t*)buf1715, *(uint32_t*)buf1716);
-    *(float3*)buf1717 = rsGetElementAt_float3(*(rs_allocation*)buf1718, *(uint32_t*)buf1719, *(uint32_t*)buf1720, *(uint32_t*)buf1721);
-    *(float4*)buf1722 = rsGetElementAt_float4(*(rs_allocation*)buf1723, *(uint32_t*)buf1724, *(uint32_t*)buf1725, *(uint32_t*)buf1726);
-    *(double*)buf1727 = rsGetElementAt_double(*(rs_allocation*)buf1728, *(uint32_t*)buf1729, *(uint32_t*)buf1730, *(uint32_t*)buf1731);
-    *(double2*)buf1732 = rsGetElementAt_double2(*(rs_allocation*)buf1733, *(uint32_t*)buf1734, *(uint32_t*)buf1735, *(uint32_t*)buf1736);
-    *(double3*)buf1737 = rsGetElementAt_double3(*(rs_allocation*)buf1738, *(uint32_t*)buf1739, *(uint32_t*)buf1740, *(uint32_t*)buf1741);
-    *(double4*)buf1742 = rsGetElementAt_double4(*(rs_allocation*)buf1743, *(uint32_t*)buf1744, *(uint32_t*)buf1745, *(uint32_t*)buf1746);
-    *(char*)buf1747 = rsGetElementAt_char(*(rs_allocation*)buf1748, *(uint32_t*)buf1749, *(uint32_t*)buf1750, *(uint32_t*)buf1751);
-    *(char2*)buf1752 = rsGetElementAt_char2(*(rs_allocation*)buf1753, *(uint32_t*)buf1754, *(uint32_t*)buf1755, *(uint32_t*)buf1756);
-    *(char3*)buf1757 = rsGetElementAt_char3(*(rs_allocation*)buf1758, *(uint32_t*)buf1759, *(uint32_t*)buf1760, *(uint32_t*)buf1761);
-    *(char4*)buf1762 = rsGetElementAt_char4(*(rs_allocation*)buf1763, *(uint32_t*)buf1764, *(uint32_t*)buf1765, *(uint32_t*)buf1766);
-    *(uchar*)buf1767 = rsGetElementAt_uchar(*(rs_allocation*)buf1768, *(uint32_t*)buf1769, *(uint32_t*)buf1770, *(uint32_t*)buf1771);
-    *(uchar2*)buf1772 = rsGetElementAt_uchar2(*(rs_allocation*)buf1773, *(uint32_t*)buf1774, *(uint32_t*)buf1775, *(uint32_t*)buf1776);
-    *(uchar3*)buf1777 = rsGetElementAt_uchar3(*(rs_allocation*)buf1778, *(uint32_t*)buf1779, *(uint32_t*)buf1780, *(uint32_t*)buf1781);
-    *(uchar4*)buf1782 = rsGetElementAt_uchar4(*(rs_allocation*)buf1783, *(uint32_t*)buf1784, *(uint32_t*)buf1785, *(uint32_t*)buf1786);
-    *(short*)buf1787 = rsGetElementAt_short(*(rs_allocation*)buf1788, *(uint32_t*)buf1789, *(uint32_t*)buf1790, *(uint32_t*)buf1791);
-    *(short2*)buf1792 = rsGetElementAt_short2(*(rs_allocation*)buf1793, *(uint32_t*)buf1794, *(uint32_t*)buf1795, *(uint32_t*)buf1796);
-    *(short3*)buf1797 = rsGetElementAt_short3(*(rs_allocation*)buf1798, *(uint32_t*)buf1799, *(uint32_t*)buf1800, *(uint32_t*)buf1801);
-    *(short4*)buf1802 = rsGetElementAt_short4(*(rs_allocation*)buf1803, *(uint32_t*)buf1804, *(uint32_t*)buf1805, *(uint32_t*)buf1806);
-    *(ushort*)buf1807 = rsGetElementAt_ushort(*(rs_allocation*)buf1808, *(uint32_t*)buf1809, *(uint32_t*)buf1810, *(uint32_t*)buf1811);
-    *(ushort2*)buf1812 = rsGetElementAt_ushort2(*(rs_allocation*)buf1813, *(uint32_t*)buf1814, *(uint32_t*)buf1815, *(uint32_t*)buf1816);
-    *(ushort3*)buf1817 = rsGetElementAt_ushort3(*(rs_allocation*)buf1818, *(uint32_t*)buf1819, *(uint32_t*)buf1820, *(uint32_t*)buf1821);
-    *(ushort4*)buf1822 = rsGetElementAt_ushort4(*(rs_allocation*)buf1823, *(uint32_t*)buf1824, *(uint32_t*)buf1825, *(uint32_t*)buf1826);
-    *(int*)buf1827 = rsGetElementAt_int(*(rs_allocation*)buf1828, *(uint32_t*)buf1829, *(uint32_t*)buf1830, *(uint32_t*)buf1831);
-    *(int2*)buf1832 = rsGetElementAt_int2(*(rs_allocation*)buf1833, *(uint32_t*)buf1834, *(uint32_t*)buf1835, *(uint32_t*)buf1836);
-    *(int3*)buf1837 = rsGetElementAt_int3(*(rs_allocation*)buf1838, *(uint32_t*)buf1839, *(uint32_t*)buf1840, *(uint32_t*)buf1841);
-    *(int4*)buf1842 = rsGetElementAt_int4(*(rs_allocation*)buf1843, *(uint32_t*)buf1844, *(uint32_t*)buf1845, *(uint32_t*)buf1846);
-    *(uint*)buf1847 = rsGetElementAt_uint(*(rs_allocation*)buf1848, *(uint32_t*)buf1849, *(uint32_t*)buf1850, *(uint32_t*)buf1851);
-    *(uint2*)buf1852 = rsGetElementAt_uint2(*(rs_allocation*)buf1853, *(uint32_t*)buf1854, *(uint32_t*)buf1855, *(uint32_t*)buf1856);
-    *(uint3*)buf1857 = rsGetElementAt_uint3(*(rs_allocation*)buf1858, *(uint32_t*)buf1859, *(uint32_t*)buf1860, *(uint32_t*)buf1861);
-    *(uint4*)buf1862 = rsGetElementAt_uint4(*(rs_allocation*)buf1863, *(uint32_t*)buf1864, *(uint32_t*)buf1865, *(uint32_t*)buf1866);
-    *(long*)buf1867 = rsGetElementAt_long(*(rs_allocation*)buf1868, *(uint32_t*)buf1869, *(uint32_t*)buf1870, *(uint32_t*)buf1871);
-    *(long2*)buf1872 = rsGetElementAt_long2(*(rs_allocation*)buf1873, *(uint32_t*)buf1874, *(uint32_t*)buf1875, *(uint32_t*)buf1876);
-    *(long3*)buf1877 = rsGetElementAt_long3(*(rs_allocation*)buf1878, *(uint32_t*)buf1879, *(uint32_t*)buf1880, *(uint32_t*)buf1881);
-    *(long4*)buf1882 = rsGetElementAt_long4(*(rs_allocation*)buf1883, *(uint32_t*)buf1884, *(uint32_t*)buf1885, *(uint32_t*)buf1886);
-    *(ulong*)buf1887 = rsGetElementAt_ulong(*(rs_allocation*)buf1888, *(uint32_t*)buf1889, *(uint32_t*)buf1890, *(uint32_t*)buf1891);
-    *(ulong2*)buf1892 = rsGetElementAt_ulong2(*(rs_allocation*)buf1893, *(uint32_t*)buf1894, *(uint32_t*)buf1895, *(uint32_t*)buf1896);
-    *(ulong3*)buf1897 = rsGetElementAt_ulong3(*(rs_allocation*)buf1898, *(uint32_t*)buf1899, *(uint32_t*)buf1900, *(uint32_t*)buf1901);
-    *(ulong4*)buf1902 = rsGetElementAt_ulong4(*(rs_allocation*)buf1903, *(uint32_t*)buf1904, *(uint32_t*)buf1905, *(uint32_t*)buf1906);
-    *(bool*)buf1907 = rsIsObject(*(rs_element*)buf1908);
-    *(bool*)buf1909 = rsIsObject(*(rs_type*)buf1910);
-    *(bool*)buf1911 = rsIsObject(*(rs_allocation*)buf1912);
-    *(bool*)buf1913 = rsIsObject(*(rs_sampler*)buf1914);
-    *(bool*)buf1915 = rsIsObject(*(rs_script*)buf1916);
+    rsDebug((const char*) buf1338, *(double*)buf1339);
+    rsDebug((const char*) buf1340, *(int*)buf1341);
+    rsDebug((const char*) buf1342, *(uint*)buf1343);
+    rsDebug((const char*) buf1344, *(long*)buf1345);
+    rsDebug((const char*) buf1346, *(ulong*)buf1347);
+    rsDebug((const char*) buf1348, *(float*)buf1349);
+    rsDebug((const char*) buf1350, *(float2*)buf1351);
+    rsDebug((const char*) buf1352, *(float3*)buf1353);
+    rsDebug((const char*) buf1354, *(float4*)buf1355);
+    rsDebug((const char*) buf1356, *(float*)buf1357, *(float*)buf1358);
+    rsDebug((const char*) buf1359, *(float*)buf1360, *(float*)buf1361, *(float*)buf1362);
+    rsDebug((const char*) buf1363, *(float*)buf1364, *(float*)buf1365, *(float*)buf1366, *(float*)buf1367);
+    rsDebug((const char*) buf1368, *(long long*)buf1369);
+    rsDebug((const char*) buf1370, *(unsigned long long*)buf1371);
+    rsDebug((const char*) buf1372, (const void*) buf1373);
+    rsDebug((const char*) buf1374, (const rs_matrix4x4*) buf1375);
+    rsDebug((const char*) buf1376, (const rs_matrix3x3*) buf1377);
+    rsDebug((const char*) buf1378, (const rs_matrix2x2*) buf1379);
+    *(uint32_t*)buf1380 = rsElementGetBytesSize(*(rs_element*)buf1381);
+    *(rs_data_kind*)buf1382 = rsElementGetDataKind(*(rs_element*)buf1383);
+    *(rs_data_type*)buf1384 = rsElementGetDataType(*(rs_element*)buf1385);
+    *(rs_element*)buf1386 = rsElementGetSubElement(*(rs_element*)buf1387, *(uint32_t*)buf1388);
+    *(uint32_t*)buf1389 = rsElementGetSubElementArraySize(*(rs_element*)buf1390, *(uint32_t*)buf1391);
+    *(uint32_t*)buf1392 = rsElementGetSubElementCount(*(rs_element*)buf1393);
+    *(uint32_t*)buf1394 = rsElementGetSubElementName(*(rs_element*)buf1395, *(uint32_t*)buf1396, (char*) buf1397, *(uint32_t*)buf1398);
+    *(uint32_t*)buf1399 = rsElementGetSubElementNameLength(*(rs_element*)buf1400, *(uint32_t*)buf1401);
+    *(uint32_t*)buf1402 = rsElementGetSubElementOffsetBytes(*(rs_element*)buf1403, *(uint32_t*)buf1404);
+    *(uint32_t*)buf1405 = rsElementGetVectorSize(*(rs_element*)buf1406);
+    rsExtractFrustumPlanes((const rs_matrix4x4*) buf1407, (float4*) buf1408, (float4*) buf1409, (float4*) buf1410, (float4*) buf1411, (float4*) buf1412, (float4*) buf1413);
+    rsForEach(*(rs_script*)buf1414, *(rs_allocation*)buf1415, *(rs_allocation*)buf1416, (const void*) buf1417, *(size_t*)buf1418, (const rs_script_call_t*) buf1419);
+    rsForEach(*(rs_script*)buf1420, *(rs_allocation*)buf1421, *(rs_allocation*)buf1422, (const void*) buf1423, *(size_t*)buf1424);
+    rsForEach(*(rs_script*)buf1425, *(rs_allocation*)buf1426, *(rs_allocation*)buf1427);
+    *(float*)buf1428 = rsFrac(*(float*)buf1429);
+    *(rs_allocation*)buf1430 = rsGetAllocation((const void*) buf1431);
+    *(float*)buf1432 = rsGetDt();
+    *(const void**)buf1433 = rsGetElementAt(*(rs_allocation*)buf1434, *(uint32_t*)buf1435);
+    *(const void**)buf1436 = rsGetElementAt(*(rs_allocation*)buf1437, *(uint32_t*)buf1438, *(uint32_t*)buf1439);
+    *(const void**)buf1440 = rsGetElementAt(*(rs_allocation*)buf1441, *(uint32_t*)buf1442, *(uint32_t*)buf1443, *(uint32_t*)buf1444);
+    *(float*)buf1445 = rsGetElementAt_float(*(rs_allocation*)buf1446, *(uint32_t*)buf1447);
+    *(float2*)buf1448 = rsGetElementAt_float2(*(rs_allocation*)buf1449, *(uint32_t*)buf1450);
+    *(float3*)buf1451 = rsGetElementAt_float3(*(rs_allocation*)buf1452, *(uint32_t*)buf1453);
+    *(float4*)buf1454 = rsGetElementAt_float4(*(rs_allocation*)buf1455, *(uint32_t*)buf1456);
+    *(double*)buf1457 = rsGetElementAt_double(*(rs_allocation*)buf1458, *(uint32_t*)buf1459);
+    *(double2*)buf1460 = rsGetElementAt_double2(*(rs_allocation*)buf1461, *(uint32_t*)buf1462);
+    *(double3*)buf1463 = rsGetElementAt_double3(*(rs_allocation*)buf1464, *(uint32_t*)buf1465);
+    *(double4*)buf1466 = rsGetElementAt_double4(*(rs_allocation*)buf1467, *(uint32_t*)buf1468);
+    *(char*)buf1469 = rsGetElementAt_char(*(rs_allocation*)buf1470, *(uint32_t*)buf1471);
+    *(char2*)buf1472 = rsGetElementAt_char2(*(rs_allocation*)buf1473, *(uint32_t*)buf1474);
+    *(char3*)buf1475 = rsGetElementAt_char3(*(rs_allocation*)buf1476, *(uint32_t*)buf1477);
+    *(char4*)buf1478 = rsGetElementAt_char4(*(rs_allocation*)buf1479, *(uint32_t*)buf1480);
+    *(uchar*)buf1481 = rsGetElementAt_uchar(*(rs_allocation*)buf1482, *(uint32_t*)buf1483);
+    *(uchar2*)buf1484 = rsGetElementAt_uchar2(*(rs_allocation*)buf1485, *(uint32_t*)buf1486);
+    *(uchar3*)buf1487 = rsGetElementAt_uchar3(*(rs_allocation*)buf1488, *(uint32_t*)buf1489);
+    *(uchar4*)buf1490 = rsGetElementAt_uchar4(*(rs_allocation*)buf1491, *(uint32_t*)buf1492);
+    *(short*)buf1493 = rsGetElementAt_short(*(rs_allocation*)buf1494, *(uint32_t*)buf1495);
+    *(short2*)buf1496 = rsGetElementAt_short2(*(rs_allocation*)buf1497, *(uint32_t*)buf1498);
+    *(short3*)buf1499 = rsGetElementAt_short3(*(rs_allocation*)buf1500, *(uint32_t*)buf1501);
+    *(short4*)buf1502 = rsGetElementAt_short4(*(rs_allocation*)buf1503, *(uint32_t*)buf1504);
+    *(ushort*)buf1505 = rsGetElementAt_ushort(*(rs_allocation*)buf1506, *(uint32_t*)buf1507);
+    *(ushort2*)buf1508 = rsGetElementAt_ushort2(*(rs_allocation*)buf1509, *(uint32_t*)buf1510);
+    *(ushort3*)buf1511 = rsGetElementAt_ushort3(*(rs_allocation*)buf1512, *(uint32_t*)buf1513);
+    *(ushort4*)buf1514 = rsGetElementAt_ushort4(*(rs_allocation*)buf1515, *(uint32_t*)buf1516);
+    *(int*)buf1517 = rsGetElementAt_int(*(rs_allocation*)buf1518, *(uint32_t*)buf1519);
+    *(int2*)buf1520 = rsGetElementAt_int2(*(rs_allocation*)buf1521, *(uint32_t*)buf1522);
+    *(int3*)buf1523 = rsGetElementAt_int3(*(rs_allocation*)buf1524, *(uint32_t*)buf1525);
+    *(int4*)buf1526 = rsGetElementAt_int4(*(rs_allocation*)buf1527, *(uint32_t*)buf1528);
+    *(uint*)buf1529 = rsGetElementAt_uint(*(rs_allocation*)buf1530, *(uint32_t*)buf1531);
+    *(uint2*)buf1532 = rsGetElementAt_uint2(*(rs_allocation*)buf1533, *(uint32_t*)buf1534);
+    *(uint3*)buf1535 = rsGetElementAt_uint3(*(rs_allocation*)buf1536, *(uint32_t*)buf1537);
+    *(uint4*)buf1538 = rsGetElementAt_uint4(*(rs_allocation*)buf1539, *(uint32_t*)buf1540);
+    *(long*)buf1541 = rsGetElementAt_long(*(rs_allocation*)buf1542, *(uint32_t*)buf1543);
+    *(long2*)buf1544 = rsGetElementAt_long2(*(rs_allocation*)buf1545, *(uint32_t*)buf1546);
+    *(long3*)buf1547 = rsGetElementAt_long3(*(rs_allocation*)buf1548, *(uint32_t*)buf1549);
+    *(long4*)buf1550 = rsGetElementAt_long4(*(rs_allocation*)buf1551, *(uint32_t*)buf1552);
+    *(ulong*)buf1553 = rsGetElementAt_ulong(*(rs_allocation*)buf1554, *(uint32_t*)buf1555);
+    *(ulong2*)buf1556 = rsGetElementAt_ulong2(*(rs_allocation*)buf1557, *(uint32_t*)buf1558);
+    *(ulong3*)buf1559 = rsGetElementAt_ulong3(*(rs_allocation*)buf1560, *(uint32_t*)buf1561);
+    *(ulong4*)buf1562 = rsGetElementAt_ulong4(*(rs_allocation*)buf1563, *(uint32_t*)buf1564);
+    *(float*)buf1565 = rsGetElementAt_float(*(rs_allocation*)buf1566, *(uint32_t*)buf1567, *(uint32_t*)buf1568);
+    *(float2*)buf1569 = rsGetElementAt_float2(*(rs_allocation*)buf1570, *(uint32_t*)buf1571, *(uint32_t*)buf1572);
+    *(float3*)buf1573 = rsGetElementAt_float3(*(rs_allocation*)buf1574, *(uint32_t*)buf1575, *(uint32_t*)buf1576);
+    *(float4*)buf1577 = rsGetElementAt_float4(*(rs_allocation*)buf1578, *(uint32_t*)buf1579, *(uint32_t*)buf1580);
+    *(double*)buf1581 = rsGetElementAt_double(*(rs_allocation*)buf1582, *(uint32_t*)buf1583, *(uint32_t*)buf1584);
+    *(double2*)buf1585 = rsGetElementAt_double2(*(rs_allocation*)buf1586, *(uint32_t*)buf1587, *(uint32_t*)buf1588);
+    *(double3*)buf1589 = rsGetElementAt_double3(*(rs_allocation*)buf1590, *(uint32_t*)buf1591, *(uint32_t*)buf1592);
+    *(double4*)buf1593 = rsGetElementAt_double4(*(rs_allocation*)buf1594, *(uint32_t*)buf1595, *(uint32_t*)buf1596);
+    *(char*)buf1597 = rsGetElementAt_char(*(rs_allocation*)buf1598, *(uint32_t*)buf1599, *(uint32_t*)buf1600);
+    *(char2*)buf1601 = rsGetElementAt_char2(*(rs_allocation*)buf1602, *(uint32_t*)buf1603, *(uint32_t*)buf1604);
+    *(char3*)buf1605 = rsGetElementAt_char3(*(rs_allocation*)buf1606, *(uint32_t*)buf1607, *(uint32_t*)buf1608);
+    *(char4*)buf1609 = rsGetElementAt_char4(*(rs_allocation*)buf1610, *(uint32_t*)buf1611, *(uint32_t*)buf1612);
+    *(uchar*)buf1613 = rsGetElementAt_uchar(*(rs_allocation*)buf1614, *(uint32_t*)buf1615, *(uint32_t*)buf1616);
+    *(uchar2*)buf1617 = rsGetElementAt_uchar2(*(rs_allocation*)buf1618, *(uint32_t*)buf1619, *(uint32_t*)buf1620);
+    *(uchar3*)buf1621 = rsGetElementAt_uchar3(*(rs_allocation*)buf1622, *(uint32_t*)buf1623, *(uint32_t*)buf1624);
+    *(uchar4*)buf1625 = rsGetElementAt_uchar4(*(rs_allocation*)buf1626, *(uint32_t*)buf1627, *(uint32_t*)buf1628);
+    *(short*)buf1629 = rsGetElementAt_short(*(rs_allocation*)buf1630, *(uint32_t*)buf1631, *(uint32_t*)buf1632);
+    *(short2*)buf1633 = rsGetElementAt_short2(*(rs_allocation*)buf1634, *(uint32_t*)buf1635, *(uint32_t*)buf1636);
+    *(short3*)buf1637 = rsGetElementAt_short3(*(rs_allocation*)buf1638, *(uint32_t*)buf1639, *(uint32_t*)buf1640);
+    *(short4*)buf1641 = rsGetElementAt_short4(*(rs_allocation*)buf1642, *(uint32_t*)buf1643, *(uint32_t*)buf1644);
+    *(ushort*)buf1645 = rsGetElementAt_ushort(*(rs_allocation*)buf1646, *(uint32_t*)buf1647, *(uint32_t*)buf1648);
+    *(ushort2*)buf1649 = rsGetElementAt_ushort2(*(rs_allocation*)buf1650, *(uint32_t*)buf1651, *(uint32_t*)buf1652);
+    *(ushort3*)buf1653 = rsGetElementAt_ushort3(*(rs_allocation*)buf1654, *(uint32_t*)buf1655, *(uint32_t*)buf1656);
+    *(ushort4*)buf1657 = rsGetElementAt_ushort4(*(rs_allocation*)buf1658, *(uint32_t*)buf1659, *(uint32_t*)buf1660);
+    *(int*)buf1661 = rsGetElementAt_int(*(rs_allocation*)buf1662, *(uint32_t*)buf1663, *(uint32_t*)buf1664);
+    *(int2*)buf1665 = rsGetElementAt_int2(*(rs_allocation*)buf1666, *(uint32_t*)buf1667, *(uint32_t*)buf1668);
+    *(int3*)buf1669 = rsGetElementAt_int3(*(rs_allocation*)buf1670, *(uint32_t*)buf1671, *(uint32_t*)buf1672);
+    *(int4*)buf1673 = rsGetElementAt_int4(*(rs_allocation*)buf1674, *(uint32_t*)buf1675, *(uint32_t*)buf1676);
+    *(uint*)buf1677 = rsGetElementAt_uint(*(rs_allocation*)buf1678, *(uint32_t*)buf1679, *(uint32_t*)buf1680);
+    *(uint2*)buf1681 = rsGetElementAt_uint2(*(rs_allocation*)buf1682, *(uint32_t*)buf1683, *(uint32_t*)buf1684);
+    *(uint3*)buf1685 = rsGetElementAt_uint3(*(rs_allocation*)buf1686, *(uint32_t*)buf1687, *(uint32_t*)buf1688);
+    *(uint4*)buf1689 = rsGetElementAt_uint4(*(rs_allocation*)buf1690, *(uint32_t*)buf1691, *(uint32_t*)buf1692);
+    *(long*)buf1693 = rsGetElementAt_long(*(rs_allocation*)buf1694, *(uint32_t*)buf1695, *(uint32_t*)buf1696);
+    *(long2*)buf1697 = rsGetElementAt_long2(*(rs_allocation*)buf1698, *(uint32_t*)buf1699, *(uint32_t*)buf1700);
+    *(long3*)buf1701 = rsGetElementAt_long3(*(rs_allocation*)buf1702, *(uint32_t*)buf1703, *(uint32_t*)buf1704);
+    *(long4*)buf1705 = rsGetElementAt_long4(*(rs_allocation*)buf1706, *(uint32_t*)buf1707, *(uint32_t*)buf1708);
+    *(ulong*)buf1709 = rsGetElementAt_ulong(*(rs_allocation*)buf1710, *(uint32_t*)buf1711, *(uint32_t*)buf1712);
+    *(ulong2*)buf1713 = rsGetElementAt_ulong2(*(rs_allocation*)buf1714, *(uint32_t*)buf1715, *(uint32_t*)buf1716);
+    *(ulong3*)buf1717 = rsGetElementAt_ulong3(*(rs_allocation*)buf1718, *(uint32_t*)buf1719, *(uint32_t*)buf1720);
+    *(ulong4*)buf1721 = rsGetElementAt_ulong4(*(rs_allocation*)buf1722, *(uint32_t*)buf1723, *(uint32_t*)buf1724);
+    *(float*)buf1725 = rsGetElementAt_float(*(rs_allocation*)buf1726, *(uint32_t*)buf1727, *(uint32_t*)buf1728, *(uint32_t*)buf1729);
+    *(float2*)buf1730 = rsGetElementAt_float2(*(rs_allocation*)buf1731, *(uint32_t*)buf1732, *(uint32_t*)buf1733, *(uint32_t*)buf1734);
+    *(float3*)buf1735 = rsGetElementAt_float3(*(rs_allocation*)buf1736, *(uint32_t*)buf1737, *(uint32_t*)buf1738, *(uint32_t*)buf1739);
+    *(float4*)buf1740 = rsGetElementAt_float4(*(rs_allocation*)buf1741, *(uint32_t*)buf1742, *(uint32_t*)buf1743, *(uint32_t*)buf1744);
+    *(double*)buf1745 = rsGetElementAt_double(*(rs_allocation*)buf1746, *(uint32_t*)buf1747, *(uint32_t*)buf1748, *(uint32_t*)buf1749);
+    *(double2*)buf1750 = rsGetElementAt_double2(*(rs_allocation*)buf1751, *(uint32_t*)buf1752, *(uint32_t*)buf1753, *(uint32_t*)buf1754);
+    *(double3*)buf1755 = rsGetElementAt_double3(*(rs_allocation*)buf1756, *(uint32_t*)buf1757, *(uint32_t*)buf1758, *(uint32_t*)buf1759);
+    *(double4*)buf1760 = rsGetElementAt_double4(*(rs_allocation*)buf1761, *(uint32_t*)buf1762, *(uint32_t*)buf1763, *(uint32_t*)buf1764);
+    *(char*)buf1765 = rsGetElementAt_char(*(rs_allocation*)buf1766, *(uint32_t*)buf1767, *(uint32_t*)buf1768, *(uint32_t*)buf1769);
+    *(char2*)buf1770 = rsGetElementAt_char2(*(rs_allocation*)buf1771, *(uint32_t*)buf1772, *(uint32_t*)buf1773, *(uint32_t*)buf1774);
+    *(char3*)buf1775 = rsGetElementAt_char3(*(rs_allocation*)buf1776, *(uint32_t*)buf1777, *(uint32_t*)buf1778, *(uint32_t*)buf1779);
+    *(char4*)buf1780 = rsGetElementAt_char4(*(rs_allocation*)buf1781, *(uint32_t*)buf1782, *(uint32_t*)buf1783, *(uint32_t*)buf1784);
+    *(uchar*)buf1785 = rsGetElementAt_uchar(*(rs_allocation*)buf1786, *(uint32_t*)buf1787, *(uint32_t*)buf1788, *(uint32_t*)buf1789);
+    *(uchar2*)buf1790 = rsGetElementAt_uchar2(*(rs_allocation*)buf1791, *(uint32_t*)buf1792, *(uint32_t*)buf1793, *(uint32_t*)buf1794);
+    *(uchar3*)buf1795 = rsGetElementAt_uchar3(*(rs_allocation*)buf1796, *(uint32_t*)buf1797, *(uint32_t*)buf1798, *(uint32_t*)buf1799);
+    *(uchar4*)buf1800 = rsGetElementAt_uchar4(*(rs_allocation*)buf1801, *(uint32_t*)buf1802, *(uint32_t*)buf1803, *(uint32_t*)buf1804);
+    *(short*)buf1805 = rsGetElementAt_short(*(rs_allocation*)buf1806, *(uint32_t*)buf1807, *(uint32_t*)buf1808, *(uint32_t*)buf1809);
+    *(short2*)buf1810 = rsGetElementAt_short2(*(rs_allocation*)buf1811, *(uint32_t*)buf1812, *(uint32_t*)buf1813, *(uint32_t*)buf1814);
+    *(short3*)buf1815 = rsGetElementAt_short3(*(rs_allocation*)buf1816, *(uint32_t*)buf1817, *(uint32_t*)buf1818, *(uint32_t*)buf1819);
+    *(short4*)buf1820 = rsGetElementAt_short4(*(rs_allocation*)buf1821, *(uint32_t*)buf1822, *(uint32_t*)buf1823, *(uint32_t*)buf1824);
+    *(ushort*)buf1825 = rsGetElementAt_ushort(*(rs_allocation*)buf1826, *(uint32_t*)buf1827, *(uint32_t*)buf1828, *(uint32_t*)buf1829);
+    *(ushort2*)buf1830 = rsGetElementAt_ushort2(*(rs_allocation*)buf1831, *(uint32_t*)buf1832, *(uint32_t*)buf1833, *(uint32_t*)buf1834);
+    *(ushort3*)buf1835 = rsGetElementAt_ushort3(*(rs_allocation*)buf1836, *(uint32_t*)buf1837, *(uint32_t*)buf1838, *(uint32_t*)buf1839);
+    *(ushort4*)buf1840 = rsGetElementAt_ushort4(*(rs_allocation*)buf1841, *(uint32_t*)buf1842, *(uint32_t*)buf1843, *(uint32_t*)buf1844);
+    *(int*)buf1845 = rsGetElementAt_int(*(rs_allocation*)buf1846, *(uint32_t*)buf1847, *(uint32_t*)buf1848, *(uint32_t*)buf1849);
+    *(int2*)buf1850 = rsGetElementAt_int2(*(rs_allocation*)buf1851, *(uint32_t*)buf1852, *(uint32_t*)buf1853, *(uint32_t*)buf1854);
+    *(int3*)buf1855 = rsGetElementAt_int3(*(rs_allocation*)buf1856, *(uint32_t*)buf1857, *(uint32_t*)buf1858, *(uint32_t*)buf1859);
+    *(int4*)buf1860 = rsGetElementAt_int4(*(rs_allocation*)buf1861, *(uint32_t*)buf1862, *(uint32_t*)buf1863, *(uint32_t*)buf1864);
+    *(uint*)buf1865 = rsGetElementAt_uint(*(rs_allocation*)buf1866, *(uint32_t*)buf1867, *(uint32_t*)buf1868, *(uint32_t*)buf1869);
+    *(uint2*)buf1870 = rsGetElementAt_uint2(*(rs_allocation*)buf1871, *(uint32_t*)buf1872, *(uint32_t*)buf1873, *(uint32_t*)buf1874);
+    *(uint3*)buf1875 = rsGetElementAt_uint3(*(rs_allocation*)buf1876, *(uint32_t*)buf1877, *(uint32_t*)buf1878, *(uint32_t*)buf1879);
+    *(uint4*)buf1880 = rsGetElementAt_uint4(*(rs_allocation*)buf1881, *(uint32_t*)buf1882, *(uint32_t*)buf1883, *(uint32_t*)buf1884);
+    *(long*)buf1885 = rsGetElementAt_long(*(rs_allocation*)buf1886, *(uint32_t*)buf1887, *(uint32_t*)buf1888, *(uint32_t*)buf1889);
+    *(long2*)buf1890 = rsGetElementAt_long2(*(rs_allocation*)buf1891, *(uint32_t*)buf1892, *(uint32_t*)buf1893, *(uint32_t*)buf1894);
+    *(long3*)buf1895 = rsGetElementAt_long3(*(rs_allocation*)buf1896, *(uint32_t*)buf1897, *(uint32_t*)buf1898, *(uint32_t*)buf1899);
+    *(long4*)buf1900 = rsGetElementAt_long4(*(rs_allocation*)buf1901, *(uint32_t*)buf1902, *(uint32_t*)buf1903, *(uint32_t*)buf1904);
+    *(ulong*)buf1905 = rsGetElementAt_ulong(*(rs_allocation*)buf1906, *(uint32_t*)buf1907, *(uint32_t*)buf1908, *(uint32_t*)buf1909);
+    *(ulong2*)buf1910 = rsGetElementAt_ulong2(*(rs_allocation*)buf1911, *(uint32_t*)buf1912, *(uint32_t*)buf1913, *(uint32_t*)buf1914);
+    *(ulong3*)buf1915 = rsGetElementAt_ulong3(*(rs_allocation*)buf1916, *(uint32_t*)buf1917, *(uint32_t*)buf1918, *(uint32_t*)buf1919);
+    *(ulong4*)buf1920 = rsGetElementAt_ulong4(*(rs_allocation*)buf1921, *(uint32_t*)buf1922, *(uint32_t*)buf1923, *(uint32_t*)buf1924);
+    *(bool*)buf1925 = rsIsObject(*(rs_element*)buf1926);
+    *(bool*)buf1927 = rsIsObject(*(rs_type*)buf1928);
+    *(bool*)buf1929 = rsIsObject(*(rs_allocation*)buf1930);
+    *(bool*)buf1931 = rsIsObject(*(rs_sampler*)buf1932);
+    *(bool*)buf1933 = rsIsObject(*(rs_script*)buf1934);
 #ifndef __LP64__
-    *(bool*)buf1917 = rsIsObject(*(rs_mesh*)buf1918);
-    *(bool*)buf1919 = rsIsObject(*(rs_program_fragment*)buf1920);
-    *(bool*)buf1921 = rsIsObject(*(rs_program_vertex*)buf1922);
-    *(bool*)buf1923 = rsIsObject(*(rs_program_raster*)buf1924);
-    *(bool*)buf1925 = rsIsObject(*(rs_program_store*)buf1926);
-    *(bool*)buf1927 = rsIsObject(*(rs_font*)buf1928);
+    *(bool*)buf1935 = rsIsObject(*(rs_mesh*)buf1936);
+    *(bool*)buf1937 = rsIsObject(*(rs_program_fragment*)buf1938);
+    *(bool*)buf1939 = rsIsObject(*(rs_program_vertex*)buf1940);
+    *(bool*)buf1941 = rsIsObject(*(rs_program_raster*)buf1942);
+    *(bool*)buf1943 = rsIsObject(*(rs_program_store*)buf1944);
+    *(bool*)buf1945 = rsIsObject(*(rs_font*)buf1946);
 #endif
-    *(bool*)buf1929 = rsIsSphereInFrustum((float4*) buf1930, (float4*) buf1931, (float4*) buf1932, (float4*) buf1933, (float4*) buf1934, (float4*) buf1935, (float4*) buf1936);
-    *(rs_tm**)buf1937 = rsLocaltime((rs_tm*) buf1938, (const rs_time_t*) buf1939);
-    *(float*)buf1940 = rsMatrixGet((const rs_matrix4x4*) buf1941, *(uint32_t*)buf1942, *(uint32_t*)buf1943);
-    *(float*)buf1944 = rsMatrixGet((const rs_matrix3x3*) buf1945, *(uint32_t*)buf1946, *(uint32_t*)buf1947);
-    *(float*)buf1948 = rsMatrixGet((const rs_matrix2x2*) buf1949, *(uint32_t*)buf1950, *(uint32_t*)buf1951);
-    *(bool*)buf1952 = rsMatrixInverse((rs_matrix4x4*) buf1953);
-    *(bool*)buf1954 = rsMatrixInverseTranspose((rs_matrix4x4*) buf1955);
-    rsMatrixLoad((rs_matrix4x4*) buf1956, (const float*) buf1957);
-    rsMatrixLoad((rs_matrix3x3*) buf1958, (const float*) buf1959);
-    rsMatrixLoad((rs_matrix2x2*) buf1960, (const float*) buf1961);
-    rsMatrixLoad((rs_matrix4x4*) buf1962, (const rs_matrix4x4*) buf1963);
-    rsMatrixLoad((rs_matrix3x3*) buf1964, (const rs_matrix3x3*) buf1965);
-    rsMatrixLoad((rs_matrix2x2*) buf1966, (const rs_matrix2x2*) buf1967);
-    rsMatrixLoad((rs_matrix4x4*) buf1968, (const rs_matrix3x3*) buf1969);
-    rsMatrixLoad((rs_matrix4x4*) buf1970, (const rs_matrix2x2*) buf1971);
-    rsMatrixLoadFrustum((rs_matrix4x4*) buf1972, *(float*)buf1973, *(float*)buf1974, *(float*)buf1975, *(float*)buf1976, *(float*)buf1977, *(float*)buf1978);
-    rsMatrixLoadIdentity((rs_matrix4x4*) buf1979);
-    rsMatrixLoadIdentity((rs_matrix3x3*) buf1980);
-    rsMatrixLoadIdentity((rs_matrix2x2*) buf1981);
-    rsMatrixLoadMultiply((rs_matrix4x4*) buf1982, (const rs_matrix4x4*) buf1983, (const rs_matrix4x4*) buf1984);
-    rsMatrixLoadMultiply((rs_matrix3x3*) buf1985, (const rs_matrix3x3*) buf1986, (const rs_matrix3x3*) buf1987);
-    rsMatrixLoadMultiply((rs_matrix2x2*) buf1988, (const rs_matrix2x2*) buf1989, (const rs_matrix2x2*) buf1990);
-    rsMatrixLoadOrtho((rs_matrix4x4*) buf1991, *(float*)buf1992, *(float*)buf1993, *(float*)buf1994, *(float*)buf1995, *(float*)buf1996, *(float*)buf1997);
-    rsMatrixLoadPerspective((rs_matrix4x4*) buf1998, *(float*)buf1999, *(float*)buf2000, *(float*)buf2001, *(float*)buf2002);
-    rsMatrixLoadRotate((rs_matrix4x4*) buf2003, *(float*)buf2004, *(float*)buf2005, *(float*)buf2006, *(float*)buf2007);
-    rsMatrixLoadScale((rs_matrix4x4*) buf2008, *(float*)buf2009, *(float*)buf2010, *(float*)buf2011);
-    rsMatrixLoadTranslate((rs_matrix4x4*) buf2012, *(float*)buf2013, *(float*)buf2014, *(float*)buf2015);
-    rsMatrixMultiply((rs_matrix4x4*) buf2016, (const rs_matrix4x4*) buf2017);
-    rsMatrixMultiply((rs_matrix3x3*) buf2018, (const rs_matrix3x3*) buf2019);
-    rsMatrixMultiply((rs_matrix2x2*) buf2020, (const rs_matrix2x2*) buf2021);
-    *(float4*)buf2022 = rsMatrixMultiply((const rs_matrix4x4*) buf2023, *(float4*)buf2024);
-    *(float4*)buf2025 = rsMatrixMultiply((const rs_matrix4x4*) buf2026, *(float3*)buf2027);
-    *(float4*)buf2028 = rsMatrixMultiply((const rs_matrix4x4*) buf2029, *(float2*)buf2030);
-    *(float3*)buf2031 = rsMatrixMultiply((const rs_matrix3x3*) buf2032, *(float3*)buf2033);
-    *(float3*)buf2034 = rsMatrixMultiply((const rs_matrix3x3*) buf2035, *(float2*)buf2036);
-    *(float2*)buf2037 = rsMatrixMultiply((const rs_matrix2x2*) buf2038, *(float2*)buf2039);
-    rsMatrixRotate((rs_matrix4x4*) buf2040, *(float*)buf2041, *(float*)buf2042, *(float*)buf2043, *(float*)buf2044);
-    rsMatrixScale((rs_matrix4x4*) buf2045, *(float*)buf2046, *(float*)buf2047, *(float*)buf2048);
-    rsMatrixSet((rs_matrix4x4*) buf2049, *(uint32_t*)buf2050, *(uint32_t*)buf2051, *(float*)buf2052);
-    rsMatrixSet((rs_matrix3x3*) buf2053, *(uint32_t*)buf2054, *(uint32_t*)buf2055, *(float*)buf2056);
-    rsMatrixSet((rs_matrix2x2*) buf2057, *(uint32_t*)buf2058, *(uint32_t*)buf2059, *(float*)buf2060);
-    rsMatrixTranslate((rs_matrix4x4*) buf2061, *(float*)buf2062, *(float*)buf2063, *(float*)buf2064);
-    rsMatrixTranspose((rs_matrix4x4*) buf2065);
-    rsMatrixTranspose((rs_matrix3x3*) buf2066);
-    rsMatrixTranspose((rs_matrix2x2*) buf2067);
-    *(uchar4*)buf2068 = rsPackColorTo8888(*(float*)buf2069, *(float*)buf2070, *(float*)buf2071);
-    *(uchar4*)buf2072 = rsPackColorTo8888(*(float*)buf2073, *(float*)buf2074, *(float*)buf2075, *(float*)buf2076);
-    *(uchar4*)buf2077 = rsPackColorTo8888(*(float3*)buf2078);
-    *(uchar4*)buf2079 = rsPackColorTo8888(*(float4*)buf2080);
-    rsQuaternionAdd((rs_quaternion*) buf2081, (const rs_quaternion*) buf2082);
-    rsQuaternionConjugate((rs_quaternion*) buf2083);
-    *(float*)buf2084 = rsQuaternionDot((const rs_quaternion*) buf2085, (const rs_quaternion*) buf2086);
-    rsQuaternionGetMatrixUnit((rs_matrix4x4*) buf2087, (const rs_quaternion*) buf2088);
-    rsQuaternionLoadRotate((rs_quaternion*) buf2089, *(float*)buf2090, *(float*)buf2091, *(float*)buf2092, *(float*)buf2093);
-    rsQuaternionLoadRotateUnit((rs_quaternion*) buf2094, *(float*)buf2095, *(float*)buf2096, *(float*)buf2097, *(float*)buf2098);
-    rsQuaternionMultiply((rs_quaternion*) buf2099, *(float*)buf2100);
-    rsQuaternionMultiply((rs_quaternion*) buf2101, (const rs_quaternion*) buf2102);
-    rsQuaternionNormalize((rs_quaternion*) buf2103);
-    rsQuaternionSet((rs_quaternion*) buf2104, *(float*)buf2105, *(float*)buf2106, *(float*)buf2107, *(float*)buf2108);
-    rsQuaternionSet((rs_quaternion*) buf2109, (const rs_quaternion*) buf2110);
-    rsQuaternionSlerp((rs_quaternion*) buf2111, (const rs_quaternion*) buf2112, (const rs_quaternion*) buf2113, *(float*)buf2114);
-    *(int*)buf2115 = rsRand(*(int*)buf2116);
-    *(int*)buf2117 = rsRand(*(int*)buf2118, *(int*)buf2119);
-    *(float*)buf2120 = rsRand(*(float*)buf2121);
-    *(float*)buf2122 = rsRand(*(float*)buf2123, *(float*)buf2124);
-    *(float4*)buf2125 = rsSample(*(rs_allocation*)buf2126, *(rs_sampler*)buf2127, *(float*)buf2128);
-    *(float4*)buf2129 = rsSample(*(rs_allocation*)buf2130, *(rs_sampler*)buf2131, *(float*)buf2132, *(float*)buf2133);
-    *(float4*)buf2134 = rsSample(*(rs_allocation*)buf2135, *(rs_sampler*)buf2136, *(float2*)buf2137);
-    *(float4*)buf2138 = rsSample(*(rs_allocation*)buf2139, *(rs_sampler*)buf2140, *(float2*)buf2141, *(float*)buf2142);
-    *(float*)buf2143 = rsSamplerGetAnisotropy(*(rs_sampler*)buf2144);
-    *(rs_sampler_value*)buf2145 = rsSamplerGetMagnification(*(rs_sampler*)buf2146);
-    *(rs_sampler_value*)buf2147 = rsSamplerGetMinification(*(rs_sampler*)buf2148);
-    *(rs_sampler_value*)buf2149 = rsSamplerGetWrapS(*(rs_sampler*)buf2150);
-    *(rs_sampler_value*)buf2151 = rsSamplerGetWrapT(*(rs_sampler*)buf2152);
-    *(bool*)buf2153 = rsSendToClient(*(int*)buf2154);
-    *(bool*)buf2155 = rsSendToClient(*(int*)buf2156, (const void*) buf2157, *(uint*)buf2158);
-    rsSendToClientBlocking(*(int*)buf2159);
-    rsSendToClientBlocking(*(int*)buf2160, (const void*) buf2161, *(uint*)buf2162);
-    rsSetObject((rs_element*) buf2163, *(rs_element*)buf2164);
-    rsSetObject((rs_type*) buf2165, *(rs_type*)buf2166);
-    rsSetObject((rs_allocation*) buf2167, *(rs_allocation*)buf2168);
-    rsSetObject((rs_sampler*) buf2169, *(rs_sampler*)buf2170);
-    rsSetObject((rs_script*) buf2171, *(rs_script*)buf2172);
+    *(bool*)buf1947 = rsIsSphereInFrustum((float4*) buf1948, (float4*) buf1949, (float4*) buf1950, (float4*) buf1951, (float4*) buf1952, (float4*) buf1953, (float4*) buf1954);
+    *(rs_tm**)buf1955 = rsLocaltime((rs_tm*) buf1956, (const rs_time_t*) buf1957);
+    *(float*)buf1958 = rsMatrixGet((const rs_matrix4x4*) buf1959, *(uint32_t*)buf1960, *(uint32_t*)buf1961);
+    *(float*)buf1962 = rsMatrixGet((const rs_matrix3x3*) buf1963, *(uint32_t*)buf1964, *(uint32_t*)buf1965);
+    *(float*)buf1966 = rsMatrixGet((const rs_matrix2x2*) buf1967, *(uint32_t*)buf1968, *(uint32_t*)buf1969);
+    *(bool*)buf1970 = rsMatrixInverse((rs_matrix4x4*) buf1971);
+    *(bool*)buf1972 = rsMatrixInverseTranspose((rs_matrix4x4*) buf1973);
+    rsMatrixLoad((rs_matrix4x4*) buf1974, (const float*) buf1975);
+    rsMatrixLoad((rs_matrix3x3*) buf1976, (const float*) buf1977);
+    rsMatrixLoad((rs_matrix2x2*) buf1978, (const float*) buf1979);
+    rsMatrixLoad((rs_matrix4x4*) buf1980, (const rs_matrix4x4*) buf1981);
+    rsMatrixLoad((rs_matrix3x3*) buf1982, (const rs_matrix3x3*) buf1983);
+    rsMatrixLoad((rs_matrix2x2*) buf1984, (const rs_matrix2x2*) buf1985);
+    rsMatrixLoad((rs_matrix4x4*) buf1986, (const rs_matrix3x3*) buf1987);
+    rsMatrixLoad((rs_matrix4x4*) buf1988, (const rs_matrix2x2*) buf1989);
+    rsMatrixLoadFrustum((rs_matrix4x4*) buf1990, *(float*)buf1991, *(float*)buf1992, *(float*)buf1993, *(float*)buf1994, *(float*)buf1995, *(float*)buf1996);
+    rsMatrixLoadIdentity((rs_matrix4x4*) buf1997);
+    rsMatrixLoadIdentity((rs_matrix3x3*) buf1998);
+    rsMatrixLoadIdentity((rs_matrix2x2*) buf1999);
+    rsMatrixLoadMultiply((rs_matrix4x4*) buf2000, (const rs_matrix4x4*) buf2001, (const rs_matrix4x4*) buf2002);
+    rsMatrixLoadMultiply((rs_matrix3x3*) buf2003, (const rs_matrix3x3*) buf2004, (const rs_matrix3x3*) buf2005);
+    rsMatrixLoadMultiply((rs_matrix2x2*) buf2006, (const rs_matrix2x2*) buf2007, (const rs_matrix2x2*) buf2008);
+    rsMatrixLoadOrtho((rs_matrix4x4*) buf2009, *(float*)buf2010, *(float*)buf2011, *(float*)buf2012, *(float*)buf2013, *(float*)buf2014, *(float*)buf2015);
+    rsMatrixLoadPerspective((rs_matrix4x4*) buf2016, *(float*)buf2017, *(float*)buf2018, *(float*)buf2019, *(float*)buf2020);
+    rsMatrixLoadRotate((rs_matrix4x4*) buf2021, *(float*)buf2022, *(float*)buf2023, *(float*)buf2024, *(float*)buf2025);
+    rsMatrixLoadScale((rs_matrix4x4*) buf2026, *(float*)buf2027, *(float*)buf2028, *(float*)buf2029);
+    rsMatrixLoadTranslate((rs_matrix4x4*) buf2030, *(float*)buf2031, *(float*)buf2032, *(float*)buf2033);
+    rsMatrixMultiply((rs_matrix4x4*) buf2034, (const rs_matrix4x4*) buf2035);
+    rsMatrixMultiply((rs_matrix3x3*) buf2036, (const rs_matrix3x3*) buf2037);
+    rsMatrixMultiply((rs_matrix2x2*) buf2038, (const rs_matrix2x2*) buf2039);
+    *(float4*)buf2040 = rsMatrixMultiply((const rs_matrix4x4*) buf2041, *(float4*)buf2042);
+    *(float4*)buf2043 = rsMatrixMultiply((const rs_matrix4x4*) buf2044, *(float3*)buf2045);
+    *(float4*)buf2046 = rsMatrixMultiply((const rs_matrix4x4*) buf2047, *(float2*)buf2048);
+    *(float3*)buf2049 = rsMatrixMultiply((const rs_matrix3x3*) buf2050, *(float3*)buf2051);
+    *(float3*)buf2052 = rsMatrixMultiply((const rs_matrix3x3*) buf2053, *(float2*)buf2054);
+    *(float2*)buf2055 = rsMatrixMultiply((const rs_matrix2x2*) buf2056, *(float2*)buf2057);
+    rsMatrixRotate((rs_matrix4x4*) buf2058, *(float*)buf2059, *(float*)buf2060, *(float*)buf2061, *(float*)buf2062);
+    rsMatrixScale((rs_matrix4x4*) buf2063, *(float*)buf2064, *(float*)buf2065, *(float*)buf2066);
+    rsMatrixSet((rs_matrix4x4*) buf2067, *(uint32_t*)buf2068, *(uint32_t*)buf2069, *(float*)buf2070);
+    rsMatrixSet((rs_matrix3x3*) buf2071, *(uint32_t*)buf2072, *(uint32_t*)buf2073, *(float*)buf2074);
+    rsMatrixSet((rs_matrix2x2*) buf2075, *(uint32_t*)buf2076, *(uint32_t*)buf2077, *(float*)buf2078);
+    rsMatrixTranslate((rs_matrix4x4*) buf2079, *(float*)buf2080, *(float*)buf2081, *(float*)buf2082);
+    rsMatrixTranspose((rs_matrix4x4*) buf2083);
+    rsMatrixTranspose((rs_matrix3x3*) buf2084);
+    rsMatrixTranspose((rs_matrix2x2*) buf2085);
+    *(uchar4*)buf2086 = rsPackColorTo8888(*(float*)buf2087, *(float*)buf2088, *(float*)buf2089);
+    *(uchar4*)buf2090 = rsPackColorTo8888(*(float*)buf2091, *(float*)buf2092, *(float*)buf2093, *(float*)buf2094);
+    *(uchar4*)buf2095 = rsPackColorTo8888(*(float3*)buf2096);
+    *(uchar4*)buf2097 = rsPackColorTo8888(*(float4*)buf2098);
+    rsQuaternionAdd((rs_quaternion*) buf2099, (const rs_quaternion*) buf2100);
+    rsQuaternionConjugate((rs_quaternion*) buf2101);
+    *(float*)buf2102 = rsQuaternionDot((const rs_quaternion*) buf2103, (const rs_quaternion*) buf2104);
+    rsQuaternionGetMatrixUnit((rs_matrix4x4*) buf2105, (const rs_quaternion*) buf2106);
+    rsQuaternionLoadRotate((rs_quaternion*) buf2107, *(float*)buf2108, *(float*)buf2109, *(float*)buf2110, *(float*)buf2111);
+    rsQuaternionLoadRotateUnit((rs_quaternion*) buf2112, *(float*)buf2113, *(float*)buf2114, *(float*)buf2115, *(float*)buf2116);
+    rsQuaternionMultiply((rs_quaternion*) buf2117, *(float*)buf2118);
+    rsQuaternionMultiply((rs_quaternion*) buf2119, (const rs_quaternion*) buf2120);
+    rsQuaternionNormalize((rs_quaternion*) buf2121);
+    rsQuaternionSet((rs_quaternion*) buf2122, *(float*)buf2123, *(float*)buf2124, *(float*)buf2125, *(float*)buf2126);
+    rsQuaternionSet((rs_quaternion*) buf2127, (const rs_quaternion*) buf2128);
+    rsQuaternionSlerp((rs_quaternion*) buf2129, (const rs_quaternion*) buf2130, (const rs_quaternion*) buf2131, *(float*)buf2132);
+    *(int*)buf2133 = rsRand(*(int*)buf2134);
+    *(int*)buf2135 = rsRand(*(int*)buf2136, *(int*)buf2137);
+    *(float*)buf2138 = rsRand(*(float*)buf2139);
+    *(float*)buf2140 = rsRand(*(float*)buf2141, *(float*)buf2142);
+    *(float4*)buf2143 = rsSample(*(rs_allocation*)buf2144, *(rs_sampler*)buf2145, *(float*)buf2146);
+    *(float4*)buf2147 = rsSample(*(rs_allocation*)buf2148, *(rs_sampler*)buf2149, *(float*)buf2150, *(float*)buf2151);
+    *(float4*)buf2152 = rsSample(*(rs_allocation*)buf2153, *(rs_sampler*)buf2154, *(float2*)buf2155);
+    *(float4*)buf2156 = rsSample(*(rs_allocation*)buf2157, *(rs_sampler*)buf2158, *(float2*)buf2159, *(float*)buf2160);
+    *(float*)buf2161 = rsSamplerGetAnisotropy(*(rs_sampler*)buf2162);
+    *(rs_sampler_value*)buf2163 = rsSamplerGetMagnification(*(rs_sampler*)buf2164);
+    *(rs_sampler_value*)buf2165 = rsSamplerGetMinification(*(rs_sampler*)buf2166);
+    *(rs_sampler_value*)buf2167 = rsSamplerGetWrapS(*(rs_sampler*)buf2168);
+    *(rs_sampler_value*)buf2169 = rsSamplerGetWrapT(*(rs_sampler*)buf2170);
+    *(bool*)buf2171 = rsSendToClient(*(int*)buf2172);
+    *(bool*)buf2173 = rsSendToClient(*(int*)buf2174, (const void*) buf2175, *(uint*)buf2176);
+    rsSendToClientBlocking(*(int*)buf2177);
+    rsSendToClientBlocking(*(int*)buf2178, (const void*) buf2179, *(uint*)buf2180);
+    rsSetObject((rs_element*) buf2181, *(rs_element*)buf2182);
+    rsSetObject((rs_type*) buf2183, *(rs_type*)buf2184);
+    rsSetObject((rs_allocation*) buf2185, *(rs_allocation*)buf2186);
+    rsSetObject((rs_sampler*) buf2187, *(rs_sampler*)buf2188);
+    rsSetObject((rs_script*) buf2189, *(rs_script*)buf2190);
 #ifndef __LP64__
-    rsSetObject((rs_mesh*) buf2173, *(rs_mesh*)buf2174);
-    rsSetObject((rs_program_fragment*) buf2175, *(rs_program_fragment*)buf2176);
-    rsSetObject((rs_program_vertex*) buf2177, *(rs_program_vertex*)buf2178);
-    rsSetObject((rs_program_raster*) buf2179, *(rs_program_raster*)buf2180);
-    rsSetObject((rs_program_store*) buf2181, *(rs_program_store*)buf2182);
-    rsSetObject((rs_font*) buf2183, *(rs_font*)buf2184);
+    rsSetObject((rs_mesh*) buf2191, *(rs_mesh*)buf2192);
+    rsSetObject((rs_program_fragment*) buf2193, *(rs_program_fragment*)buf2194);
+    rsSetObject((rs_program_vertex*) buf2195, *(rs_program_vertex*)buf2196);
+    rsSetObject((rs_program_raster*) buf2197, *(rs_program_raster*)buf2198);
+    rsSetObject((rs_program_store*) buf2199, *(rs_program_store*)buf2200);
+    rsSetObject((rs_font*) buf2201, *(rs_font*)buf2202);
 #endif
-    *(rs_time_t*)buf2185 = rsTime((rs_time_t*) buf2186);
-    *(float4*)buf2187 = rsUnpackColor8888(*(uchar4*)buf2188);
-    *(int64_t*)buf2189 = rsUptimeMillis();
-    *(int64_t*)buf2190 = rsUptimeNanos();
-    *(float4*)buf2191 = rsYuvToRGBA_float4(*(uchar*)buf2192, *(uchar*)buf2193, *(uchar*)buf2194);
-    *(uchar4*)buf2195 = rsYuvToRGBA_uchar4(*(uchar*)buf2196, *(uchar*)buf2197, *(uchar*)buf2198);
+    *(rs_time_t*)buf2203 = rsTime((rs_time_t*) buf2204);
+    *(float4*)buf2205 = rsUnpackColor8888(*(uchar4*)buf2206);
+    *(int64_t*)buf2207 = rsUptimeMillis();
+    *(int64_t*)buf2208 = rsUptimeNanos();
+    *(float4*)buf2209 = rsYuvToRGBA_float4(*(uchar*)buf2210, *(uchar*)buf2211, *(uchar*)buf2212);
+    *(uchar4*)buf2213 = rsYuvToRGBA_uchar4(*(uchar*)buf2214, *(uchar*)buf2215, *(uchar*)buf2216);
 #ifndef __LP64__
-    rsgAllocationSyncAll(*(rs_allocation*)buf2199);
-#endif
-#ifndef __LP64__
-    rsgAllocationSyncAll(*(rs_allocation*)buf2200, *(rs_allocation_usage_type*)buf2201);
-#endif
-#ifndef __LP64__
-    rsgBindColorTarget(*(rs_allocation*)buf2202, *(uint*)buf2203);
-#endif
-#ifndef __LP64__
-    rsgBindConstant(*(rs_program_fragment*)buf2204, *(uint*)buf2205, *(rs_allocation*)buf2206);
+    rsgAllocationSyncAll(*(rs_allocation*)buf2217);
 #endif
 #ifndef __LP64__
-    rsgBindConstant(*(rs_program_vertex*)buf2207, *(uint*)buf2208, *(rs_allocation*)buf2209);
+    rsgAllocationSyncAll(*(rs_allocation*)buf2218, *(rs_allocation_usage_type*)buf2219);
 #endif
 #ifndef __LP64__
-    rsgBindDepthTarget(*(rs_allocation*)buf2210);
+    rsgBindColorTarget(*(rs_allocation*)buf2220, *(uint*)buf2221);
 #endif
 #ifndef __LP64__
-    rsgBindFont(*(rs_font*)buf2211);
+    rsgBindConstant(*(rs_program_fragment*)buf2222, *(uint*)buf2223, *(rs_allocation*)buf2224);
 #endif
 #ifndef __LP64__
-    rsgBindProgramFragment(*(rs_program_fragment*)buf2212);
+    rsgBindConstant(*(rs_program_vertex*)buf2225, *(uint*)buf2226, *(rs_allocation*)buf2227);
 #endif
 #ifndef __LP64__
-    rsgBindProgramRaster(*(rs_program_raster*)buf2213);
+    rsgBindDepthTarget(*(rs_allocation*)buf2228);
 #endif
 #ifndef __LP64__
-    rsgBindProgramStore(*(rs_program_store*)buf2214);
+    rsgBindFont(*(rs_font*)buf2229);
 #endif
 #ifndef __LP64__
-    rsgBindProgramVertex(*(rs_program_vertex*)buf2215);
+    rsgBindProgramFragment(*(rs_program_fragment*)buf2230);
 #endif
 #ifndef __LP64__
-    rsgBindSampler(*(rs_program_fragment*)buf2216, *(uint*)buf2217, *(rs_sampler*)buf2218);
+    rsgBindProgramRaster(*(rs_program_raster*)buf2231);
 #endif
 #ifndef __LP64__
-    rsgBindTexture(*(rs_program_fragment*)buf2219, *(uint*)buf2220, *(rs_allocation*)buf2221);
+    rsgBindProgramStore(*(rs_program_store*)buf2232);
+#endif
+#ifndef __LP64__
+    rsgBindProgramVertex(*(rs_program_vertex*)buf2233);
+#endif
+#ifndef __LP64__
+    rsgBindSampler(*(rs_program_fragment*)buf2234, *(uint*)buf2235, *(rs_sampler*)buf2236);
+#endif
+#ifndef __LP64__
+    rsgBindTexture(*(rs_program_fragment*)buf2237, *(uint*)buf2238, *(rs_allocation*)buf2239);
 #endif
 #ifndef __LP64__
     rsgClearAllRenderTargets();
 #endif
 #ifndef __LP64__
-    rsgClearColor(*(float*)buf2222, *(float*)buf2223, *(float*)buf2224, *(float*)buf2225);
+    rsgClearColor(*(float*)buf2240, *(float*)buf2241, *(float*)buf2242, *(float*)buf2243);
 #endif
 #ifndef __LP64__
-    rsgClearColorTarget(*(uint*)buf2226);
+    rsgClearColorTarget(*(uint*)buf2244);
 #endif
 #ifndef __LP64__
-    rsgClearDepth(*(float*)buf2227);
+    rsgClearDepth(*(float*)buf2245);
 #endif
 #ifndef __LP64__
     rsgClearDepthTarget();
 #endif
 #ifndef __LP64__
-    rsgDrawMesh(*(rs_mesh*)buf2228);
+    rsgDrawMesh(*(rs_mesh*)buf2246);
 #endif
 #ifndef __LP64__
-    rsgDrawMesh(*(rs_mesh*)buf2229, *(uint*)buf2230);
+    rsgDrawMesh(*(rs_mesh*)buf2247, *(uint*)buf2248);
 #endif
 #ifndef __LP64__
-    rsgDrawMesh(*(rs_mesh*)buf2231, *(uint*)buf2232, *(uint*)buf2233, *(uint*)buf2234);
+    rsgDrawMesh(*(rs_mesh*)buf2249, *(uint*)buf2250, *(uint*)buf2251, *(uint*)buf2252);
 #endif
 #ifndef __LP64__
-    rsgDrawQuad(*(float*)buf2235, *(float*)buf2236, *(float*)buf2237, *(float*)buf2238, *(float*)buf2239, *(float*)buf2240, *(float*)buf2241, *(float*)buf2242, *(float*)buf2243, *(float*)buf2244, *(float*)buf2245, *(float*)buf2246);
+    rsgDrawQuad(*(float*)buf2253, *(float*)buf2254, *(float*)buf2255, *(float*)buf2256, *(float*)buf2257, *(float*)buf2258, *(float*)buf2259, *(float*)buf2260, *(float*)buf2261, *(float*)buf2262, *(float*)buf2263, *(float*)buf2264);
 #endif
 #ifndef __LP64__
-    rsgDrawQuadTexCoords(*(float*)buf2247, *(float*)buf2248, *(float*)buf2249, *(float*)buf2250, *(float*)buf2251, *(float*)buf2252, *(float*)buf2253, *(float*)buf2254, *(float*)buf2255, *(float*)buf2256, *(float*)buf2257, *(float*)buf2258, *(float*)buf2259, *(float*)buf2260, *(float*)buf2261, *(float*)buf2262, *(float*)buf2263, *(float*)buf2264, *(float*)buf2265, *(float*)buf2266);
+    rsgDrawQuadTexCoords(*(float*)buf2265, *(float*)buf2266, *(float*)buf2267, *(float*)buf2268, *(float*)buf2269, *(float*)buf2270, *(float*)buf2271, *(float*)buf2272, *(float*)buf2273, *(float*)buf2274, *(float*)buf2275, *(float*)buf2276, *(float*)buf2277, *(float*)buf2278, *(float*)buf2279, *(float*)buf2280, *(float*)buf2281, *(float*)buf2282, *(float*)buf2283, *(float*)buf2284);
 #endif
 #ifndef __LP64__
-    rsgDrawRect(*(float*)buf2267, *(float*)buf2268, *(float*)buf2269, *(float*)buf2270, *(float*)buf2271);
+    rsgDrawRect(*(float*)buf2285, *(float*)buf2286, *(float*)buf2287, *(float*)buf2288, *(float*)buf2289);
 #endif
 #ifndef __LP64__
-    rsgDrawSpriteScreenspace(*(float*)buf2272, *(float*)buf2273, *(float*)buf2274, *(float*)buf2275, *(float*)buf2276);
+    rsgDrawSpriteScreenspace(*(float*)buf2290, *(float*)buf2291, *(float*)buf2292, *(float*)buf2293, *(float*)buf2294);
 #endif
 #ifndef __LP64__
-    rsgDrawText((const char*) buf2277, *(int*)buf2278, *(int*)buf2279);
+    rsgDrawText((const char*) buf2295, *(int*)buf2296, *(int*)buf2297);
 #endif
 #ifndef __LP64__
-    rsgDrawText(*(rs_allocation*)buf2280, *(int*)buf2281, *(int*)buf2282);
+    rsgDrawText(*(rs_allocation*)buf2298, *(int*)buf2299, *(int*)buf2300);
 #endif
 #ifndef __LP64__
-    *(uint*)buf2283 = rsgFinish();
+    *(uint*)buf2301 = rsgFinish();
 #endif
 #ifndef __LP64__
-    rsgFontColor(*(float*)buf2284, *(float*)buf2285, *(float*)buf2286, *(float*)buf2287);
+    rsgFontColor(*(float*)buf2302, *(float*)buf2303, *(float*)buf2304, *(float*)buf2305);
 #endif
 #ifndef __LP64__
-    *(uint*)buf2288 = rsgGetHeight();
+    *(uint*)buf2306 = rsgGetHeight();
 #endif
 #ifndef __LP64__
-    *(uint*)buf2289 = rsgGetWidth();
+    *(uint*)buf2307 = rsgGetWidth();
 #endif
 #ifndef __LP64__
-    rsgMeasureText((const char*) buf2290, (int*) buf2291, (int*) buf2292, (int*) buf2293, (int*) buf2294);
+    rsgMeasureText((const char*) buf2308, (int*) buf2309, (int*) buf2310, (int*) buf2311, (int*) buf2312);
 #endif
 #ifndef __LP64__
-    rsgMeasureText(*(rs_allocation*)buf2295, (int*) buf2296, (int*) buf2297, (int*) buf2298, (int*) buf2299);
+    rsgMeasureText(*(rs_allocation*)buf2313, (int*) buf2314, (int*) buf2315, (int*) buf2316, (int*) buf2317);
 #endif
 #ifndef __LP64__
-    rsgMeshComputeBoundingBox(*(rs_mesh*)buf2300, (float*) buf2301, (float*) buf2302, (float*) buf2303, (float*) buf2304, (float*) buf2305, (float*) buf2306);
+    rsgMeshComputeBoundingBox(*(rs_mesh*)buf2318, (float*) buf2319, (float*) buf2320, (float*) buf2321, (float*) buf2322, (float*) buf2323, (float*) buf2324);
 #endif
 #ifndef __LP64__
-    rsgMeshComputeBoundingBox(*(rs_mesh*)buf2307, (float3*) buf2308, (float3*) buf2309);
+    rsgMeshComputeBoundingBox(*(rs_mesh*)buf2325, (float3*) buf2326, (float3*) buf2327);
 #endif
 #ifndef __LP64__
-    *(rs_allocation*)buf2310 = rsgMeshGetIndexAllocation(*(rs_mesh*)buf2311, *(uint32_t*)buf2312);
+    *(rs_allocation*)buf2328 = rsgMeshGetIndexAllocation(*(rs_mesh*)buf2329, *(uint32_t*)buf2330);
 #endif
 #ifndef __LP64__
-    *(rs_primitive*)buf2313 = rsgMeshGetPrimitive(*(rs_mesh*)buf2314, *(uint32_t*)buf2315);
+    *(rs_primitive*)buf2331 = rsgMeshGetPrimitive(*(rs_mesh*)buf2332, *(uint32_t*)buf2333);
 #endif
 #ifndef __LP64__
-    *(uint32_t*)buf2316 = rsgMeshGetPrimitiveCount(*(rs_mesh*)buf2317);
+    *(uint32_t*)buf2334 = rsgMeshGetPrimitiveCount(*(rs_mesh*)buf2335);
 #endif
 #ifndef __LP64__
-    *(rs_allocation*)buf2318 = rsgMeshGetVertexAllocation(*(rs_mesh*)buf2319, *(uint32_t*)buf2320);
+    *(rs_allocation*)buf2336 = rsgMeshGetVertexAllocation(*(rs_mesh*)buf2337, *(uint32_t*)buf2338);
 #endif
 #ifndef __LP64__
-    *(uint32_t*)buf2321 = rsgMeshGetVertexAllocationCount(*(rs_mesh*)buf2322);
+    *(uint32_t*)buf2339 = rsgMeshGetVertexAllocationCount(*(rs_mesh*)buf2340);
 #endif
 #ifndef __LP64__
-    rsgProgramFragmentConstantColor(*(rs_program_fragment*)buf2323, *(float*)buf2324, *(float*)buf2325, *(float*)buf2326, *(float*)buf2327);
+    rsgProgramFragmentConstantColor(*(rs_program_fragment*)buf2341, *(float*)buf2342, *(float*)buf2343, *(float*)buf2344, *(float*)buf2345);
 #endif
 #ifndef __LP64__
-    *(rs_cull_mode*)buf2328 = rsgProgramRasterGetCullMode(*(rs_program_raster*)buf2329);
+    *(rs_cull_mode*)buf2346 = rsgProgramRasterGetCullMode(*(rs_program_raster*)buf2347);
 #endif
 #ifndef __LP64__
-    *(bool*)buf2330 = rsgProgramRasterIsPointSpriteEnabled(*(rs_program_raster*)buf2331);
+    *(bool*)buf2348 = rsgProgramRasterIsPointSpriteEnabled(*(rs_program_raster*)buf2349);
 #endif
 #ifndef __LP64__
-    *(rs_blend_dst_func*)buf2332 = rsgProgramStoreGetBlendDstFunc(*(rs_program_store*)buf2333);
+    *(rs_blend_dst_func*)buf2350 = rsgProgramStoreGetBlendDstFunc(*(rs_program_store*)buf2351);
 #endif
 #ifndef __LP64__
-    *(rs_blend_src_func*)buf2334 = rsgProgramStoreGetBlendSrcFunc(*(rs_program_store*)buf2335);
+    *(rs_blend_src_func*)buf2352 = rsgProgramStoreGetBlendSrcFunc(*(rs_program_store*)buf2353);
 #endif
 #ifndef __LP64__
-    *(rs_depth_func*)buf2336 = rsgProgramStoreGetDepthFunc(*(rs_program_store*)buf2337);
+    *(rs_depth_func*)buf2354 = rsgProgramStoreGetDepthFunc(*(rs_program_store*)buf2355);
 #endif
 #ifndef __LP64__
-    *(bool*)buf2338 = rsgProgramStoreIsColorMaskAlphaEnabled(*(rs_program_store*)buf2339);
+    *(bool*)buf2356 = rsgProgramStoreIsColorMaskAlphaEnabled(*(rs_program_store*)buf2357);
 #endif
 #ifndef __LP64__
-    *(bool*)buf2340 = rsgProgramStoreIsColorMaskBlueEnabled(*(rs_program_store*)buf2341);
+    *(bool*)buf2358 = rsgProgramStoreIsColorMaskBlueEnabled(*(rs_program_store*)buf2359);
 #endif
 #ifndef __LP64__
-    *(bool*)buf2342 = rsgProgramStoreIsColorMaskGreenEnabled(*(rs_program_store*)buf2343);
+    *(bool*)buf2360 = rsgProgramStoreIsColorMaskGreenEnabled(*(rs_program_store*)buf2361);
 #endif
 #ifndef __LP64__
-    *(bool*)buf2344 = rsgProgramStoreIsColorMaskRedEnabled(*(rs_program_store*)buf2345);
+    *(bool*)buf2362 = rsgProgramStoreIsColorMaskRedEnabled(*(rs_program_store*)buf2363);
 #endif
 #ifndef __LP64__
-    *(bool*)buf2346 = rsgProgramStoreIsDepthMaskEnabled(*(rs_program_store*)buf2347);
+    *(bool*)buf2364 = rsgProgramStoreIsDepthMaskEnabled(*(rs_program_store*)buf2365);
 #endif
 #ifndef __LP64__
-    *(bool*)buf2348 = rsgProgramStoreIsDitherEnabled(*(rs_program_store*)buf2349);
+    *(bool*)buf2366 = rsgProgramStoreIsDitherEnabled(*(rs_program_store*)buf2367);
 #endif
 #ifndef __LP64__
-    rsgProgramVertexGetProjectionMatrix((rs_matrix4x4*) buf2350);
+    rsgProgramVertexGetProjectionMatrix((rs_matrix4x4*) buf2368);
 #endif
 #ifndef __LP64__
-    rsgProgramVertexLoadModelMatrix((const rs_matrix4x4*) buf2351);
+    rsgProgramVertexLoadModelMatrix((const rs_matrix4x4*) buf2369);
 #endif
 #ifndef __LP64__
-    rsgProgramVertexLoadProjectionMatrix((const rs_matrix4x4*) buf2352);
+    rsgProgramVertexLoadProjectionMatrix((const rs_matrix4x4*) buf2370);
 #endif
 #ifndef __LP64__
-    rsgProgramVertexLoadTextureMatrix((const rs_matrix4x4*) buf2353);
+    rsgProgramVertexLoadTextureMatrix((const rs_matrix4x4*) buf2371);
 #endif
-    *(float*)buf2354 = rsqrt(*(float*)buf2355);
-    *(float2*)buf2356 = rsqrt(*(float2*)buf2357);
-    *(float3*)buf2358 = rsqrt(*(float3*)buf2359);
-    *(float4*)buf2360 = rsqrt(*(float4*)buf2361);
-    *(float*)buf2362 = sign(*(float*)buf2363);
-    *(float2*)buf2364 = sign(*(float2*)buf2365);
-    *(float3*)buf2366 = sign(*(float3*)buf2367);
-    *(float4*)buf2368 = sign(*(float4*)buf2369);
-    *(float*)buf2370 = sin(*(float*)buf2371);
-    *(float2*)buf2372 = sin(*(float2*)buf2373);
-    *(float3*)buf2374 = sin(*(float3*)buf2375);
-    *(float4*)buf2376 = sin(*(float4*)buf2377);
-    *(float*)buf2378 = sincos(*(float*)buf2379, (float*) buf2380);
-    *(float2*)buf2381 = sincos(*(float2*)buf2382, (float2*) buf2383);
-    *(float3*)buf2384 = sincos(*(float3*)buf2385, (float3*) buf2386);
-    *(float4*)buf2387 = sincos(*(float4*)buf2388, (float4*) buf2389);
-    *(float*)buf2390 = sinh(*(float*)buf2391);
-    *(float2*)buf2392 = sinh(*(float2*)buf2393);
-    *(float3*)buf2394 = sinh(*(float3*)buf2395);
-    *(float4*)buf2396 = sinh(*(float4*)buf2397);
-    *(float*)buf2398 = sinpi(*(float*)buf2399);
-    *(float2*)buf2400 = sinpi(*(float2*)buf2401);
-    *(float3*)buf2402 = sinpi(*(float3*)buf2403);
-    *(float4*)buf2404 = sinpi(*(float4*)buf2405);
-    *(float*)buf2406 = sqrt(*(float*)buf2407);
-    *(float2*)buf2408 = sqrt(*(float2*)buf2409);
-    *(float3*)buf2410 = sqrt(*(float3*)buf2411);
-    *(float4*)buf2412 = sqrt(*(float4*)buf2413);
-    *(float*)buf2414 = step(*(float*)buf2415, *(float*)buf2416);
-    *(float2*)buf2417 = step(*(float2*)buf2418, *(float2*)buf2419);
-    *(float3*)buf2420 = step(*(float3*)buf2421, *(float3*)buf2422);
-    *(float4*)buf2423 = step(*(float4*)buf2424, *(float4*)buf2425);
-    *(float2*)buf2426 = step(*(float2*)buf2427, *(float*)buf2428);
-    *(float3*)buf2429 = step(*(float3*)buf2430, *(float*)buf2431);
-    *(float4*)buf2432 = step(*(float4*)buf2433, *(float*)buf2434);
-    *(float*)buf2435 = tan(*(float*)buf2436);
-    *(float2*)buf2437 = tan(*(float2*)buf2438);
-    *(float3*)buf2439 = tan(*(float3*)buf2440);
-    *(float4*)buf2441 = tan(*(float4*)buf2442);
-    *(float*)buf2443 = tanh(*(float*)buf2444);
-    *(float2*)buf2445 = tanh(*(float2*)buf2446);
-    *(float3*)buf2447 = tanh(*(float3*)buf2448);
-    *(float4*)buf2449 = tanh(*(float4*)buf2450);
-    *(float*)buf2451 = tanpi(*(float*)buf2452);
-    *(float2*)buf2453 = tanpi(*(float2*)buf2454);
-    *(float3*)buf2455 = tanpi(*(float3*)buf2456);
-    *(float4*)buf2457 = tanpi(*(float4*)buf2458);
-    *(float*)buf2459 = tgamma(*(float*)buf2460);
-    *(float2*)buf2461 = tgamma(*(float2*)buf2462);
-    *(float3*)buf2463 = tgamma(*(float3*)buf2464);
-    *(float4*)buf2465 = tgamma(*(float4*)buf2466);
-    *(float*)buf2467 = trunc(*(float*)buf2468);
-    *(float2*)buf2469 = trunc(*(float2*)buf2470);
-    *(float3*)buf2471 = trunc(*(float3*)buf2472);
-    *(float4*)buf2473 = trunc(*(float4*)buf2474);
+    *(float*)buf2372 = rsqrt(*(float*)buf2373);
+    *(float2*)buf2374 = rsqrt(*(float2*)buf2375);
+    *(float3*)buf2376 = rsqrt(*(float3*)buf2377);
+    *(float4*)buf2378 = rsqrt(*(float4*)buf2379);
+    *(float*)buf2380 = sign(*(float*)buf2381);
+    *(float2*)buf2382 = sign(*(float2*)buf2383);
+    *(float3*)buf2384 = sign(*(float3*)buf2385);
+    *(float4*)buf2386 = sign(*(float4*)buf2387);
+    *(float*)buf2388 = sin(*(float*)buf2389);
+    *(float2*)buf2390 = sin(*(float2*)buf2391);
+    *(float3*)buf2392 = sin(*(float3*)buf2393);
+    *(float4*)buf2394 = sin(*(float4*)buf2395);
+    *(float*)buf2396 = sincos(*(float*)buf2397, (float*) buf2398);
+    *(float2*)buf2399 = sincos(*(float2*)buf2400, (float2*) buf2401);
+    *(float3*)buf2402 = sincos(*(float3*)buf2403, (float3*) buf2404);
+    *(float4*)buf2405 = sincos(*(float4*)buf2406, (float4*) buf2407);
+    *(float*)buf2408 = sinh(*(float*)buf2409);
+    *(float2*)buf2410 = sinh(*(float2*)buf2411);
+    *(float3*)buf2412 = sinh(*(float3*)buf2413);
+    *(float4*)buf2414 = sinh(*(float4*)buf2415);
+    *(float*)buf2416 = sinpi(*(float*)buf2417);
+    *(float2*)buf2418 = sinpi(*(float2*)buf2419);
+    *(float3*)buf2420 = sinpi(*(float3*)buf2421);
+    *(float4*)buf2422 = sinpi(*(float4*)buf2423);
+    *(float*)buf2424 = sqrt(*(float*)buf2425);
+    *(float2*)buf2426 = sqrt(*(float2*)buf2427);
+    *(float3*)buf2428 = sqrt(*(float3*)buf2429);
+    *(float4*)buf2430 = sqrt(*(float4*)buf2431);
+    *(float*)buf2432 = step(*(float*)buf2433, *(float*)buf2434);
+    *(float2*)buf2435 = step(*(float2*)buf2436, *(float2*)buf2437);
+    *(float3*)buf2438 = step(*(float3*)buf2439, *(float3*)buf2440);
+    *(float4*)buf2441 = step(*(float4*)buf2442, *(float4*)buf2443);
+    *(float2*)buf2444 = step(*(float2*)buf2445, *(float*)buf2446);
+    *(float3*)buf2447 = step(*(float3*)buf2448, *(float*)buf2449);
+    *(float4*)buf2450 = step(*(float4*)buf2451, *(float*)buf2452);
+    *(float*)buf2453 = tan(*(float*)buf2454);
+    *(float2*)buf2455 = tan(*(float2*)buf2456);
+    *(float3*)buf2457 = tan(*(float3*)buf2458);
+    *(float4*)buf2459 = tan(*(float4*)buf2460);
+    *(float*)buf2461 = tanh(*(float*)buf2462);
+    *(float2*)buf2463 = tanh(*(float2*)buf2464);
+    *(float3*)buf2465 = tanh(*(float3*)buf2466);
+    *(float4*)buf2467 = tanh(*(float4*)buf2468);
+    *(float*)buf2469 = tanpi(*(float*)buf2470);
+    *(float2*)buf2471 = tanpi(*(float2*)buf2472);
+    *(float3*)buf2473 = tanpi(*(float3*)buf2474);
+    *(float4*)buf2475 = tanpi(*(float4*)buf2476);
+    *(float*)buf2477 = tgamma(*(float*)buf2478);
+    *(float2*)buf2479 = tgamma(*(float2*)buf2480);
+    *(float3*)buf2481 = tgamma(*(float3*)buf2482);
+    *(float4*)buf2483 = tgamma(*(float4*)buf2484);
+    *(float*)buf2485 = trunc(*(float*)buf2486);
+    *(float2*)buf2487 = trunc(*(float2*)buf2488);
+    *(float3*)buf2489 = trunc(*(float3*)buf2490);
+    *(float4*)buf2491 = trunc(*(float4*)buf2492);
 }
