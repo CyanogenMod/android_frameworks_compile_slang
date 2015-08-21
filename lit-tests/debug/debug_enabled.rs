@@ -1,6 +1,6 @@
 // RUN: %Slang -g %s
 // RUN: %rs-filecheck-wrapper %s
-// CHECK: MDSubprogram
+// CHECK: DILocation
 
 #pragma version(1)
 #pragma rs java_package_name(foo)
