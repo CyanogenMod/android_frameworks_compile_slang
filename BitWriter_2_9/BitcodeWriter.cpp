@@ -308,6 +308,7 @@ static void WriteTypeTable(const llvm_2_9::ValueEnumerator &VE,
       for (StructType::element_iterator I = ST->element_begin(),
            E = ST->element_end(); I != E; ++I)
         TypeVals.push_back(VE.getTypeID(*I));
+      Code = TYPE_CODE_STRUCT_OLD_3_0;
       AbbrevToUse = StructAbbrev;
       break;
     }
