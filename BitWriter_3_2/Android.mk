@@ -19,11 +19,7 @@ LOCAL_SRC_FILES := $(bitcode_writer_3_2_SRC_FILES)
 
 LOCAL_MODULE:= libLLVMBitWriter_3_2
 
-LOCAL_MODULE_TAGS := optional
-
-ifneq ($(HOST_OS),windows)
-LOCAL_CLANG := true
-endif
+LOCAL_MODULE_HOST_OS := darwin linux windows
 
 include $(LLVM_HOST_BUILD_MK)
 include $(LLVM_GEN_INTRINSICS_MK)
@@ -39,8 +35,6 @@ LOCAL_C_INCLUDES += frameworks/compile/slang
 LOCAL_SRC_FILES := $(bitcode_writer_3_2_SRC_FILES)
 
 LOCAL_MODULE:= libLLVMBitWriter_3_2
-
-LOCAL_MODULE_TAGS := optional
 
 include $(LLVM_DEVICE_BUILD_MK)
 include $(LLVM_GEN_INTRINSICS_MK)
