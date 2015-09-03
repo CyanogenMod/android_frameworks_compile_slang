@@ -65,12 +65,8 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_CFLAGS += $(local_cflags_for_slang)
 
-ifeq ($(HOST_OS),windows)
 # Skip missing-field-initializer warnings for mingw.
-LOCAL_CFLAGS += -Wno-error=missing-field-initializers
-else
-LOCAL_CLANG := true
-endif
+LOCAL_CFLAGS_windows += -Wno-error=missing-field-initializers
 
 TBLGEN_TABLES :=    \
 	AttrList.inc	\
@@ -93,9 +89,6 @@ LOCAL_SRC_FILES :=	\
 LOCAL_C_INCLUDES += frameworks/compile/libbcc/include
 
 LOCAL_LDLIBS := -ldl -lpthread
-ifneq ($(HOST_OS),windows)
-LOCAL_CXX_STL := libc++
-endif
 
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
@@ -133,12 +126,8 @@ LOCAL_MODULE := llvm-rs-cc
 
 LOCAL_CFLAGS += $(local_cflags_for_slang)
 
-ifeq ($(HOST_OS),windows)
 # Skip missing-field-initializer warnings for mingw.
 LOCAL_CFLAGS += -Wno-error=missing-field-initializers
-else
-LOCAL_CLANG := true
-endif
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE_CLASS := EXECUTABLES
@@ -187,11 +176,9 @@ LOCAL_SHARED_LIBRARIES := \
 	libclang \
 	libLLVM
 
-ifeq ($(HOST_OS),windows)
-  LOCAL_LDLIBS := -limagehlp -lpsapi
-else
-  LOCAL_LDLIBS := -ldl -lpthread
-endif
+LOCAL_LDLIBS_windows := -limagehlp -lpsapi
+LOCAL_LDLIBS_linux := -ldl -lpthread
+LOCAL_LDLIBS_darwin := -ldl -lpthread
 
 # For build RSCCOptions.inc from RSCCOptions.td
 intermediates := $(call local-generated-sources-dir)
