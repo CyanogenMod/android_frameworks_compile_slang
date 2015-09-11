@@ -31,7 +31,8 @@ namespace slang {
 void writeBitcode(llvm::raw_ostream &Out,
                   const llvm::Module &M,
                   uint32_t TargetAPI,
-                  uint32_t OptimizationLevel);
+                  uint32_t OptimizationLevel,
+                  bool GenerateDebugInfo);
 
 } // end namespace slang
 
