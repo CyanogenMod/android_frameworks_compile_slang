@@ -91,7 +91,8 @@ static void WriteOutputFile(const Module *M, uint32_t ModuleTargetAPI) {
   if (Force || !CheckBitcodeOutputToConsole(Out->os(), true)) {
     slang::writeBitcode(Out->os(), *M,
         /* TargetAPI = */ ModuleTargetAPI,
-        /* OptimizationLevel = */ 3);
+        /* OptimizationLevel = */ 3,
+        /* GenerateDebugInfo = */ false);
 
     if (!Out->os().has_error()) {
       // Declare success.
