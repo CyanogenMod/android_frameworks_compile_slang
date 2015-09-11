@@ -327,7 +327,7 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
     }
     case Slang::OT_Bitcode: {
       writeBitcode(mBufferOutStream, *mpModule, getTargetAPI(),
-                   mCodeGenOpts.OptimizationLevel);
+                   mCodeGenOpts.OptimizationLevel, mCodeGenOpts.getDebugInfo());
       break;
     }
     case Slang::OT_Nothing: {
