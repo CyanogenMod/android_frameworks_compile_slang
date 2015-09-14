@@ -21,6 +21,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "clang/Lex/Preprocessor.h"
 #include "clang/AST/Mangle.h"
@@ -39,8 +40,11 @@ namespace clang {
   class VarDecl;
   class ASTContext;
   class TargetInfo;
+  class DeclGroupRef;
   class FunctionDecl;
+  class QualType;
   class SourceManager;
+  class TypeDecl;
 }   // namespace clang
 
 namespace slang {
@@ -60,7 +64,7 @@ class RSContext {
   typedef std::list<RSExportable*> ExportableList;
   typedef std::list<RSExportVar*> ExportVarList;
   typedef std::list<RSExportFunc*> ExportFuncList;
-  typedef std::list<RSExportForEach*> ExportForEachList;
+  typedef std::vector<RSExportForEach*> ExportForEachVector;
   typedef std::list<RSExportReduce*> ExportReduceList;
   typedef llvm::StringMap<RSExportType*> ExportTypeMap;
 
@@ -97,13 +101,17 @@ class RSContext {
   bool processExportFunc(const clang::FunctionDecl *FD);
   bool processExportType(const llvm::StringRef &Name);
 
-  void cleanupForEach();
+  bool addForEach(const clang::FunctionDecl* FD);
+  int getForEachSlotNumber(const clang::StringRef& funcName);
 
   ExportVarList mExportVars;
   ExportFuncList mExportFuncs;
-  ExportForEachList mExportForEach;
+  std::map<llvm::StringRef, unsigned> mExportForEachMap;
+  ExportForEachVector mExportForEach;
   ExportReduceList mExportReduce;
   ExportTypeMap mExportTypes;
+
+  clang::QualType mAllocationType;
 
  public:
   RSContext(clang::Preprocessor &PP,
@@ -159,6 +167,12 @@ class RSContext {
 
   inline const std::string &getRSPackageName() const { return mRSPackageName; }
 
+  void addAllocationType(const clang::TypeDecl* TD);
+  inline const clang::QualType& getAllocationType() const {
+    return mAllocationType;
+  }
+
+  bool processExportDecl(const clang::DeclGroupRef& DGR);
   bool processExport();
   inline void newExportable(RSExportable *E) {
     if (E != nullptr)
@@ -192,7 +206,7 @@ class RSContext {
   }
   inline bool hasExportFunc() const { return !mExportFuncs.empty(); }
 
-  typedef ExportForEachList::const_iterator const_export_foreach_iterator;
+  typedef ExportForEachVector::const_iterator const_export_foreach_iterator;
   const_export_foreach_iterator export_foreach_begin() const {
     return mExportForEach.begin();
   }
@@ -200,6 +214,7 @@ class RSContext {
     return mExportForEach.end();
   }
   inline bool hasExportForEach() const { return !mExportForEach.empty(); }
+  int getForEachSlotNumber(const clang::FunctionDecl* FD);
 
   typedef ExportReduceList::const_iterator const_export_reduce_iterator;
   const_export_reduce_iterator export_reduce_begin() const {
