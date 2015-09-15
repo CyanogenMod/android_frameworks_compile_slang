@@ -58,7 +58,8 @@ enum {
   KK_P1 = 1901,
   L = 2100,
   M = 2300,
-  CURRENT = M
+  M_RS_OBJECT = 2310,
+  CURRENT = M_RS_OBJECT
 };
 }  // namespace SlangVersion
 
