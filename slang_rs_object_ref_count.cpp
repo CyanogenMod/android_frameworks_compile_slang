@@ -445,60 +445,64 @@ static clang::Stmt *ClearArrayRSObject(
   // Actually extract out the base RS object type for use later
   BaseType = BaseType->getArrayElementTypeNoTypeQual();
 
-  clang::Stmt *StmtArray[2] = {nullptr};
-  int StmtCtr = 0;
-
   if (NumArrayElements <= 0) {
     return nullptr;
   }
 
   // Example destructor loop for "rs_font fontArr[10];"
   //
-  // (CompoundStmt
-  //   (DeclStmt "int rsIntIter")
-  //   (ForStmt
-  //     (BinaryOperator 'int' '='
-  //       (DeclRefExpr 'int' Var='rsIntIter')
-  //       (IntegerLiteral 'int' 0))
-  //     (BinaryOperator 'int' '<'
-  //       (DeclRefExpr 'int' Var='rsIntIter')
-  //       (IntegerLiteral 'int' 10)
-  //     nullptr << CondVar >>
-  //     (UnaryOperator 'int' postfix '++'
+  // (ForStmt
+  //   (DeclStmt
+  //     (VarDecl used rsIntIter 'int' cinit
+  //       (IntegerLiteral 'int' 0)))
+  //   (BinaryOperator 'int' '<'
+  //     (ImplicitCastExpr int LValueToRValue
   //       (DeclRefExpr 'int' Var='rsIntIter'))
-  //     (CallExpr 'void'
-  //       (ImplicitCastExpr 'void (*)(rs_font *)' <FunctionToPointerDecay>
-  //         (DeclRefExpr 'void (rs_font *)' FunctionDecl='rsClearObject'))
-  //       (UnaryOperator 'rs_font *' prefix '&'
-  //         (ArraySubscriptExpr 'rs_font':'rs_font'
-  //           (ImplicitCastExpr 'rs_font *' <ArrayToPointerDecay>
-  //             (DeclRefExpr 'rs_font [10]' Var='fontArr'))
-  //           (DeclRefExpr 'int' Var='rsIntIter')))))))
+  //     (IntegerLiteral 'int' 10)
+  //   nullptr << CondVar >>
+  //   (UnaryOperator 'int' postfix '++'
+  //     (DeclRefExpr 'int' Var='rsIntIter'))
+  //   (CallExpr 'void'
+  //     (ImplicitCastExpr 'void (*)(rs_font *)' <FunctionToPointerDecay>
+  //       (DeclRefExpr 'void (rs_font *)' FunctionDecl='rsClearObject'))
+  //     (UnaryOperator 'rs_font *' prefix '&'
+  //       (ArraySubscriptExpr 'rs_font':'rs_font'
+  //         (ImplicitCastExpr 'rs_font *' <ArrayToPointerDecay>
+  //           (DeclRefExpr 'rs_font [10]' Var='fontArr'))
+  //         (DeclRefExpr 'int' Var='rsIntIter'))))))
 
   // Create helper variable for iterating through elements
-  clang::IdentifierInfo& II = C.Idents.get("rsIntIter");
+  static unsigned sIterCounter = 0;
+  std::stringstream UniqueIterName;
+  UniqueIterName << "rsIntIter" << sIterCounter++;
+  clang::IdentifierInfo *II = &C.Idents.get(UniqueIterName.str());
   clang::VarDecl *IIVD =
       clang::VarDecl::Create(C,
                              DC,
                              StartLoc,
                              Loc,
-                             &II,
+                             II,
                              C.IntTy,
                              C.getTrivialTypeSourceInfo(C.IntTy),
                              clang::SC_None);
   // Mark "rsIntIter" as used
   IIVD->markUsed(C);
-  clang::Decl *IID = (clang::Decl *)IIVD;
-
-  clang::DeclGroupRef DGR = clang::DeclGroupRef::Create(C, &IID, 1);
-  StmtArray[StmtCtr++] = new(C) clang::DeclStmt(DGR, Loc, Loc);
 
   // Form the actual destructor loop
   // for (Init; Cond; Inc)
   //   RSClearObjectCall;
 
-  // Init -> "rsIntIter = 0"
-  clang::DeclRefExpr *RefrsIntIter =
+  // Init -> "int rsIntIter = 0"
+  clang::Expr *Int0 = clang::IntegerLiteral::Create(C,
+      llvm::APInt(C.getTypeSize(C.IntTy), 0), C.IntTy, Loc);
+  IIVD->setInit(Int0);
+
+  clang::Decl *IID = (clang::Decl *)IIVD;
+  clang::DeclGroupRef DGR = clang::DeclGroupRef::Create(C, &IID, 1);
+  clang::Stmt *Init = new(C) clang::DeclStmt(DGR, Loc, Loc);
+
+  // Cond -> "rsIntIter < NumArrayElements"
+  clang::DeclRefExpr *RefrsIntIterLValue =
       clang::DeclRefExpr::Create(C,
                                  clang::NestedNameSpecifierLoc(),
                                  clang::SourceLocation(),
@@ -506,28 +510,22 @@ static clang::Stmt *ClearArrayRSObject(
                                  false,
                                  Loc,
                                  C.IntTy,
-                                 clang::VK_RValue,
+                                 clang::VK_LValue,
                                  nullptr);
 
-  clang::Expr *Int0 = clang::IntegerLiteral::Create(C,
-      llvm::APInt(C.getTypeSize(C.IntTy), 0), C.IntTy, Loc);
+  clang::Expr *RefrsIntIterRValue =
+      clang::ImplicitCastExpr::Create(C,
+                                      RefrsIntIterLValue->getType(),
+                                      clang::CK_LValueToRValue,
+                                      RefrsIntIterLValue,
+                                      nullptr,
+                                      clang::VK_RValue);
 
-  clang::BinaryOperator *Init =
-      new(C) clang::BinaryOperator(RefrsIntIter,
-                                   Int0,
-                                   clang::BO_Assign,
-                                   C.IntTy,
-                                   clang::VK_RValue,
-                                   clang::OK_Ordinary,
-                                   Loc,
-                                   false);
-
-  // Cond -> "rsIntIter < NumArrayElements"
   clang::Expr *NumArrayElementsExpr = clang::IntegerLiteral::Create(C,
       llvm::APInt(C.getTypeSize(C.IntTy), NumArrayElements), C.IntTy, Loc);
 
   clang::BinaryOperator *Cond =
-      new(C) clang::BinaryOperator(RefrsIntIter,
+      new(C) clang::BinaryOperator(RefrsIntIterRValue,
                                    NumArrayElementsExpr,
                                    clang::BO_LT,
                                    C.IntTy,
@@ -538,7 +536,7 @@ static clang::Stmt *ClearArrayRSObject(
 
   // Inc -> "rsIntIter++"
   clang::UnaryOperator *Inc =
-      new(C) clang::UnaryOperator(RefrsIntIter,
+      new(C) clang::UnaryOperator(RefrsIntIterLValue,
                                   clang::UO_PostInc,
                                   C.IntTy,
                                   clang::VK_RValue,
@@ -558,7 +556,7 @@ static clang::Stmt *ClearArrayRSObject(
 
   clang::Expr *RefRSArrPtrSubscript =
       new(C) clang::ArraySubscriptExpr(RefRSArrPtr,
-                                       RefrsIntIter,
+                                       RefrsIntIterRValue,
                                        BaseType->getCanonicalTypeInternal(),
                                        clang::VK_RValue,
                                        clang::OK_Ordinary,
@@ -588,13 +586,7 @@ static clang::Stmt *ClearArrayRSObject(
                             Loc,
                             Loc);
 
-  StmtArray[StmtCtr++] = DestructorLoop;
-  slangAssert(StmtCtr == 2);
-
-  clang::CompoundStmt *CS = new(C) clang::CompoundStmt(
-      C, llvm::makeArrayRef(StmtArray, StmtCtr), Loc, Loc);
-
-  return CS;
+  return DestructorLoop;
 }
 
 static unsigned CountRSObjectTypes(clang::ASTContext &C,
