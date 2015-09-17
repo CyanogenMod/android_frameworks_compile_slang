@@ -250,6 +250,14 @@ Slang::Slang(uint32_t BitWidth, clang::DiagnosticsEngine *DiagEngine,
 
   CodeGenOpts.OptimizationLevel = 3;
 
+  // We must set StackRealignment, because the default is for the actual
+  // Clang driver to pass this option (-mstackrealign) directly to cc1.
+  // Since we don't use Clang's driver, we need to similarly supply it.
+  // If StackRealignment is zero (i.e. the option wasn't set), then the
+  // backend assumes that it can't adjust the stack in any way, which breaks
+  // alignment for vector loads/stores.
+  CodeGenOpts.StackRealignment = 1;
+
   createTarget(BitWidth);
   createFileManager();
   createSourceManager();
