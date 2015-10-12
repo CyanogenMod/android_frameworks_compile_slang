@@ -26,6 +26,7 @@
 #include "slang.h"
 #include "slang_pragma_recorder.h"
 #include "slang_rs_check_ast.h"
+#include "slang_rs_foreach_lowering.h"
 #include "slang_rs_object_ref_count.h"
 #include "slang_version.h"
 
@@ -103,6 +104,8 @@ class Backend : public clang::ASTConsumer {
 
   RSCheckAST mASTChecker;
 
+  RSForEachLowering mForEachHandler;
+
   void AnnotateFunction(clang::FunctionDecl *FD);
 
   void dumpExportVarInfo(llvm::Module *M);
@@ -110,6 +113,8 @@ class Backend : public clang::ASTConsumer {
   void dumpExportForEachInfo(llvm::Module *M);
   void dumpExportReduceInfo(llvm::Module *M);
   void dumpExportTypeInfo(llvm::Module *M);
+
+  void LowerRSForEachCall(clang::FunctionDecl* FD);
 
  protected:
   llvm::LLVMContext &mLLVMContext;
