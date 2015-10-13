@@ -148,7 +148,6 @@ TBLGEN_TABLES :=    \
 LOCAL_SRC_FILES :=	\
 	llvm-rs-cc.cpp	\
 	rs_cc_options.cpp \
-	slang_rs_foreach_lowering.cpp \
 	slang_rs_ast_replace.cpp	\
 	slang_rs_check_ast.cpp	\
 	slang_rs_context.cpp	\
