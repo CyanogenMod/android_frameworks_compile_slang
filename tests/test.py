@@ -68,11 +68,10 @@ def ExecTest(dirname):
   stdout_file = open('stdout.txt', 'w+')
   stderr_file = open('stderr.txt', 'w+')
 
-  cmd_string = ('../../../../../out/host/linux-x86/bin/llvm-rs-cc '
-                '-o tmp/ -p tmp/ '
-                '-MD '
-                '-I ../../../../../frameworks/rs/scriptc/ '
-                '-I ../../../../../external/clang/lib/Headers/')
+  out_dir = os.environ['ANDROID_HOST_OUT']
+  cmd_string = ("%s/bin/llvm-rs-cc -o tmp/ -p tmp/ -MD "
+                "-I ../../../../../frameworks/rs/scriptc/ "
+                "-I ../../../../../external/clang/lib/Headers/") % out_dir
   base_args = cmd_string.split()
   rs_files = glob.glob('*.rs')
   fs_files = glob.glob('*.fs')
