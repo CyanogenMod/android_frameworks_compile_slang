@@ -592,7 +592,9 @@ RSExportForEach *RSExportForEach::CreateDummyRoot(RSContext *Context) {
 
 bool RSExportForEach::isRSForEachFunc(unsigned int targetAPI,
                                       const clang::FunctionDecl *FD) {
-  slangAssert(FD);
+  if (!FD) {
+    return false;
+  }
 
   // Anything tagged as a kernel("") is definitely used with ForEach.
   if (auto *Kernel = FD->getAttr<clang::KernelAttr>()) {
