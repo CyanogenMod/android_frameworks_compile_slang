@@ -223,6 +223,7 @@ Backend::Backend(RSContext *Context, clang::DiagnosticsEngine *DiagEngine,
       mExportTypeMetadata(nullptr), mRSObjectSlotsMetadata(nullptr),
       mRefCount(mContext->getASTContext()),
       mASTChecker(Context, Context->getTargetAPI(), IsFilterscript),
+      mForEachHandler(Context),
       mLLVMContext(llvm::getGlobalContext()), mDiagEngine(*DiagEngine),
       mCodeGenOpts(CodeGenOpts), mPragmas(Pragmas) {
   mGen = CreateLLVMCodeGen(mDiagEngine, "", mCodeGenOpts, mLLVMContext);
@@ -367,7 +368,32 @@ void Backend::AnnotateFunction(clang::FunctionDecl *FD) {
   }
 }
 
+void Backend::LowerRSForEachCall(clang::FunctionDecl *FD) {
+  // Skip this AST walking for lower API levels.
+  if (getTargetAPI() < SLANG_DEVELOPMENT_TARGET_API) {
+    return;
+  }
+
+  if (!FD || !FD->hasBody() ||
+      Slang::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr)) {
+    return;
+  }
+
+  mForEachHandler.VisitStmt(FD->getBody());
+}
+
 bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
+  // Find and remember the TypeDecl for rs_allocation so we can use it
+  // later during the compilation
+  for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end();
+       I != E; I++) {
+    clang::TypeDecl* TD = llvm::dyn_cast<clang::TypeDecl>(*I);
+    if (TD && TD->getName().equals("rs_allocation")) {
+      mContext->addAllocationType(TD);
+      break;
+    }
+  }
+
   // Disallow user-defined functions with prefix "rs"
   if (!mAllowRSPrefix) {
     // Iterate all function declarations in the program.
@@ -386,9 +412,9 @@ bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
     }
   }
 
-  // Process any non-static function declarations
   for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; I++) {
     clang::FunctionDecl *FD = llvm::dyn_cast<clang::FunctionDecl>(*I);
+    // Process any non-static function declarations
     if (FD && FD->isGlobal()) {
       // Check that we don't have any array parameters being misintrepeted as
       // kernel pointers due to the C type system's array to pointer decay.
@@ -405,7 +431,22 @@ bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
       }
       AnnotateFunction(FD);
     }
+
+    if (RSExportForEach::isRSForEachFunc(getTargetAPI(), FD)) {
+      // Log kernels by their names, and assign them slot numbers.
+      if (getTargetAPI() == SLANG_DEVELOPMENT_TARGET_API &&
+          !Slang::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr)) {
+        mContext->addForEach(FD);
+      }
+    } else {
+      // Look for any kernel launch calls and translate them into using the
+      // internal API.
+      // TODO: Simply ignores kernel launch inside a kernel for now.
+      // Needs more rigorous and comprehensive checks.
+      LowerRSForEachCall(FD);
+    }
   }
+
   return mGen->HandleTopLevelDecl(D);
 }
 
@@ -670,10 +711,11 @@ void Backend::dumpExportFunctionInfo(llvm::Module *M) {
 
           CI->setCallingConv(F->getCallingConv());
 
-          if (F->getReturnType() == llvm::Type::getVoidTy(mLLVMContext))
+          if (F->getReturnType() == llvm::Type::getVoidTy(mLLVMContext)) {
             IB->CreateRetVoid();
-          else
+          } else {
             IB->CreateRet(CI);
+          }
 
           delete IB;
         }
@@ -811,7 +853,7 @@ void Backend::HandleTranslationUnitPost(llvm::Module *M) {
     M->setDataLayout("e-p:32:32-i64:64-v128:64:128-n32-S64");
   }
 
-  if (!mContext->processExport()) {
+  if (!mContext->processExports()) {
     return;
   }
 
