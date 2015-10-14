@@ -19,6 +19,7 @@
 #include <string>
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/Mangle.h"
@@ -61,12 +62,16 @@ RSContext::RSContext(clang::Preprocessor &PP,
       mRSPackageName("android.renderscript"),
       version(0),
       mMangleCtx(Ctx.createMangleContext()),
-      mIs64Bit(Target.getPointerWidth(0) == 64) {
+      mIs64Bit(Target.getPointerWidth(0) == 64),
+      mNextSlot(1) {
 
   AddPragmaHandlers(PP, this);
 
   // Prepare target data
   mDataLayout = new llvm::DataLayout(Target.getTargetDescription());
+
+  // Reserve slot 0 for the root kernel.
+  mExportForEach.push_back(nullptr);
 }
 
 bool RSContext::processExportVar(const clang::VarDecl *VD) {
@@ -85,6 +90,19 @@ bool RSContext::processExportVar(const clang::VarDecl *VD) {
     mExportVars.push_back(EV);
 
   return true;
+}
+
+int RSContext::getForEachSlotNumber(const clang::FunctionDecl* FD) {
+  const clang::StringRef& funcName = FD->getName();
+  return getForEachSlotNumber(funcName);
+}
+
+int RSContext::getForEachSlotNumber(const clang::StringRef& funcName) {
+  auto it = mExportForEachMap.find(funcName);
+  if (it == mExportForEachMap.end()) {
+    return -1;
+  }
+  return it->second;
 }
 
 bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
@@ -108,11 +126,17 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
 
   // Foreach kernel
   if (RSExportForEach::isRSForEachFunc(mTargetAPI, FD)) {
-    if (auto *EFE = RSExportForEach::Create(this, FD)) {
-      mExportForEach.push_back(EFE);
-      return true;
+    RSExportForEach *EFE = RSExportForEach::Create(this, FD);
+    if (EFE == nullptr) {
+      return false;
     }
-    return false;
+    const llvm::StringRef& funcName = FD->getName();
+    if (funcName.equals("root")) {
+      mExportForEach[0] = EFE;
+    } else {
+      mExportForEach.push_back(EFE);
+    }
+    return true;
   }
 
   // Reduce kernel
@@ -133,6 +157,18 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
   return false;
 }
 
+bool RSContext::addForEach(const clang::FunctionDecl* FD) {
+  const llvm::StringRef& funcName = FD->getName();
+
+  if (funcName.equals("root")) {
+    // The root kernel should always be in slot 0.
+    mExportForEachMap.insert(std::make_pair(funcName, 0));
+  } else {
+    mExportForEachMap.insert(std::make_pair(funcName, mNextSlot++));
+  }
+
+  return true;
+}
 
 bool RSContext::processExportType(const llvm::StringRef &Name) {
   clang::TranslationUnitDecl *TUDecl = mCtx.getTranslationUnitDecl();
@@ -178,75 +214,47 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
   return (ET != nullptr);
 }
 
-
-// Possibly re-order ForEach exports (maybe generating a dummy "root" function).
-// We require "root" to be listed as slot 0 of our exported compute kernels,
-// so this only needs to be created if we have other non-root kernels.
-void RSContext::cleanupForEach() {
-  bool foundNonRoot = false;
-  ExportForEachList::iterator begin = mExportForEach.begin();
-
-  for (ExportForEachList::iterator I = begin, E = mExportForEach.end();
-       I != E;
-       I++) {
-    RSExportForEach *EFE = *I;
-    if (!EFE->getName().compare("root")) {
-      if (I == begin) {
-        // Nothing to do, since it is the first function
-        return;
-      }
-
-      mExportForEach.erase(I);
-      mExportForEach.push_front(EFE);
-      return;
-    } else {
-      foundNonRoot = true;
-    }
-  }
-
-  // If we found a non-root kernel, but no root() function, we need to add a
-  // dummy version (so that script->script calls of rsForEach don't behave
-  // erratically).
-  if (foundNonRoot) {
-    RSExportForEach *DummyRoot = RSExportForEach::CreateDummyRoot(this);
-    mExportForEach.push_front(DummyRoot);
-  }
+void RSContext::addAllocationType(const clang::TypeDecl* TD) {
+  mAllocationType = mCtx.getTypeDeclType(TD);
 }
 
-
-bool RSContext::processExport() {
+bool RSContext::processExports() {
   bool valid = true;
 
   if (getDiagnostics()->hasErrorOccurred()) {
     return false;
   }
 
-  // Export variable
   clang::TranslationUnitDecl *TUDecl = mCtx.getTranslationUnitDecl();
-  for (clang::DeclContext::decl_iterator DI = TUDecl->decls_begin(),
-           DE = TUDecl->decls_end();
-       DI != DE;
-       DI++) {
-    if (DI->getKind() == clang::Decl::Var) {
-      clang::VarDecl *VD = (clang::VarDecl*) (*DI);
+  for (auto I = TUDecl->decls_begin(), E = TUDecl->decls_end(); I != E; I++) {
+    clang::Decl* D = *I;
+    switch (D->getKind()) {
+    case clang::Decl::Var: {
+      clang::VarDecl* VD = llvm::dyn_cast<clang::VarDecl>(D);
       if (VD->getFormalLinkage() == clang::ExternalLinkage) {
         if (!processExportVar(VD)) {
           valid = false;
         }
       }
-    } else if (DI->getKind() == clang::Decl::Function) {
-      // Export functions
-      clang::FunctionDecl *FD = (clang::FunctionDecl*) (*DI);
+      break;
+    }
+    case clang::Decl::Function: {
+      clang::FunctionDecl* FD = llvm::dyn_cast<clang::FunctionDecl>(D);
       if (FD->getFormalLinkage() == clang::ExternalLinkage) {
         if (!processExportFunc(FD)) {
           valid = false;
         }
       }
+      break;
+    }
+    default:
+      break;
     }
   }
 
-  if (valid) {
-    cleanupForEach();
+  // Create a dummy root in slot 0 if a root kernel is not seen.
+  if (valid && mExportForEach[0] == nullptr) {
+    mExportForEach[0] = RSExportForEach::CreateDummyRoot(this);
   }
 
   // Finally, export type forcely set to be exported by user
