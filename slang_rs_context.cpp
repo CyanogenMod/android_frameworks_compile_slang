@@ -77,8 +77,6 @@ RSContext::RSContext(clang::Preprocessor &PP,
 bool RSContext::processExportVar(const clang::VarDecl *VD) {
   slangAssert(!VD->getName().empty() && "Variable name should not be empty");
 
-  // TODO(zonr): some check on variable
-
   RSExportType *ET = RSExportType::CreateFromDecl(this, VD);
   if (!ET)
     return false;
@@ -231,8 +229,25 @@ bool RSContext::processExports() {
     switch (D->getKind()) {
     case clang::Decl::Var: {
       clang::VarDecl* VD = llvm::dyn_cast<clang::VarDecl>(D);
+      bool ShouldExportVariable = true;
       if (VD->getFormalLinkage() == clang::ExternalLinkage) {
-        if (!processExportVar(VD)) {
+        clang::QualType QT = VD->getTypeSourceInfo()->getType();
+        if (QT.isConstQualified() && !VD->hasInit()) {
+          if (Slang::IsLocInRSHeaderFile(VD->getLocation(),
+                                         *getSourceManager())) {
+            // We don't export variables internal to the runtime's
+            // implementation.
+            ShouldExportVariable = false;
+          } else {
+            clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
+            DiagEngine->Report(VD->getLocation(), DiagEngine->getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "invalid declaration of uninitialized constant variable '%0'"))
+              << VD->getName();
+            valid = false;
+          }
+        }
+        if (valid && ShouldExportVariable && !processExportVar(VD)) {
           valid = false;
         }
       }
