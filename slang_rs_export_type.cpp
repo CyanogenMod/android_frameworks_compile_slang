@@ -75,9 +75,9 @@ static RSReflectionType gReflectionTypes[] = {
 {PrimitiveDataType, "UNSIGNED_5_5_5_1",         _, 16,          _,         _,        _,        _,        _, false},
 {PrimitiveDataType, "UNSIGNED_4_4_4_4",         _, 16,          _,         _,        _,        _,        _, false},
 
-{MatrixDataType, "MATRIX_2X2", _,  4*32, "rsMatrix_2x2", "Matrix2f", _, _, _, false},
-{MatrixDataType, "MATRIX_3X3", _,  9*32, "rsMatrix_3x3", "Matrix3f", _, _, _, false},
-{MatrixDataType, "MATRIX_4X4", _, 16*32, "rsMatrix_4x4", "Matrix4f", _, _, _, false},
+{MatrixDataType, "MATRIX_2X2", _,  4*32, "rs_matrix2x2", "Matrix2f", _, _, _, false},
+{MatrixDataType, "MATRIX_3X3", _,  9*32, "rs_matrix3x3", "Matrix3f", _, _, _, false},
+{MatrixDataType, "MATRIX_4X4", _, 16*32, "rs_matrix4x4", "Matrix4f", _, _, _, false},
 
 // RS object types are 32 bits in 32-bit RS, but 256 bits in 64-bit RS.
 // This is handled specially by the GetSizeInBits(}, method.
