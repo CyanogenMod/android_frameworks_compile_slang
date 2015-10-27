@@ -25,9 +25,10 @@ namespace slang {
 
 namespace {
 
-const char KERNEL_LAUNCH_FUNCTION_NAME[] = "rsParallelFor";
+const char KERNEL_LAUNCH_FUNCTION_NAME[] = "rsForEach";
+const char KERNEL_LAUNCH_FUNCTION_NAME_WITH_OPTIONS[] = "rsForEachWithOptions";
 const char INTERNAL_LAUNCH_FUNCTION_NAME[] =
-    "_Z17rsForEachInternali13rs_allocationS_";
+    "_Z17rsForEachInternaliP14rs_script_calliiz";
 
 }  // anonymous namespace
 
@@ -69,19 +70,17 @@ const clang::FunctionDecl* RSForEachLowering::matchFunctionDesignator(
     return nullptr;
   }
 
-  // TODO: Verify the launch has the expected number of input allocations
-
   return FD;
 }
 
-// Checks if the call expression is a legal rsParallelFor call by looking for the
+// Checks if the call expression is a legal rsForEach call by looking for the
 // following pattern in the AST. On success, returns the first argument that is
 // a FunctionDecl of a kernel function.
 //
 // CallExpr 'void'
 // |
 // |-ImplicitCastExpr 'void (*)(void *, ...)' <FunctionToPointerDecay>
-// | `-DeclRefExpr  'void (void *, ...)'  'rsParallelFor' 'void (void *, ...)'
+// | `-DeclRefExpr  'void (void *, ...)'  'rsForEach' 'void (void *, ...)'
 // |
 // |-ImplicitCastExpr 'void *' <BitCast>
 // | `-ImplicitCastExpr 'int (*)(int)' <FunctionToPointerDecay>
@@ -93,7 +92,7 @@ const clang::FunctionDecl* RSForEachLowering::matchFunctionDesignator(
 // `-ImplicitCastExpr 'rs_allocation':'rs_allocation' <LValueToRValue>
 //   `-DeclRefExpr  'rs_allocation':'rs_allocation' lvalue ParmVar 'out' 'rs_allocation':'rs_allocation'
 const clang::FunctionDecl* RSForEachLowering::matchKernelLaunchCall(
-    clang::CallExpr* CE) {
+    clang::CallExpr* CE, int* slot, bool* hasOptions) {
   const clang::Decl* D = CE->getCalleeDecl();
   const clang::FunctionDecl* FD = clang::dyn_cast<clang::FunctionDecl>(D);
 
@@ -103,15 +102,30 @@ const clang::FunctionDecl* RSForEachLowering::matchKernelLaunchCall(
 
   const clang::StringRef& funcName = FD->getName();
 
-  if (!funcName.equals(KERNEL_LAUNCH_FUNCTION_NAME)) {
+  if (funcName.equals(KERNEL_LAUNCH_FUNCTION_NAME)) {
+    *hasOptions = false;
+  } else if (funcName.equals(KERNEL_LAUNCH_FUNCTION_NAME_WITH_OPTIONS)) {
+    *hasOptions = true;
+  } else {
     return nullptr;
   }
 
-  const clang::FunctionDecl* kernel = matchFunctionDesignator(CE->getArg(0));
+  clang::Expr* arg0 = CE->getArg(0);
+  const clang::FunctionDecl* kernel = matchFunctionDesignator(arg0);
 
-  if (kernel == nullptr ||
-      CE->getNumArgs() < 3) {  // TODO: Make argument check more accurate
-    mCtxt->ReportError(CE->getExprLoc(), "Invalid kernel launch call.");
+  if (kernel == nullptr) {
+    mCtxt->ReportError(arg0->getExprLoc(),
+                       "Invalid kernel launch call. "
+                       "Expects a function designator for the first argument.");
+    return nullptr;
+  }
+
+  // Verifies that kernel is indeed a "kernel" function.
+  *slot = mCtxt->getForEachSlotNumber(kernel);
+  if (*slot == -1) {
+    mCtxt->ReportError(CE->getExprLoc(), "%0 applied to non kernel function %1")
+            << funcName << kernel->getName();
+    return nullptr;
   }
 
   return kernel;
@@ -119,7 +133,6 @@ const clang::FunctionDecl* RSForEachLowering::matchKernelLaunchCall(
 
 // Create an AST node for the declaration of rsForEachInternal
 clang::FunctionDecl* RSForEachLowering::CreateForEachInternalFunctionDecl() {
-  const clang::QualType& AllocTy = mCtxt->getAllocationType();
   clang::DeclContext* DC = mASTCtxt.getTranslationUnitDecl();
   clang::SourceLocation Loc;
 
@@ -128,19 +141,26 @@ clang::FunctionDecl* RSForEachLowering::CreateForEachInternalFunctionDecl() {
   clang::DeclarationName N(&II);
 
   clang::FunctionProtoType::ExtProtoInfo EPI;
+  EPI.Variadic = true;  // varargs
 
   clang::QualType T = mASTCtxt.getFunctionType(
-      mASTCtxt.VoidTy,                     // Return type
-      {mASTCtxt.IntTy, AllocTy, AllocTy},  // Argument types
+      mASTCtxt.VoidTy,       // Return type
+                             // Argument types:
+      { mASTCtxt.IntTy,      // int slot
+        mASTCtxt.VoidPtrTy,  // rs_script_call_t* launch_options
+        mASTCtxt.IntTy,      // int numOutput
+        mASTCtxt.IntTy       // int numInputs
+      },
       EPI);
 
   clang::FunctionDecl* FD = clang::FunctionDecl::Create(
       mASTCtxt, DC, Loc, Loc, N, T, nullptr, clang::SC_Extern);
+
   return FD;
 }
 
 // Create an expression like the following that references the rsForEachInternal to
-// replace the callee in the original call expression that references rsParallelFor.
+// replace the callee in the original call expression that references rsForEach.
 //
 // ImplicitCastExpr 'void (*)(int, rs_allocation, rs_allocation)' <FunctionToPointerDecay>
 // `-DeclRefExpr 'void' Function '_Z17rsForEachInternali13rs_allocationS_' 'void (int, rs_allocation, rs_allocation)'
@@ -161,28 +181,87 @@ clang::Expr* RSForEachLowering::CreateCalleeExprForInternalForEach() {
 }
 
 // This visit method checks (via pattern matching) if the call expression is to
-// rsParallelFor, and the arguments satisfy the restrictions on the
-// rsParallelFor API. If so, replace the call with a rsForEachInternal call
+// rsForEach, and the arguments satisfy the restrictions on the
+// rsForEach API. If so, replace the call with a rsForEachInternal call
 // with the first argument replaced by the slot number of the kernel function
 // referenced in the original first argument.
 //
 // See comments to the helper methods defined above for details.
 void RSForEachLowering::VisitCallExpr(clang::CallExpr* CE) {
-  const clang::FunctionDecl* kernel = matchKernelLaunchCall(CE);
+  int slot;
+  bool hasOptions;
+  const clang::FunctionDecl* kernel = matchKernelLaunchCall(CE, &slot, &hasOptions);
   if (kernel == nullptr) {
+    return;
+  }
+
+  slangAssert(slot >= 0);
+
+  const unsigned numArgsOrig = CE->getNumArgs();
+
+  clang::QualType resultType = kernel->getReturnType().getCanonicalType();
+  int numOutput = resultType->isVoidType() ? 0 : 1;
+
+  unsigned numInputs = RSExportForEach::getNumInputs(mCtxt->getTargetAPI(), kernel);
+
+  // Verifies that rsForEach takes the right number of input and output allocations.
+  // TODO: Check input/output allocation types match kernel function expectation.
+  const unsigned expectedNumAllocations = numArgsOrig - (hasOptions ? 2 : 1);
+  if (numInputs + numOutput != expectedNumAllocations) {
+    mCtxt->ReportError(
+      CE->getExprLoc(),
+      "Number of input and output allocations unexpected for kernel function %0")
+    << kernel->getName();
     return;
   }
 
   clang::Expr* calleeNew = CreateCalleeExprForInternalForEach();
   CE->setCallee(calleeNew);
 
-  const int slot = mCtxt->getForEachSlotNumber(kernel);
-  const llvm::APInt APIntSlot(mASTCtxt.getTypeSize(mASTCtxt.IntTy), slot);
+  const clang::CanQualType IntTy = mASTCtxt.IntTy;
+  const unsigned IntTySize = mASTCtxt.getTypeSize(IntTy);
+  const llvm::APInt APIntSlot(IntTySize, slot);
   const clang::Expr* arg0 = CE->getArg(0);
   const clang::SourceLocation Loc(arg0->getLocStart());
   clang::Expr* IntSlotNum =
-      clang::IntegerLiteral::Create(mASTCtxt, APIntSlot, mASTCtxt.IntTy, Loc);
+      clang::IntegerLiteral::Create(mASTCtxt, APIntSlot, IntTy, Loc);
   CE->setArg(0, IntSlotNum);
+
+  const unsigned numAdditionalArgs =
+    hasOptions ?
+    2 :  // numOutputs and numInputs
+    3;   // launchOptions, numOutputs and numInputs
+
+  const unsigned numArgs = numArgsOrig + numAdditionalArgs;
+
+  // Makes extra room in the argument list for new arguments to add at position
+  // 1, 2, and 3. The last (numInputs + numOutput) arguments, i.e., the input
+  // and output allocations, are moved up numAdditionalArgs (2 or 3) positions
+  // in the argument list.
+  CE->setNumArgs(mASTCtxt, numArgs);
+  for (unsigned i = numArgs - 1; i >= 4; i--) {
+    CE->setArg(i, CE->getArg(i - numAdditionalArgs));
+  }
+
+  // Sets the new arguments for NULL launch option (if the user does not set one),
+  // the number of outputs, and the number of inputs.
+
+  if (!hasOptions) {
+    const llvm::APInt APIntZero(IntTySize, 0);
+    clang::Expr* IntNull =
+        clang::IntegerLiteral::Create(mASTCtxt, APIntZero, IntTy, Loc);
+    CE->setArg(1, IntNull);
+  }
+
+  const llvm::APInt APIntNumOutput(IntTySize, numOutput);
+  clang::Expr* IntNumOutput =
+      clang::IntegerLiteral::Create(mASTCtxt, APIntNumOutput, IntTy, Loc);
+  CE->setArg(2, IntNumOutput);
+
+  const llvm::APInt APIntNumInputs(IntTySize, numInputs);
+  clang::Expr* IntNumInputs =
+      clang::IntegerLiteral::Create(mASTCtxt, APIntNumInputs, IntTy, Loc);
+  CE->setArg(3, IntNumInputs);
 }
 
 void RSForEachLowering::VisitStmt(clang::Stmt* S) {

@@ -1,0 +1,1 @@
+foreach_non_kernel.rs:10:3: error: rsForEach applied to non kernel function foo
