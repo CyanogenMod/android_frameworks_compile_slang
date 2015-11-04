@@ -60,7 +60,11 @@ static const char *GetMatrixTypeName(const RSExportMatrixType *EMT) {
   return nullptr;
 }
 
-static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
+static std::string GetTypeName(const RSExportType *ET, bool PreIdentifier = true) {
+  if((!PreIdentifier) && (ET->getClass() != RSExportType::ExportClassConstantArray)) {
+    slangAssert(false && "Non-array type post identifier?");
+    return "";
+  }
   switch (ET->getClass()) {
   case RSExportType::ExportClassPrimitive: {
     const RSExportPrimitiveType *EPT =
@@ -92,14 +96,17 @@ static std::string GetTypeName(const RSExportType *ET, bool Brackets = true) {
     return GetMatrixTypeName(static_cast<const RSExportMatrixType *>(ET));
   }
   case RSExportType::ExportClassConstantArray: {
-    // TODO: Fix this for C arrays!
     const RSExportConstantArrayType *CAT =
         static_cast<const RSExportConstantArrayType *>(ET);
-    std::string ElementTypeName = GetTypeName(CAT->getElementType());
-    if (Brackets) {
-      ElementTypeName.append("[]");
+    if (PreIdentifier) {
+      std::string ElementTypeName = GetTypeName(CAT->getElementType());
+      return ElementTypeName;
     }
-    return ElementTypeName;
+    else {
+      std::stringstream ArraySpec;
+      ArraySpec << "[" << CAT->getSize() << "]";
+      return ArraySpec.str();
+    }
   }
   case RSExportType::ExportClassRecord: {
     // TODO: Fix for C structs!
@@ -679,7 +686,7 @@ void RSReflectionCpp::genGetterAndSetter(const RSExportPrimitiveType *EPT,
                                          const RSExportVar *EV) {
   RSReflectionTypeData rtd;
   EPT->convertToRTD(&rtd);
-  std::string TypeName = GetTypeName(EPT, false);
+  std::string TypeName = GetTypeName(EPT);
 
   if (!EV->isConst()) {
     mOut.indent() << "void set_" << EV->getName() << "(" << TypeName << " v)";
@@ -776,12 +783,51 @@ void RSReflectionCpp::genGetterAndSetter(const RSExportVectorType *EVT,
 }
 
 void RSReflectionCpp::genMatrixTypeExportVariable(const RSExportVar *EV) {
-  slangAssert(false);
+  uint32_t slot = getNextExportVarSlot();
+  stringstream tmp;
+  tmp << slot;
+
+  const RSExportType *ET = EV->getType();
+  if (ET->getName() == "rs_matrix4x4") {
+    mOut.indent() << "void set_" << EV->getName() << "(float v[16])";
+    mOut.startBlock();
+    mOut.indent() << "setVar(" << tmp.str() << ", v, sizeof(float)*16);\n";
+    mOut.endBlock();
+  } else if (ET->getName() == "rs_matrix3x3") {
+    mOut.indent() << "void set_" << EV->getName() << "(float v[9])";
+    mOut.startBlock();
+    mOut.indent() << "setVar(" << tmp.str() << ", v, sizeof(float)*9);";
+    mOut.endBlock();
+  } else if (ET->getName() == "rs_matrix2x2") {
+    mOut.indent() << "void set_" << EV->getName() << "(float v[4])";
+    mOut.startBlock();
+    mOut.indent() << "setVar(" << tmp.str() << ", v, sizeof(float)*4);";
+    mOut.endBlock();
+  } else {
+    mOut.indent() << "#error: TODO: " << ET->getName();
+    slangAssert(false);
+  }
 }
 
 void RSReflectionCpp::genGetterAndSetter(const RSExportConstantArrayType *AT,
                                          const RSExportVar *EV) {
-  slangAssert(false);
+  std::stringstream ArraySpec;
+  const RSExportType *ET = EV->getType();
+
+  const RSExportConstantArrayType *CAT =
+      static_cast<const RSExportConstantArrayType *>(ET);
+
+  uint32_t slot = getNextExportVarSlot();
+  stringstream tmp;
+  tmp << slot;
+
+  ArraySpec << CAT->getSize();
+  mOut.indent() << "void set_" << EV->getName() << "(" << GetTypeName(EV->getType()) << " v "
+      << GetTypeName(EV->getType(), false) << ")";
+  mOut.startBlock();
+  mOut.indent() << "setVar(" << tmp.str() << ", v, sizeof(" << GetTypeName(EV->getType()) + ") *"
+      << ArraySpec.str() << ");";
+  mOut.endBlock();
 }
 
 void RSReflectionCpp::genGetterAndSetter(const RSExportRecordType *ERT,
@@ -807,7 +853,7 @@ void RSReflectionCpp::makeFunctionSignature(bool isDefinition,
       } else {
         FirstArg = false;
       }
-      mOut << GetTypeName((*i)->getType(), false) << " " << (*i)->getName();
+      mOut << GetTypeName((*i)->getType()) << " " << (*i)->getName();
     }
   }
 
