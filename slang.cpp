@@ -198,7 +198,6 @@ void Slang::createPreprocessor() {
   clang::InitializePreprocessor(*mPP, *PPOpts, FEOpts);
 
   mPragmas.clear();
-  mPP->AddPragmaHandler(new PragmaRecorder(&mPragmas));
 
   std::vector<clang::DirectoryLookup> SearchList;
   for (unsigned i = 0, e = mIncludePaths.size(); i != e; i++) {
