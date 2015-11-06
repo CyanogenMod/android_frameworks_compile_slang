@@ -162,6 +162,9 @@ class RSExportForEach : public RSExportable {
 
   static bool isRSForEachFunc(unsigned int targetAPI,
                               const clang::FunctionDecl *FD);
+
+  static unsigned getNumInputs(unsigned int targetAPI,
+                              const clang::FunctionDecl *FD);
 };  // RSExportForEach
 
 }  // namespace slang

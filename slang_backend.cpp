@@ -383,17 +383,6 @@ void Backend::LowerRSForEachCall(clang::FunctionDecl *FD) {
 }
 
 bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
-  // Find and remember the TypeDecl for rs_allocation so we can use it
-  // later during the compilation
-  for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end();
-       I != E; I++) {
-    clang::TypeDecl* TD = llvm::dyn_cast<clang::TypeDecl>(*I);
-    if (TD && TD->getName().equals("rs_allocation")) {
-      mContext->addAllocationType(TD);
-      break;
-    }
-  }
-
   // Disallow user-defined functions with prefix "rs"
   if (!mAllowRSPrefix) {
     // Iterate all function declarations in the program.
@@ -432,18 +421,20 @@ bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
       AnnotateFunction(FD);
     }
 
-    if (RSExportForEach::isRSForEachFunc(getTargetAPI(), FD)) {
-      // Log kernels by their names, and assign them slot numbers.
-      if (getTargetAPI() == SLANG_DEVELOPMENT_TARGET_API &&
-          !Slang::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr)) {
-        mContext->addForEach(FD);
+    if (getTargetAPI() == SLANG_DEVELOPMENT_TARGET_API) {
+      if (FD && FD->hasBody() &&
+          RSExportForEach::isRSForEachFunc(getTargetAPI(), FD)) {
+        // Log kernels by their names, and assign them slot numbers.
+        if (!Slang::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr)) {
+            mContext->addForEach(FD);
+        }
+      } else {
+        // Look for any kernel launch calls and translate them into using the
+        // internal API.
+        // TODO: Simply ignores kernel launch inside a kernel for now.
+        // Needs more rigorous and comprehensive checks.
+        LowerRSForEachCall(FD);
       }
-    } else {
-      // Look for any kernel launch calls and translate them into using the
-      // internal API.
-      // TODO: Simply ignores kernel launch inside a kernel for now.
-      // Needs more rigorous and comprehensive checks.
-      LowerRSForEachCall(FD);
     }
   }
 

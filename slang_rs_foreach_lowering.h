@@ -42,7 +42,9 @@ class RSForEachLowering : public clang::StmtVisitor<RSForEachLowering> {
   clang::ASTContext& mASTCtxt;
 
   const clang::FunctionDecl* matchFunctionDesignator(clang::Expr* expr);
-  const clang::FunctionDecl* matchKernelLaunchCall(clang::CallExpr* CE);
+  const clang::FunctionDecl* matchKernelLaunchCall(clang::CallExpr* CE,
+                                                   int* slot,
+                                                   bool* hasOptions);
   clang::FunctionDecl* CreateForEachInternalFunctionDecl();
   clang::Expr* CreateCalleeExprForInternalForEach();
 };  // RSForEachLowering

@@ -629,4 +629,16 @@ bool RSExportForEach::isRSForEachFunc(unsigned int targetAPI,
   return false;
 }
 
+unsigned RSExportForEach::getNumInputs(unsigned int targetAPI,
+                                       const clang::FunctionDecl *FD) {
+  unsigned numInputs = 0;
+  for (const clang::ParmVarDecl* param : FD->params()) {
+    if (lookupSpecialParameter(param->getName()) < 0) {
+      numInputs++;
+    }
+  }
+
+  return numInputs;
+}
+
 }  // namespace slang
