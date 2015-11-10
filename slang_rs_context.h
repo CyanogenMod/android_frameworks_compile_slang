@@ -52,6 +52,7 @@ namespace slang {
   class RSExportFunc;
   class RSExportForEach;
   class RSExportReduce;
+  class RSExportReduceNew;
   class RSExportType;
 
 class RSContext {
@@ -65,6 +66,7 @@ class RSContext {
   typedef std::list<RSExportFunc*> ExportFuncList;
   typedef std::vector<RSExportForEach*> ExportForEachVector;
   typedef std::list<RSExportReduce*> ExportReduceList;
+  typedef std::list<RSExportReduceNew*> ExportReduceNewList;
   typedef llvm::StringMap<RSExportType*> ExportTypeMap;
 
  private:
@@ -108,6 +110,7 @@ class RSContext {
   std::map<llvm::StringRef, unsigned> mExportForEachMap;
   ExportForEachVector mExportForEach;
   ExportReduceList mExportReduce;
+  ExportReduceNewList mExportReduceNew;
   ExportTypeMap mExportTypes;
 
   clang::QualType mAllocationType;
@@ -218,6 +221,18 @@ class RSContext {
     return mExportReduce.end();
   }
   inline bool hasExportReduce() const { return !mExportReduce.empty(); }
+
+  typedef ExportReduceNewList::const_iterator const_export_reduce_new_iterator;
+  const_export_reduce_new_iterator export_reduce_new_begin() const {
+    return mExportReduceNew.begin();
+  }
+  const_export_reduce_new_iterator export_reduce_new_end() const {
+    return mExportReduceNew.end();
+  }
+  inline bool hasExportReduceNew() const { return !mExportReduceNew.empty(); }
+  void addExportReduceNew(RSExportReduceNew *ReduceNew) {
+    mExportReduceNew.push_back(ReduceNew);
+  }
 
   typedef ExportTypeMap::iterator export_type_iterator;
   typedef ExportTypeMap::const_iterator const_export_type_iterator;

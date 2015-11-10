@@ -27,6 +27,8 @@
 
 #include "slang_assert.h"
 #include "slang_rs_context.h"
+#include "slang_rs_export_reduce.h"
+#include "slang_version.h"
 
 namespace slang {
 
@@ -116,6 +118,204 @@ class RSJavaPackageNamePragmaHandler : public RSPragmaHandler {
         }
       }
     }
+  }
+};
+
+class RSReducePragmaHandler : public RSPragmaHandler {
+ public:
+  RSReducePragmaHandler(llvm::StringRef Name, RSContext *Context)
+      : RSPragmaHandler(Name, Context) { }
+
+  void HandlePragma(clang::Preprocessor &PP,
+                    clang::PragmaIntroducerKind Introducer,
+                    clang::Token &FirstToken) override {
+    // #pragma rs reduce(name)
+    //   initializer(initializename)
+    //   accumulator(accumulatename)
+    //   combiner(combinename)
+    //   outconverter(outconvertname)
+    //   halter(haltname)
+    const char NameReduce[] = "reduce";
+    const char NameInitializer[] = "initializer";
+    const char NameAccumulator[] = "accumulator";
+    const char NameCombiner[] = "combiner";
+    const char NameOutConverter[] = "outconverter";
+    const char NameHalter[] = "halter";
+
+    const clang::SourceLocation PragmaLocation = FirstToken.getLocation();
+
+    clang::Token &PragmaToken = FirstToken;
+
+    // Grab "reduce(name)" ("reduce" is already known to be the first
+    // token) and all the "keyword(value)" contributions
+    //
+    // TODO: Remove halter from initial release
+    KeywordValueMapType KeywordValueMap({std::make_pair(NameReduce, ""),
+                                         std::make_pair(NameInitializer, ""),
+                                         std::make_pair(NameAccumulator, ""),
+                                         std::make_pair(NameCombiner, ""),
+                                         std::make_pair(NameOutConverter, ""),
+                                         std::make_pair(NameHalter, "")});
+    while (PragmaToken.is(clang::tok::identifier)) {
+      if (!ProcessKeywordAndValue(PP, PragmaToken, KeywordValueMap))
+        return;
+    }
+
+    // Make sure there's no end-of-line garbage
+    if (PragmaToken.isNot(clang::tok::eod)) {
+      PP.Diag(PragmaToken.getLocation(),
+              PP.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "did not expect '%0' here for '#pragma rs %1'"))
+          << PP.getSpelling(PragmaToken) << getName();
+      return;
+    }
+
+    // Make sure we have an initializer and an accumulator
+    if (KeywordValueMap[NameInitializer].empty()) {
+      PP.Diag(PragmaLocation, PP.getDiagnostics().getCustomDiagID(
+                                  clang::DiagnosticsEngine::Error,
+                                  "missing '%0' for '#pragma rs %1'"))
+          << NameInitializer << getName();
+      return;
+    }
+    if (KeywordValueMap[NameAccumulator].empty()) {
+      PP.Diag(PragmaLocation, PP.getDiagnostics().getCustomDiagID(
+                                clang::DiagnosticsEngine::Error,
+                                "missing '%0' for '#pragma rs %1'"))
+          << NameAccumulator << getName();
+      return;
+    }
+
+    // Make sure the reduction kernel name is unique.  (If we were
+    // worried there might be a VERY large number of pragmas, then we
+    // could do something more efficient than walking a list to search
+    // for duplicates.)
+    for (auto I = mContext->export_reduce_new_begin(),
+              E = mContext->export_reduce_new_end();
+         I != E; ++I) {
+      if ((*I)->getNameReduce() == KeywordValueMap[NameReduce]) {
+        PP.Diag(PragmaLocation, PP.getDiagnostics().getCustomDiagID(
+                                  clang::DiagnosticsEngine::Error,
+                                  "reduction kernel '%0' declared multiple "
+                                  "times (first one is at %1)"))
+            << KeywordValueMap[NameReduce]
+            << (*I)->getLocation().printToString(PP.getSourceManager());
+        return;
+      }
+    }
+
+    // Check API version.
+    if (mContext->getTargetAPI() != RS_DEVELOPMENT_API) {
+      PP.Diag(PragmaLocation,
+              PP.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "reduction kernels are not supported in SDK level %0"))
+          << mContext->getTargetAPI();
+      return;
+    }
+
+    mContext->addExportReduceNew(RSExportReduceNew::Create(mContext, PragmaLocation,
+                                                           KeywordValueMap[NameReduce],
+                                                           KeywordValueMap[NameInitializer],
+                                                           KeywordValueMap[NameAccumulator],
+                                                           KeywordValueMap[NameCombiner],
+                                                           KeywordValueMap[NameOutConverter],
+                                                           KeywordValueMap[NameHalter]));
+  }
+
+ private:
+  typedef std::map<std::string, std::string> KeywordValueMapType;
+
+  // Return comma-separated list of all keys in the map
+  static std::string ListKeywords(const KeywordValueMapType &KeywordValueMap) {
+    std::string Ret;
+    bool First = true;
+    for (auto const &entry : KeywordValueMap) {
+      if (First)
+        First = false;
+      else
+        Ret += ", ";
+      Ret += "'";
+      Ret += entry.first;
+      Ret += "'";
+    }
+    return Ret;
+  }
+
+  // Parse "keyword(value)" and set KeywordValueMap[keyword] = value.  (Both
+  // "keyword" and "value" are identifiers.)
+  // Does both syntactic validation and the following semantic validation:
+  // - The keyword must be present in the map.
+  // - The map entry for the keyword must not contain a value.
+  bool ProcessKeywordAndValue(clang::Preprocessor &PP,
+                              clang::Token &PragmaToken,
+                              KeywordValueMapType &KeywordValueMap) {
+    // The current token must be an identifier in KeywordValueMap
+    KeywordValueMapType::iterator Entry;
+    if (PragmaToken.isNot(clang::tok::identifier) ||
+        ((Entry = KeywordValueMap.find(
+            PragmaToken.getIdentifierInfo()->getName())) ==
+         KeywordValueMap.end())) {
+      // Note that we should never get here for the "reduce" token
+      // itself, which should already have been recognized.
+      PP.Diag(PragmaToken.getLocation(),
+              PP.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "did not recognize '%0' for '#pragma %1'; expected one of "
+                "the following keywords: %2"))
+          << PragmaToken.getIdentifierInfo()->getName() << getName()
+          << ListKeywords(KeywordValueMap);
+      return false;
+    }
+    // ... and there must be no value for this keyword yet
+    if (!Entry->second.empty()) {
+      PP.Diag(PragmaToken.getLocation(),
+              PP.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "more than one '%0' for '#pragma rs %1'"))
+          << Entry->first << getName();
+      return false;
+    }
+    PP.LexUnexpandedToken(PragmaToken);
+
+    // The current token must be clang::tok::l_paren
+    if (PragmaToken.isNot(clang::tok::l_paren)) {
+      PP.Diag(PragmaToken.getLocation(),
+              PP.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "missing '(' after '%0' for '#pragma rs %1'"))
+          << Entry->first << getName();
+      return false;
+    }
+    PP.LexUnexpandedToken(PragmaToken);
+
+    // The current token must be an identifier (a name)
+    if (PragmaToken.isNot(clang::tok::identifier)) {
+      PP.Diag(PragmaToken.getLocation(),
+              PP.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "missing name after '%0(' for '#pragma rs %1'"))
+          << Entry->first << getName();
+      return false;
+    }
+    const std::string Name = PragmaToken.getIdentifierInfo()->getName();
+    PP.LexUnexpandedToken(PragmaToken);
+
+    // The current token must be clang::tok::r_paren
+    if (PragmaToken.isNot(clang::tok::r_paren)) {
+      PP.Diag(PragmaToken.getLocation(),
+              PP.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "missing ')' after '%0(%1' for '#pragma rs %2'"))
+          << Entry->first << Name << getName();
+      return false;
+    }
+    PP.LexUnexpandedToken(PragmaToken);
+
+    // Success
+    Entry->second = Name;
+    return true;
   }
 };
 
@@ -349,6 +549,10 @@ void AddPragmaHandlers(clang::Preprocessor &PP, RSContext *RsContext) {
   // For #pragma rs java_package_name
   PP.AddPragmaHandler(
       "rs", new RSJavaPackageNamePragmaHandler("java_package_name", RsContext));
+
+  // For #pragma rs reduce
+  PP.AddPragmaHandler(
+      "rs", new RSReducePragmaHandler("reduce", RsContext));
 
   // For #pragma rs set_reflect_license
   PP.AddPragmaHandler(
