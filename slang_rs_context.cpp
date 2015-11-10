@@ -263,9 +263,16 @@ bool RSContext::processExports() {
     }
   }
 
-  // Create a dummy root in slot 0 if a root kernel is not seen.
+  // Create a dummy root in slot 0 if a root kernel is not seen
+  // and there exists a non-root kernel.
   if (valid && mExportForEach[0] == nullptr) {
-    mExportForEach[0] = RSExportForEach::CreateDummyRoot(this);
+    const size_t numExportedForEach = mExportForEach.size();
+    if (numExportedForEach > 1) {
+      mExportForEach[0] = RSExportForEach::CreateDummyRoot(this);
+    } else {
+      slangAssert(numExportedForEach == 1);
+      mExportForEach.pop_back();
+    }
   }
 
   // Finally, export type forcely set to be exported by user
