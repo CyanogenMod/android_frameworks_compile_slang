@@ -99,6 +99,7 @@ namespace slang {
 
 /* RS_HEADER_ENTRY(name) */
 #define ENUM_RS_HEADER()  \
+  RS_HEADER_ENTRY(rs_allocation_create) \
   RS_HEADER_ENTRY(rs_allocation_data) \
   RS_HEADER_ENTRY(rs_atomic) \
   RS_HEADER_ENTRY(rs_convert) \
