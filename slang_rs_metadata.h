@@ -35,4 +35,6 @@
 
 #define RS_EXPORT_REDUCE_MN "#rs_export_reduce"
 
+#define RS_EXPORT_REDUCE_NEW_MN "#rs_export_reduce_new"
+
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_METADATA_H_  NOLINT

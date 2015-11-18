@@ -180,4 +180,25 @@ bool RSExportReduce::isRSReduceFunc(unsigned int /* targetAPI */,
   return KernelAttrOrNull && KernelAttrOrNull->getKernelKind().equals("reduce");
 }
 
+RSExportReduceNew *RSExportReduceNew::Create(RSContext *Context,
+                                             const clang::SourceLocation Location,
+                                             const llvm::StringRef &NameReduce,
+                                             const llvm::StringRef &NameInitializer,
+                                             const llvm::StringRef &NameAccumulator,
+                                             const llvm::StringRef &NameCombiner,
+                                             const llvm::StringRef &NameOutConverter,
+                                             const llvm::StringRef &NameHalter) {
+  slangAssert(Context);
+  RSExportReduceNew *RNE = new RSExportReduceNew(Context,
+                                                 Location,
+                                                 NameReduce,
+                                                 NameInitializer,
+                                                 NameAccumulator,
+                                                 NameCombiner,
+                                                 NameOutConverter,
+                                                 NameHalter);
+
+  return RNE;
+}
+
 }  // namespace slang

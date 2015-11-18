@@ -78,6 +78,63 @@ class RSExportReduce : public RSExportable {
 
 };  // RSExportReduce
 
+// Base class for reflecting control-side reduce
+class RSExportReduceNew : public RSExportable {
+ private:
+  // pragma location (for error reporting)
+  clang::SourceLocation mLocation;
+
+  // reduction kernel name
+  std::string mNameReduce;
+
+  // constituent function names
+  std::string mNameInitializer;
+  std::string mNameAccumulator;
+  std::string mNameCombiner;
+  std::string mNameOutConverter;
+  std::string mNameHalter;
+
+  RSExportReduceNew(RSContext *Context,
+                    const clang::SourceLocation Location,
+                    const llvm::StringRef &NameReduce,
+                    const llvm::StringRef &NameInitializer,
+                    const llvm::StringRef &NameAccumulator,
+                    const llvm::StringRef &NameCombiner,
+                    const llvm::StringRef &NameOutConverter,
+                    const llvm::StringRef &NameHalter)
+    : RSExportable(Context, RSExportable::EX_REDUCE_NEW),
+      mLocation(Location),
+      mNameReduce(NameReduce),
+      mNameInitializer(NameInitializer),
+      mNameAccumulator(NameAccumulator),
+      mNameCombiner(NameCombiner),
+      mNameOutConverter(NameOutConverter),
+      mNameHalter(NameHalter) {
+  }
+
+  RSExportReduceNew(const RSExportReduceNew &) = delete;
+  void operator=(const RSExportReduceNew &) = delete;
+
+ public:
+  static RSExportReduceNew *Create(RSContext *Context,
+                                   const clang::SourceLocation Location,
+                                   const llvm::StringRef &NameReduce,
+                                   const llvm::StringRef &NameInitializer,
+                                   const llvm::StringRef &NameAccumulator,
+                                   const llvm::StringRef &NameCombiner,
+                                   const llvm::StringRef &NameOutConverter,
+                                   const llvm::StringRef &NameHalter);
+
+  const clang::SourceLocation &getLocation() const { return mLocation; }
+
+  const std::string &getNameReduce() const { return mNameReduce; }
+  const std::string &getNameInitializer() const { return mNameInitializer; }
+  const std::string &getNameAccumulator() const { return mNameAccumulator; }
+  const std::string &getNameCombiner() const { return mNameCombiner; }
+  const std::string &getNameOutConverter() const { return mNameOutConverter; }
+  const std::string &getNameHalter() const { return mNameHalter; }
+};  // RSExportReduceNew
+
 }  // namespace slang
 
 #endif  // _FRAMEWORKS_COMPILE_SLANG_SLANG_RS_EXPORT_REDUCE_H_  NOLINT
