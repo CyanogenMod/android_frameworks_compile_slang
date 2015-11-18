@@ -29,7 +29,7 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/StringMap.h"
 
-#include "slang_pragma_recorder.h"
+#include "slang_pragma_list.h"
 
 namespace llvm {
   class LLVMContext;

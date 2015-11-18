@@ -42,7 +42,7 @@ using llvm::RefCountedBase;
 #include "llvm/Target/TargetMachine.h"
 
 #include "slang_diagnostic_buffer.h"
-#include "slang_pragma_recorder.h"
+#include "slang_pragma_list.h"
 
 namespace llvm {
   class tool_output_file;

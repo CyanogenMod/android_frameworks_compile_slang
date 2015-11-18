@@ -24,7 +24,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include "slang.h"
-#include "slang_pragma_recorder.h"
+#include "slang_pragma_list.h"
 #include "slang_rs_check_ast.h"
 #include "slang_rs_foreach_lowering.h"
 #include "slang_rs_object_ref_count.h"
