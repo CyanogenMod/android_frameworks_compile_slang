@@ -170,6 +170,7 @@ LOCAL_SRC_FILES :=	\
 	slang_rs_reflection_cpp.cpp \
 	slang_rs_reflect_utils.cpp \
 	slang_rs_special_func.cpp	\
+	slang_rs_special_kernel_param.cpp \
 	strip_unknown_attributes.cpp
 
 LOCAL_C_INCLUDES += frameworks/compile/libbcc/include
