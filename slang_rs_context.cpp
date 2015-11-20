@@ -212,6 +212,10 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
   return (ET != nullptr);
 }
 
+void RSContext::setAllocationType(const clang::TypeDecl* TD) {
+  mAllocationType = mCtx.getTypeDeclType(TD);
+}
+
 bool RSContext::processExports() {
   bool valid = true;
 

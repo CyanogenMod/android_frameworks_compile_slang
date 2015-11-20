@@ -384,6 +384,19 @@ void Backend::LowerRSForEachCall(clang::FunctionDecl *FD) {
 }
 
 bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
+  // Find and remember the TypeDecl for rs_allocation so we can use it
+  // later during the compilation
+  if (mContext->getAllocationType().isNull()) {
+    for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end();
+         I != E; I++) {
+      clang::TypeDecl* TD = llvm::dyn_cast<clang::TypeDecl>(*I);
+      if (TD && TD->getName().equals("rs_allocation")) {
+        mContext->setAllocationType(TD);
+        break;
+      }
+    }
+  }
+
   // Disallow user-defined functions with prefix "rs"
   if (!mAllowRSPrefix) {
     // Iterate all function declarations in the program.
