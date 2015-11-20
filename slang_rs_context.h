@@ -169,6 +169,11 @@ class RSContext {
 
   inline const std::string &getRSPackageName() const { return mRSPackageName; }
 
+  void setAllocationType(const clang::TypeDecl* TD);
+  inline const clang::QualType& getAllocationType() const {
+    return mAllocationType;
+  }
+
   bool addForEach(const clang::FunctionDecl* FD);
   bool processExports();
   inline void newExportable(RSExportable *E) {

@@ -28,7 +28,7 @@ namespace {
 const char KERNEL_LAUNCH_FUNCTION_NAME[] = "rsForEach";
 const char KERNEL_LAUNCH_FUNCTION_NAME_WITH_OPTIONS[] = "rsForEachWithOptions";
 const char INTERNAL_LAUNCH_FUNCTION_NAME[] =
-    "_Z17rsForEachInternaliP14rs_script_calliiz";
+    "_Z17rsForEachInternaliP14rs_script_calliiP13rs_allocation";
 
 }  // anonymous namespace
 
@@ -141,7 +141,9 @@ clang::FunctionDecl* RSForEachLowering::CreateForEachInternalFunctionDecl() {
   clang::DeclarationName N(&II);
 
   clang::FunctionProtoType::ExtProtoInfo EPI;
-  EPI.Variadic = true;  // varargs
+
+  const clang::QualType& AllocTy = mCtxt->getAllocationType();
+  clang::QualType AllocPtrTy = mASTCtxt.getPointerType(AllocTy);
 
   clang::QualType T = mASTCtxt.getFunctionType(
       mASTCtxt.VoidTy,       // Return type
@@ -149,7 +151,8 @@ clang::FunctionDecl* RSForEachLowering::CreateForEachInternalFunctionDecl() {
       { mASTCtxt.IntTy,      // int slot
         mASTCtxt.VoidPtrTy,  // rs_script_call_t* launch_options
         mASTCtxt.IntTy,      // int numOutput
-        mASTCtxt.IntTy       // int numInputs
+        mASTCtxt.IntTy,      // int numInputs
+        AllocPtrTy           // rs_allocation* allocs
       },
       EPI);
 
@@ -200,14 +203,14 @@ void RSForEachLowering::VisitCallExpr(clang::CallExpr* CE) {
   const unsigned numArgsOrig = CE->getNumArgs();
 
   clang::QualType resultType = kernel->getReturnType().getCanonicalType();
-  int numOutput = resultType->isVoidType() ? 0 : 1;
+  const unsigned numOutputsExpected = resultType->isVoidType() ? 0 : 1;
 
-  unsigned numInputs = RSExportForEach::getNumInputs(mCtxt->getTargetAPI(), kernel);
+  const unsigned numInputsExpected = RSExportForEach::getNumInputs(mCtxt->getTargetAPI(), kernel);
 
   // Verifies that rsForEach takes the right number of input and output allocations.
   // TODO: Check input/output allocation types match kernel function expectation.
-  const unsigned expectedNumAllocations = numArgsOrig - (hasOptions ? 2 : 1);
-  if (numInputs + numOutput != expectedNumAllocations) {
+  const unsigned numAllocations = numArgsOrig - (hasOptions ? 2 : 1);
+  if (numInputsExpected + numOutputsExpected != numAllocations) {
     mCtxt->ReportError(
       CE->getExprLoc(),
       "Number of input and output allocations unexpected for kernel function %0")
@@ -227,21 +230,87 @@ void RSForEachLowering::VisitCallExpr(clang::CallExpr* CE) {
       clang::IntegerLiteral::Create(mASTCtxt, APIntSlot, IntTy, Loc);
   CE->setArg(0, IntSlotNum);
 
-  const unsigned numAdditionalArgs =
-    hasOptions ?
-    2 :  // numOutputs and numInputs
-    3;   // launchOptions, numOutputs and numInputs
+  /*
+    The last few arguments to rsForEach or rsForEachWithOptions are allocations.
+    Creates a new compound literal of an array initialized with those values, and
+    passes it to rsForEachInternal as the last (the 5th) argument.
 
-  const unsigned numArgs = numArgsOrig + numAdditionalArgs;
+    For example, rsForEach(foo, ain1, ain2, aout) would be translated into
+    rsForEachInternal(
+        1,                                   // Slot number for kernel
+        NULL,                                // Launch options
+        2,                                   // Number of input allocations
+        1,                                   // Number of output allocations
+        (rs_allocation[]){ain1, ain2, aout)  // Input and output allocations
+    );
 
-  // Makes extra room in the argument list for new arguments to add at position
-  // 1, 2, and 3. The last (numInputs + numOutput) arguments, i.e., the input
-  // and output allocations, are moved up numAdditionalArgs (2 or 3) positions
-  // in the argument list.
-  CE->setNumArgs(mASTCtxt, numArgs);
-  for (unsigned i = numArgs - 1; i >= 4; i--) {
-    CE->setArg(i, CE->getArg(i - numAdditionalArgs));
+    The AST for the rs_allocation array looks like following:
+
+    ImplicitCastExpr 0x99575670 'struct rs_allocation *' <ArrayToPointerDecay>
+    `-CompoundLiteralExpr 0x99575648 'struct rs_allocation [3]' lvalue
+      `-InitListExpr 0x99575590 'struct rs_allocation [3]'
+      |-ImplicitCastExpr 0x99574b38 'rs_allocation':'struct rs_allocation' <LValueToRValue>
+      | `-DeclRefExpr 0x99574a08 'rs_allocation':'struct rs_allocation' lvalue ParmVar 0x9942c408 'ain1' 'rs_allocation':'struct rs_allocation'
+      |-ImplicitCastExpr 0x99574b50 'rs_allocation':'struct rs_allocation' <LValueToRValue>
+      | `-DeclRefExpr 0x99574a30 'rs_allocation':'struct rs_allocation' lvalue ParmVar 0x9942c478 'ain2' 'rs_allocation':'struct rs_allocation'
+      `-ImplicitCastExpr 0x99574b68 'rs_allocation':'struct rs_allocation' <LValueToRValue>
+        `-DeclRefExpr 0x99574a58 'rs_allocation':'struct rs_allocation' lvalue ParmVar 0x9942c478 'aout' 'rs_allocation':'struct rs_allocation'
+  */
+
+  const clang::QualType& AllocTy = mCtxt->getAllocationType();
+  const llvm::APInt APIntNumAllocs(IntTySize, numAllocations);
+  clang::QualType AllocArrayTy = mASTCtxt.getConstantArrayType(
+      AllocTy,
+      APIntNumAllocs,
+      clang::ArrayType::ArraySizeModifier::Normal,
+      0  // index type qualifiers
+  );
+
+  const int allocArgIndexEnd = numArgsOrig - 1;
+  int allocArgIndexStart = allocArgIndexEnd;
+
+  clang::Expr** args = CE->getArgs();
+
+  clang::SourceLocation lparenloc;
+  clang::SourceLocation rparenloc;
+
+  if (numAllocations > 0) {
+    allocArgIndexStart = hasOptions ? 2 : 1;
+    lparenloc = args[allocArgIndexStart]->getExprLoc();
+    rparenloc = args[allocArgIndexEnd]->getExprLoc();
   }
+
+  clang::InitListExpr* init = new (mASTCtxt) clang::InitListExpr(
+      mASTCtxt,
+      lparenloc,
+      llvm::ArrayRef<clang::Expr*>(args + allocArgIndexStart, numAllocations),
+      rparenloc);
+  init->setType(AllocArrayTy);
+
+  clang::TypeSourceInfo* ti = mASTCtxt.getTrivialTypeSourceInfo(AllocArrayTy);
+  clang::CompoundLiteralExpr* CLE = new (mASTCtxt) clang::CompoundLiteralExpr(
+      lparenloc,
+      ti,
+      AllocArrayTy,
+      clang::VK_LValue,  // A compound literal is an l-value in C.
+      init,
+      false  // Not file scope
+  );
+
+  const clang::QualType AllocPtrTy = mASTCtxt.getPointerType(AllocTy);
+
+  clang::ImplicitCastExpr* Decay = clang::ImplicitCastExpr::Create(
+      mASTCtxt,
+      AllocPtrTy,
+      clang::CK_ArrayToPointerDecay,
+      CLE,
+      nullptr,  // C++ cast path
+      clang::VK_RValue
+  );
+
+  CE->setNumArgs(mASTCtxt, 5);
+
+  CE->setArg(4, Decay);
 
   // Sets the new arguments for NULL launch option (if the user does not set one),
   // the number of outputs, and the number of inputs.
@@ -253,12 +322,12 @@ void RSForEachLowering::VisitCallExpr(clang::CallExpr* CE) {
     CE->setArg(1, IntNull);
   }
 
-  const llvm::APInt APIntNumOutput(IntTySize, numOutput);
+  const llvm::APInt APIntNumOutput(IntTySize, numOutputsExpected);
   clang::Expr* IntNumOutput =
       clang::IntegerLiteral::Create(mASTCtxt, APIntNumOutput, IntTy, Loc);
   CE->setArg(2, IntNumOutput);
 
-  const llvm::APInt APIntNumInputs(IntTySize, numInputs);
+  const llvm::APInt APIntNumInputs(IntTySize, numInputsExpected);
   clang::Expr* IntNumInputs =
       clang::IntegerLiteral::Create(mASTCtxt, APIntNumInputs, IntTy, Loc);
   CE->setArg(3, IntNumInputs);
