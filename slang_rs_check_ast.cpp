@@ -218,7 +218,8 @@ void RSCheckAST::ValidateVarDecl(clang::VarDecl *VD) {
   if (VD->getFormalLinkage() == clang::ExternalLinkage) {
     llvm::StringRef TypeName;
     const clang::Type *T = QT.getTypePtr();
-    if (!RSExportType::NormalizeType(T, TypeName, Context, VD)) {
+    if (!RSExportType::NormalizeType(T, TypeName, Context, VD,
+                                     NotLegacyKernelArgument)) {
       mValid = false;
     }
   }

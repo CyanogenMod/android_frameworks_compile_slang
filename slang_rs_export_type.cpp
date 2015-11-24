@@ -180,7 +180,8 @@ static const clang::Type *TypeExportableHelper(
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
     slang::RSContext *Context,
     const clang::VarDecl *VD,
-    const clang::RecordDecl *TopLevelRecord);
+    const clang::RecordDecl *TopLevelRecord,
+    ExportKind EK);
 
 template <unsigned N>
 static void ReportTypeError(slang::RSContext *Context,
@@ -207,7 +208,8 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
     slang::RSContext *Context,
     const clang::VarDecl *VD,
-    const clang::RecordDecl *TopLevelRecord) {
+    const clang::RecordDecl *TopLevelRecord,
+    ExportKind EK) {
   // Check element type
   const clang::Type *ElementType = GetConstantArrayElementType(CAT);
   if (ElementType->isArrayType()) {
@@ -234,7 +236,7 @@ static const clang::Type *ConstantArrayTypeExportableHelper(
   }
 
   if (TypeExportableHelper(ElementType, SPS, Context, VD,
-                           TopLevelRecord) == nullptr) {
+                           TopLevelRecord, EK) == nullptr) {
     return nullptr;
   } else {
     return CAT;
@@ -255,7 +257,8 @@ static const clang::Type *TypeExportableHelper(
     llvm::SmallPtrSet<clang::Type const *, 8> &SPS,
     slang::RSContext *Context,
     clang::VarDecl const *VD,
-    clang::RecordDecl const *TopLevelRecord) {
+    clang::RecordDecl const *TopLevelRecord,
+    ExportKind EK) {
   // Normalize first
   if ((T = GetCanonicalType(T)) == nullptr)
     return nullptr;
@@ -320,7 +323,8 @@ static const clang::Type *TypeExportableHelper(
         const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
         FT = GetCanonicalType(FT);
 
-        if (!TypeExportableHelper(FT, SPS, Context, VD, TopLevelRecord)) {
+        if (!TypeExportableHelper(FT, SPS, Context, VD, TopLevelRecord,
+                                  EK)) {
           return nullptr;
         }
 
@@ -355,11 +359,20 @@ static const clang::Type *TypeExportableHelper(
             "multiple levels of pointers cannot be exported: '%0'");
         return nullptr;
       }
+
+      // Void pointers are forbidden for export, although we must accept
+      // void pointers that come in as arguments to a legacy kernel.
+      if (PointeeType->isVoidType() && EK != LegacyKernelArgument) {
+        ReportTypeError(Context, VD, TopLevelRecord,
+            "void pointers cannot be exported: '%0'");
+        return nullptr;
+      }
+
       // We don't support pointer with array-type pointee or unsupported pointee
       // type
       if (PointeeType->isArrayType() ||
           (TypeExportableHelper(PointeeType, SPS, Context, VD,
-                                TopLevelRecord) == nullptr))
+                                TopLevelRecord, EK) == nullptr))
         return nullptr;
       else
         return T;
@@ -376,7 +389,7 @@ static const clang::Type *TypeExportableHelper(
 
       if ((ElementType->getTypeClass() != clang::Type::Builtin) ||
           (TypeExportableHelper(ElementType, SPS, Context, VD,
-                                TopLevelRecord) == nullptr))
+                                TopLevelRecord, EK) == nullptr))
         return nullptr;
       else
         return T;
@@ -386,7 +399,7 @@ static const clang::Type *TypeExportableHelper(
               static_cast<const clang::ConstantArrayType*>(CTI);
 
       return ConstantArrayTypeExportableHelper(CAT, SPS, Context, VD,
-                                               TopLevelRecord);
+                                               TopLevelRecord, EK);
     }
     case clang::Type::Enum: {
       // FIXME: We currently convert enums to integers, rather than reflecting
@@ -410,11 +423,12 @@ static const clang::Type *TypeExportableHelper(
 // (mostly pointers within a struct).
 static const clang::Type *TypeExportable(const clang::Type *T,
                                          slang::RSContext *Context,
-                                         const clang::VarDecl *VD) {
+                                         const clang::VarDecl *VD,
+                                         ExportKind EK) {
   llvm::SmallPtrSet<const clang::Type*, 8> SPS =
       llvm::SmallPtrSet<const clang::Type*, 8>();
 
-  return TypeExportableHelper(T, SPS, Context, VD, nullptr);
+  return TypeExportableHelper(T, SPS, Context, VD, nullptr, EK);
 }
 
 static bool ValidateRSObjectInVarDecl(slang::RSContext *Context,
@@ -658,8 +672,9 @@ std::string CreateDummyName(const char *type, const std::string &name) {
 bool RSExportType::NormalizeType(const clang::Type *&T,
                                  llvm::StringRef &TypeName,
                                  RSContext *Context,
-                                 const clang::VarDecl *VD) {
-  if ((T = TypeExportable(T, Context, VD)) == nullptr) {
+                                 const clang::VarDecl *VD,
+                                 ExportKind EK) {
+  if ((T = TypeExportable(T, Context, VD, EK)) == nullptr) {
     return false;
   }
   // Get type name
@@ -690,7 +705,7 @@ bool RSExportType::ValidateType(slang::RSContext *Context, clang::ASTContext &C,
   // type is able to be exported first.
   if (auto VD = llvm::dyn_cast_or_null<clang::VarDecl>(ND)) {
     if (VD->getFormalLinkage() == clang::ExternalLinkage) {
-      if (!TypeExportable(T, Context, VD)) {
+      if (!TypeExportable(T, Context, VD, NotLegacyKernelArgument)) {
         return false;
       }
     }
@@ -772,7 +787,8 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
       const clang::PointerType *P = static_cast<const clang::PointerType*>(CTI);
       const clang::Type *PT = GetPointeeType(P);
       llvm::StringRef PointeeName;
-      if (NormalizeType(PT, PointeeName, nullptr, nullptr)) {
+      if (NormalizeType(PT, PointeeName, nullptr, nullptr,
+                        NotLegacyKernelArgument)) {
         char *Name = new char[ 1 /* * */ + PointeeName.size() + 1 ];
         Name[0] = '*';
         memcpy(Name + 1, PointeeName.data(), PointeeName.size());
@@ -802,7 +818,8 @@ llvm::StringRef RSExportType::GetTypeName(const clang::Type* T) {
 
 RSExportType *RSExportType::Create(RSContext *Context,
                                    const clang::Type *T,
-                                   const llvm::StringRef &TypeName) {
+                                   const llvm::StringRef &TypeName,
+                                   ExportKind EK) {
   // Lookup the context to see whether the type was processed before.
   // Newly created RSExportType will insert into context
   // in RSExportType::RSExportType()
@@ -891,10 +908,11 @@ RSExportType *RSExportType::Create(RSContext *Context,
   return ET;
 }
 
-RSExportType *RSExportType::Create(RSContext *Context, const clang::Type *T) {
+RSExportType *RSExportType::Create(RSContext *Context, const clang::Type *T,
+                                   ExportKind EK) {
   llvm::StringRef TypeName;
-  if (NormalizeType(T, TypeName, Context, nullptr)) {
-    return Create(Context, T, TypeName);
+  if (NormalizeType(T, TypeName, Context, nullptr, EK)) {
+    return Create(Context, T, TypeName, EK);
   } else {
     return nullptr;
   }
@@ -902,7 +920,8 @@ RSExportType *RSExportType::Create(RSContext *Context, const clang::Type *T) {
 
 RSExportType *RSExportType::CreateFromDecl(RSContext *Context,
                                            const clang::VarDecl *VD) {
-  return RSExportType::Create(Context, GetTypeOfDecl(VD));
+  return RSExportType::Create(Context, GetTypeOfDecl(VD),
+                              NotLegacyKernelArgument);
 }
 
 size_t RSExportType::getStoreSize() const {
@@ -1122,8 +1141,9 @@ RSExportPrimitiveType
 RSExportPrimitiveType *RSExportPrimitiveType::Create(RSContext *Context,
                                                      const clang::Type *T) {
   llvm::StringRef TypeName;
-  if (RSExportType::NormalizeType(T, TypeName, Context, nullptr)
-      && IsPrimitiveType(T)) {
+  if (RSExportType::NormalizeType(T, TypeName, Context, nullptr,
+                                  NotLegacyKernelArgument) &&
+      IsPrimitiveType(T)) {
     return Create(Context, T, TypeName);
   } else {
     return nullptr;
@@ -1225,7 +1245,8 @@ RSExportPointerType
   const RSExportType *PointeeET;
 
   if (PointeeType->getTypeClass() != clang::Type::Pointer) {
-    PointeeET = RSExportType::Create(Context, PointeeType);
+    PointeeET = RSExportType::Create(Context, PointeeType,
+                                     NotLegacyKernelArgument);
   } else {
     // Double or higher dimension of pointer, export as int*
     PointeeET = RSExportPrimitiveType::Create(Context,
@@ -1413,7 +1434,8 @@ RSExportConstantArrayType
   slangAssert((Size > 0) && "Constant array should have size greater than 0");
 
   const clang::Type *ElementType = GetConstantArrayElementType(CAT);
-  RSExportType *ElementET = RSExportType::Create(Context, ElementType);
+  RSExportType *ElementET = RSExportType::Create(Context, ElementType,
+                                                 NotLegacyKernelArgument);
 
   if (ElementET == nullptr) {
     return nullptr;

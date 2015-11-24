@@ -206,7 +206,7 @@ bool RSContext::processExportType(const llvm::StringRef &Name) {
     }
 
     if (T != nullptr)
-      ET = RSExportType::Create(this, T);
+      ET = RSExportType::Create(this, T, NotLegacyKernelArgument);
   }
 
   return (ET != nullptr);

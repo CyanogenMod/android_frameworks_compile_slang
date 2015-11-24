@@ -82,6 +82,17 @@ enum DataTypeCategory {
     ObjectDataType
 };
 
+// Denote whether a particular export is intended for a legacy kernel argument.
+// NotLegacyKernelArgument - not a legacy kernel argument (might not even be a
+//                           kernel argument).
+// LegacyKernelArgument    - legacy pass-by-reference kernel argument using
+//                           pointers and no kernel attribute.
+enum ExportKind {
+   NotLegacyKernelArgument,
+   LegacyKernelArgument
+ };
+
+
 // From graphics/java/android/renderscript/Element.java: Element.DataType
 /* NOTE: The values of the enums are found compiled in the bit code (i.e. as
  * values, not symbolic.  When adding new types, you must add them to the end.
@@ -209,12 +220,15 @@ class RSExportType : public RSExportable {
   // function.
   //
   // @T was normalized by calling RSExportType::NormalizeType().
-  // @TypeName was retrieve from RSExportType::GetTypeName() before calling
+  // @TypeName was retrieved from RSExportType::GetTypeName() before calling
   //           this.
+  // @EK denotes whether this @T is being used for a legacy kernel argument or
+  //     something else.
   //
   static RSExportType *Create(RSContext *Context,
                               const clang::Type *T,
-                              const llvm::StringRef &TypeName);
+                              const llvm::StringRef &TypeName,
+                              ExportKind EK);
 
   static llvm::StringRef GetTypeName(const clang::Type *T);
 
@@ -241,7 +255,8 @@ class RSExportType : public RSExportable {
   static bool NormalizeType(const clang::Type *&T,
                             llvm::StringRef &TypeName,
                             RSContext *Context,
-                            const clang::VarDecl *VD);
+                            const clang::VarDecl *VD,
+                            ExportKind EK);
 
   // This function checks whether the specified type can be handled by RS/FS.
   // If it cannot, this function returns false. Otherwise it returns true.
@@ -258,7 +273,8 @@ class RSExportType : public RSExportable {
                               unsigned int TargetAPI, bool IsFilterscript);
 
   // @T may not be normalized
-  static RSExportType *Create(RSContext *Context, const clang::Type *T);
+  static RSExportType *Create(RSContext *Context, const clang::Type *T,
+                              ExportKind EK);
   static RSExportType *CreateFromDecl(RSContext *Context,
                                       const clang::VarDecl *VD);
 

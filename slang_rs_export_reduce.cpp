@@ -144,7 +144,8 @@ bool RSExportReduce::validateAndConstructParams(
   if (Valid) {
     // If the validation was successful, then populate the fields of
     // the exportable.
-    if (!(mType = RSExportType::Create(Context, ReturnTy.getTypePtr()))) {
+    if (!(mType = RSExportType::Create(Context, ReturnTy.getTypePtr(),
+                                       NotLegacyKernelArgument))) {
       // There was an error exporting the type for the reduce kernel.
       return false;
     }
