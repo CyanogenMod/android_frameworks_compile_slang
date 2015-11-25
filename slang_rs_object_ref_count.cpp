@@ -181,6 +181,7 @@ static void AppendAfterStmt(clang::ASTContext &C,
 class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
  private:
   clang::ASTContext &mCtx;
+  clang::DeclContext *mDC;
 
   // The loop depth of the currently visited node.
   int mLoopDepth;
@@ -209,7 +210,7 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
   clang::SourceLocation mVarLoc;
 
  public:
-  DestructorVisitor(clang::ASTContext &C,
+  DestructorVisitor(clang::DeclContext* DC,
                     clang::Stmt* OuterStmt,
                     clang::Stmt* DtorStmt,
                     clang::SourceLocation VarLoc);
@@ -233,10 +234,69 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
         continue;
       }
 
-      StmtList.push_back(S);
-      clang::CompoundStmt *CS =
-          BuildCompoundStmt(mCtx, StmtList, S->getLocEnd());
-      StmtList.pop_back();
+      clang::CompoundStmt *CS;
+      clang::ReturnStmt* RS = llvm::dyn_cast<clang::ReturnStmt>(S);
+      clang::Expr* RetVal;
+      if (!RS || !(RetVal = RS->getRetValue())) {
+        StmtList.push_back(S);
+        CS = BuildCompoundStmt(mCtx, StmtList, S->getLocEnd());
+        StmtList.pop_back();
+      } else {
+        // Since we insert rsClearObj() calls before the return statement, we need
+        // to make sure none of the cleared RS objects are referenced in the
+        // return statement.
+        // For that, we create a new local variable named .rs.retval, assign the
+        // original return expression to it, make all necessary rsClearObj()
+        // calls, then return .rs.retval. Note rsSetObj() or rsClearObj() are not
+        // called on .rs.retval.
+
+        clang::SourceLocation Loc;
+        clang::QualType RetTy = RetVal->getType();
+        clang::VarDecl* RSRetValDecl = clang::VarDecl::Create(
+            mCtx,                                  // AST context
+            mDC,                                   // Decl context
+            Loc,                                   // Start location
+            Loc,                                   // Id location
+            &mCtx.Idents.get(".rs.retval"),        // Id
+            RetTy,                                 // Type
+            mCtx.getTrivialTypeSourceInfo(RetTy),  // Type info
+            clang::SC_None                         // Storage class
+        );
+        RSRetValDecl->setInit(RetVal);
+        clang::Decl* Decls[] = { RSRetValDecl };
+        const clang::DeclGroupRef DGR = clang::DeclGroupRef::Create(
+            mCtx, Decls, sizeof(Decls) / sizeof(*Decls));
+        clang::DeclStmt* DS = new (mCtx) clang::DeclStmt(DGR, Loc, Loc);
+
+        // Creates a new return statement
+        clang::ReturnStmt* NewRet = new (mCtx) clang::ReturnStmt(RS->getReturnLoc());
+        clang::DeclRefExpr* DRE = clang::DeclRefExpr::Create(
+            mCtx,
+            clang::NestedNameSpecifierLoc(),  // QualifierLoc
+            Loc,                              // TemplateKWLoc
+            RSRetValDecl,
+            false,                            // RefersToEnclosingVariableOrCapture
+            Loc,                              // NameLoc
+            RetTy,
+            clang::VK_LValue
+        );
+        clang::Expr* CastExpr = clang::ImplicitCastExpr::Create(
+            mCtx,
+            RetTy,
+            clang::CK_LValueToRValue,
+            DRE,
+            nullptr,
+            clang::VK_RValue
+        );
+        NewRet->setRetValue(CastExpr);
+
+        // Insert the two new statements into StmtList
+        StmtList.push_front(DS);
+        StmtList.push_back(NewRet);
+        CS = BuildCompoundStmt(mCtx, StmtList, S->getLocEnd());
+        StmtList.pop_back();
+        StmtList.pop_front();
+      }
 
       RSASTReplace R(mCtx);
       R.ReplaceStmt(mOuterStmt, S, CS);
@@ -258,11 +318,12 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
   void VisitWhileStmt(clang::WhileStmt *WS);
 };
 
-DestructorVisitor::DestructorVisitor(clang::ASTContext &C,
+DestructorVisitor::DestructorVisitor(clang::DeclContext* DC,
                          clang::Stmt *OuterStmt,
                          clang::Stmt *DtorStmt,
                          clang::SourceLocation VarLoc)
-  : mCtx(C),
+  : mCtx(DC->getParentASTContext()),
+    mDC(DC),
     mLoopDepth(0),
     mSwitchDepth(0),
     mOuterStmt(OuterStmt),
@@ -1209,7 +1270,7 @@ void RSObjectRefCount::Scope::InsertLocalVarDestructors() {
       // 'markUsed' has side-effects that are caused only if VD is not already
       // used.  Hence no need for an extra check here.
       VD->markUsed(C);
-      DestructorVisitor DV(C,
+      DestructorVisitor DV(VD->getDeclContext(),
                            mCS,
                            RSClearObjectCall,
                            VD->getSourceRange().getBegin());
