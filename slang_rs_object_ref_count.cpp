@@ -248,17 +248,12 @@ class DestructorVisitor : public clang::StmtVisitor<DestructorVisitor> {
   }
 
   void VisitStmt(clang::Stmt *S);
-  void VisitCompoundStmt(clang::CompoundStmt *CS);
 
   void VisitBreakStmt(clang::BreakStmt *BS);
-  void VisitCaseStmt(clang::CaseStmt *CS);
   void VisitContinueStmt(clang::ContinueStmt *CS);
-  void VisitDefaultStmt(clang::DefaultStmt *DS);
   void VisitDoStmt(clang::DoStmt *DS);
   void VisitForStmt(clang::ForStmt *FS);
-  void VisitIfStmt(clang::IfStmt *IS);
   void VisitReturnStmt(clang::ReturnStmt *RS);
-  void VisitSwitchCase(clang::SwitchCase *SC);
   void VisitSwitchStmt(clang::SwitchStmt *SS);
   void VisitWhileStmt(clang::WhileStmt *WS);
 };
@@ -276,17 +271,11 @@ DestructorVisitor::DestructorVisitor(clang::ASTContext &C,
 }
 
 void DestructorVisitor::VisitStmt(clang::Stmt *S) {
-  for (clang::Stmt::child_iterator I = S->child_begin(), E = S->child_end();
-       I != E;
-       I++) {
-    if (clang::Stmt *Child = *I) {
+  for (clang::Stmt* Child : S->children()) {
+    if (Child) {
       Visit(Child);
     }
   }
-}
-
-void DestructorVisitor::VisitCompoundStmt(clang::CompoundStmt *CS) {
-  VisitStmt(CS);
 }
 
 void DestructorVisitor::VisitBreakStmt(clang::BreakStmt *BS) {
@@ -296,20 +285,12 @@ void DestructorVisitor::VisitBreakStmt(clang::BreakStmt *BS) {
   }
 }
 
-void DestructorVisitor::VisitCaseStmt(clang::CaseStmt *CS) {
-  VisitStmt(CS);
-}
-
 void DestructorVisitor::VisitContinueStmt(clang::ContinueStmt *CS) {
   VisitStmt(CS);
   if (mLoopDepth == 0) {
     // Switch statements can have nested continues.
     mReplaceStmtStack.push(CS);
   }
-}
-
-void DestructorVisitor::VisitDefaultStmt(clang::DefaultStmt *DS) {
-  VisitStmt(DS);
 }
 
 void DestructorVisitor::VisitDoStmt(clang::DoStmt *DS) {
@@ -324,17 +305,8 @@ void DestructorVisitor::VisitForStmt(clang::ForStmt *FS) {
   mLoopDepth--;
 }
 
-void DestructorVisitor::VisitIfStmt(clang::IfStmt *IS) {
-  VisitStmt(IS);
-}
-
 void DestructorVisitor::VisitReturnStmt(clang::ReturnStmt *RS) {
   mReplaceStmtStack.push(RS);
-}
-
-void DestructorVisitor::VisitSwitchCase(clang::SwitchCase *SC) {
-  slangAssert(false && "Both case and default have specialized handlers");
-  VisitStmt(SC);
 }
 
 void DestructorVisitor::VisitSwitchStmt(clang::SwitchStmt *SS) {
