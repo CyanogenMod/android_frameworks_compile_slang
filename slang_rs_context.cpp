@@ -216,6 +216,10 @@ void RSContext::setAllocationType(const clang::TypeDecl* TD) {
   mAllocationType = mCtx.getTypeDeclType(TD);
 }
 
+void RSContext::setScriptCallType(const clang::TypeDecl* TD) {
+  mScriptCallType = mCtx.getTypeDeclType(TD);
+}
+
 bool RSContext::processExports() {
   bool valid = true;
 
