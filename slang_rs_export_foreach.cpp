@@ -74,12 +74,12 @@ bool RSExportForEach::validateAndConstructParams(
   // Compute kernel functions are defined differently when the
   // "__attribute__((kernel))" is set.
   if (FD->hasAttr<clang::KernelAttr>()) {
-    valid |= validateAndConstructKernelParams(Context, FD);
+    valid &= validateAndConstructKernelParams(Context, FD);
   } else {
-    valid |= validateAndConstructOldStyleParams(Context, FD);
+    valid &= validateAndConstructOldStyleParams(Context, FD);
   }
 
-  valid |= setSignatureMetadata(Context, FD);
+  valid &= setSignatureMetadata(Context, FD);
   return valid;
 }
 
@@ -104,7 +104,7 @@ bool RSExportForEach::validateAndConstructOldStyleParams(
   // Validate remaining parameter types
 
   size_t IndexOfFirstSpecialParameter = numParams;
-  valid |= processSpecialParameters(Context, FD, &IndexOfFirstSpecialParameter);
+  valid &= processSpecialParameters(Context, FD, &IndexOfFirstSpecialParameter);
 
   // Validate the non-special parameters, which should all be found before the
   // first special parameter.
@@ -192,7 +192,7 @@ bool RSExportForEach::validateAndConstructKernelParams(
   // Validate remaining parameter types
 
   size_t IndexOfFirstSpecialParameter = numParams;
-  valid |= processSpecialParameters(Context, FD, &IndexOfFirstSpecialParameter);
+  valid &= processSpecialParameters(Context, FD, &IndexOfFirstSpecialParameter);
 
   // Validate the non-special parameters, which should all be found before the
   // first special.
