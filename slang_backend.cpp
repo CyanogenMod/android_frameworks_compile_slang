@@ -384,15 +384,18 @@ void Backend::LowerRSForEachCall(clang::FunctionDecl *FD) {
 }
 
 bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
-  // Find and remember the TypeDecl for rs_allocation so we can use it
-  // later during the compilation
-  if (mContext->getAllocationType().isNull()) {
-    for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end();
-         I != E; I++) {
-      clang::TypeDecl* TD = llvm::dyn_cast<clang::TypeDecl>(*I);
-      if (TD && TD->getName().equals("rs_allocation")) {
+  // Find and remember the types for rs_allocation and rs_script_call_t so
+  // they can be used later for translating rsForEach() calls.
+  for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end();
+       (mContext->getAllocationType().isNull() ||
+        mContext->getScriptCallType().isNull()) &&
+       I != E; I++) {
+    if (clang::TypeDecl* TD = llvm::dyn_cast<clang::TypeDecl>(*I)) {
+      clang::StringRef TypeName = TD->getName();
+      if (TypeName.equals("rs_allocation")) {
         mContext->setAllocationType(TD);
-        break;
+      } else if (TypeName.equals("rs_script_call_t")) {
+        mContext->setScriptCallType(TD);
       }
     }
   }

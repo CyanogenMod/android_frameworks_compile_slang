@@ -145,14 +145,17 @@ clang::FunctionDecl* RSForEachLowering::CreateForEachInternalFunctionDecl() {
   const clang::QualType& AllocTy = mCtxt->getAllocationType();
   clang::QualType AllocPtrTy = mASTCtxt.getPointerType(AllocTy);
 
+  clang::QualType ScriptCallTy = mCtxt->getScriptCallType();
+  const clang::QualType ScriptCallPtrTy = mASTCtxt.getPointerType(ScriptCallTy);
+
   clang::QualType T = mASTCtxt.getFunctionType(
-      mASTCtxt.VoidTy,       // Return type
-                             // Argument types:
-      { mASTCtxt.IntTy,      // int slot
-        mASTCtxt.VoidPtrTy,  // rs_script_call_t* launch_options
-        mASTCtxt.IntTy,      // int numOutput
-        mASTCtxt.IntTy,      // int numInputs
-        AllocPtrTy           // rs_allocation* allocs
+      mASTCtxt.VoidTy,    // Return type
+                          // Argument types:
+      { mASTCtxt.IntTy,   // int slot
+        ScriptCallPtrTy,  // rs_script_call_t* launch_options
+        mASTCtxt.IntTy,   // int numOutput
+        mASTCtxt.IntTy,   // int numInputs
+        AllocPtrTy        // rs_allocation* allocs
       },
       EPI);
 
@@ -165,16 +168,16 @@ clang::FunctionDecl* RSForEachLowering::CreateForEachInternalFunctionDecl() {
 // Create an expression like the following that references the rsForEachInternal to
 // replace the callee in the original call expression that references rsForEach.
 //
-// ImplicitCastExpr 'void (*)(int, rs_allocation, rs_allocation)' <FunctionToPointerDecay>
-// `-DeclRefExpr 'void' Function '_Z17rsForEachInternali13rs_allocationS_' 'void (int, rs_allocation, rs_allocation)'
+// ImplicitCastExpr 'void (*)(int, rs_script_call_t*, int, int, rs_allocation*)' <FunctionToPointerDecay>
+// `-DeclRefExpr 'void' Function '_Z17rsForEachInternaliP14rs_script_calliiP13rs_allocation' 'void (int, rs_script_call_t*, int, int, rs_allocation*)'
 clang::Expr* RSForEachLowering::CreateCalleeExprForInternalForEach() {
   clang::FunctionDecl* FDNew = CreateForEachInternalFunctionDecl();
 
+  const clang::QualType FDNewType = FDNew->getType();
+
   clang::DeclRefExpr* refExpr = clang::DeclRefExpr::Create(
       mASTCtxt, clang::NestedNameSpecifierLoc(), clang::SourceLocation(), FDNew,
-      false, clang::SourceLocation(), mASTCtxt.VoidTy, clang::VK_RValue);
-
-  const clang::QualType FDNewType = FDNew->getType();
+      false, clang::SourceLocation(), FDNewType, clang::VK_RValue);
 
   clang::Expr* calleeNew = clang::ImplicitCastExpr::Create(
       mASTCtxt, mASTCtxt.getPointerType(FDNewType),
@@ -319,7 +322,19 @@ void RSForEachLowering::VisitCallExpr(clang::CallExpr* CE) {
     const llvm::APInt APIntZero(IntTySize, 0);
     clang::Expr* IntNull =
         clang::IntegerLiteral::Create(mASTCtxt, APIntZero, IntTy, Loc);
-    CE->setArg(1, IntNull);
+    clang::QualType ScriptCallTy = mCtxt->getScriptCallType();
+    const clang::QualType ScriptCallPtrTy = mASTCtxt.getPointerType(ScriptCallTy);
+    clang::CStyleCastExpr* Cast =
+        clang::CStyleCastExpr::Create(mASTCtxt,
+                                      ScriptCallPtrTy,
+                                      clang::VK_RValue,
+                                      clang::CK_NullToPointer,
+                                      IntNull,
+                                      nullptr,
+                                      mASTCtxt.getTrivialTypeSourceInfo(ScriptCallPtrTy),
+                                      clang::SourceLocation(),
+                                      clang::SourceLocation());
+    CE->setArg(1, Cast);
   }
 
   const llvm::APInt APIntNumOutput(IntTySize, numOutputsExpected);

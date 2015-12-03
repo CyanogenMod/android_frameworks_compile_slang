@@ -114,6 +114,7 @@ class RSContext {
   ExportTypeMap mExportTypes;
 
   clang::QualType mAllocationType;
+  clang::QualType mScriptCallType;
 
  public:
   RSContext(clang::Preprocessor &PP,
@@ -172,6 +173,11 @@ class RSContext {
   void setAllocationType(const clang::TypeDecl* TD);
   inline const clang::QualType& getAllocationType() const {
     return mAllocationType;
+  }
+
+  void setScriptCallType(const clang::TypeDecl* TD);
+  inline const clang::QualType& getScriptCallType() const {
+    return mScriptCallType;
   }
 
   bool addForEach(const clang::FunctionDecl* FD);
