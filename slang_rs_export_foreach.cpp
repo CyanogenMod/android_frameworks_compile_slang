@@ -74,12 +74,12 @@ bool RSExportForEach::validateAndConstructParams(
   // Compute kernel functions are defined differently when the
   // "__attribute__((kernel))" is set.
   if (FD->hasAttr<clang::KernelAttr>()) {
-    valid |= validateAndConstructKernelParams(Context, FD);
+    valid &= validateAndConstructKernelParams(Context, FD);
   } else {
-    valid |= validateAndConstructOldStyleParams(Context, FD);
+    valid &= validateAndConstructOldStyleParams(Context, FD);
   }
 
-  valid |= setSignatureMetadata(Context, FD);
+  valid &= setSignatureMetadata(Context, FD);
   return valid;
 }
 
@@ -104,7 +104,7 @@ bool RSExportForEach::validateAndConstructOldStyleParams(
   // Validate remaining parameter types
 
   size_t IndexOfFirstSpecialParameter = numParams;
-  valid |= processSpecialParameters(Context, FD, &IndexOfFirstSpecialParameter);
+  valid &= processSpecialParameters(Context, FD, &IndexOfFirstSpecialParameter);
 
   // Validate the non-special parameters, which should all be found before the
   // first special parameter.
@@ -192,7 +192,7 @@ bool RSExportForEach::validateAndConstructKernelParams(
   // Validate remaining parameter types
 
   size_t IndexOfFirstSpecialParameter = numParams;
-  valid |= processSpecialParameters(Context, FD, &IndexOfFirstSpecialParameter);
+  valid &= processSpecialParameters(Context, FD, &IndexOfFirstSpecialParameter);
 
   // Validate the non-special parameters, which should all be found before the
   // first special.
@@ -363,7 +363,8 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
       clang::QualType T = Ctx.getTagDeclType(RD);
       slangAssert(!T.isNull());
 
-      RSExportType *ET = RSExportType::Create(Context, T.getTypePtr());
+      RSExportType *ET =
+          RSExportType::Create(Context, T.getTypePtr(), LegacyKernelArgument);
 
       slangAssert(ET && "Failed to export a kernel");
 
@@ -382,10 +383,12 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
   if (FE->hasIns()) {
     for (InIter BI = FE->mIns.begin(), EI = FE->mIns.end(); BI != EI; BI++) {
       const clang::Type *T = (*BI)->getType().getCanonicalType().getTypePtr();
-      RSExportType *InExportType = RSExportType::Create(Context, T);
+      ExportKind EK = (FE->mIsKernelStyle ? NotLegacyKernelArgument :
+                                            LegacyKernelArgument);
+      RSExportType *InExportType = RSExportType::Create(Context, T, EK);
 
       // It is not an error if we don't export an input type for legacy
-      // kernels. This can happen in the case of a void pointer.
+      // kernel arguments. This can happen in the case of a void pointer.
       if (FE->mIsKernelStyle && !InExportType) {
         TypeExportError = true;
       }
@@ -396,12 +399,13 @@ RSExportForEach *RSExportForEach::Create(RSContext *Context,
 
   if (FE->mIsKernelStyle && FE->mHasReturnType) {
     const clang::Type *ReturnType = FE->mResultType.getTypePtr();
-    FE->mOutType = RSExportType::Create(Context, ReturnType);
+    FE->mOutType = RSExportType::Create(Context, ReturnType,
+                                        NotLegacyKernelArgument);
     TypeExportError |= !FE->mOutType;
   } else if (FE->mOut) {
     const clang::Type *OutType =
         FE->mOut->getType().getCanonicalType().getTypePtr();
-    FE->mOutType = RSExportType::Create(Context, OutType);
+    FE->mOutType = RSExportType::Create(Context, OutType, LegacyKernelArgument);
     // It is not an error if we don't export an output type.
     // This can happen in the case of a void pointer.
   }
