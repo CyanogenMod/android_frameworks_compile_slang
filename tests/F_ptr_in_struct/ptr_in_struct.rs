@@ -7,3 +7,8 @@ struct s {
 
 struct s myStruct;
 
+struct voidStruct {
+    void *v;
+};
+
+struct voidStruct myVoidStruct;
