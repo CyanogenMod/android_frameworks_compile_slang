@@ -212,6 +212,7 @@ def main():
     for f in tmp_files:
       if os.path.isdir(f) and (f[0:2] == 'F_' or f[0:2] == 'P_'):
         files.append(f)
+    files.sort()
 
   for f in files:
     if os.path.isdir(f):
