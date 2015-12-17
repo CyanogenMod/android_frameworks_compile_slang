@@ -162,9 +162,9 @@ typedef struct {
 
 typedef struct RSReflectionTypeData_rec {
     const RSReflectionType *type;
-    uint32_t vecSize;
+    uint32_t vecSize;   // number of elements; one if not a vector
     bool isPointer;
-    uint32_t arraySize;
+    uint32_t arraySize; // number of elements; zero if not an array
 
     // Subelements
     //std::vector<const struct RSReflectionTypeData_rec *> fields;
@@ -266,8 +266,6 @@ class RSExportType : public RSExportable {
 
   inline ExportClass getClass() const { return mClass; }
 
-  virtual unsigned getSize() const { return 1; }
-
   inline llvm::Type *getLLVMType() const {
     if (mLLVMType == nullptr)
       mLLVMType = convertToLLVMType();
@@ -350,7 +348,10 @@ class RSExportPrimitiveType : public RSExportType {
   // RS object type within it.
   static bool IsStructureTypeWithRSObject(const clang::Type *T);
 
-  static size_t GetSizeInBits(const RSExportPrimitiveType *EPT);
+  // For a primitive type, this is the size of the type.
+  // For a vector type (RSExportVectorType is derived from RSExportPrimitiveType),
+  // this is the size of a single vector element (component).
+  static size_t GetElementSizeInBits(const RSExportPrimitiveType *EPT);
 
   inline DataType getType() const { return mType; }
   inline bool isRSObjectType() const {
@@ -365,7 +366,8 @@ class RSExportPrimitiveType : public RSExportType {
     return getRSReflectionType(EPT->getType());
   }
 
-  virtual unsigned getSize() const { return (GetSizeInBits(this) >> 3); }
+  // For a vector type, this is the size of a single element.
+  unsigned getElementSizeInBytes() const { return (GetElementSizeInBits(this) >> 3); }
 
   std::string getElementName() const {
     return getRSReflectionType(this)->rs_short_type;
@@ -407,7 +409,7 @@ class RSExportVectorType : public RSExportPrimitiveType {
   friend class RSExportType;
   friend class RSExportElement;
  private:
-  unsigned mNumElement;   // number of element
+  unsigned mNumElement;   // number of elements (components)
 
   RSExportVectorType(RSContext *Context,
                      const llvm::StringRef &Name,
@@ -483,14 +485,14 @@ class RSExportConstantArrayType : public RSExportType {
   friend class RSExportType;
  private:
   const RSExportType *mElementType;  // Array element type
-  unsigned mSize;  // Array size
+  unsigned mNumElement;              // Array element count
 
   RSExportConstantArrayType(RSContext *Context,
                             const RSExportType *ElementType,
-                            unsigned Size)
+                            unsigned NumElement)
     : RSExportType(Context, ExportClassConstantArray, "<ConstantArray>"),
       mElementType(ElementType),
-      mSize(Size) {
+      mNumElement(NumElement) {
   }
 
   // @CAT was normalized by calling RSExportType::NormalizeType() before
@@ -501,8 +503,8 @@ class RSExportConstantArrayType : public RSExportType {
   virtual llvm::Type *convertToLLVMType() const;
 
  public:
-  virtual unsigned getSize() const { return mSize; }
-  inline const RSExportType *getElementType() const { return mElementType; }
+  unsigned getNumElement() const { return mNumElement; }
+  const RSExportType *getElementType() const { return mElementType; }
 
   std::string getElementName() const {
     return mElementType->getElementName();

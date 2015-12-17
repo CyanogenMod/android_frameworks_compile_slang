@@ -80,7 +80,7 @@ static RSReflectionType gReflectionTypes[] = {
 {MatrixDataType, "MATRIX_4X4", _, 16*32, "rs_matrix4x4", "Matrix4f", _, _, _, false},
 
 // RS object types are 32 bits in 32-bit RS, but 256 bits in 64-bit RS.
-// This is handled specially by the GetSizeInBits(}, method.
+// This is handled specially by the GetElementSizeInBits() method.
 {ObjectDataType,          "RS_ELEMENT",          "ELEMENT", 32,         "Element",         "Element", _, _, _, false},
 {ObjectDataType,             "RS_TYPE",             "TYPE", 32,            "Type",            "Type", _, _, _, false},
 {ObjectDataType,       "RS_ALLOCATION",       "ALLOCATION", 32,      "Allocation",      "Allocation", _, _, _, false},
@@ -1061,10 +1061,10 @@ bool RSExportPrimitiveType::IsStructureTypeWithRSObject(const clang::Type *T) {
   return RSObjectTypeSeen;
 }
 
-size_t RSExportPrimitiveType::GetSizeInBits(const RSExportPrimitiveType *EPT) {
+size_t RSExportPrimitiveType::GetElementSizeInBits(const RSExportPrimitiveType *EPT) {
   int type = EPT->getType();
   slangAssert((type > DataTypeUnknown && type < DataTypeMax) &&
-              "RSExportPrimitiveType::GetSizeInBits : unknown data type");
+              "RSExportPrimitiveType::GetElementSizeInBits : unknown data type");
   // All RS object types are 256 bits in 64-bit RS.
   if (EPT->isRSObjectType() && EPT->getRSContext()->is64Bit()) {
     return 256;
@@ -1425,7 +1425,7 @@ RSExportConstantArrayType
 }
 
 llvm::Type *RSExportConstantArrayType::convertToLLVMType() const {
-  return llvm::ArrayType::get(mElementType->getLLVMType(), getSize());
+  return llvm::ArrayType::get(mElementType->getLLVMType(), getNumElement());
 }
 
 bool RSExportConstantArrayType::keep() {
@@ -1439,7 +1439,7 @@ bool RSExportConstantArrayType::equals(const RSExportable *E) const {
   CHECK_PARENT_EQUALITY(RSExportType, E);
   const RSExportConstantArrayType *RHS =
       static_cast<const RSExportConstantArrayType*>(E);
-  return ((getSize() == RHS->getSize()) &&
+  return ((getNumElement() == RHS->getNumElement()) &&
           (getElementType()->equals(RHS->getElementType())));
 }
 
@@ -1597,7 +1597,7 @@ void RSExportType::convertToRTD(RSReflectionTypeData *rtd) const {
             const RSExportConstantArrayType* CAT =
               static_cast<const RSExportConstantArrayType*>(this);
             CAT->getElementType()->convertToRTD(rtd);
-            rtd->arraySize = CAT->getSize();
+            rtd->arraySize = CAT->getNumElement();
             return;
         }
     case RSExportType::ExportClassRecord: {
