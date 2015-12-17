@@ -191,7 +191,7 @@ private:
   void genRecordTypeExportVariable(const RSExportVar *EV);
   void genPrivateExportVariable(const std::string &TypeName,
                                 const std::string &VarName);
-  void genSetExportVariable(const std::string &TypeName, const RSExportVar *EV);
+  void genSetExportVariable(const std::string &TypeName, const RSExportVar *EV, unsigned Dimension);
   void genGetExportVariable(const std::string &TypeName,
                             const std::string &VarName);
   void genGetFieldID(const std::string &VarName);

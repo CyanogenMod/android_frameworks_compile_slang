@@ -1292,7 +1292,7 @@ void RSReflectionJava::genPrimitiveTypeExportVariable(const RSExportVar *EV) {
     // be calling setters.
     startFunction(AM_PublicSynchronized, false, "void", "set_" + VarName, 1,
                   TypeName.c_str(), "v");
-    if ((EPT->getSize() < 4) || EV->isUnsigned()) {
+    if ((EPT->getElementSizeInBytes() < 4) || EV->isUnsigned()) {
       // We create/cache a per-type FieldPacker. This allows us to reuse the
       // validation logic (for catching negative inputs from Dalvik, as well
       // as inputs that are too large to be represented in the unsigned type).
@@ -1307,7 +1307,7 @@ void RSReflectionJava::genPrimitiveTypeExportVariable(const RSExportVar *EV) {
       mOut.decreaseIndent();
       mOut.indent() << "} else {\n";
       mOut.increaseIndent();
-      mOut.indent() << FPName << " = new FieldPacker(" << EPT->getSize()
+      mOut.indent() << FPName << " = new FieldPacker(" << EPT->getElementSizeInBytes()
                     << ");\n";
       mOut.decreaseIndent();
       mOut.indent() << "}\n";
@@ -1416,7 +1416,7 @@ void RSReflectionJava::genVectorTypeExportVariable(const RSExportVar *EV) {
   std::string VarName = EV->getName();
 
   genPrivateExportVariable(TypeName, VarName);
-  genSetExportVariable(TypeName, EV);
+  genSetExportVariable(TypeName, EV, 1);
   genGetExportVariable(TypeName, VarName);
   genGetFieldID(VarName);
 }
@@ -1452,15 +1452,16 @@ void RSReflectionJava::genMatrixTypeExportVariable(const RSExportVar *EV) {
 
 void
 RSReflectionJava::genConstantArrayTypeExportVariable(const RSExportVar *EV) {
+  const RSExportType *const ET = EV->getType();
   slangAssert(
-      (EV->getType()->getClass() == RSExportType::ExportClassConstantArray) &&
+      (ET->getClass() == RSExportType::ExportClassConstantArray) &&
       "Variable should be type of constant array here");
 
   std::string TypeName = GetTypeName(EV->getType());
   std::string VarName = EV->getName();
 
   genPrivateExportVariable(TypeName, VarName);
-  genSetExportVariable(TypeName, EV);
+  genSetExportVariable(TypeName, EV, static_cast<const RSExportConstantArrayType *>(ET)->getNumElement());
   genGetExportVariable(TypeName, VarName);
   genGetFieldID(VarName);
 }
@@ -1473,7 +1474,7 @@ void RSReflectionJava::genRecordTypeExportVariable(const RSExportVar *EV) {
   std::string VarName = EV->getName();
 
   genPrivateExportVariable(TypeName, VarName);
-  genSetExportVariable(TypeName, EV);
+  genSetExportVariable(TypeName, EV, 1);
   genGetExportVariable(TypeName, VarName);
   genGetFieldID(VarName);
 }
@@ -1484,8 +1485,10 @@ void RSReflectionJava::genPrivateExportVariable(const std::string &TypeName,
                 << VarName << ";\n";
 }
 
+// Dimension = array element count; otherwise, 1.
 void RSReflectionJava::genSetExportVariable(const std::string &TypeName,
-                                            const RSExportVar *EV) {
+                                            const RSExportVar *EV,
+                                            unsigned Dimension) {
   if (!EV->isConst()) {
     const char *FieldPackerName = "fp";
     std::string VarName = EV->getName();
@@ -1505,7 +1508,7 @@ void RSReflectionJava::genSetExportVariable(const std::string &TypeName,
       // We only have support for one-dimensional array reflection today,
       // but the entry point (i.e. setVar()) takes an array of dimensions.
       mOut.indent() << "int []__dimArr = new int[1];\n";
-      mOut.indent() << "__dimArr[0] = " << ET->getSize() << ";\n";
+      mOut.indent() << "__dimArr[0] = " << Dimension << ";\n";
       mOut.indent() << "setVar(" << RS_EXPORT_VAR_INDEX_PREFIX << VarName
                     << ", " << FieldPackerName << ", " << RS_ELEM_PREFIX
                     << ET->getElementName() << ", __dimArr);\n";
@@ -1601,7 +1604,7 @@ void RSReflectionJava::genPackVarOfType(const RSExportType *ET,
     IndexVarName.append(llvm::utostr_32(Level));
 
     mOut.indent() << "for (int " << IndexVarName << " = 0; " << IndexVarName
-                  << " < " << ECAT->getSize() << "; " << IndexVarName << "++)";
+                  << " < " << ECAT->getNumElement() << "; " << IndexVarName << "++)";
     mOut.startBlock();
 
     ElementVarName.append("[" + IndexVarName + "]");
@@ -1682,11 +1685,11 @@ void RSReflectionJava::genAllocateVarOfType(const RSExportType *T,
     const RSExportType *ElementType = ECAT->getElementType();
 
     mOut.indent() << VarName << " = new " << GetTypeName(ElementType) << "["
-                  << ECAT->getSize() << "];\n";
+                  << ECAT->getNumElement() << "];\n";
 
     // Primitive type element doesn't need allocation code.
     if (ElementType->getClass() != RSExportType::ExportClassPrimitive) {
-      mOut.indent() << "for (int $ct = 0; $ct < " << ECAT->getSize()
+      mOut.indent() << "for (int $ct = 0; $ct < " << ECAT->getNumElement()
                     << "; $ct++)";
       mOut.startBlock();
 
@@ -2147,7 +2150,7 @@ void RSReflectionJavaElementBuilder::genAddElement(const RSExportType *ET,
 
       const RSExportType *ElementType = ECAT->getElementType();
       if (ElementType->getClass() != RSExportType::ExportClassRecord) {
-        genAddElement(ECAT->getElementType(), VarName, ECAT->getSize());
+        genAddElement(ECAT->getElementType(), VarName, ECAT->getNumElement());
       } else {
         std::string NewElementBuilderName(mElementBuilderName);
         NewElementBuilderName.append(1, '_');
@@ -2158,7 +2161,7 @@ void RSReflectionJavaElementBuilder::genAddElement(const RSExportType *ET,
             mRenderScriptVar, mOut, mRSContext, mReflection);
         builder.generate();
 
-        ArraySize = ECAT->getSize();
+        ArraySize = ECAT->getNumElement();
         genAddStatementStart();
         *mOut << NewElementBuilderName << ".create()";
         genAddStatementEnd(VarName, ArraySize);

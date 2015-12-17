@@ -104,7 +104,7 @@ static std::string GetTypeName(const RSExportType *ET, bool PreIdentifier = true
     }
     else {
       std::stringstream ArraySpec;
-      ArraySpec << "[" << CAT->getSize() << "]";
+      ArraySpec << "[" << CAT->getNumElement() << "]";
       return ArraySpec.str();
     }
   }
@@ -821,7 +821,7 @@ void RSReflectionCpp::genGetterAndSetter(const RSExportConstantArrayType *AT,
   stringstream tmp;
   tmp << slot;
 
-  ArraySpec << CAT->getSize();
+  ArraySpec << CAT->getNumElement();
   mOut.indent() << "void set_" << EV->getName() << "(" << GetTypeName(EV->getType()) << " v "
       << GetTypeName(EV->getType(), false) << ")";
   mOut.startBlock();
