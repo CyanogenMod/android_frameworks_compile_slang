@@ -262,7 +262,7 @@ class RSExportType : public RSExportable {
   // If it cannot, this function returns false. Otherwise it returns true.
   // Filterscript has additional restrictions on supported types.
   static bool ValidateType(slang::RSContext *Context, clang::ASTContext &C,
-                           clang::QualType QT, clang::NamedDecl *ND,
+                           clang::QualType QT, const clang::NamedDecl *ND,
                            clang::SourceLocation Loc, unsigned int TargetAPI,
                            bool IsFilterscript, bool IsExtern);
 
@@ -274,7 +274,9 @@ class RSExportType : public RSExportable {
 
   // @T may not be normalized
   static RSExportType *Create(RSContext *Context, const clang::Type *T,
-                              ExportKind EK);
+                              ExportKind EK,
+                              // T is type of VD or of subobject within VD
+                              const clang::VarDecl *VD = nullptr);
   static RSExportType *CreateFromDecl(RSContext *Context,
                                       const clang::VarDecl *VD);
 

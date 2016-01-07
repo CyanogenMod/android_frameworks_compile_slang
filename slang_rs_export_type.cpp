@@ -59,6 +59,7 @@ namespace {
 // TODO: Pull this information out into a separate file.
 static RSReflectionType gReflectionTypes[] = {
 #define _ nullptr
+  //      Category             RsType       RsST           CName         JN     JAEN        CVN       JVN      JP
 {PrimitiveDataType,         "FLOAT_16",     "F16", 16,     "half",   "short",        _,   "Half",   "Half", false},
 {PrimitiveDataType,         "FLOAT_32",     "F32", 32,    "float",   "float",  "float",  "Float",  "Float", false},
 {PrimitiveDataType,         "FLOAT_64",     "F64", 64,   "double",  "double", "double", "Double", "Double", false},
@@ -342,6 +343,10 @@ static const clang::Type *TypeExportableHelper(
 
       return T;
     }
+    case clang::Type::FunctionProto:
+      ReportTypeError(Context, VD, TopLevelRecord,
+                      "function types cannot be exported: '%0'");
+      return nullptr;
     case clang::Type::Pointer: {
       if (TopLevelRecord) {
         ReportTypeError(Context, VD, TopLevelRecord,
@@ -432,7 +437,7 @@ static const clang::Type *TypeExportable(const clang::Type *T,
 }
 
 static bool ValidateRSObjectInVarDecl(slang::RSContext *Context,
-                                      clang::VarDecl *VD, bool InCompositeType,
+                                      const clang::VarDecl *VD, bool InCompositeType,
                                       unsigned int TargetAPI) {
   if (TargetAPI < SLANG_JB_TARGET_API) {
     // Only if we are already in a composite type (like an array or structure).
@@ -476,7 +481,7 @@ static bool ValidateTypeHelper(
     slang::RSContext *Context,
     clang::ASTContext &C,
     const clang::Type *&T,
-    clang::NamedDecl *ND,
+    const clang::NamedDecl *ND,
     clang::SourceLocation Loc,
     llvm::SmallPtrSet<const clang::Type*, 8>& SPS,
     bool InCompositeType,
@@ -495,7 +500,7 @@ static bool ValidateTypeHelper(
   switch (T->getTypeClass()) {
     case clang::Type::Record: {
       if (RSExportPrimitiveType::IsRSObjectType(T)) {
-        clang::VarDecl *VD = (ND ? llvm::dyn_cast<clang::VarDecl>(ND) : nullptr);
+        const clang::VarDecl *VD = (ND ? llvm::dyn_cast<clang::VarDecl>(ND) : nullptr);
         if (VD && !ValidateRSObjectInVarDecl(Context, VD, InCompositeType,
                                              TargetAPI)) {
           return false;
@@ -693,7 +698,7 @@ bool RSExportType::NormalizeType(const clang::Type *&T,
 }
 
 bool RSExportType::ValidateType(slang::RSContext *Context, clang::ASTContext &C,
-                                clang::QualType QT, clang::NamedDecl *ND,
+                                clang::QualType QT, const clang::NamedDecl *ND,
                                 clang::SourceLocation Loc,
                                 unsigned int TargetAPI, bool IsFilterscript,
                                 bool IsExtern) {
@@ -909,9 +914,9 @@ RSExportType *RSExportType::Create(RSContext *Context,
 }
 
 RSExportType *RSExportType::Create(RSContext *Context, const clang::Type *T,
-                                   ExportKind EK) {
+                                   ExportKind EK, const clang::VarDecl *VD) {
   llvm::StringRef TypeName;
-  if (NormalizeType(T, TypeName, Context, nullptr, EK)) {
+  if (NormalizeType(T, TypeName, Context, VD, EK)) {
     return Create(Context, T, TypeName, EK);
   } else {
     return nullptr;
@@ -921,7 +926,7 @@ RSExportType *RSExportType::Create(RSContext *Context, const clang::Type *T,
 RSExportType *RSExportType::CreateFromDecl(RSContext *Context,
                                            const clang::VarDecl *VD) {
   return RSExportType::Create(Context, GetTypeOfDecl(VD),
-                              NotLegacyKernelArgument);
+                              NotLegacyKernelArgument, VD);
 }
 
 size_t RSExportType::getStoreSize() const {
