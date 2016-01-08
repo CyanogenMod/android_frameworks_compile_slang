@@ -622,14 +622,12 @@ static clang::Stmt *ClearArrayRSObject(
   return DestructorLoop;
 }
 
-static unsigned CountRSObjectTypes(clang::ASTContext &C,
-                                   const clang::Type *T,
-                                   clang::SourceLocation Loc) {
+static unsigned CountRSObjectTypes(const clang::Type *T) {
   slangAssert(T);
   unsigned RSObjectCount = 0;
 
   if (T->isArrayType()) {
-    return CountRSObjectTypes(C, T->getArrayElementTypeNoTypeQual(), Loc);
+    return CountRSObjectTypes(T->getArrayElementTypeNoTypeQual());
   }
 
   DataType DT = RSExportPrimitiveType::GetRSSpecificType(T);
@@ -646,7 +644,7 @@ static unsigned CountRSObjectTypes(clang::ASTContext &C,
          FI++) {
       const clang::FieldDecl *FD = *FI;
       const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
-      if (CountRSObjectTypes(C, FT, Loc)) {
+      if (CountRSObjectTypes(FT)) {
         slangAssert(false && "can't have unions with RS object types!");
         return 0;
       }
@@ -665,7 +663,7 @@ static unsigned CountRSObjectTypes(clang::ASTContext &C,
        FI++) {
     const clang::FieldDecl *FD = *FI;
     const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
-    if (CountRSObjectTypes(C, FT, Loc)) {
+    if (CountRSObjectTypes(FT)) {
       // Sub-structs should only count once (as should arrays, etc.)
       RSObjectCount++;
     }
@@ -688,7 +686,7 @@ static clang::Stmt *ClearStructRSObject(
   slangAssert(RSExportPrimitiveType::GetRSSpecificType(BaseType) ==
               DataTypeUnknown);
 
-  unsigned FieldsToDestroy = CountRSObjectTypes(C, BaseType, Loc);
+  unsigned FieldsToDestroy = CountRSObjectTypes(BaseType);
   slangAssert(FieldsToDestroy != 0);
 
   unsigned StmtCount = 0;
@@ -751,7 +749,7 @@ static clang::Stmt *ClearStructRSObject(
                                                      RSObjectMember,
                                                      Loc);
       }
-    } else if (FT->isStructureType() && CountRSObjectTypes(C, FT, Loc)) {
+    } else if (FT->isStructureType() && CountRSObjectTypes(FT)) {
       // In this case, we have a nested struct. We may not end up filling all
       // of the spaces in StmtArray (sub-structs should handle themselves
       // with separate compound statements).
@@ -1025,7 +1023,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
   slangAssert(!RSExportPrimitiveType::IsRSObjectType(T));
 
   // Keep an extra slot for the original copy (memcpy)
-  unsigned FieldsToSet = CountRSObjectTypes(C, T, Loc) + 1;
+  unsigned FieldsToSet = CountRSObjectTypes(T) + 1;
 
   unsigned StmtCount = 0;
   clang::Stmt **StmtArray = new clang::Stmt*[FieldsToSet];
@@ -1044,7 +1042,7 @@ static clang::Stmt *CreateStructRSSetObject(clang::ASTContext &C,
     const clang::Type *FT = RSExportType::GetTypeOfDecl(FD);
     const clang::Type *OrigType = FT;
 
-    if (!CountRSObjectTypes(C, FT, Loc)) {
+    if (!CountRSObjectTypes(FT)) {
       // Skip to next if we don't have any viable RS object types
       continue;
     }
@@ -1488,8 +1486,7 @@ void RSObjectRefCount::VisitDeclStmt(clang::DeclStmt *DS) {
         getCurrentScope()->AppendRSObjectInit(VD, DS, DT, InitExpr);
         // ... but, only add to the list of RS objects if we have some
         // non-matrix RS object fields.
-        if (CountRSObjectTypes(mCtx, VD->getType().getTypePtr(),
-                               VD->getLocation())) {
+        if (CountRSObjectTypes(VD->getType().getTypePtr())) {
           getCurrentScope()->addRSObject(VD);
         }
       }
@@ -1516,7 +1513,7 @@ void RSObjectRefCount::VisitCompoundStmt(clang::CompoundStmt *CS) {
 void RSObjectRefCount::VisitBinAssign(clang::BinaryOperator *AS) {
   clang::QualType QT = AS->getType();
 
-  if (CountRSObjectTypes(mCtx, QT.getTypePtr(), AS->getExprLoc())) {
+  if (CountRSObjectTypes(QT.getTypePtr())) {
     getCurrentScope()->ReplaceRSObjectAssignment(AS);
   }
 }
@@ -1555,7 +1552,7 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
           E = DC->decls_end(); I != E; I++) {
     clang::VarDecl *VD = llvm::dyn_cast<clang::VarDecl>(*I);
     if (VD) {
-      if (CountRSObjectTypes(mCtx, VD->getType().getTypePtr(), loc)) {
+      if (CountRSObjectTypes(VD->getType().getTypePtr())) {
         if (!FD) {
           // Only create FD if we are going to use it.
           FD = clang::FunctionDecl::Create(mCtx, DC, loc, loc, N, T, nullptr,
@@ -1583,6 +1580,10 @@ clang::FunctionDecl *RSObjectRefCount::CreateStaticGlobalDtor() {
   FD->setBody(CS);
 
   return FD;
+}
+
+bool HasRSObjectType(const clang::Type *T) {
+  return CountRSObjectTypes(T) != 0;
 }
 
 }  // namespace slang

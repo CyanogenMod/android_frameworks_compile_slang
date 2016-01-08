@@ -19,6 +19,9 @@
 #include <sstream>
 #include <string>
 
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
+
 #include "clang/Basic/TokenKinds.h"
 
 #include "clang/Lex/LiteralSupport.h"
@@ -135,12 +138,6 @@ class RSReducePragmaHandler : public RSPragmaHandler {
     //   combiner(combinename)
     //   outconverter(outconvertname)
     //   halter(haltname)
-    const char NameReduce[] = "reduce";
-    const char NameInitializer[] = "initializer";
-    const char NameAccumulator[] = "accumulator";
-    const char NameCombiner[] = "combiner";
-    const char NameOutConverter[] = "outconverter";
-    const char NameHalter[] = "halter";
 
     const clang::SourceLocation PragmaLocation = FirstToken.getLocation();
 
@@ -150,12 +147,12 @@ class RSReducePragmaHandler : public RSPragmaHandler {
     // token) and all the "keyword(value)" contributions
     //
     // TODO: Remove halter from initial release
-    KeywordValueMapType KeywordValueMap({std::make_pair(NameReduce, ""),
-                                         std::make_pair(NameInitializer, ""),
-                                         std::make_pair(NameAccumulator, ""),
-                                         std::make_pair(NameCombiner, ""),
-                                         std::make_pair(NameOutConverter, ""),
-                                         std::make_pair(NameHalter, "")});
+    KeywordValueMapType KeywordValueMap({std::make_pair(RSExportReduceNew::KeyReduce, ""),
+                                         std::make_pair(RSExportReduceNew::KeyInitializer, ""),
+                                         std::make_pair(RSExportReduceNew::KeyAccumulator, ""),
+                                         std::make_pair(RSExportReduceNew::KeyCombiner, ""),
+                                         std::make_pair(RSExportReduceNew::KeyOutConverter, ""),
+                                         std::make_pair(RSExportReduceNew::KeyHalter, "")});
     while (PragmaToken.is(clang::tok::identifier)) {
       if (!ProcessKeywordAndValue(PP, PragmaToken, KeywordValueMap))
         return;
@@ -171,19 +168,12 @@ class RSReducePragmaHandler : public RSPragmaHandler {
       return;
     }
 
-    // Make sure we have an initializer and an accumulator
-    if (KeywordValueMap[NameInitializer].empty()) {
-      PP.Diag(PragmaLocation, PP.getDiagnostics().getCustomDiagID(
-                                  clang::DiagnosticsEngine::Error,
-                                  "missing '%0' for '#pragma rs %1'"))
-          << NameInitializer << getName();
-      return;
-    }
-    if (KeywordValueMap[NameAccumulator].empty()) {
+    // Make sure we have an accumulator
+    if (KeywordValueMap[RSExportReduceNew::KeyAccumulator].empty()) {
       PP.Diag(PragmaLocation, PP.getDiagnostics().getCustomDiagID(
                                 clang::DiagnosticsEngine::Error,
                                 "missing '%0' for '#pragma rs %1'"))
-          << NameAccumulator << getName();
+          << RSExportReduceNew::KeyAccumulator << getName();
       return;
     }
 
@@ -194,12 +184,12 @@ class RSReducePragmaHandler : public RSPragmaHandler {
     for (auto I = mContext->export_reduce_new_begin(),
               E = mContext->export_reduce_new_end();
          I != E; ++I) {
-      if ((*I)->getNameReduce() == KeywordValueMap[NameReduce]) {
+      if ((*I)->getNameReduce() == KeywordValueMap[RSExportReduceNew::KeyReduce]) {
         PP.Diag(PragmaLocation, PP.getDiagnostics().getCustomDiagID(
                                   clang::DiagnosticsEngine::Error,
                                   "reduction kernel '%0' declared multiple "
                                   "times (first one is at %1)"))
-            << KeywordValueMap[NameReduce]
+            << KeywordValueMap[RSExportReduceNew::KeyReduce]
             << (*I)->getLocation().printToString(PP.getSourceManager());
         return;
       }
@@ -215,17 +205,45 @@ class RSReducePragmaHandler : public RSPragmaHandler {
       return;
     }
 
+    // Handle backward reference from pragma (see Backend::HandleTopLevelDecl for forward reference).
+    MarkUsed(PP, KeywordValueMap[RSExportReduceNew::KeyInitializer]);
+    MarkUsed(PP, KeywordValueMap[RSExportReduceNew::KeyAccumulator]);
+    MarkUsed(PP, KeywordValueMap[RSExportReduceNew::KeyCombiner]);
+    MarkUsed(PP, KeywordValueMap[RSExportReduceNew::KeyOutConverter]);
+    MarkUsed(PP, KeywordValueMap[RSExportReduceNew::KeyHalter]);
+
     mContext->addExportReduceNew(RSExportReduceNew::Create(mContext, PragmaLocation,
-                                                           KeywordValueMap[NameReduce],
-                                                           KeywordValueMap[NameInitializer],
-                                                           KeywordValueMap[NameAccumulator],
-                                                           KeywordValueMap[NameCombiner],
-                                                           KeywordValueMap[NameOutConverter],
-                                                           KeywordValueMap[NameHalter]));
+                                                           KeywordValueMap[RSExportReduceNew::KeyReduce],
+                                                           KeywordValueMap[RSExportReduceNew::KeyInitializer],
+                                                           KeywordValueMap[RSExportReduceNew::KeyAccumulator],
+                                                           KeywordValueMap[RSExportReduceNew::KeyCombiner],
+                                                           KeywordValueMap[RSExportReduceNew::KeyOutConverter],
+                                                           KeywordValueMap[RSExportReduceNew::KeyHalter]));
   }
 
  private:
   typedef std::map<std::string, std::string> KeywordValueMapType;
+
+  void MarkUsed(clang::Preprocessor &PP, const std::string &FunctionName) {
+    if (FunctionName.empty())
+      return;
+
+    clang::ASTContext &ASTC = mContext->getASTContext();
+    clang::TranslationUnitDecl *TUDecl = ASTC.getTranslationUnitDecl();
+    slangAssert(TUDecl);
+    if (const clang::IdentifierInfo *II = PP.getIdentifierInfo(FunctionName)) {
+      for (auto Decl : TUDecl->lookup(II)) {
+        clang::FunctionDecl *FDecl = Decl->getAsFunction();
+        if (!FDecl || !FDecl->isThisDeclarationADefinition())
+          continue;
+        if (!FDecl->hasAttr<clang::UsedAttr>()) {
+          // Handle backward reference from pragma (see RSReducePragmaHandler::HandlePragma
+          // for forward reference).
+          FDecl->addAttr(clang::UsedAttr::CreateImplicit(ASTC));
+        }
+      }
+    }
+  }
 
   // Return comma-separated list of all keys in the map
   static std::string ListKeywords(const KeywordValueMapType &KeywordValueMap) {
@@ -552,7 +570,7 @@ void AddPragmaHandlers(clang::Preprocessor &PP, RSContext *RsContext) {
 
   // For #pragma rs reduce
   PP.AddPragmaHandler(
-      "rs", new RSReducePragmaHandler("reduce", RsContext));
+      "rs", new RSReducePragmaHandler(RSExportReduceNew::KeyReduce, RsContext));
 
   // For #pragma rs set_reflect_license
   PP.AddPragmaHandler(
