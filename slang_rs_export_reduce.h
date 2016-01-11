@@ -94,6 +94,32 @@ class RSExportReduceNew : public RSExportable {
   std::string mNameOutConverter;
   std::string mNameHalter;
 
+  // constituent function identity
+  enum FnIdent {
+    FN_IDENT_INITIALIZER,
+    FN_IDENT_ACCUMULATOR,
+    FN_IDENT_COMBINER,
+    FN_IDENT_OUT_CONVERTER,
+    FN_IDENT_HALTER
+  };
+  static const char *getKey(FnIdent Kind);
+
+  // signature information for accumulator function
+  unsigned int mAccumulatorSignatureMetadata;
+
+  // size of accumulator data type (compType), in bytes
+  unsigned int mAccumulatorTypeSize;
+
+  // input information for accumulator function
+  static const int kAccumulatorInsSmallSize = 4;
+  typedef llvm::SmallVectorImpl<const clang::ParmVarDecl*> InVec;
+  llvm::SmallVector<const clang::ParmVarDecl*, kAccumulatorInsSmallSize> mAccumulatorIns;
+  typedef llvm::SmallVectorImpl<const RSExportType*> InTypeVec;
+  llvm::SmallVector<const RSExportType*, kAccumulatorInsSmallSize> mAccumulatorInTypes;
+
+  // result information
+  RSExportType *mResultType;
+
   RSExportReduceNew(RSContext *Context,
                     const clang::SourceLocation Location,
                     const llvm::StringRef &NameReduce,
@@ -109,13 +135,44 @@ class RSExportReduceNew : public RSExportable {
       mNameAccumulator(NameAccumulator),
       mNameCombiner(NameCombiner),
       mNameOutConverter(NameOutConverter),
-      mNameHalter(NameHalter) {
+      mNameHalter(NameHalter),
+      mAccumulatorSignatureMetadata(0),
+      mAccumulatorTypeSize(0),
+      mResultType(nullptr) {
   }
 
   RSExportReduceNew(const RSExportReduceNew &) = delete;
   void operator=(const RSExportReduceNew &) = delete;
 
+  struct StateOfAnalyzeTranslationUnit;
+
+  static void notOk(StateOfAnalyzeTranslationUnit &S, FnIdent Kind);
+
+  static void checkPointeeConstQualified(StateOfAnalyzeTranslationUnit &S,
+                                         FnIdent Kind, const llvm::StringRef &Name,
+                                         const clang::ParmVarDecl *Param, bool ExpectedQualification);
+
+  static void checkVoidReturn(StateOfAnalyzeTranslationUnit &S, FnIdent Kind, clang::FunctionDecl *Fn);
+
+  clang::FunctionDecl *lookupFunction(StateOfAnalyzeTranslationUnit &S,
+                                      const char *Kind, const llvm::StringRef &Name);
+
+  void analyzeInitializer(StateOfAnalyzeTranslationUnit &S);
+  void analyzeAccumulator(StateOfAnalyzeTranslationUnit &S);
+  void analyzeCombiner(StateOfAnalyzeTranslationUnit &S);
+  void analyzeOutConverter(StateOfAnalyzeTranslationUnit &S);
+  void analyzeHalter(StateOfAnalyzeTranslationUnit &S);
+  void analyzeResultType(StateOfAnalyzeTranslationUnit &S);
+
  public:
+
+  static const char KeyReduce[];
+  static const char KeyInitializer[];
+  static const char KeyAccumulator[];
+  static const char KeyCombiner[];
+  static const char KeyOutConverter[];
+  static const char KeyHalter[];
+
   static RSExportReduceNew *Create(RSContext *Context,
                                    const clang::SourceLocation Location,
                                    const llvm::StringRef &NameReduce,
@@ -133,6 +190,20 @@ class RSExportReduceNew : public RSExportable {
   const std::string &getNameCombiner() const { return mNameCombiner; }
   const std::string &getNameOutConverter() const { return mNameOutConverter; }
   const std::string &getNameHalter() const { return mNameHalter; }
+
+  unsigned int getAccumulatorSignatureMetadata() const { return mAccumulatorSignatureMetadata; }
+
+  unsigned int getAccumulatorTypeSize() const { return mAccumulatorTypeSize; }
+
+  const InVec &getAccumulatorIns() const { return mAccumulatorIns; }
+  const InTypeVec &getAccumulatorInTypes() const { return mAccumulatorInTypes; }
+
+  const RSExportType *getResultType() const { return mResultType; }
+
+  // Does one of this reduction's constituent function names match Candidate?
+  bool matchName(const llvm::StringRef &Candidate) const;
+
+  bool analyzeTranslationUnit();
 };  // RSExportReduceNew
 
 }  // namespace slang

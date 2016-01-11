@@ -32,6 +32,9 @@ namespace clang {
 
 namespace slang {
 
+// Recursive check
+bool HasRSObjectType(const clang::Type *T);
+
 // This class provides the overall reference counting mechanism for handling
 // local variables of RS object types (rs_font, rs_allocation, ...). This
 // class ensures that appropriate functions (rsSetObject, rsClearObject) are

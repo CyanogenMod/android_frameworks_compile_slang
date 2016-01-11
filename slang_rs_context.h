@@ -21,6 +21,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "clang/Lex/Preprocessor.h"
@@ -44,6 +45,7 @@ namespace clang {
   class QualType;
   class SourceManager;
   class TypeDecl;
+  class FunctionDecl;
 }   // namespace clang
 
 namespace slang {
@@ -67,6 +69,10 @@ class RSContext {
   typedef std::vector<RSExportForEach*> ExportForEachVector;
   typedef std::list<RSExportReduce*> ExportReduceList;
   typedef std::list<RSExportReduceNew*> ExportReduceNewList;
+
+  // WARNING: Sorted by pointer value, resulting in unpredictable order
+  typedef std::unordered_set<RSExportType*> ExportReduceNewResultTypeSet;
+
   typedef llvm::StringMap<RSExportType*> ExportTypeMap;
 
  private:
@@ -111,6 +117,7 @@ class RSContext {
   ExportForEachVector mExportForEach;
   ExportReduceList mExportReduce;
   ExportReduceNewList mExportReduceNew;
+  ExportReduceNewResultTypeSet mExportReduceNewResultType;
   ExportTypeMap mExportTypes;
 
   clang::QualType mAllocationType;
@@ -243,6 +250,18 @@ class RSContext {
   inline bool hasExportReduceNew() const { return !mExportReduceNew.empty(); }
   void addExportReduceNew(RSExportReduceNew *ReduceNew) {
     mExportReduceNew.push_back(ReduceNew);
+  }
+  bool processReducePragmas();
+  bool isReferencedByReducePragma(const clang::FunctionDecl *FD) const;
+
+  // If the type has already been inserted, has no effect.
+  void insertExportReduceNewResultType(RSExportType *Type) { mExportReduceNewResultType.insert(Type); }
+
+  template <class Compare>
+  std::vector<RSExportType *> getReduceNewResultTypesByName(Compare Comp) const {
+    std::vector<RSExportType *> Return(mExportReduceNewResultType.begin(), mExportReduceNewResultType.end());
+    std::sort(Return.begin(), Return.end(), Comp);
+    return Return;
   }
 
   typedef ExportTypeMap::iterator export_type_iterator;

@@ -18,3 +18,9 @@
 #pragma rs reduce(baz) accumulator(baccum) initializer(binit) accumulator(baccum2)
 #pragma rs reduce(goo) something(wrong)
 #pragma rs reduce(goo) initializer(gi) accumulator(ga) (
+
+static void init(int *accum) { }
+static void accum(int *accum, int val) { }
+
+static void binit(int *accum) { }
+static void baccum(int *accum, int val) { }
