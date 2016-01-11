@@ -1,0 +1,61 @@
+reduce_general_bad_function.rs:17:13: error: initializer init0() for '#pragma rs reduce(init0)' (reduce_general_bad_function.rs:16:12) must take exactly 1 parameter (found 0)
+reduce_general_bad_function.rs:21:13: error: initializer init2() for '#pragma rs reduce(init2)' (reduce_general_bad_function.rs:20:12) must take exactly 1 parameter (found 2)
+reduce_general_bad_function.rs:25:13: error: initializer init_special1() for '#pragma rs reduce(init_special1)' (reduce_general_bad_function.rs:24:12) cannot take special parameter 'x'
+reduce_general_bad_function.rs:29:13: error: initializer init2_special1() for '#pragma rs reduce(init2_special1)' (reduce_general_bad_function.rs:28:12) must take exactly 1 parameter (found 2)
+reduce_general_bad_function.rs:33:13: error: initializer init2_special0() for '#pragma rs reduce(init2_special0)' (reduce_general_bad_function.rs:32:12) must take exactly 1 parameter (found 2)
+reduce_general_bad_function.rs:37:13: error: initializer init_noptr() for '#pragma rs reduce(init_noptr)' (reduce_general_bad_function.rs:36:12) parameter 'a' must be of pointer type not 'int'
+reduce_general_bad_function.rs:44:12: error: duplicate function definition for 'initializer(init_dup)' for '#pragma rs reduce(init_dup)' (reduce_general_bad_function.rs:45:43, reduce_general_bad_function.rs:46:43)
+reduce_general_bad_function.rs:49:12: error: could not find function definition for 'initializer(init_missing)' for '#pragma rs reduce(init_missing)'
+reduce_general_bad_function.rs:53:6: error: initializer init_nonstatic() for '#pragma rs reduce(init_nonstatic)' (reduce_general_bad_function.rs:52:12) must be static
+reduce_general_bad_function.rs:57:12: error: initializer init_nonvoid() for '#pragma rs reduce(init_nonvoid)' (reduce_general_bad_function.rs:56:12) must return void not 'int'
+reduce_general_bad_function.rs:61:35: error: initializer init_const() for '#pragma rs reduce(init_const)' (reduce_general_bad_function.rs:60:12) parameter 'accum' (type 'const int *') must not point to const-qualified type
+reduce_general_bad_function.rs:73:13: error: accumulator accum0() for '#pragma rs reduce(accum0)' (reduce_general_bad_function.rs:72:12) must take at least 2 parameters
+reduce_general_bad_function.rs:77:13: error: accumulator accum1() for '#pragma rs reduce(accum1)' (reduce_general_bad_function.rs:76:12) must take at least 2 parameters
+reduce_general_bad_function.rs:81:13: error: accumulator accum_noptr() for '#pragma rs reduce(accum_noptr)' (reduce_general_bad_function.rs:80:12) parameter 'accum' must be of pointer type not 'int'
+reduce_general_bad_function.rs:86:13: error: accumulator avi_accum() for '#pragma rs reduce(accum_vs_init)' (reduce_general_bad_function.rs:84:12) parameter 'accum' (type 'double *') and initializer avi_init() parameter 'accum' (type 'int *') must be pointers to the same type
+reduce_general_bad_function.rs:90:13: error: accumulator accum_special() for '#pragma rs reduce(accum_special)' (reduce_general_bad_function.rs:89:12) must have at least 1 input ('x' is a special parameter)
+reduce_general_bad_function.rs:94:41: error: accumulator accum_ptr() for '#pragma rs reduce(accum_ptr)' (reduce_general_bad_function.rs:93:12) parameter 'val' (type 'char *') must not be a pointer
+reduce_general_bad_function.rs:100:45: error: accumulator accum_arr() for '#pragma rs reduce(accum_arr)' (reduce_general_bad_function.rs:98:12) parameter 'val' (type 'char *') must not be a pointer
+reduce_general_bad_function.rs:105:55: error: accumulator accum_obj() for '#pragma rs reduce(accum_obj)' (reduce_general_bad_function.rs:104:12) parameter 'elem' (type 'struct rs_element') must not contain an object type
+reduce_general_bad_function.rs:113:12: error: duplicate function definition for 'accumulator(accum_dup)' for '#pragma rs reduce(accum_dup)' (reduce_general_bad_function.rs:114:43, reduce_general_bad_function.rs:115:43)
+reduce_general_bad_function.rs:118:12: error: could not find function definition for 'accumulator(accum_missing)' for '#pragma rs reduce(accum_missing)'
+reduce_general_bad_function.rs:122:6: error: accumulator accum_nonstatic() for '#pragma rs reduce(accum_nonstatic)' (reduce_general_bad_function.rs:121:12) must be static
+reduce_general_bad_function.rs:126:12: error: accumulator accum_nonvoid() for '#pragma rs reduce(accum_nonvoid)' (reduce_general_bad_function.rs:125:12) must return void not 'int'
+reduce_general_bad_function.rs:130:36: error: accumulator accum_const() for '#pragma rs reduce(accum_const)' (reduce_general_bad_function.rs:129:12) parameter 'accum' (type 'const int *') must not point to const-qualified type
+reduce_general_bad_function.rs:142:13: error: combiner comb0() for '#pragma rs reduce(comb0)' (reduce_general_bad_function.rs:141:12) must take exactly 2 parameters (found 0)
+reduce_general_bad_function.rs:146:13: error: combiner comb1() for '#pragma rs reduce(comb1)' (reduce_general_bad_function.rs:145:12) must take exactly 2 parameters (found 1)
+reduce_general_bad_function.rs:150:13: error: combiner comb3() for '#pragma rs reduce(comb3)' (reduce_general_bad_function.rs:149:12) must take exactly 2 parameters (found 3)
+reduce_general_bad_function.rs:155:13: error: combiner cva_comb() for '#pragma rs reduce(comb_vs_accum)' (reduce_general_bad_function.rs:153:12) parameter 'accum' (type 'unsigned int *') and accumulator cva_accum() parameter 'accum' (type 'int *') must be pointers to the same type
+reduce_general_bad_function.rs:155:13: error: combiner cva_comb() for '#pragma rs reduce(comb_vs_accum)' (reduce_general_bad_function.rs:153:12) parameter 'other' (type 'const unsigned int *') and accumulator cva_accum() parameter 'accum' (type 'int *') must be pointers to the same type
+reduce_general_bad_function.rs:159:13: error: accumulator accum_2in() for '#pragma rs reduce(accum_2in)' (reduce_general_bad_function.rs:158:12) must have exactly 1 input and no special parameters in order for the combiner to be omitted
+reduce_general_bad_function.rs:163:13: error: accumulator accum_special_1in() for '#pragma rs reduce(accum_special_1in)' (reduce_general_bad_function.rs:162:12) must have exactly 1 input and no special parameters in order for the combiner to be omitted
+reduce_general_bad_function.rs:167:13: error: accumulator accum_types() for '#pragma rs reduce(accum_types)' (reduce_general_bad_function.rs:166:12) parameter 'accum' (type 'int *') must be pointer to the type of parameter 'val' (type 'unsigned int') in order for the combiner to be omitted
+reduce_general_bad_function.rs:174:12: error: duplicate function definition for 'combiner(comb_dup)' for '#pragma rs reduce(comb_dup)' (reduce_general_bad_function.rs:175:43, reduce_general_bad_function.rs:176:43)
+reduce_general_bad_function.rs:179:12: error: could not find function definition for 'combiner(comb_missing)' for '#pragma rs reduce(comb_missing)'
+reduce_general_bad_function.rs:183:6: error: combiner comb_nonstatic() for '#pragma rs reduce(comb_nonstatic)' (reduce_general_bad_function.rs:182:12) must be static
+reduce_general_bad_function.rs:187:12: error: combiner comb_nonvoid() for '#pragma rs reduce(comb_nonvoid)' (reduce_general_bad_function.rs:186:12) must return void not 'int'
+reduce_general_bad_function.rs:191:35: error: combiner comb_const() for '#pragma rs reduce(comb_const)' (reduce_general_bad_function.rs:190:12) parameter 'accum' (type 'const int *') must not point to const-qualified type
+reduce_general_bad_function.rs:191:47: error: combiner comb_const() for '#pragma rs reduce(comb_const)' (reduce_general_bad_function.rs:190:12) parameter 'other' (type 'int *') must point to const-qualified type
+reduce_general_bad_function.rs:203:13: error: outconverter out0() for '#pragma rs reduce(out0)' (reduce_general_bad_function.rs:202:12) must take exactly 2 parameters (found 0)
+reduce_general_bad_function.rs:207:13: error: outconverter out1() for '#pragma rs reduce(out1)' (reduce_general_bad_function.rs:206:12) must take exactly 2 parameters (found 1)
+reduce_general_bad_function.rs:211:13: error: outconverter out3() for '#pragma rs reduce(out3)' (reduce_general_bad_function.rs:210:12) must take exactly 2 parameters (found 3)
+reduce_general_bad_function.rs:215:13: error: outconverter out_special() for '#pragma rs reduce(out_special)' (reduce_general_bad_function.rs:214:12) cannot take special parameter 'y'
+reduce_general_bad_function.rs:219:13: error: outconverter out_ptr1() for '#pragma rs reduce(out_ptr1)' (reduce_general_bad_function.rs:218:12) parameter 'out' must be of pointer type not 'int'
+reduce_general_bad_function.rs:223:13: error: outconverter out_ptr2() for '#pragma rs reduce(out_ptr2)' (reduce_general_bad_function.rs:222:12) parameter 'val' must be of pointer type not 'const int'
+reduce_general_bad_function.rs:227:13: error: outconverter ova_out() for '#pragma rs reduce(out_vs_accum)' (reduce_general_bad_function.rs:226:12) parameter 'val' (type 'const double *') and accumulator AccumInt() parameter 'accum' (type 'int *') must be pointers to the same type
+reduce_general_bad_function.rs:234:12: error: duplicate function definition for 'outconverter(out_dup)' for '#pragma rs reduce(out_dup)' (reduce_general_bad_function.rs:235:43, reduce_general_bad_function.rs:236:43)
+reduce_general_bad_function.rs:239:12: error: could not find function definition for 'outconverter(out_missing)' for '#pragma rs reduce(out_missing)'
+reduce_general_bad_function.rs:243:6: error: outconverter out_nonstatic() for '#pragma rs reduce(out_nonstatic)' (reduce_general_bad_function.rs:242:12) must be static
+reduce_general_bad_function.rs:247:12: error: outconverter out_nonvoid() for '#pragma rs reduce(out_nonvoid)' (reduce_general_bad_function.rs:246:12) must return void not 'int'
+reduce_general_bad_function.rs:251:34: error: outconverter out_const() for '#pragma rs reduce(out_const)' (reduce_general_bad_function.rs:250:12) parameter 'out' (type 'const int *') must not point to const-qualified type
+reduce_general_bad_function.rs:251:44: error: outconverter out_const() for '#pragma rs reduce(out_const)' (reduce_general_bad_function.rs:250:12) parameter 'val' (type 'int *') must point to const-qualified type
+reduce_general_bad_function.rs:263:13: error: halter halt_void() for '#pragma rs reduce(halt_void)' (reduce_general_bad_function.rs:262:12) must return bool not 'void'
+reduce_general_bad_function.rs:267:12: error: halter halt_int() for '#pragma rs reduce(halt_int)' (reduce_general_bad_function.rs:266:12) must return bool not 'int'
+reduce_general_bad_function.rs:271:13: error: halter halt0() for '#pragma rs reduce(halt0)' (reduce_general_bad_function.rs:270:12) must take exactly 1 parameter (found 0)
+reduce_general_bad_function.rs:275:13: error: halter halt2() for '#pragma rs reduce(halt2)' (reduce_general_bad_function.rs:274:12) must take exactly 1 parameter (found 2)
+reduce_general_bad_function.rs:279:13: error: halter halt_special() for '#pragma rs reduce(halt_special)' (reduce_general_bad_function.rs:278:12) cannot take special parameter 'context'
+reduce_general_bad_function.rs:283:13: error: halter hva_halt() for '#pragma rs reduce(halt_vs_accum)' (reduce_general_bad_function.rs:282:12) parameter 'accum' (type 'const unsigned int *') and accumulator AccumInt() parameter 'accum' (type 'int *') must be pointers to the same type
+reduce_general_bad_function.rs:290:12: error: duplicate function definition for 'halter(halt_dup)' for '#pragma rs reduce(halt_dup)' (reduce_general_bad_function.rs:291:43, reduce_general_bad_function.rs:292:43)
+reduce_general_bad_function.rs:295:12: error: could not find function definition for 'halter(halt_missing)' for '#pragma rs reduce(halt_missing)'
+reduce_general_bad_function.rs:299:6: error: halter halt_nonstatic() for '#pragma rs reduce(halt_nonstatic)' (reduce_general_bad_function.rs:298:12) must be static
+reduce_general_bad_function.rs:303:29: error: halter halt_const() for '#pragma rs reduce(halt_const)' (reduce_general_bad_function.rs:302:12) parameter 'accum' (type 'int *') must point to const-qualified type

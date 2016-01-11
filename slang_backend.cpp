@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclGroup.h"
 
@@ -420,22 +421,28 @@ bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
 
   for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; I++) {
     clang::FunctionDecl *FD = llvm::dyn_cast<clang::FunctionDecl>(*I);
-    // Process any non-static function declarations
-    if (FD && FD->isGlobal()) {
-      // Check that we don't have any array parameters being misintrepeted as
-      // kernel pointers due to the C type system's array to pointer decay.
-      size_t numParams = FD->getNumParams();
-      for (size_t i = 0; i < numParams; i++) {
-        const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
-        clang::QualType QT = PVD->getOriginalType();
-        if (QT->isArrayType()) {
-          mContext->ReportError(
-              PVD->getTypeSpecStartLoc(),
-              "exported function parameters may not have array type: %0")
-              << QT;
-        }
+    if (FD) {
+      if (!FD->hasAttr<clang::UsedAttr>() && mContext->isReferencedByReducePragma(FD)) {
+        // Handle forward reference from pragma (see RSReducePragmaHandler::HandlePragma
+        // for backward reference).
+        FD->addAttr(clang::UsedAttr::CreateImplicit(mContext->getASTContext()));
       }
-      AnnotateFunction(FD);
+      if (FD->isGlobal()) {
+        // Check that we don't have any array parameters being misinterpreted as
+        // kernel pointers due to the C type system's array to pointer decay.
+        size_t numParams = FD->getNumParams();
+        for (size_t i = 0; i < numParams; i++) {
+          const clang::ParmVarDecl *PVD = FD->getParamDecl(i);
+          clang::QualType QT = PVD->getOriginalType();
+          if (QT->isArrayType()) {
+            mContext->ReportError(
+                PVD->getTypeSpecStartLoc(),
+                "exported function parameters may not have array type: %0")
+                << QT;
+          }
+        }
+        AnnotateFunction(FD);
+      }
     }
 
     if (getTargetAPI() == SLANG_DEVELOPMENT_TARGET_API) {
@@ -460,6 +467,9 @@ bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
 
 void Backend::HandleTranslationUnitPre(clang::ASTContext &C) {
   clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
+
+  if (!mContext->processReducePragmas())
+    return;
 
   // If we have an invalid RS/FS AST, don't check further.
   if (!mASTChecker.Validate()) {
@@ -825,20 +835,24 @@ void Backend::dumpExportReduceNewInfo(llvm::Module *M) {
        I != E; ++I) {
     ExportReduceNewInfo.clear();
 
-    addString(0, (*I)->getNameReduce());
-    addString(1, (*I)->getNameInitializer());
+    int Idx = 0;
+
+    addString(Idx++, (*I)->getNameReduce());
+
+    addOperand(Idx++, llvm::MDString::get(mLLVMContext, llvm::utostr_32((*I)->getAccumulatorTypeSize())));
 
     llvm::SmallVector<llvm::Metadata *, 2> Accumulator;
     Accumulator.push_back(
       llvm::MDString::get(mLLVMContext, (*I)->getNameAccumulator()));
     Accumulator.push_back(llvm::MDString::get(
       mLLVMContext,
-      llvm::utostr_32(0))); // TODO: emit actual accumulator signature bits
-    addOperand(2, llvm::MDTuple::get(mLLVMContext, Accumulator));
+      llvm::utostr_32((*I)->getAccumulatorSignatureMetadata())));
+    addOperand(Idx++, llvm::MDTuple::get(mLLVMContext, Accumulator));
 
-    addString(3, (*I)->getNameCombiner(), false);
-    addString(4, (*I)->getNameOutConverter(), false);
-    addString(5, (*I)->getNameHalter(), false);
+    addString(Idx++, (*I)->getNameInitializer(), false);
+    addString(Idx++, (*I)->getNameCombiner(), false);
+    addString(Idx++, (*I)->getNameOutConverter(), false);
+    addString(Idx++, (*I)->getNameHalter(), false);
 
     mExportReduceNewMetadata->addOperand(
       llvm::MDTuple::get(mLLVMContext, ExportReduceNewInfo));
@@ -910,9 +924,8 @@ void Backend::HandleTranslationUnitPost(llvm::Module *M) {
     M->setDataLayout("e-p:32:32-i64:64-v128:64:128-n32-S64");
   }
 
-  if (!mContext->processExports()) {
+  if (!mContext->processExports())
     return;
-  }
 
   if (mContext->hasExportVar())
     dumpExportVarInfo(M);

@@ -110,11 +110,7 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     return true;
   }
 
-  if (FD->getStorageClass() != clang::SC_None) {
-    fprintf(stderr, "RSContext::processExportFunc : cannot export extern or "
-                    "static function '%s'\n", FD->getName().str().c_str());
-    return false;
-  }
+  slangAssert(FD->getStorageClass() == clang::SC_None);
 
   // Specialized function
   if (RSSpecialFunc::isSpecialRSFunc(mTargetAPI, FD)) {
@@ -294,6 +290,28 @@ bool RSContext::processExports() {
   }
 
   return valid;
+}
+
+bool RSContext::processReducePragmas() {
+  bool valid = true;
+  for (auto I = export_reduce_new_begin(), E = export_reduce_new_end(); I != E; ++I) {
+    if (! (*I)->analyzeTranslationUnit())
+      valid = false;
+  }
+  return valid;
+}
+
+bool RSContext::isReferencedByReducePragma(const clang::FunctionDecl *FD) const {
+  // This is an inefficient linear search.  If this turns out to be a
+  // problem in practice, then processReducePragmas() could build a
+  // set or hash table or something similar containing all function
+  // names mentioned in a reduce pragma and searchable in O(c) or
+  // O(log(n)) time rather than the currently-implemented O(n) search.
+  for (auto I = export_reduce_new_begin(), E = export_reduce_new_end(); I != E; ++I) {
+    if ((*I)->matchName(FD->getName()))
+      return true;
+  }
+  return false;
 }
 
 bool RSContext::insertExportType(const llvm::StringRef &TypeName,
