@@ -257,9 +257,10 @@ class RSContext {
   // If the type has already been inserted, has no effect.
   void insertExportReduceNewResultType(RSExportType *Type) { mExportReduceNewResultType.insert(Type); }
 
-  template <class Compare>
-  std::vector<RSExportType *> getReduceNewResultTypesByName(Compare Comp) const {
-    std::vector<RSExportType *> Return(mExportReduceNewResultType.begin(), mExportReduceNewResultType.end());
+  template <class FilterIn, class Compare>
+  std::vector<RSExportType *> getReduceNewResultTypes(FilterIn Filt, Compare Comp) const {
+    std::vector<RSExportType *> Return;
+    std::copy_if(mExportReduceNewResultType.begin(), mExportReduceNewResultType.end(), std::back_inserter(Return), Filt);
     std::sort(Return.begin(), Return.end(), Comp);
     return Return;
   }
