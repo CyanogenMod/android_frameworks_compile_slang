@@ -366,6 +366,7 @@ void Backend::AnnotateFunction(clang::FunctionDecl *FD) {
       FD->hasBody() &&
       !Slang::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr)) {
     mRefCount.Init();
+    mRefCount.SetDeclContext(FD);
     mRefCount.Visit(FD->getBody());
   }
 }

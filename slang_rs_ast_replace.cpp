@@ -87,6 +87,18 @@ void RSASTReplace::VisitCaseStmt(clang::CaseStmt *CS) {
   }
 }
 
+void RSASTReplace::VisitDeclStmt(clang::DeclStmt* DS) {
+  VisitStmt(DS);
+  for (clang::Decl* D : DS->decls()) {
+    clang::VarDecl* VD;
+    if ((VD = llvm::dyn_cast<clang::VarDecl>(D))) {
+      if (matchesExpr(VD->getInit())) {
+        VD->setInit(mNewExpr);
+      }
+    }
+  }
+}
+
 void RSASTReplace::VisitDefaultStmt(clang::DefaultStmt *DS) {
   if (matchesStmt(DS->getSubStmt())) {
     DS->setSubStmt(mNewStmt);
