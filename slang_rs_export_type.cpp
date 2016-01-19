@@ -43,6 +43,7 @@ namespace {
 
 // For the data types we support:
 //  Category      - data type category
+//  SName         - "common name" in script (C99)
 //  RsType        - element name in RenderScript
 //  RsShortType   - short element name in RenderScript
 //  SizeInBits    - size in bits
@@ -59,41 +60,41 @@ namespace {
 // TODO: Pull this information out into a separate file.
 static RSReflectionType gReflectionTypes[] = {
 #define _ nullptr
-  //      Category             RsType       RsST           CName         JN     JAEN        CVN       JVN      JP
-{PrimitiveDataType,         "FLOAT_16",     "F16", 16,     "half",   "short",        _,   "Half",   "Half", false},
-{PrimitiveDataType,         "FLOAT_32",     "F32", 32,    "float",   "float",  "float",  "Float",  "Float", false},
-{PrimitiveDataType,         "FLOAT_64",     "F64", 64,   "double",  "double", "double", "Double", "Double", false},
-{PrimitiveDataType,         "SIGNED_8",      "I8",  8,   "int8_t",    "byte",   "byte",   "Byte",   "Byte", false},
-{PrimitiveDataType,        "SIGNED_16",     "I16", 16,  "int16_t",   "short",  "short",  "Short",  "Short", false},
-{PrimitiveDataType,        "SIGNED_32",     "I32", 32,  "int32_t",     "int",    "int",    "Int",    "Int", false},
-{PrimitiveDataType,        "SIGNED_64",     "I64", 64,  "int64_t",    "long",   "long",   "Long",   "Long", false},
-{PrimitiveDataType,       "UNSIGNED_8",      "U8",  8,  "uint8_t",   "short",   "byte",  "UByte",  "Short",  true},
-{PrimitiveDataType,      "UNSIGNED_16",     "U16", 16, "uint16_t",     "int",  "short", "UShort",    "Int",  true},
-{PrimitiveDataType,      "UNSIGNED_32",     "U32", 32, "uint32_t",    "long",    "int",   "UInt",   "Long",  true},
-{PrimitiveDataType,      "UNSIGNED_64",     "U64", 64, "uint64_t",    "long",   "long",  "ULong",   "Long", false},
-{PrimitiveDataType,          "BOOLEAN", "BOOLEAN",  8,     "bool", "boolean",   "byte",        _,        _, false},
-{PrimitiveDataType,   "UNSIGNED_5_6_5",         _, 16,          _,         _,        _,        _,        _, false},
-{PrimitiveDataType, "UNSIGNED_5_5_5_1",         _, 16,          _,         _,        _,        _,        _, false},
-{PrimitiveDataType, "UNSIGNED_4_4_4_4",         _, 16,          _,         _,        _,        _,        _, false},
+  //      Category     SName              RsType       RsST           CName         JN      JAEN       CVN       JVN     JP
+{PrimitiveDataType,   "half",         "FLOAT_16",     "F16", 16,     "half",   "short",        _,   "Half",   "Half", false},
+{PrimitiveDataType,  "float",         "FLOAT_32",     "F32", 32,    "float",   "float",  "float",  "Float",  "Float", false},
+{PrimitiveDataType, "double",         "FLOAT_64",     "F64", 64,   "double",  "double", "double", "Double", "Double", false},
+{PrimitiveDataType,   "char",         "SIGNED_8",      "I8",  8,   "int8_t",    "byte",   "byte",   "Byte",   "Byte", false},
+{PrimitiveDataType,  "short",        "SIGNED_16",     "I16", 16,  "int16_t",   "short",  "short",  "Short",  "Short", false},
+{PrimitiveDataType,    "int",        "SIGNED_32",     "I32", 32,  "int32_t",     "int",    "int",    "Int",    "Int", false},
+{PrimitiveDataType,   "long",        "SIGNED_64",     "I64", 64,  "int64_t",    "long",   "long",   "Long",   "Long", false},
+{PrimitiveDataType,  "uchar",       "UNSIGNED_8",      "U8",  8,  "uint8_t",   "short",   "byte",  "UByte",  "Short",  true},
+{PrimitiveDataType, "ushort",      "UNSIGNED_16",     "U16", 16, "uint16_t",     "int",  "short", "UShort",    "Int",  true},
+{PrimitiveDataType,   "uint",      "UNSIGNED_32",     "U32", 32, "uint32_t",    "long",    "int",   "UInt",   "Long",  true},
+{PrimitiveDataType,  "ulong",      "UNSIGNED_64",     "U64", 64, "uint64_t",    "long",   "long",  "ULong",   "Long", false},
+{PrimitiveDataType,   "bool",          "BOOLEAN", "BOOLEAN",  8,     "bool", "boolean",   "byte",        _,        _, false},
+{PrimitiveDataType,        _,   "UNSIGNED_5_6_5",         _, 16,          _,         _,        _,        _,        _, false},
+{PrimitiveDataType,        _, "UNSIGNED_5_5_5_1",         _, 16,          _,         _,        _,        _,        _, false},
+{PrimitiveDataType,        _, "UNSIGNED_4_4_4_4",         _, 16,          _,         _,        _,        _,        _, false},
 
-{MatrixDataType, "MATRIX_2X2", _,  4*32, "rs_matrix2x2", "Matrix2f", _, _, _, false},
-{MatrixDataType, "MATRIX_3X3", _,  9*32, "rs_matrix3x3", "Matrix3f", _, _, _, false},
-{MatrixDataType, "MATRIX_4X4", _, 16*32, "rs_matrix4x4", "Matrix4f", _, _, _, false},
+{MatrixDataType, "rs_matrix2x2", "MATRIX_2X2", _,  4*32, "rs_matrix2x2", "Matrix2f", _, _, _, false},
+{MatrixDataType, "rs_matrix3x3", "MATRIX_3X3", _,  9*32, "rs_matrix3x3", "Matrix3f", _, _, _, false},
+{MatrixDataType, "rs_matrix4x4", "MATRIX_4X4", _, 16*32, "rs_matrix4x4", "Matrix4f", _, _, _, false},
 
 // RS object types are 32 bits in 32-bit RS, but 256 bits in 64-bit RS.
 // This is handled specially by the GetElementSizeInBits() method.
-{ObjectDataType,          "RS_ELEMENT",          "ELEMENT", 32,         "Element",         "Element", _, _, _, false},
-{ObjectDataType,             "RS_TYPE",             "TYPE", 32,            "Type",            "Type", _, _, _, false},
-{ObjectDataType,       "RS_ALLOCATION",       "ALLOCATION", 32,      "Allocation",      "Allocation", _, _, _, false},
-{ObjectDataType,          "RS_SAMPLER",          "SAMPLER", 32,         "Sampler",         "Sampler", _, _, _, false},
-{ObjectDataType,           "RS_SCRIPT",           "SCRIPT", 32,          "Script",          "Script", _, _, _, false},
-{ObjectDataType,             "RS_MESH",             "MESH", 32,            "Mesh",            "Mesh", _, _, _, false},
-{ObjectDataType,             "RS_PATH",             "PATH", 32,            "Path",            "Path", _, _, _, false},
-{ObjectDataType, "RS_PROGRAM_FRAGMENT", "PROGRAM_FRAGMENT", 32, "ProgramFragment", "ProgramFragment", _, _, _, false},
-{ObjectDataType,   "RS_PROGRAM_VERTEX",   "PROGRAM_VERTEX", 32,   "ProgramVertex",   "ProgramVertex", _, _, _, false},
-{ObjectDataType,   "RS_PROGRAM_RASTER",   "PROGRAM_RASTER", 32,   "ProgramRaster",   "ProgramRaster", _, _, _, false},
-{ObjectDataType,    "RS_PROGRAM_STORE",    "PROGRAM_STORE", 32,    "ProgramStore",    "ProgramStore", _, _, _, false},
-{ObjectDataType,             "RS_FONT",             "FONT", 32,            "Font",            "Font", _, _, _, false},
+{ObjectDataType, _,          "RS_ELEMENT",          "ELEMENT", 32,         "Element",         "Element", _, _, _, false},
+{ObjectDataType, _,             "RS_TYPE",             "TYPE", 32,            "Type",            "Type", _, _, _, false},
+{ObjectDataType, _,       "RS_ALLOCATION",       "ALLOCATION", 32,      "Allocation",      "Allocation", _, _, _, false},
+{ObjectDataType, _,          "RS_SAMPLER",          "SAMPLER", 32,         "Sampler",         "Sampler", _, _, _, false},
+{ObjectDataType, _,           "RS_SCRIPT",           "SCRIPT", 32,          "Script",          "Script", _, _, _, false},
+{ObjectDataType, _,             "RS_MESH",             "MESH", 32,            "Mesh",            "Mesh", _, _, _, false},
+{ObjectDataType, _,             "RS_PATH",             "PATH", 32,            "Path",            "Path", _, _, _, false},
+{ObjectDataType, _, "RS_PROGRAM_FRAGMENT", "PROGRAM_FRAGMENT", 32, "ProgramFragment", "ProgramFragment", _, _, _, false},
+{ObjectDataType, _,   "RS_PROGRAM_VERTEX",   "PROGRAM_VERTEX", 32,   "ProgramVertex",   "ProgramVertex", _, _, _, false},
+{ObjectDataType, _,   "RS_PROGRAM_RASTER",   "PROGRAM_RASTER", 32,   "ProgramRaster",   "ProgramRaster", _, _, _, false},
+{ObjectDataType, _,    "RS_PROGRAM_STORE",    "PROGRAM_STORE", 32,    "ProgramStore",    "ProgramStore", _, _, _, false},
+{ObjectDataType, _,             "RS_FONT",             "FONT", 32,            "Font",            "Font", _, _, _, false},
 #undef _
 };
 

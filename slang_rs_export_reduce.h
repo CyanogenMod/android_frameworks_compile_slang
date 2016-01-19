@@ -80,6 +80,13 @@ class RSExportReduce : public RSExportable {
 
 // Base class for reflecting control-side reduce
 class RSExportReduceNew : public RSExportable {
+ public:
+  typedef llvm::SmallVectorImpl<const clang::ParmVarDecl*> InVec;
+  typedef llvm::SmallVectorImpl<const RSExportType*> InTypeVec;
+
+  typedef InVec::const_iterator InIter;
+  typedef InTypeVec::const_iterator InTypeIter;
+
  private:
   // pragma location (for error reporting)
   clang::SourceLocation mLocation;
@@ -112,9 +119,7 @@ class RSExportReduceNew : public RSExportable {
 
   // input information for accumulator function
   static const int kAccumulatorInsSmallSize = 4;
-  typedef llvm::SmallVectorImpl<const clang::ParmVarDecl*> InVec;
   llvm::SmallVector<const clang::ParmVarDecl*, kAccumulatorInsSmallSize> mAccumulatorIns;
-  typedef llvm::SmallVectorImpl<const RSExportType*> InTypeVec;
   llvm::SmallVector<const RSExportType*, kAccumulatorInsSmallSize> mAccumulatorInTypes;
 
   // result information

@@ -141,6 +141,21 @@ def ExecTest(dirname):
     passed = False
     if Options.verbose:
       print 'stderr is different'
+  java_expect = glob.glob('Script*.java.expect');
+  for expect in java_expect:
+    expect_base = expect[:-7] # strip ".expect" suffix
+    if Options.verbose:
+      print 'Comparing ' + expect_base
+    find = 'tmp/*/' + expect_base
+    found = glob.glob(find)
+    if len(found) != 1:
+      passed = False
+      if Options.verbose:
+        print 'unique ' + find + ' not found'
+    elif not CompareFiles(found[0], expect):
+      passed = False
+      if Options.verbose:
+        print expect_base + ' is different'
 
   if Options.updateCTS:
     # Copy resulting files to appropriate CTS directory (if different).
