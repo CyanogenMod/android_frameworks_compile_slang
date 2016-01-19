@@ -149,6 +149,8 @@ enum DataType {
 typedef struct {
     // The data type category
     DataTypeCategory category;
+    // "Common name" in script (C99)
+    const char * s_name;
     // The element name in RenderScript
     const char * rs_type;
     // The short element name in RenderScript
