@@ -372,7 +372,7 @@ void Backend::AnnotateFunction(clang::FunctionDecl *FD) {
 
 void Backend::LowerRSForEachCall(clang::FunctionDecl *FD) {
   // Skip this AST walking for lower API levels.
-  if (getTargetAPI() < SLANG_DEVELOPMENT_TARGET_API) {
+  if (getTargetAPI() < SLANG_N_TARGET_API) {
     return;
   }
 
@@ -445,7 +445,7 @@ bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
       }
     }
 
-    if (getTargetAPI() == SLANG_DEVELOPMENT_TARGET_API) {
+    if (getTargetAPI() >= SLANG_N_TARGET_API) {
       if (FD && FD->hasBody() &&
           RSExportForEach::isRSForEachFunc(getTargetAPI(), FD)) {
         // Log kernels by their names, and assign them slot numbers.
