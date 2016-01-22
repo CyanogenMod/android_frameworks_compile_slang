@@ -1,4 +1,4 @@
-// -target-api 0 -Wall -Werror
+// -Wall -Werror
 #pragma version(1)
 #pragma rs java_package_name(reflect)
 

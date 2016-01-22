@@ -27,6 +27,7 @@
 // ICS -> Ice Cream Sandwich
 // JB -> Jelly Bean
 // KK -> KitKat
+// M -> Marshmallow
 enum SlangTargetAPI {
   SLANG_MINIMUM_TARGET_API = 11,
   SLANG_HC_TARGET_API = 11,
@@ -44,6 +45,15 @@ enum SlangTargetAPI {
   SLANG_DEVELOPMENT_TARGET_API = RS_DEVELOPMENT_API
 };
 // Note that RS_VERSION is defined at build time (see Android.mk for details).
+
+// API levels where particular features exist.
+// . Open (feature appears at a particular level and continues to exist):
+//     SLANG_FEAT_FOO_API
+// . Closed (feature exists only through a particular range of API levels):
+//     SLANG_FEAT_BAR_API_MIN, SLANG_FEAT_BAR_API_MAX
+enum SlangFeatureAPI {
+  SLANG_FEATURE_GENERAL_REDUCTION_API = SLANG_N_TARGET_API
+};
 
 // SlangVersion refers to the released compiler version (for which certain
 // behaviors could change - i.e. critical bugs fixed that may require
