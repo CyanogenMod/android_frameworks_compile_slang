@@ -196,12 +196,13 @@ class RSReducePragmaHandler : public RSPragmaHandler {
     }
 
     // Check API version.
-    if (mContext->getTargetAPI() != RS_DEVELOPMENT_API) {
+    if (mContext->getTargetAPI() < SLANG_FEATURE_GENERAL_REDUCTION_API) {
       PP.Diag(PragmaLocation,
               PP.getDiagnostics().getCustomDiagID(
                 clang::DiagnosticsEngine::Error,
-                "reduction kernels are not supported in SDK level %0"))
-          << mContext->getTargetAPI();
+                "reduction kernels are not supported in SDK levels %0-%1"))
+          << SLANG_MINIMUM_TARGET_API
+          << (SLANG_FEATURE_GENERAL_REDUCTION_API - 1);
       return;
     }
 

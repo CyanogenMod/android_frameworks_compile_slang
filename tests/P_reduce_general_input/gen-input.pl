@@ -18,7 +18,7 @@ my $specialParameterPowerSetCardinality = 2 ** (1 + $#specialParameters);
 # 3 is not supported for exported types
 my @vecLengths = (1, 2, 4);
 
-print "// -target-api 0 -Wall -Werror\n";
+print "// -Wall -Werror\n";
 print "#pragma version(1)\n";
 print "#pragma rs java_package_name(input)\n\n";
 print "// This test case was created by $0.\n";

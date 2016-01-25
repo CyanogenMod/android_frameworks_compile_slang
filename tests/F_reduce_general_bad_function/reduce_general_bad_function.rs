@@ -1,4 +1,4 @@
-// -target-api 0 -Wall
+// -Wall
 #pragma version(1)
 #pragma rs java_package_name(fn)
 

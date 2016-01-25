@@ -29,7 +29,7 @@ sub isVectorEligible {
   return 1;
 }
 
-print "// -target-api 0 -Wall -Werror\n";
+print "// -Wall -Werror\n";
 print "#pragma version(1)\n";
 print "#pragma rs java_package_name(inputs)\n\n";
 print "// This test case was created by $0.\n";
