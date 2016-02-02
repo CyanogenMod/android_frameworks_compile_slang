@@ -145,14 +145,18 @@ class RSReducePragmaHandler : public RSPragmaHandler {
 
     // Grab "reduce(name)" ("reduce" is already known to be the first
     // token) and all the "keyword(value)" contributions
-    //
-    // TODO: Remove halter from initial release
     KeywordValueMapType KeywordValueMap({std::make_pair(RSExportReduceNew::KeyReduce, ""),
                                          std::make_pair(RSExportReduceNew::KeyInitializer, ""),
                                          std::make_pair(RSExportReduceNew::KeyAccumulator, ""),
                                          std::make_pair(RSExportReduceNew::KeyCombiner, ""),
-                                         std::make_pair(RSExportReduceNew::KeyOutConverter, ""),
-                                         std::make_pair(RSExportReduceNew::KeyHalter, "")});
+                                         std::make_pair(RSExportReduceNew::KeyOutConverter, "")});
+    if (mContext->getTargetAPI() >= SLANG_FEATURE_GENERAL_REDUCTION_HALTER_API) {
+      // Halter functionality has not been released, nor has its
+      // specification been finalized with partners.  We do not have a
+      // specification that extends through the full RenderScript
+      // software stack, either.
+      KeywordValueMap.insert(std::make_pair(RSExportReduceNew::KeyHalter, ""));
+    }
     while (PragmaToken.is(clang::tok::identifier)) {
       if (!ProcessKeywordAndValue(PP, PragmaToken, KeywordValueMap))
         return;
