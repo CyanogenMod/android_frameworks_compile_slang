@@ -52,7 +52,8 @@ enum SlangTargetAPI {
 // . Closed (feature exists only through a particular range of API levels):
 //     SLANG_FEAT_BAR_API_MIN, SLANG_FEAT_BAR_API_MAX
 enum SlangFeatureAPI {
-  SLANG_FEATURE_GENERAL_REDUCTION_API = SLANG_N_TARGET_API
+  SLANG_FEATURE_GENERAL_REDUCTION_API = SLANG_N_TARGET_API,
+  SLANG_FEATURE_GENERAL_REDUCTION_HALTER_API = SLANG_DEVELOPMENT_TARGET_API
 };
 
 // SlangVersion refers to the released compiler version (for which certain
