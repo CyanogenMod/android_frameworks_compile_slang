@@ -1317,28 +1317,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_float(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_float reduce_my_float(float[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_float(ain1, null);
     }
@@ -1371,32 +1352,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_float2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public result_float2 reduce_my_float2(float[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F32_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F32_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_float2(ain1, null);
     }
@@ -1429,32 +1387,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_float4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public result_float4 reduce_my_float4(float[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F32_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F32_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_float4(ain1, null);
     }
@@ -1483,28 +1418,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_array_float(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public resultArray7_float reduce_my_array_float(float[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_float(ain1, null);
     }
@@ -1537,32 +1453,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_array_float2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public resultArray7_float2 reduce_my_array_float2(float[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F32_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F32_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_float2(ain1, null);
     }
@@ -1595,32 +1488,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_array_float4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public resultArray7_float4 reduce_my_array_float4(float[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F32_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F32_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_float4(ain1, null);
     }
@@ -1649,28 +1519,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_double(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_double reduce_my_double(double[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F64, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F64, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_double(ain1, null);
     }
@@ -1703,32 +1554,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_double2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public result_double2 reduce_my_double2(double[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F64_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F64_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_double2(ain1, null);
     }
@@ -1761,32 +1589,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_double4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public result_double4 reduce_my_double4(double[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F64_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F64_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_double4(ain1, null);
     }
@@ -1815,28 +1620,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_array_double(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public resultArray7_double reduce_my_array_double(double[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F64, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F64, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_double(ain1, null);
     }
@@ -1869,32 +1655,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_array_double2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public resultArray7_double2 reduce_my_array_double2(double[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F64_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F64_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_double2(ain1, null);
     }
@@ -1927,32 +1690,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_array_double4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public resultArray7_double4 reduce_my_array_double4(double[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F64_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F64_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_double4(ain1, null);
     }
@@ -1981,28 +1721,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_char(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_char reduce_my_char(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I8, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I8, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_char(ain1, null);
     }
@@ -2035,32 +1756,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_char2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public result_char2 reduce_my_char2(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I8_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I8_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_char2(ain1, null);
     }
@@ -2093,32 +1791,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_char4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public result_char4 reduce_my_char4(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I8_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I8_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_char4(ain1, null);
     }
@@ -2147,28 +1822,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_array_char(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public resultArray7_char reduce_my_array_char(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I8, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I8, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_char(ain1, null);
     }
@@ -2201,32 +1857,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_array_char2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public resultArray7_char2 reduce_my_array_char2(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I8_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I8_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_char2(ain1, null);
     }
@@ -2259,32 +1892,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_array_char4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public resultArray7_char4 reduce_my_array_char4(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I8_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I8_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_char4(ain1, null);
     }
@@ -2313,28 +1923,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_short(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_short reduce_my_short(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I16, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I16, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_short(ain1, null);
     }
@@ -2367,32 +1958,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_short2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public result_short2 reduce_my_short2(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I16_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I16_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_short2(ain1, null);
     }
@@ -2425,32 +1993,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_short4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public result_short4 reduce_my_short4(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I16_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I16_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_short4(ain1, null);
     }
@@ -2479,28 +2024,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_array_short(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public resultArray7_short reduce_my_array_short(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I16, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I16, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_short(ain1, null);
     }
@@ -2533,32 +2059,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_array_short2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public resultArray7_short2 reduce_my_array_short2(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I16_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I16_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_short2(ain1, null);
     }
@@ -2591,32 +2094,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_array_short4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public resultArray7_short4 reduce_my_array_short4(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I16_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I16_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_short4(ain1, null);
     }
@@ -2645,28 +2125,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_int(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_int reduce_my_int(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_int(ain1, null);
     }
@@ -2699,32 +2160,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_int2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public result_int2 reduce_my_int2(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_int2(ain1, null);
     }
@@ -2757,32 +2195,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_int4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public result_int4 reduce_my_int4(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_int4(ain1, null);
     }
@@ -2811,28 +2226,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_array_int(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public resultArray7_int reduce_my_array_int(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_int(ain1, null);
     }
@@ -2865,32 +2261,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_array_int2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public resultArray7_int2 reduce_my_array_int2(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_int2(ain1, null);
     }
@@ -2923,32 +2296,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_array_int4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public resultArray7_int4 reduce_my_array_int4(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_int4(ain1, null);
     }
@@ -2977,28 +2327,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_long(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_long reduce_my_long(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I64, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I64, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_long(ain1, null);
     }
@@ -3031,32 +2362,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_long2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public result_long2 reduce_my_long2(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I64_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I64_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_long2(ain1, null);
     }
@@ -3089,32 +2397,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_long4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public result_long4 reduce_my_long4(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I64_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I64_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_long4(ain1, null);
     }
@@ -3143,28 +2428,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_array_long(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public resultArray7_long reduce_my_array_long(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I64, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I64, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_long(ain1, null);
     }
@@ -3197,32 +2463,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_array_long2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public resultArray7_long2 reduce_my_array_long2(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I64_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I64_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_long2(ain1, null);
     }
@@ -3255,32 +2498,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_array_long4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public resultArray7_long4 reduce_my_array_long4(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I64_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I64_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_long4(ain1, null);
     }
@@ -3309,28 +2529,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_uchar(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_uchar reduce_my_uchar(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U8, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U8, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_uchar(ain1, null);
     }
@@ -3363,32 +2564,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_uchar2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public result_uchar2 reduce_my_uchar2(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U8_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U8_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_uchar2(ain1, null);
     }
@@ -3421,32 +2599,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_uchar4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public result_uchar4 reduce_my_uchar4(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U8_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U8_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_uchar4(ain1, null);
     }
@@ -3475,28 +2630,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_array_uchar(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public resultArray7_uchar reduce_my_array_uchar(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U8, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U8, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_uchar(ain1, null);
     }
@@ -3529,32 +2665,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_array_uchar2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public resultArray7_uchar2 reduce_my_array_uchar2(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U8_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U8_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_uchar2(ain1, null);
     }
@@ -3587,32 +2700,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_array_uchar4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public resultArray7_uchar4 reduce_my_array_uchar4(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U8_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U8_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_uchar4(ain1, null);
     }
@@ -3641,28 +2731,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_ushort(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_ushort reduce_my_ushort(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U16, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U16, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_ushort(ain1, null);
     }
@@ -3695,32 +2766,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_ushort2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public result_ushort2 reduce_my_ushort2(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U16_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U16_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_ushort2(ain1, null);
     }
@@ -3753,32 +2801,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_ushort4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public result_ushort4 reduce_my_ushort4(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U16_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U16_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_ushort4(ain1, null);
     }
@@ -3807,28 +2832,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_array_ushort(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public resultArray7_ushort reduce_my_array_ushort(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U16, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U16, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_ushort(ain1, null);
     }
@@ -3861,32 +2867,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_array_ushort2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public resultArray7_ushort2 reduce_my_array_ushort2(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U16_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U16_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_ushort2(ain1, null);
     }
@@ -3919,32 +2902,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_array_ushort4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public resultArray7_ushort4 reduce_my_array_ushort4(short[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U16_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U16_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_ushort4(ain1, null);
     }
@@ -3973,28 +2933,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_uint(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_uint reduce_my_uint(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_uint(ain1, null);
     }
@@ -4027,32 +2968,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_uint2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public result_uint2 reduce_my_uint2(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U32_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U32_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_uint2(ain1, null);
     }
@@ -4085,32 +3003,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_uint4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public result_uint4 reduce_my_uint4(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U32_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U32_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_uint4(ain1, null);
     }
@@ -4139,28 +3034,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_array_uint(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public resultArray7_uint reduce_my_array_uint(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_uint(ain1, null);
     }
@@ -4193,32 +3069,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_array_uint2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public resultArray7_uint2 reduce_my_array_uint2(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U32_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U32_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_uint2(ain1, null);
     }
@@ -4251,32 +3104,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_array_uint4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public resultArray7_uint4 reduce_my_array_uint4(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U32_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U32_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_uint4(ain1, null);
     }
@@ -4305,28 +3135,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_ulong(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_ulong reduce_my_ulong(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U64, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U64, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_ulong(ain1, null);
     }
@@ -4359,32 +3170,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_ulong2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public result_ulong2 reduce_my_ulong2(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U64_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U64_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_ulong2(ain1, null);
     }
@@ -4417,32 +3205,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_ulong4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public result_ulong4 reduce_my_ulong4(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U64_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U64_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_ulong4(ain1, null);
     }
@@ -4471,28 +3236,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_array_ulong(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public resultArray7_ulong reduce_my_array_ulong(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U64, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U64, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_ulong(ain1, null);
     }
@@ -4525,32 +3271,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 2 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
         }
-
-        return reduce_my_array_ulong2(in1, 0, in1.length / 2);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 2-vectors
-    public resultArray7_ulong2 reduce_my_array_ulong2(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 2 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 2) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U64_2, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U64_2, in1.length / 2);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_ulong2(ain1, null);
     }
@@ -4583,32 +3306,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1.length % 4 != 0) {
             throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
         }
-
-        return reduce_my_array_ulong4(in1, 0, in1.length / 4);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val", flattened 4-vectors
-    public resultArray7_ulong4 reduce_my_array_ulong4(long[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Verify that the array length is a multiple of the vector size.
-        if (in1.length % 4 != 0) {
-            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length / 4) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U64_4, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U64_4, in1.length / 4);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_ulong4(ain1, null);
     }
@@ -4637,28 +3337,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_bool(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_bool reduce_my_bool(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __BOOLEAN, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __BOOLEAN, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_bool(ain1, null);
     }
@@ -4687,28 +3368,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_my_array_bool(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public resultArray7_bool reduce_my_array_bool(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __BOOLEAN, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __BOOLEAN, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_my_array_bool(ain1, null);
     }

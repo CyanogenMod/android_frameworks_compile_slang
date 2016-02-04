@@ -125,28 +125,9 @@ public class ScriptC_reduce_general_examples extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_addint(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_int reduce_addint(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_addint(ain1, null);
     }
@@ -175,28 +156,9 @@ public class ScriptC_reduce_general_examples extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_mpyint(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "val"
-    public result_int reduce_mpyint(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_mpyint(ain1, null);
     }
@@ -226,6 +188,9 @@ public class ScriptC_reduce_general_examples extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F32, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
         // Verify that "in2" is non-null.
         if (in2 == null) {
             throw new RSIllegalArgumentException("Array \"in2\" is null!");
@@ -234,40 +199,9 @@ public class ScriptC_reduce_general_examples extends ScriptC {
         if (in1.length != in2.length) {
             throw new RSRuntimeException("Array length mismatch between parameters \"in1\" and \"in2\"!");
         }
-
-        return reduce_dp(in1, in2, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "in1"
-    // in2 = "in2"
-    public result_float reduce_dp(float[] in1, float[] in2, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F32, x2 - x1);
-        ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
-        // Verify that "in2" is non-null.
-        if (in2 == null) {
-            throw new RSIllegalArgumentException("Array \"in2\" is null!");
-        }
-        // Bounds-check "in2" against x2
-        if (x2 > in2.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in2\"!");
-        }
-        Allocation ain2 = Allocation.createSized(mRSLocal, __F32, x2 - x1);
+        Allocation ain2 = Allocation.createSized(mRSLocal, __F32, in2.length);
         ain2.setAutoPadding(true);
-        ain2.copy1DRangeFrom(x1, x2 - x1, in2);
+        ain2.copyFrom(in2);
 
         return reduce_dp(ain1, ain2, null);
     }
@@ -315,28 +249,9 @@ public class ScriptC_reduce_general_examples extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_findMinAndMax(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "in"
-    public result_int2 reduce_findMinAndMax(float[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __F32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_findMinAndMax(ain1, null);
     }
@@ -365,28 +280,9 @@ public class ScriptC_reduce_general_examples extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_fz(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "inVal"
-    public result_int reduce_fz(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_fz(ain1, null);
     }
@@ -415,28 +311,9 @@ public class ScriptC_reduce_general_examples extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_fz2(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "inVal"
-    public result_int2 reduce_fz2(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_fz2(ain1, null);
     }
@@ -465,28 +342,9 @@ public class ScriptC_reduce_general_examples extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_histogram(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "in"
-    public resultArray256_uint reduce_histogram(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U8, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U8, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_histogram(ain1, null);
     }
@@ -515,28 +373,9 @@ public class ScriptC_reduce_general_examples extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_mode(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "in"
-    public result_int2 reduce_mode(byte[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __U8, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __U8, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_mode(ain1, null);
     }
