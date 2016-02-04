@@ -1329,7 +1329,6 @@ void RSReflectionJava::genExportReduceNew(const RSExportReduceNew *ER) {
   // Two variants of reduce_* entry points get generated.
   // Array variant:
   //   result_<resultSvType> reduce_<name>(<devecSiIn1Type>[] in1, ..., <devecSiInNType>[] inN)
-  //   result_<resultSvType> reduce_<name>(<devecSiIn1Type>[] in1, ..., <devecSiInNType>[] inN, int x1, int x2)
   // Allocation variant:
   //   result_<resultSvType> reduce_<name>(Allocation in1, ..., Allocation inN)
   //   result_<resultSvType> reduce_<name>(Allocation in1, ..., Allocation inN, Script.LaunchOptions sc)
@@ -1433,57 +1432,7 @@ void RSReflectionJava::genExportReduceNewArrayVariant(const RSExportReduceNew *E
   slangAssert(Ins.size() == InTypes.size());
   slangAssert(Ins.size() == InsTypeData.size());
   slangAssert(Ins.size() == Args.size());
-  std::string PassAsX2; // reduce_<name>(in1, ..., inN, int x1, int x2)
-  for (size_t InIdx = 0, InEnd = Ins.size(); InIdx < InEnd; ++InIdx) {
-    const std::string &ArgName = Args[InIdx].second;
-    genNullArrayCheck(ArgName);
-    std::string InLength = ArgName + ".length";
-    const uint32_t VecSize = InsTypeData[InIdx].vecSize;
-    if (VecSize > 1) {
-      InLength += " / " + std::to_string(VecSize);
-      genVectorLengthCompatibilityCheck(ArgName, VecSize);
-    }
-    if (InIdx == 0) {
-      PassAsX2 = InLength;
-    } else {
-      mOut.indent() << "// Verify that input array lengths are the same.\n";
-      mOut.indent() << "if (" << PassAsX2 << " != " << InLength << ") {\n";
-      mOut.indent() << "    throw new RSRuntimeException(\"Array length mismatch "
-                    << "between parameters \\\"" << Args[0].second << "\\\" and \\\"" << ArgName
-                    << "\\\"!\");\n";
-      mOut.indent() << "}\n";
-    }
-  }
-  mOut << "\n";
-  mOut.indent() << "return " << MethodName << "(";
-  bool EmittedFirstArg = false;
-  for (const auto &Arg : Args) {
-    if (!EmittedFirstArg) {
-      EmittedFirstArg = true;
-    } else {
-      mOut << ", ";
-    }
-    mOut << Arg.second;
-  }
-  mOut << ", 0, " << PassAsX2 << ");\n";
-  endFunction();
-
-  // result_<resultSvType> reduce_<name>(<devecSiIn1Type>[] in1, ..., <devecSiInNType>[] inN, int x1, int x2)
-
-  static const char FormalX1Name[] = "x1";
-  static const char FormalX2Name[] = "x2";
-  Args.push_back(std::make_pair("int", FormalX1Name));
-  Args.push_back(std::make_pair("int", FormalX2Name));
-  mOut.indent() << "// reduction only across cells at " << FormalX1Name << " <= coord < " << FormalX2Name << "\n";
-  for (const std::string &InVectorComment : InComments)
-    mOut.indent() << "// " << InVectorComment << "\n";
-  startFunction(AM_Public, false, ResultTypeName.c_str(), MethodName, Args);
-    // Verify that !(x1 < 0 || x1 >= x2)
-  mOut.indent() << "// Bounds-check " << FormalX1Name << " and " << FormalX2Name << "\n";
-  mOut.indent() << "if (" << FormalX1Name << " < 0 || "
-                << FormalX1Name << " >= " << FormalX2Name << ") {\n";
-  mOut.indent() << "    throw new RSRuntimeException(\"Input bounds are invalid!\");\n";
-  mOut.indent() << "}\n";
+  std::string In1Length;
   std::string InputAllocationOutgoingArgumentList;
   for (size_t InIdx = 0, InEnd = Ins.size(); InIdx < InEnd; ++InIdx) {
     const std::string &ArgName = Args[InIdx].second;
@@ -1494,27 +1443,30 @@ void RSReflectionJava::genExportReduceNewArrayVariant(const RSExportReduceNew *E
       InLength += " / " + std::to_string(VecSize);
       genVectorLengthCompatibilityCheck(ArgName, VecSize);
     }
-    // Verify that !(x2 > InLength)
-    mOut.indent() << "// Bounds-check \"" << ArgName << "\" against " << FormalX2Name << "\n";
-    mOut.indent() << "if (" << FormalX2Name << " > " << InLength << ") {\n";
-    mOut.indent() << "    throw new RSRuntimeException(\"Input bound is invalid "
-                  << "for parameter \\\"" << ArgName << "\\\"!\");\n";
-    mOut.indent() << "}\n";
+    if (InIdx == 0) {
+      In1Length = InLength;
+    } else {
+      mOut.indent() << "// Verify that input array lengths are the same.\n";
+      mOut.indent() << "if (" << In1Length << " != " << InLength << ") {\n";
+      mOut.indent() << "    throw new RSRuntimeException(\"Array length mismatch "
+                    << "between parameters \\\"" << Args[0].second << "\\\" and \\\"" << ArgName
+                    << "\\\"!\");\n";
+      mOut.indent() << "}\n";
+    }
     // Create a temporary input allocation
     const std::string TempName = "a" + ArgName;
     mOut.indent() << "Allocation " << TempName << " = Allocation.createSized("
                   << SAVED_RS_REFERENCE << ", "
                   << RS_ELEM_PREFIX << InTypes[InIdx]->getElementName() << ", "
-                  << FormalX2Name << " - " << FormalX1Name << ");\n";
+                  << InLength << ");\n";
     mOut.indent() << TempName << ".setAutoPadding(true);\n";
-    mOut.indent() << TempName << ".copy1DRangeFrom(" << FormalX1Name << ", "
-                  << FormalX2Name << " - " << FormalX1Name << ", "
-                  << ArgName << ");\n";
+    mOut.indent() << TempName << ".copyFrom(" << ArgName << ");\n";
     // ... and put that input allocation on the outgoing argument list
     if (!InputAllocationOutgoingArgumentList.empty())
       InputAllocationOutgoingArgumentList += ", ";
     InputAllocationOutgoingArgumentList += TempName;
   }
+
   mOut << "\n";
   mOut.indent() << "return " << MethodName << "(" << InputAllocationOutgoingArgumentList << ", null);\n";
   endFunction();
