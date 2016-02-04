@@ -220,7 +220,7 @@ Backend::Backend(RSContext *Context, clang::DiagnosticsEngine *DiagEngine,
       mSourceMgr(SourceMgr), mASTPrint(Opts.mASTPrint), mAllowRSPrefix(AllowRSPrefix),
       mIsFilterscript(IsFilterscript), mExportVarMetadata(nullptr),
       mExportFuncMetadata(nullptr), mExportForEachNameMetadata(nullptr),
-      mExportForEachSignatureMetadata(nullptr), mExportReduceMetadata(nullptr),
+      mExportForEachSignatureMetadata(nullptr),
       mExportReduceNewMetadata(nullptr),
       mExportTypeMetadata(nullptr), mRSObjectSlotsMetadata(nullptr),
       mRefCount(mContext->getASTContext()),
@@ -786,26 +786,6 @@ void Backend::dumpExportForEachInfo(llvm::Module *M) {
   }
 }
 
-void Backend::dumpExportReduceInfo(llvm::Module *M) {
-  if (!mExportReduceMetadata) {
-    mExportReduceMetadata = M->getOrInsertNamedMetadata(RS_EXPORT_REDUCE_MN);
-  }
-
-  llvm::SmallVector<llvm::Metadata *, 1> ExportReduceInfo;
-
-  // Add the names of the reduce-style kernel functions to the metadata node.
-  for (auto I = mContext->export_reduce_begin(),
-            E = mContext->export_reduce_end(); I != E; ++I) {
-    ExportReduceInfo.clear();
-
-    ExportReduceInfo.push_back(
-      llvm::MDString::get(mLLVMContext, (*I)->getName().c_str()));
-
-    mExportReduceMetadata->addOperand(
-      llvm::MDNode::get(mLLVMContext, ExportReduceInfo));
-  }
-}
-
 void Backend::dumpExportReduceNewInfo(llvm::Module *M) {
   if (!mExportReduceNewMetadata) {
     mExportReduceNewMetadata =
@@ -935,9 +915,6 @@ void Backend::HandleTranslationUnitPost(llvm::Module *M) {
 
   if (mContext->hasExportForEach())
     dumpExportForEachInfo(M);
-
-  if (mContext->hasExportReduce())
-    dumpExportReduceInfo(M);
 
   if (mContext->hasExportReduceNew())
     dumpExportReduceNewInfo(M);
