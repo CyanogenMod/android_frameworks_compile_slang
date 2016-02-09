@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <list>
 #include <map>
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -49,6 +50,7 @@ namespace clang {
 }   // namespace clang
 
 namespace slang {
+  class Backend;
   class RSExportable;
   class RSExportVar;
   class RSExportFunc;
@@ -123,6 +125,12 @@ class RSContext {
   clang::QualType mAllocationType;
   clang::QualType mScriptCallType;
 
+  std::set<const clang::FunctionDecl *> mUsedByReducePragmaFns;
+
+  // Populated by markUsedByReducePragma().
+  // Consumed by processReducePragmas().
+  std::vector<clang::VarDecl *> mUsedByReducePragmaDummyVars;
+
  public:
   RSContext(clang::Preprocessor &PP,
             clang::ASTContext &Ctx,
@@ -130,6 +138,10 @@ class RSContext {
             PragmaList *Pragmas,
             unsigned int TargetAPI,
             bool Verbose);
+
+  enum CheckName { CheckNameNo, CheckNameYes };
+
+  static bool isSyntheticName(const llvm::StringRef Name) { return Name.startswith(".rs."); }
 
   inline clang::Preprocessor &getPreprocessor() const { return mPP; }
   inline clang::ASTContext &getASTContext() const { return mCtx; }
@@ -251,8 +263,8 @@ class RSContext {
   void addExportReduceNew(RSExportReduceNew *ReduceNew) {
     mExportReduceNew.push_back(ReduceNew);
   }
-  bool processReducePragmas();
-  bool isReferencedByReducePragma(const clang::FunctionDecl *FD) const;
+  bool processReducePragmas(Backend *BE);
+  void markUsedByReducePragma(clang::FunctionDecl *FD, CheckName Check);
 
   // If the type has already been inserted, has no effect.
   void insertExportReduceNewResultType(RSExportType *Type) { mExportReduceNewResultType.insert(Type); }
@@ -312,7 +324,7 @@ class RSContext {
                                              const char (&Message)[N]) {
   clang::DiagnosticsEngine *DiagEngine = getDiagnostics();
   return DiagEngine->Report(DiagEngine->getCustomDiagID(Level, Message));
-}
+  }
 
   template <unsigned N>
   clang::DiagnosticBuilder Report(clang::DiagnosticsEngine::Level Level,
@@ -322,7 +334,7 @@ class RSContext {
   const clang::SourceManager *SM = getSourceManager();
   return DiagEngine->Report(clang::FullSourceLoc(Loc, *SM),
                             DiagEngine->getCustomDiagID(Level, Message));
-}
+  }
 
   // Utility functions to report errors and warnings to make the calling code
   // easier to read.

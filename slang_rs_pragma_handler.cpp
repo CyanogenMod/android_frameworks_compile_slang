@@ -16,11 +16,11 @@
 
 #include "slang_rs_pragma_handler.h"
 
+#include <map>
 #include <sstream>
 #include <string>
 
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Attr.h"
 
 #include "clang/Basic/TokenKinds.h"
 
@@ -241,11 +241,9 @@ class RSReducePragmaHandler : public RSPragmaHandler {
         clang::FunctionDecl *FDecl = Decl->getAsFunction();
         if (!FDecl || !FDecl->isThisDeclarationADefinition())
           continue;
-        if (!FDecl->hasAttr<clang::UsedAttr>()) {
-          // Handle backward reference from pragma (see RSReducePragmaHandler::HandlePragma
-          // for forward reference).
-          FDecl->addAttr(clang::UsedAttr::CreateImplicit(ASTC));
-        }
+        // Handle backward reference from pragma (see
+        // Backend::HandleTopLevelDecl for forward reference).
+        mContext->markUsedByReducePragma(FDecl, RSContext::CheckNameNo);
       }
     }
   }

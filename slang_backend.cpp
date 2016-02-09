@@ -422,11 +422,9 @@ bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
   for (clang::DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; I++) {
     clang::FunctionDecl *FD = llvm::dyn_cast<clang::FunctionDecl>(*I);
     if (FD) {
-      if (!FD->hasAttr<clang::UsedAttr>() && mContext->isReferencedByReducePragma(FD)) {
-        // Handle forward reference from pragma (see RSReducePragmaHandler::HandlePragma
-        // for backward reference).
-        FD->addAttr(clang::UsedAttr::CreateImplicit(mContext->getASTContext()));
-      }
+      // Handle forward reference from pragma (see
+      // RSReducePragmaHandler::HandlePragma for backward reference).
+      mContext->markUsedByReducePragma(FD, RSContext::CheckNameYes);
       if (FD->isGlobal()) {
         // Check that we don't have any array parameters being misinterpreted as
         // kernel pointers due to the C type system's array to pointer decay.
@@ -468,7 +466,7 @@ bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
 void Backend::HandleTranslationUnitPre(clang::ASTContext &C) {
   clang::TranslationUnitDecl *TUDecl = C.getTranslationUnitDecl();
 
-  if (!mContext->processReducePragmas())
+  if (!mContext->processReducePragmas(this))
     return;
 
   // If we have an invalid RS/FS AST, don't check further.

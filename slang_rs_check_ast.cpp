@@ -209,7 +209,7 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
 
 
 void RSCheckAST::ValidateVarDecl(clang::VarDecl *VD) {
-  if (!VD) {
+  if (!VD || RSContext::isSyntheticName(VD->getName())) {
     return;
   }
 

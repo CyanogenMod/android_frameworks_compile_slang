@@ -33,6 +33,7 @@
 
 #include "slang.h"
 #include "slang_assert.h"
+#include "slang_backend.h"
 #include "slang_rs_export_foreach.h"
 #include "slang_rs_export_func.h"
 #include "slang_rs_export_reduce.h"
@@ -247,6 +248,8 @@ bool RSContext::processExports() {
             valid = false;
           }
         }
+        if (valid && ShouldExportVariable && isSyntheticName(VD->getName()))
+          ShouldExportVariable = false;
         if (valid && ShouldExportVariable && !processExportVar(VD)) {
           valid = false;
         }
@@ -292,7 +295,15 @@ bool RSContext::processExports() {
   return valid;
 }
 
-bool RSContext::processReducePragmas() {
+bool RSContext::processReducePragmas(Backend *BE) {
+  // This is needed to ensure that the dummy variable is emitted into
+  // the bitcode -- which in turn forces the function to be emitted
+  // into the bitcode.  We couldn't do this at
+  // markUsedByReducePragma() time because we had to wait until the
+  // Backend is available.
+  for (auto DummyVar : mUsedByReducePragmaDummyVars)
+    BE->HandleTopLevelDecl(clang::DeclGroupRef(DummyVar));
+
   bool valid = true;
   for (auto I = export_reduce_new_begin(), E = export_reduce_new_end(); I != E; ++I) {
     if (! (*I)->analyzeTranslationUnit())
@@ -301,17 +312,71 @@ bool RSContext::processReducePragmas() {
   return valid;
 }
 
-bool RSContext::isReferencedByReducePragma(const clang::FunctionDecl *FD) const {
-  // This is an inefficient linear search.  If this turns out to be a
-  // problem in practice, then processReducePragmas() could build a
-  // set or hash table or something similar containing all function
-  // names mentioned in a reduce pragma and searchable in O(c) or
-  // O(log(n)) time rather than the currently-implemented O(n) search.
-  for (auto I = export_reduce_new_begin(), E = export_reduce_new_end(); I != E; ++I) {
-    if ((*I)->matchName(FD->getName()))
-      return true;
+void RSContext::markUsedByReducePragma(clang::FunctionDecl *FD, CheckName Check) {
+  if (mUsedByReducePragmaFns.find(FD) != mUsedByReducePragmaFns.end())
+    return;  // already marked used
+
+  if (Check == CheckNameYes) {
+    // This is an inefficient linear search.  If this turns out to be a
+    // problem in practice, then processReducePragmas() could build a
+    // set or hash table or something similar containing all function
+    // names mentioned in a reduce pragma and searchable in O(c) or
+    // O(log(n)) time rather than the currently-implemented O(n) search.
+    auto NameMatches = [this, FD]() {
+      for (auto I = export_reduce_new_begin(), E = export_reduce_new_end(); I != E; ++I) {
+        if ((*I)->matchName(FD->getName()))
+          return true;
+      }
+      return false;
+    };
+    if (!NameMatches())
+      return;
   }
-  return false;
+
+  mUsedByReducePragmaFns.insert(FD);
+
+  // This is needed to prevent clang from warning that the function is
+  // unused (in the case where it is only referenced by #pragma rs
+  // reduce).
+  FD->setIsUsed();
+
+  // Each constituent function "f" of a reduction kernel gets a dummy variable generated for it:
+  //   void *.rs.reduce_fn.f = (void*)&f;
+  // This is a trick to ensure that clang will not delete "f" as unused.
+
+  // `-VarDecl 0x87cb558 <line:3:1, col:30> col:7 var 'void *' cinit
+  //     `-CStyleCastExpr 0x87cb630 <col:19, col:26> 'void *' <BitCast>
+  //       `-ImplicitCastExpr 0x87cb618 <col:26> 'void (*)(int *, float, double)' <FunctionToPointerDecay>
+  //         `-DeclRefExpr 0x87cb5b8 <col:26> 'void (int *, float, double)' Function 0x8784e10 'foo' 'void (int *, float, double)
+
+  const clang::QualType VoidPtrType = mCtx.getPointerType(mCtx.VoidTy);
+
+  clang::DeclContext *const DC = FD->getDeclContext();
+  const clang::SourceLocation Loc = FD->getLocation();
+
+  clang::VarDecl *const VD = clang::VarDecl::Create(
+      mCtx, DC, Loc, Loc,
+      &mCtx.Idents.get(std::string(".rs.reduce_fn.") + FD->getNameAsString()),
+      VoidPtrType,
+      mCtx.getTrivialTypeSourceInfo(VoidPtrType),
+      clang::SC_None);
+  VD->setLexicalDeclContext(DC);
+  DC->addDecl(VD);
+
+  clang::DeclRefExpr *const DRE = clang::DeclRefExpr::Create(mCtx,
+                                                             clang::NestedNameSpecifierLoc(),
+                                                             Loc,
+                                                             FD, false, Loc, FD->getType(),
+                                                             clang::VK_RValue);
+  clang::ImplicitCastExpr *const ICE = clang::ImplicitCastExpr::Create(mCtx, mCtx.getPointerType(FD->getType()),
+                                                                       clang::CK_FunctionToPointerDecay, DRE,
+                                                                       nullptr, clang::VK_RValue);
+  clang::CStyleCastExpr *const CSCE = clang::CStyleCastExpr::Create(mCtx, VoidPtrType, clang::VK_RValue, clang::CK_BitCast,
+                                                                    ICE, nullptr, nullptr,
+                                                                    Loc, Loc);
+  VD->setInit(CSCE);
+
+  mUsedByReducePragmaDummyVars.push_back(VD);
 }
 
 bool RSContext::insertExportType(const llvm::StringRef &TypeName,
