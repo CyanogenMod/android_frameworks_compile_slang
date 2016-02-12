@@ -82,28 +82,9 @@ public class ScriptC_reduce_general_examples_halter extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_fz(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "inVal"
-    public result_int reduce_fz(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_fz(ain1, null);
     }
@@ -132,28 +113,9 @@ public class ScriptC_reduce_general_examples_halter extends ScriptC {
         if (in1 == null) {
             throw new RSIllegalArgumentException("Array \"in1\" is null!");
         }
-
-        return reduce_fz2(in1, 0, in1.length);
-    }
-
-    // reduction only across cells at x1 <= coord < x2
-    // in1 = "inVal"
-    public result_int2 reduce_fz2(int[] in1, int x1, int x2) {
-        // Bounds-check x1 and x2
-        if (x1 < 0 || x1 >= x2) {
-            throw new RSRuntimeException("Input bounds are invalid!");
-        }
-        // Verify that "in1" is non-null.
-        if (in1 == null) {
-            throw new RSIllegalArgumentException("Array \"in1\" is null!");
-        }
-        // Bounds-check "in1" against x2
-        if (x2 > in1.length) {
-            throw new RSRuntimeException("Input bound is invalid for parameter \"in1\"!");
-        }
-        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, x2 - x1);
+        Allocation ain1 = Allocation.createSized(mRSLocal, __I32, in1.length);
         ain1.setAutoPadding(true);
-        ain1.copy1DRangeFrom(x1, x2 - x1, in1);
+        ain1.copyFrom(in1);
 
         return reduce_fz2(ain1, null);
     }
