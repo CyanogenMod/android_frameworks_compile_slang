@@ -34,12 +34,6 @@ ifeq ($(TARGET_BUILD_APPS),)
 local_cflags_for_slang := -Wall -Werror -std=c++11
 ifeq ($(TARGET_BUILD_VARIANT),eng)
 local_cflags_for_slang += -O0 -D__ENABLE_INTERNAL_OPTIONS
-
-# Bug: 25132399
-ifneq (,$(filter mips mips64,$(TARGET_ARCH)))
-local_cflags_for_slang += -O1
-endif
-
 else
 ifeq ($(TARGET_BUILD_VARIANT),userdebug)
 else
