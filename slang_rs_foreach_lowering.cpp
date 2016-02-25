@@ -110,6 +110,12 @@ const clang::FunctionDecl* RSForEachLowering::matchKernelLaunchCall(
     return nullptr;
   }
 
+  if (mInsideKernel) {
+    mCtxt->ReportError(CE->getExprLoc(),
+        "Invalid kernel launch call made from inside another kernel.");
+    return nullptr;
+  }
+
   clang::Expr* arg0 = CE->getArg(0);
   const clang::FunctionDecl* kernel = matchFunctionDesignator(arg0);
 
@@ -354,6 +360,14 @@ void RSForEachLowering::VisitStmt(clang::Stmt* S) {
       Visit(Child);
     }
   }
+}
+
+void RSForEachLowering::handleForEachCalls(clang::FunctionDecl* FD,
+                                           unsigned int targetAPI) {
+  slangAssert(FD && FD->hasBody());
+
+  mInsideKernel = RSExportForEach::isRSForEachFunc(targetAPI, FD);
+  VisitStmt(FD->getBody());
 }
 
 }  // namespace slang

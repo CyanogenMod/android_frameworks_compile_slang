@@ -371,20 +371,6 @@ void Backend::AnnotateFunction(clang::FunctionDecl *FD) {
   }
 }
 
-void Backend::LowerRSForEachCall(clang::FunctionDecl *FD) {
-  // Skip this AST walking for lower API levels.
-  if (getTargetAPI() < SLANG_N_TARGET_API) {
-    return;
-  }
-
-  if (!FD || !FD->hasBody() ||
-      Slang::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr)) {
-    return;
-  }
-
-  mForEachHandler.VisitStmt(FD->getBody());
-}
-
 bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
   // Find and remember the types for rs_allocation and rs_script_call_t so
   // they can be used later for translating rsForEach() calls.
@@ -446,17 +432,16 @@ bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
 
     if (getTargetAPI() >= SLANG_N_TARGET_API) {
       if (FD && FD->hasBody() &&
-          RSExportForEach::isRSForEachFunc(getTargetAPI(), FD)) {
-        // Log kernels by their names, and assign them slot numbers.
-        if (!Slang::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr)) {
-            mContext->addForEach(FD);
+          !Slang::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr)) {
+        bool isKernel = RSExportForEach::isRSForEachFunc(getTargetAPI(), FD);
+        if (isKernel) {
+          // Log kernels by their names, and assign them slot numbers.
+          mContext->addForEach(FD);
         }
-      } else {
         // Look for any kernel launch calls and translate them into using the
         // internal API.
-        // TODO: Simply ignores kernel launch inside a kernel for now.
-        // Needs more rigorous and comprehensive checks.
-        LowerRSForEachCall(FD);
+        // Report a compiler on kernel launches inside a kernel.
+        mForEachHandler.handleForEachCalls(FD, getTargetAPI());
       }
     }
   }

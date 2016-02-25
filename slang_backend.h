@@ -114,7 +114,12 @@ class Backend : public clang::ASTConsumer {
   void dumpExportReduceNewInfo(llvm::Module *M);
   void dumpExportTypeInfo(llvm::Module *M);
 
-  void LowerRSForEachCall(clang::FunctionDecl* FD);
+  // Translates any rsForEach() or rsForEachWithOptions() calls inside the body
+  // of FD to lower-level runtime calls to rsForEachInternal(), if FD is not a
+  // kernel function itself, as indicated by isKernel being false. If isKernel
+  // is true, reports an error on any calls to rsForEach() or
+  // rsForEachWithOptions().
+  void LowerRSForEachCall(clang::FunctionDecl* FD, bool isKernel);
 
  protected:
   llvm::LLVMContext &mLLVMContext;

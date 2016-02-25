@@ -34,12 +34,23 @@ class RSForEachLowering : public clang::StmtVisitor<RSForEachLowering> {
  public:
   RSForEachLowering(RSContext* ctxt);
 
+  // Given a FunctionDecl FD and the target API level, either translates all
+  // rsForEach() and rsForEachWithOptions() calls inside FD into calls to the
+  // low-level rsForEachInternal() API, if FD is not a kernel function itself;
+  // or, in the case where FD is a kernel function, reports a compiler error on
+  // any calls to either kernel launching API function.
+  void handleForEachCalls(clang::FunctionDecl* FD, unsigned int targetAPI);
+
   void VisitCallExpr(clang::CallExpr *CE);
   void VisitStmt(clang::Stmt *S);
 
  private:
   RSContext* mCtxt;
   clang::ASTContext& mASTCtxt;
+  // A flag, if true, indicating that the visitor is walking inside a kernel
+  // function, in which case any call to rsForEach() or rsForEachWithOptions()
+  // is a compiler error.
+  bool mInsideKernel;
 
   const clang::FunctionDecl* matchFunctionDesignator(clang::Expr* expr);
   const clang::FunctionDecl* matchKernelLaunchCall(clang::CallExpr* CE,
