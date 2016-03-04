@@ -54,7 +54,7 @@ void RSASTReplace::ReplaceInCompoundStmt(clang::CompoundStmt *CS) {
     }
   }
 
-  CS->setStmts(C, UpdatedStmtList, UpdatedStmtCount);
+  CS->setStmts(C, llvm::makeArrayRef(UpdatedStmtList, UpdatedStmtCount));
 
   delete [] UpdatedStmtList;
 }

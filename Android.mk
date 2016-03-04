@@ -92,10 +92,13 @@ LOCAL_LDLIBS := -ldl -lpthread
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
 include $(LLVM_GEN_INTRINSICS_MK)
+include $(LLVM_GEN_ATTRIBUTES_MK)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
 # ========================================================
 include $(CLEAR_VARS)
+
+LLVM_ROOT_PATH := external/llvm
 
 LOCAL_MODULE := llvm-rs-as
 LOCAL_MODULE_TAGS := optional
@@ -113,6 +116,8 @@ LOCAL_SHARED_LIBRARIES := \
 	libLLVM
 
 include $(CLANG_HOST_BUILD_MK)
+include $(LLVM_HOST_BUILD_MK)
+include $(LLVM_GEN_ATTRIBUTES_MK)
 include $(BUILD_HOST_EXECUTABLE)
 
 # Executable llvm-rs-cc for host
@@ -190,6 +195,7 @@ $(intermediates)/RSCCOptions.inc: $(LOCAL_PATH)/RSCCOptions.td $(LLVM_ROOT_PATH)
 
 include $(CLANG_HOST_BUILD_MK)
 include $(CLANG_TBLGEN_RULES_MK)
+include $(LLVM_GEN_ATTRIBUTES_MK)
 include $(BUILD_HOST_EXECUTABLE)
 
 endif  # TARGET_BUILD_APPS

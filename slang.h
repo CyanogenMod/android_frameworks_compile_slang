@@ -57,8 +57,11 @@ namespace clang {
   class DiagnosticsEngine;
   class FileManager;
   class FileSystemOptions;
+  class HeaderSearchOptions;
   class LangOptions;
+  class PCHContainerOperations;
   class Preprocessor;
+  class PreprocessorOptions;
   class SourceManager;
   class TargetInfo;
 }  // namespace clang
@@ -123,6 +126,16 @@ class Slang : public clang::ModuleLoader {
   // AST consumer, responsible for code generation
   std::unique_ptr<clang::ASTConsumer> mBackend;
 
+  // Options for includes
+  llvm::IntrusiveRefCntPtr<clang::HeaderSearchOptions> mHSOpts;
+
+  // Options for the preprocessor (but not header includes)
+  llvm::IntrusiveRefCntPtr<clang::PreprocessorOptions> mPPOpts;
+
+  // Module provider (probably not necessary, but keeps us more consistent
+  // with regular Clang.
+  std::shared_ptr<clang::PCHContainerOperations> mPCHContainerOperations;
+
   // File names
   std::string mInputFileName;
   std::string mOutputFileName;
@@ -182,6 +195,8 @@ class Slang : public clang::ModuleLoader {
   clang::SourceManager &getSourceManager() { return *mSourceMgr; }
   clang::Preprocessor &getPreprocessor() { return *mPP; }
   clang::ASTContext &getASTContext() { return *mASTContext; }
+  clang::HeaderSearchOptions &getHeaderSearchOpts() { return *mHSOpts; }
+  clang::PreprocessorOptions &getPreprocessorOpts() { return *mPPOpts; }
 
   inline clang::TargetOptions const &getTargetOptions() const
     { return *mTargetOpts.get(); }

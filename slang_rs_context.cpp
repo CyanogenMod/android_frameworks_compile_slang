@@ -69,7 +69,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
   AddPragmaHandlers(PP, this);
 
   // Prepare target data
-  mDataLayout = new llvm::DataLayout(Target.getTargetDescription());
+  mDataLayout = new llvm::DataLayout(Target.getDataLayoutString());
 
   // Reserve slot 0 for the root kernel.
   mExportForEach.push_back(nullptr);

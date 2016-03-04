@@ -40,13 +40,14 @@
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendOptions.h"
+#include "clang/Frontend/PCHContainerOperations.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/HeaderSearchOptions.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/PreprocessorOptions.h"
 
 #include "clang/Parse/ParseAST.h"
 
@@ -174,17 +175,13 @@ void Slang::createSourceManager() {
 
 void Slang::createPreprocessor() {
   // Default only search header file in current dir
-  llvm::IntrusiveRefCntPtr<clang::HeaderSearchOptions> HSOpts =
-      new clang::HeaderSearchOptions();
-  clang::HeaderSearch *HeaderInfo = new clang::HeaderSearch(HSOpts,
+  clang::HeaderSearch *HeaderInfo = new clang::HeaderSearch(&getHeaderSearchOpts(),
                                                             *mSourceMgr,
                                                             *mDiagEngine,
                                                             LangOpts,
                                                             mTarget.get());
 
-  llvm::IntrusiveRefCntPtr<clang::PreprocessorOptions> PPOpts =
-      new clang::PreprocessorOptions();
-  mPP.reset(new clang::Preprocessor(PPOpts,
+  mPP.reset(new clang::Preprocessor(&getPreprocessorOpts(),
                                     *mDiagEngine,
                                     LangOpts,
                                     *mSourceMgr,
@@ -195,7 +192,13 @@ void Slang::createPreprocessor() {
   // Initialize the preprocessor
   mPP->Initialize(getTargetInfo());
   clang::FrontendOptions FEOpts;
-  clang::InitializePreprocessor(*mPP, *PPOpts, FEOpts);
+
+  auto *Reader = mPCHContainerOperations->getReaderOrNull(
+      getHeaderSearchOpts().ModuleFormat);
+  clang::InitializePreprocessor(*mPP, getPreprocessorOpts(), *Reader, FEOpts);
+
+  clang::ApplyHeaderSearchOptions(*HeaderInfo, getHeaderSearchOpts(), LangOpts,
+      mPP->getTargetInfo().getTriple());
 
   mPragmas.clear();
 
@@ -228,16 +231,22 @@ void Slang::createASTContext() {
 clang::ASTConsumer *
 Slang::createBackend(const RSCCOptions &Opts, const clang::CodeGenOptions &CodeGenOpts,
                      llvm::raw_ostream *OS, OutputType OT) {
-  return new Backend(mRSContext, &getDiagnostics(), Opts, CodeGenOpts,
-                     getTargetOptions(), &mPragmas, OS, OT, getSourceManager(),
-                     mAllowRSPrefix, mIsFilterscript);
+  auto *B = new Backend(mRSContext, &getDiagnostics(), Opts,
+                        getHeaderSearchOpts(), getPreprocessorOpts(),
+                        CodeGenOpts, getTargetOptions(), &mPragmas, OS, OT,
+                        getSourceManager(), mAllowRSPrefix, mIsFilterscript);
+  B->Initialize(getASTContext());
+  return B;
 }
 
 Slang::Slang(uint32_t BitWidth, clang::DiagnosticsEngine *DiagEngine,
              DiagnosticBuffer *DiagClient)
     : mDiagEngine(DiagEngine), mDiagClient(DiagClient),
-      mTargetOpts(new clang::TargetOptions()), mOT(OT_Default),
-      mRSContext(nullptr), mAllowRSPrefix(false), mTargetAPI(0),
+      mTargetOpts(new clang::TargetOptions()),
+      mHSOpts(new clang::HeaderSearchOptions()),
+      mPPOpts(new clang::PreprocessorOptions()),
+      mPCHContainerOperations(std::make_shared<clang::PCHContainerOperations>()),
+      mOT(OT_Default), mRSContext(nullptr), mAllowRSPrefix(false), mTargetAPI(0),
       mVerbose(false), mIsFilterscript(false) {
   // Please refer to include/clang/Basic/LangOptions.h to setup
   // the options.

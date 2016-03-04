@@ -176,9 +176,6 @@ bool Backend::CreateCodeGenPasses() {
     TargetInfo->createTargetMachine(Triple, mTargetOpts.CPU, FeaturesStr,
                                     Options, RM, CM);
 
-  // Register scheduler
-  llvm::RegisterScheduler::setDefault(llvm::createDefaultScheduler);
-
   // Register allocation policy:
   //  createFastRegisterAllocator: fast but bad quality
   //  createGreedyRegisterAllocator: not so fast but good quality
@@ -208,7 +205,10 @@ bool Backend::CreateCodeGenPasses() {
 }
 
 Backend::Backend(RSContext *Context, clang::DiagnosticsEngine *DiagEngine,
-                 const RSCCOptions &Opts, const clang::CodeGenOptions &CodeGenOpts,
+                 const RSCCOptions &Opts,
+                 const clang::HeaderSearchOptions &HeaderSearchOpts,
+                 const clang::PreprocessorOptions &PreprocessorOpts,
+                 const clang::CodeGenOptions &CodeGenOpts,
                  const clang::TargetOptions &TargetOpts, PragmaList *Pragmas,
                  llvm::raw_ostream *OS, Slang::OutputType OT,
                  clang::SourceManager &SourceMgr, bool AllowRSPrefix,
@@ -228,7 +228,8 @@ Backend::Backend(RSContext *Context, clang::DiagnosticsEngine *DiagEngine,
       mForEachHandler(Context),
       mLLVMContext(llvm::getGlobalContext()), mDiagEngine(*DiagEngine),
       mCodeGenOpts(CodeGenOpts), mPragmas(Pragmas) {
-  mGen = CreateLLVMCodeGen(mDiagEngine, "", mCodeGenOpts, mLLVMContext);
+  mGen = CreateLLVMCodeGen(mDiagEngine, "", HeaderSearchOpts, PreprocessorOpts,
+      mCodeGenOpts, mLLVMContext);
 }
 
 void Backend::Initialize(clang::ASTContext &Ctx) {
@@ -340,8 +341,6 @@ void Backend::HandleTranslationUnit(clang::ASTContext &Ctx) {
       slangAssert(false && "Unknown output type");
     }
   }
-
-  mBufferOutStream.flush();
 }
 
 void Backend::HandleTagDeclDefinition(clang::TagDecl *D) {

@@ -37,18 +37,18 @@ ValueEnumerator::ValueEnumerator(const llvm::Module &M)
   // Enumerate the global variables.
   for (llvm::Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
-    EnumerateValue(I);
+    EnumerateValue(&*I);
 
   // Enumerate the functions.
   for (llvm::Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    EnumerateValue(I);
+    EnumerateValue(&*I);
     EnumerateAttributes(cast<Function>(I)->getAttributes());
   }
 
   // Enumerate the aliases.
   for (llvm::Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
        I != E; ++I)
-    EnumerateValue(I);
+    EnumerateValue(&*I);
 
   // Remember what is the cutoff between globalvalue's and other constants.
   unsigned FirstConstant = Values.size();
@@ -238,7 +238,7 @@ void ValueEnumerator::EnumerateNamedMetadata(const llvm::Module &M) {
   for (llvm::Module::const_named_metadata_iterator I = M.named_metadata_begin(),
                                              E = M.named_metadata_end();
        I != E; ++I)
-    EnumerateNamedMDNode(I);
+    EnumerateNamedMDNode(&*I);
 }
 
 void ValueEnumerator::EnumerateNamedMDNode(const NamedMDNode *MD) {
@@ -461,7 +461,7 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
   // Adding function arguments to the value table.
   for (Function::const_arg_iterator I = F.arg_begin(), E = F.arg_end();
        I != E; ++I)
-    EnumerateValue(I);
+    EnumerateValue(&*I);
 
   FirstFuncConstantID = Values.size();
 
@@ -474,8 +474,8 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
             isa<InlineAsm>(*OI))
           EnumerateValue(*OI);
       }
-    BasicBlocks.push_back(BB);
-    ValueMap[BB] = BasicBlocks.size();
+    BasicBlocks.push_back(&*BB);
+    ValueMap[&*BB] = BasicBlocks.size();
   }
 
   // Optimize the constant layout.
@@ -500,7 +500,7 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
       }
 
       if (!I->getType()->isVoidTy())
-        EnumerateValue(I);
+        EnumerateValue(&*I);
     }
   }
 
@@ -528,7 +528,7 @@ static void IncorporateFunctionInfoGlobalBBIDs(const Function *F,
                                  DenseMap<const BasicBlock*, unsigned> &IDMap) {
   unsigned Counter = 0;
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-    IDMap[BB] = ++Counter;
+    IDMap[&*BB] = ++Counter;
 }
 
 /// getGlobalBasicBlockID - This returns the function-specific ID for the

@@ -531,7 +531,7 @@ static void WriteModuleInfo(const Module *M,
     Vals.push_back(getEncodedLinkage(A));
     Vals.push_back(getEncodedVisibility(A));
     unsigned AbbrevToUse = 0;
-    Stream.EmitRecord(bitc::MODULE_CODE_ALIAS, Vals, AbbrevToUse);
+    Stream.EmitRecord(bitc::MODULE_CODE_ALIAS_OLD, Vals, AbbrevToUse);
     Vals.clear();
   }
 }
@@ -756,7 +756,7 @@ static void WriteMetadataAttachment(const Function &F,
       // If no metadata, ignore instruction.
       if (MDs.empty()) continue;
 
-      Record.push_back(VE.getInstructionID(I));
+      Record.push_back(VE.getInstructionID(&*I));
 
       for (unsigned i = 0, e = MDs.size(); i != e; ++i) {
         Record.push_back(MDs[i].first);
@@ -1279,9 +1279,10 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
 
   case Instruction::LandingPad: {
     const LandingPadInst &LP = cast<LandingPadInst>(I);
-    Code = bitc::FUNC_CODE_INST_LANDINGPAD;
+    Code = bitc::FUNC_CODE_INST_LANDINGPAD_OLD;
     Vals.push_back(VE.getTypeID(LP.getType()));
-    PushValueAndType(LP.getPersonalityFn(), InstID, Vals, VE);
+    // TODO (rebase): is this fix enough?
+    // PushValueAndType(LP.getPersonalityFn(), InstID, Vals, VE);
     Vals.push_back(LP.isCleanup());
     Vals.push_back(LP.getNumClauses());
     for (unsigned I = 0, E = LP.getNumClauses(); I != E; ++I) {

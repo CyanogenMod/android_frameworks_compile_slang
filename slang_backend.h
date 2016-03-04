@@ -45,6 +45,8 @@ namespace clang {
   class DeclGroupRef;
   class DiagnosticsEngine;
   class FunctionDecl;
+  class HeaderSearchOptions;
+  class PreprocessorOptions;
   class TagDecl;
   class TargetOptions;
   class VarDecl;
@@ -149,6 +151,8 @@ class Backend : public clang::ASTConsumer {
   Backend(RSContext *Context,
             clang::DiagnosticsEngine *DiagEngine,
             const RSCCOptions &Opts,
+            const clang::HeaderSearchOptions &HeaderSearchOpts,
+            const clang::PreprocessorOptions &PreprocessorOpts,
             const clang::CodeGenOptions &CodeGenOpts,
             const clang::TargetOptions &TargetOpts,
             PragmaList *Pragmas,

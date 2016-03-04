@@ -72,8 +72,7 @@ namespace {
 class RSCCOptTable : public llvm::opt::OptTable {
  public:
   RSCCOptTable()
-      : OptTable(RSCCInfoTable,
-                 sizeof(RSCCInfoTable) / sizeof(RSCCInfoTable[0])) {}
+      : OptTable(llvm::makeArrayRef(RSCCInfoTable)) {}
 };
 }
 
@@ -102,46 +101,46 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
   // Populate a vector with the command line arguments, expanding command files
   // that have been included via the '@' argument.
   llvm::SmallVector<const char *, 256> ArgVector;
-  ArgVector.append(ArgsIn.begin(), ArgsIn.end());
+  // Skip over the command name, or we will mistakenly process it as a source file.
+  ArgVector.append(ArgsIn.slice(1).begin(), ArgsIn.end());
   llvm::cl::ExpandResponseFiles(StringSaver, llvm::cl::TokenizeGNUCommandLine,
                                 ArgVector, false);
 
   std::unique_ptr<llvm::opt::OptTable> OptParser(createRSCCOptTable());
   unsigned MissingArgIndex = 0;
   unsigned MissingArgCount = 0;
-  std::unique_ptr<llvm::opt::InputArgList> Args(
-      OptParser->ParseArgs(ArgVector.begin() + 1, ArgVector.end(),
-                           MissingArgIndex, MissingArgCount));
+  llvm::opt::InputArgList Args =
+      OptParser->ParseArgs(ArgVector, MissingArgIndex, MissingArgCount);
 
   // Check for missing argument error.
   if (MissingArgCount) {
     DiagEngine.Report(clang::diag::err_drv_missing_argument)
-        << Args->getArgString(MissingArgIndex) << MissingArgCount;
+        << Args.getArgString(MissingArgIndex) << MissingArgCount;
   }
 
   // Issue errors on unknown arguments.
-  for (llvm::opt::arg_iterator it = Args->filtered_begin(OPT_UNKNOWN),
-                               ie = Args->filtered_end();
+  for (llvm::opt::arg_iterator it = Args.filtered_begin(OPT_UNKNOWN),
+                               ie = Args.filtered_end();
        it != ie; ++it) {
     DiagEngine.Report(clang::diag::err_drv_unknown_argument)
-        << (*it)->getAsString(*Args);
+        << (*it)->getAsString(Args);
   }
 
-  DiagOpts.IgnoreWarnings = Args->hasArg(OPT_w);
-  DiagOpts.Warnings = Args->getAllArgValues(OPT_W);
+  DiagOpts.IgnoreWarnings = Args.hasArg(OPT_w);
+  DiagOpts.Warnings = Args.getAllArgValues(OPT_W);
 
-  for (llvm::opt::ArgList::const_iterator it = Args->begin(), ie = Args->end();
+  for (llvm::opt::ArgList::const_iterator it = Args.begin(), ie = Args.end();
        it != ie; ++it) {
     const llvm::opt::Arg *A = *it;
     if (A->getOption().getKind() == llvm::opt::Option::InputClass)
       Inputs.push_back(A->getValue());
   }
 
-  Opts.mIncludePaths = Args->getAllArgValues(OPT_I);
+  Opts.mIncludePaths = Args.getAllArgValues(OPT_I);
 
-  Opts.mBitcodeOutputDir = Args->getLastArgValue(OPT_o);
+  Opts.mBitcodeOutputDir = Args.getLastArgValue(OPT_o);
 
-  if (const llvm::opt::Arg *A = Args->getLastArg(OPT_M_Group)) {
+  if (const llvm::opt::Arg *A = Args.getLastArg(OPT_M_Group)) {
     switch (A->getOption().getID()) {
     case OPT_M: {
       Opts.mEmitDependency = true;
@@ -163,7 +162,7 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
     }
   }
 
-  if (const llvm::opt::Arg *A = Args->getLastArg(OPT_Output_Type_Group)) {
+  if (const llvm::opt::Arg *A = Args.getLastArg(OPT_Output_Type_Group)) {
     switch (A->getOption().getID()) {
     case OPT_emit_asm: {
       Opts.mOutputType = Slang::OT_Assembly;
@@ -188,20 +187,20 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
   if (Opts.mEmitDependency && ((Opts.mOutputType != Slang::OT_Bitcode) &&
                                (Opts.mOutputType != Slang::OT_Dependency)))
     DiagEngine.Report(clang::diag::err_drv_argument_not_allowed_with)
-        << Args->getLastArg(OPT_M_Group)->getAsString(*Args)
-        << Args->getLastArg(OPT_Output_Type_Group)->getAsString(*Args);
+        << Args.getLastArg(OPT_M_Group)->getAsString(Args)
+        << Args.getLastArg(OPT_Output_Type_Group)->getAsString(Args);
 
-  Opts.mAllowRSPrefix = Args->hasArg(OPT_allow_rs_prefix);
+  Opts.mAllowRSPrefix = Args.hasArg(OPT_allow_rs_prefix);
 
   Opts.mJavaReflectionPathBase =
-      Args->getLastArgValue(OPT_java_reflection_path_base);
+      Args.getLastArgValue(OPT_java_reflection_path_base);
   Opts.mJavaReflectionPackageName =
-      Args->getLastArgValue(OPT_java_reflection_package_name);
+      Args.getLastArgValue(OPT_java_reflection_package_name);
 
-  Opts.mRSPackageName = Args->getLastArgValue(OPT_rs_package_name);
+  Opts.mRSPackageName = Args.getLastArgValue(OPT_rs_package_name);
 
   llvm::StringRef BitcodeStorageValue =
-      Args->getLastArgValue(OPT_bitcode_storage);
+      Args.getLastArgValue(OPT_bitcode_storage);
   if (BitcodeStorageValue == "ar")
     Opts.mBitcodeStorage = BCST_APK_RESOURCE;
   else if (BitcodeStorageValue == "jc")
@@ -210,8 +209,8 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
     DiagEngine.Report(clang::diag::err_drv_invalid_value)
         << OptParser->getOptionName(OPT_bitcode_storage) << BitcodeStorageValue;
 
-  llvm::opt::Arg *lastBitwidthArg = Args->getLastArg(OPT_m32, OPT_m64);
-  if (Args->hasArg(OPT_reflect_cpp)) {
+  llvm::opt::Arg *lastBitwidthArg = Args.getLastArg(OPT_m32, OPT_m64);
+  if (Args.hasArg(OPT_reflect_cpp)) {
     Opts.mBitcodeStorage = BCST_CPP_CODE;
     // mJavaReflectionPathBase can be set for C++ reflected builds.
     // Set it to the standard mBitcodeOutputDir (via -o) by default.
@@ -247,20 +246,20 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
   }
 
   Opts.mDependencyOutputDir =
-      Args->getLastArgValue(OPT_output_dep_dir, Opts.mBitcodeOutputDir);
-  Opts.mAdditionalDepTargets = Args->getAllArgValues(OPT_additional_dep_target);
+      Args.getLastArgValue(OPT_output_dep_dir, Opts.mBitcodeOutputDir);
+  Opts.mAdditionalDepTargets = Args.getAllArgValues(OPT_additional_dep_target);
 
-  Opts.mShowHelp = Args->hasArg(OPT_help);
-  Opts.mShowVersion = Args->hasArg(OPT_version);
-  Opts.mDebugEmission = Args->hasArg(OPT_emit_g);
-  Opts.mVerbose = Args->hasArg(OPT_verbose);
-  Opts.mASTPrint = Args->hasArg(OPT_ast_print);
+  Opts.mShowHelp = Args.hasArg(OPT_help);
+  Opts.mShowVersion = Args.hasArg(OPT_version);
+  Opts.mDebugEmission = Args.hasArg(OPT_emit_g);
+  Opts.mVerbose = Args.hasArg(OPT_verbose);
+  Opts.mASTPrint = Args.hasArg(OPT_ast_print);
 
   // Delegate options
 
   std::vector<std::string> DelegatedStrings;
   for (int Opt : std::vector<unsigned>{OPT_debug, OPT_print_after_all, OPT_print_before_all}) {
-    if (Args->hasArg(Opt)) {
+    if (Args.hasArg(Opt)) {
       // TODO: Don't assume that the option begins with "-"; determine this programmatically instead.
       DelegatedStrings.push_back(std::string("-") + std::string(OptParser->getOptionName(Opt)));
       slangAssert(OptParser->getOptionKind(Opt) == llvm::opt::Option::FlagClass);
@@ -277,13 +276,13 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
   // If we are emitting both 32-bit and 64-bit bitcode, we must embed it.
 
   size_t OptLevel =
-      clang::getLastArgIntValue(*Args, OPT_optimization_level, 3, DiagEngine);
+      clang::getLastArgIntValue(Args, OPT_optimization_level, 3, DiagEngine);
 
   Opts.mOptimizationLevel =
       OptLevel == 0 ? llvm::CodeGenOpt::None : llvm::CodeGenOpt::Aggressive;
 
   Opts.mTargetAPI =
-      clang::getLastArgIntValue(*Args, OPT_target_api, RS_VERSION, DiagEngine);
+      clang::getLastArgIntValue(Args, OPT_target_api, RS_VERSION, DiagEngine);
 
   if (Opts.mTargetAPI == 0) {
     Opts.mTargetAPI = UINT_MAX;

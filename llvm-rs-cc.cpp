@@ -47,16 +47,18 @@
 #include <string>
 
 namespace {
-class StringSet : public llvm::StringSaver {
+class StringSet {
 public:
-  const char *saveImpl(llvm::StringRef Str) override {
-    return Strings.insert(Str.str()).first->c_str();
+  const char *save(const char *Str) {
+    return Strings.save(Str);
   }
 
-  StringSet() : llvm::StringSaver(A), A() {}
+  StringSet() : Strings(A), A() {}
+
+  llvm::StringSaver & getStringSaver() { return Strings; }
 
 private:
-  std::set<std::string> Strings;
+  llvm::StringSaver Strings;
   llvm::BumpPtrAllocator A;
 };
 }
@@ -230,7 +232,7 @@ int main(int argc, const char **argv) {
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts =
       new clang::DiagnosticOptions();
   if (!slang::ParseArguments(llvm::makeArrayRef(argv, argc), Inputs, Opts,
-                             *DiagOpts, SavedStrings)) {
+                             *DiagOpts, SavedStrings.getStringSaver())) {
     // Exits when there's any error occurred during parsing the arguments
     return 1;
   }

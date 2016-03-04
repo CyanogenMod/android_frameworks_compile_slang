@@ -169,7 +169,7 @@ void AppendAfterStmt(clang::ASTContext &C,
     }
   }
 
-  CS->setStmts(C, UpdatedStmtList, UpdatedStmtCount);
+  CS->setStmts(C, llvm::makeArrayRef(UpdatedStmtList, UpdatedStmtCount));
 
   delete [] UpdatedStmtList;
 }
@@ -1088,7 +1088,7 @@ void RSObjectRefCount::Scope::InsertStmt(const clang::ASTContext &C,
     }
     newBody.push_back(S1);
   }
-  mCS->setStmts(C, newBody.data(), newBody.size());
+  mCS->setStmts(C, newBody);
 }
 
 void RSObjectRefCount::Scope::ReplaceStmt(const clang::ASTContext &C,
@@ -1101,7 +1101,7 @@ void RSObjectRefCount::Scope::ReplaceStmt(const clang::ASTContext &C,
       newBody.push_back(S1);
     }
   }
-  mCS->setStmts(C, newBody.data(), newBody.size());
+  mCS->setStmts(C, newBody);
 }
 
 void RSObjectRefCount::Scope::ReplaceExpr(const clang::ASTContext& C,
