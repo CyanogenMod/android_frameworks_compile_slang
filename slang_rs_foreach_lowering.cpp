@@ -154,19 +154,36 @@ clang::FunctionDecl* RSForEachLowering::CreateForEachInternalFunctionDecl() {
   clang::QualType ScriptCallTy = mCtxt->getScriptCallType();
   const clang::QualType ScriptCallPtrTy = mASTCtxt.getPointerType(ScriptCallTy);
 
+  clang::QualType ParamTypes[] = {
+    mASTCtxt.IntTy,   // int slot
+    ScriptCallPtrTy,  // rs_script_call_t* launch_options
+    mASTCtxt.IntTy,   // int numOutput
+    mASTCtxt.IntTy,   // int numInputs
+    AllocPtrTy        // rs_allocation* allocs
+  };
+
   clang::QualType T = mASTCtxt.getFunctionType(
-      mASTCtxt.VoidTy,    // Return type
-                          // Argument types:
-      { mASTCtxt.IntTy,   // int slot
-        ScriptCallPtrTy,  // rs_script_call_t* launch_options
-        mASTCtxt.IntTy,   // int numOutput
-        mASTCtxt.IntTy,   // int numInputs
-        AllocPtrTy        // rs_allocation* allocs
-      },
+      mASTCtxt.VoidTy,  // Return type
+      ParamTypes,       // Parameter types
       EPI);
 
   clang::FunctionDecl* FD = clang::FunctionDecl::Create(
       mASTCtxt, DC, Loc, Loc, N, T, nullptr, clang::SC_Extern);
+
+  static constexpr unsigned kNumParams = sizeof(ParamTypes) / sizeof(ParamTypes[0]);
+  clang::ParmVarDecl *ParamDecls[kNumParams];
+  for (unsigned I = 0; I != kNumParams; ++I) {
+    ParamDecls[I] = clang::ParmVarDecl::Create(mASTCtxt, FD, Loc,
+        Loc, nullptr, ParamTypes[I], nullptr, clang::SC_None, nullptr);
+    // Implicit means that this declaration was created by the compiler, and
+    // not part of the actual source code.
+    ParamDecls[I]->setImplicit();
+  }
+  FD->setParams(llvm::makeArrayRef(ParamDecls, kNumParams));
+
+  // Implicit means that this declaration was created by the compiler, and
+  // not part of the actual source code.
+  FD->setImplicit();
 
   return FD;
 }
