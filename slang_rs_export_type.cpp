@@ -61,7 +61,7 @@ namespace {
 static RSReflectionType gReflectionTypes[] = {
 #define _ nullptr
   //      Category     SName              RsType       RsST           CName         JN      JAEN       CVN       JVN     JP
-{PrimitiveDataType,   "half",         "FLOAT_16",     "F16", 16,     "half",   "short",        _,   "Half",   "Half", false},
+{PrimitiveDataType,   "half",         "FLOAT_16",     "F16", 16,     "half",   "short",  "short",   "Half",  "Short", false},
 {PrimitiveDataType,  "float",         "FLOAT_32",     "F32", 32,    "float",   "float",  "float",  "Float",  "Float", false},
 {PrimitiveDataType, "double",         "FLOAT_64",     "F64", 64,   "double",  "double", "double", "Double", "Double", false},
 {PrimitiveDataType,   "char",         "SIGNED_8",      "I8",  8,   "int8_t",    "byte",   "byte",   "Byte",   "Byte", false},

@@ -888,20 +888,6 @@ void RSExportReduceNew::analyzeResultType(StateOfAnalyzeTranslationUnit &S) {
               << ResultInfo.UnlessOutConverter();
           mResultType = nullptr;
           break;
-        case RSExportType::ExportClassVector: {
-          const RSExportVectorType *const EVT = static_cast<const RSExportVectorType *>(CheckType);
-          if (EVT->getType() == DataTypeFloat16) {
-            // Not supported for now -- how is this handled?
-            S.RSC.ReportError(ResultInfo.Decl->getLocation(),
-                              "%0 parameter '%1' (type '%2') must not point to a%3 half* vector%4")
-                << S.DiagnosticDescription(ResultInfo.FnKey, ResultInfo.FnName)
-                << ResultInfo.Decl->getName() << ResultInfo.QType.getAsString()
-                << ArrayErrorPhrase
-                << ResultInfo.UnlessOutConverter();
-            mResultType = nullptr;
-          }
-          break;
-        }
         default:
           // All's well
           break;

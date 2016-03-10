@@ -126,6 +126,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_0 = 0;
+    // in1 = "in"
+    public result_int reduce_my_half_0(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_0(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_0(Allocation ain1) {
         return reduce_my_half_0(ain1, null);
@@ -144,6 +157,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_1 = 1;
+    // in1 = "in"
+    public result_int reduce_my_half_1(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_1(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_1(Allocation ain1) {
         return reduce_my_half_1(ain1, null);
@@ -162,6 +188,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_2 = 2;
+    // in1 = "in"
+    public result_int reduce_my_half_2(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_2(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_2(Allocation ain1) {
         return reduce_my_half_2(ain1, null);
@@ -180,6 +219,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_3 = 3;
+    // in1 = "in"
+    public result_int reduce_my_half_3(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_3(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_3(Allocation ain1) {
         return reduce_my_half_3(ain1, null);
@@ -198,6 +250,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_4 = 4;
+    // in1 = "in"
+    public result_int reduce_my_half_4(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_4(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_4(Allocation ain1) {
         return reduce_my_half_4(ain1, null);
@@ -216,6 +281,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_5 = 5;
+    // in1 = "in"
+    public result_int reduce_my_half_5(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_5(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_5(Allocation ain1) {
         return reduce_my_half_5(ain1, null);
@@ -234,6 +312,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_6 = 6;
+    // in1 = "in"
+    public result_int reduce_my_half_6(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_6(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_6(Allocation ain1) {
         return reduce_my_half_6(ain1, null);
@@ -252,6 +343,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_7 = 7;
+    // in1 = "in"
+    public result_int reduce_my_half_7(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_7(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_7(Allocation ain1) {
         return reduce_my_half_7(ain1, null);
@@ -270,6 +374,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_8 = 8;
+    // in1 = "in"
+    public result_int reduce_my_half_8(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_8(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_8(Allocation ain1) {
         return reduce_my_half_8(ain1, null);
@@ -288,6 +405,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_9 = 9;
+    // in1 = "in"
+    public result_int reduce_my_half_9(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_9(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_9(Allocation ain1) {
         return reduce_my_half_9(ain1, null);
@@ -306,6 +436,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_10 = 10;
+    // in1 = "in"
+    public result_int reduce_my_half_10(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_10(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_10(Allocation ain1) {
         return reduce_my_half_10(ain1, null);
@@ -324,6 +467,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_11 = 11;
+    // in1 = "in"
+    public result_int reduce_my_half_11(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_11(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_11(Allocation ain1) {
         return reduce_my_half_11(ain1, null);
@@ -342,6 +498,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_12 = 12;
+    // in1 = "in"
+    public result_int reduce_my_half_12(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_12(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_12(Allocation ain1) {
         return reduce_my_half_12(ain1, null);
@@ -360,6 +529,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_13 = 13;
+    // in1 = "in"
+    public result_int reduce_my_half_13(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_13(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_13(Allocation ain1) {
         return reduce_my_half_13(ain1, null);
@@ -378,6 +560,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_14 = 14;
+    // in1 = "in"
+    public result_int reduce_my_half_14(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_14(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_14(Allocation ain1) {
         return reduce_my_half_14(ain1, null);
@@ -396,6 +591,19 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half_15 = 15;
+    // in1 = "in"
+    public result_int reduce_my_half_15(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16, in1.length);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half_15(ain1, null);
+    }
+
     // ain1 = "half in"
     public result_int reduce_my_half_15(Allocation ain1) {
         return reduce_my_half_15(ain1, null);
@@ -414,6 +622,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_0 = 16;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_0(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_0(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_0(Allocation ain1) {
         return reduce_my_half2_0(ain1, null);
@@ -432,6 +657,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_1 = 17;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_1(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_1(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_1(Allocation ain1) {
         return reduce_my_half2_1(ain1, null);
@@ -450,6 +692,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_2 = 18;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_2(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_2(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_2(Allocation ain1) {
         return reduce_my_half2_2(ain1, null);
@@ -468,6 +727,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_3 = 19;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_3(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_3(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_3(Allocation ain1) {
         return reduce_my_half2_3(ain1, null);
@@ -486,6 +762,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_4 = 20;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_4(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_4(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_4(Allocation ain1) {
         return reduce_my_half2_4(ain1, null);
@@ -504,6 +797,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_5 = 21;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_5(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_5(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_5(Allocation ain1) {
         return reduce_my_half2_5(ain1, null);
@@ -522,6 +832,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_6 = 22;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_6(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_6(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_6(Allocation ain1) {
         return reduce_my_half2_6(ain1, null);
@@ -540,6 +867,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_7 = 23;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_7(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_7(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_7(Allocation ain1) {
         return reduce_my_half2_7(ain1, null);
@@ -558,6 +902,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_8 = 24;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_8(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_8(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_8(Allocation ain1) {
         return reduce_my_half2_8(ain1, null);
@@ -576,6 +937,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_9 = 25;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_9(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_9(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_9(Allocation ain1) {
         return reduce_my_half2_9(ain1, null);
@@ -594,6 +972,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_10 = 26;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_10(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_10(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_10(Allocation ain1) {
         return reduce_my_half2_10(ain1, null);
@@ -612,6 +1007,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_11 = 27;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_11(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_11(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_11(Allocation ain1) {
         return reduce_my_half2_11(ain1, null);
@@ -630,6 +1042,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_12 = 28;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_12(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_12(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_12(Allocation ain1) {
         return reduce_my_half2_12(ain1, null);
@@ -648,6 +1077,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_13 = 29;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_13(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_13(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_13(Allocation ain1) {
         return reduce_my_half2_13(ain1, null);
@@ -666,6 +1112,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_14 = 30;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_14(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_14(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_14(Allocation ain1) {
         return reduce_my_half2_14(ain1, null);
@@ -684,6 +1147,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half2_15 = 31;
+    // in1 = "in", flattened 2-vectors
+    public result_int reduce_my_half2_15(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 2 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 2 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_2, in1.length / 2);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half2_15(ain1, null);
+    }
+
     // ain1 = "half2 in"
     public result_int reduce_my_half2_15(Allocation ain1) {
         return reduce_my_half2_15(ain1, null);
@@ -702,6 +1182,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_0 = 32;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_0(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_0(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_0(Allocation ain1) {
         return reduce_my_half4_0(ain1, null);
@@ -720,6 +1217,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_1 = 33;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_1(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_1(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_1(Allocation ain1) {
         return reduce_my_half4_1(ain1, null);
@@ -738,6 +1252,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_2 = 34;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_2(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_2(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_2(Allocation ain1) {
         return reduce_my_half4_2(ain1, null);
@@ -756,6 +1287,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_3 = 35;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_3(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_3(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_3(Allocation ain1) {
         return reduce_my_half4_3(ain1, null);
@@ -774,6 +1322,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_4 = 36;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_4(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_4(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_4(Allocation ain1) {
         return reduce_my_half4_4(ain1, null);
@@ -792,6 +1357,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_5 = 37;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_5(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_5(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_5(Allocation ain1) {
         return reduce_my_half4_5(ain1, null);
@@ -810,6 +1392,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_6 = 38;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_6(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_6(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_6(Allocation ain1) {
         return reduce_my_half4_6(ain1, null);
@@ -828,6 +1427,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_7 = 39;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_7(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_7(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_7(Allocation ain1) {
         return reduce_my_half4_7(ain1, null);
@@ -846,6 +1462,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_8 = 40;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_8(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_8(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_8(Allocation ain1) {
         return reduce_my_half4_8(ain1, null);
@@ -864,6 +1497,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_9 = 41;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_9(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_9(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_9(Allocation ain1) {
         return reduce_my_half4_9(ain1, null);
@@ -882,6 +1532,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_10 = 42;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_10(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_10(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_10(Allocation ain1) {
         return reduce_my_half4_10(ain1, null);
@@ -900,6 +1567,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_11 = 43;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_11(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_11(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_11(Allocation ain1) {
         return reduce_my_half4_11(ain1, null);
@@ -918,6 +1602,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_12 = 44;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_12(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_12(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_12(Allocation ain1) {
         return reduce_my_half4_12(ain1, null);
@@ -936,6 +1637,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_13 = 45;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_13(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_13(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_13(Allocation ain1) {
         return reduce_my_half4_13(ain1, null);
@@ -954,6 +1672,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_14 = 46;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_14(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_14(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_14(Allocation ain1) {
         return reduce_my_half4_14(ain1, null);
@@ -972,6 +1707,23 @@ public class ScriptC_reduce_general_input extends ScriptC {
     }
 
     private final static int mExportReduceNewIdx_my_half4_15 = 47;
+    // in1 = "in", flattened 4-vectors
+    public result_int reduce_my_half4_15(short[] in1) {
+        // Verify that "in1" is non-null.
+        if (in1 == null) {
+            throw new RSIllegalArgumentException("Array \"in1\" is null!");
+        }
+        // Verify that the array length is a multiple of the vector size.
+        if (in1.length % 4 != 0) {
+            throw new RSIllegalArgumentException("Array \"in1\" is not a multiple of 4 in length!");
+        }
+        Allocation ain1 = Allocation.createSized(mRSLocal, __F16_4, in1.length / 4);
+        ain1.setAutoPadding(true);
+        ain1.copyFrom(in1);
+
+        return reduce_my_half4_15(ain1, null);
+    }
+
     // ain1 = "half4 in"
     public result_int reduce_my_half4_15(Allocation ain1) {
         return reduce_my_half4_15(ain1, null);

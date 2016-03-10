@@ -14,10 +14,28 @@ typedef struct MyStruct { float f; double d; } MyStruct;
 static void my_half_accum(half *accum, half val) { }
 static void my_half_comb(half *accum, const half *other) { }
 
+#pragma rs reduce(my_half2) accumulator(my_half2_accum) combiner(my_half2_comb)
+static void my_half2_accum(half2 *accum, half2 val) { }
+static void my_half2_comb(half2 *accum, const half2 *other) { }
+
+#pragma rs reduce(my_half4) accumulator(my_half4_accum) combiner(my_half4_comb)
+static void my_half4_accum(half4 *accum, half4 val) { }
+static void my_half4_comb(half4 *accum, const half4 *other) { }
+
 #pragma rs reduce(my_array_half) accumulator(my_array_half_accum) combiner(my_array_half_comb)
 typedef half array_half[7];
 static void my_array_half_accum(array_half *accum, half val) { }
 static void my_array_half_comb(array_half *accum, const array_half *other) { }
+
+#pragma rs reduce(my_array_half2) accumulator(my_array_half2_accum) combiner(my_array_half2_comb)
+typedef half2 array_half2[7];
+static void my_array_half2_accum(array_half2 *accum, half2 val) { }
+static void my_array_half2_comb(array_half2 *accum, const array_half2 *other) { }
+
+#pragma rs reduce(my_array_half4) accumulator(my_array_half4_accum) combiner(my_array_half4_comb)
+typedef half4 array_half4[7];
+static void my_array_half4_accum(array_half4 *accum, half4 val) { }
+static void my_array_half4_comb(array_half4 *accum, const array_half4 *other) { }
 
 #pragma rs reduce(my_float) accumulator(my_float_accum) combiner(my_float_comb)
 static void my_float_accum(float *accum, float val) { }
