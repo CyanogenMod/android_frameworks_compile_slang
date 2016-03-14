@@ -15,38 +15,6 @@ static void AccumInt(int *accum, int val) { }
 
 /////////////////////////////////////////////////////////////////////////
 
-// result type cannot be a vector of half
-#pragma rs reduce(redHalf3) accumulator(AccumHalf3)
-static void AccumHalf3(half3 *accum, half3 val) { }
-
-// problem is result type, not accumulator type, so outconverter can fix this
-#pragma rs reduce(redHalf3OutFix) accumulator(AccumHalf3) outconverter(OutHalf3Fix)
-static void OutHalf3Fix(half *out, const half3 *val) { }
-
-// problem is result type, not accumulator type, so outconverter can break this
-#pragma rs reduce(redHalf3OutBreak) accumulator(AccumInt) outconverter(OutHalf3Break)
-static void OutHalf3Break(half3 *out, const int *val) { }
-
-/////////////////////////////////////////////////////////////////////////
-
-typedef half4 Half4Array5[5];
-
-// result type cannot be an array of vector of half
-#pragma rs reduce(redHalf4A5) accumulator(AccumHalf4A5) combiner(CombHalf4A5)
-static void AccumHalf4A5(Half4Array5 *accum, short val) { }
-static void CombHalf4A5(Half4Array5 *accum, const Half4Array5 *other) { }
-
-// problem is result type, not accumulator type, so outconverter can fix this
-#pragma rs reduce(redHalf4A5OutFix) accumulator(AccumHalf4A5) combiner(CombHalf4A5) \
-  outconverter(OutHalf4A5Fix)
-static void OutHalf4A5Fix(half *out, const Half4Array5 *val) { }
-
-// problem is result type, not accumulator type, so outconverter can break this
-#pragma rs reduce(redHalf4A5OutBreak) accumulator(AccumInt) outconverter(OutHalf4A5Break)
-static void OutHalf4A5Break(Half4Array5 *out, const int *val) { }
-
-/////////////////////////////////////////////////////////////////////////
-
 typedef unsigned int UIntA916[9][16];
 
 // result type cannot be multidimensional array

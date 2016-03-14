@@ -231,7 +231,7 @@ static void ova_out(int *out, const double *val) { }
 #pragma rs reduce(out_over) accumulator(AccumInt) outconverter(out_over)
 static __attribute__((overloadable)) void out_over(double *accum, const int *val) { }
 
-// . . . but outconverter  must not have duplicate definitions
+// . . . but outconverter must not have duplicate definitions
 #pragma rs reduce(out_dup) accumulator(AccumInt) outconverter(out_dup)
 static __attribute__((overloadable)) void out_dup(double *out, const int *val) { }
 static __attribute__((overloadable)) void out_dup(float *out, const int *val) { }

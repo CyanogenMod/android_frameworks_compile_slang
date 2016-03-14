@@ -1366,6 +1366,7 @@ void RSReflectionJava::genExportReduceNewArrayVariant(const RSExportReduceNew *E
   ResultType->convertToRTD(&ResultTypeData);
   if (!ResultTypeData.type->java_name || !ResultTypeData.type->java_array_element_name ||
       (ResultTypeData.vecSize > 1 && !ResultTypeData.type->rs_java_vector_prefix)) {
+    slangAssert(false);
     return;
   }
   const std::string ResultTypeName = GetReduceNewResultTypeName(ER);
@@ -1640,7 +1641,7 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
   const std::string UnbracketedResultTypeName =
       GetTypeName(ResultType, TypeNameDefault & ~TypeNameWithConstantArrayBrackets);
   const std::string ReflectedScalarTypeName = TypeData.type->java_name;
-  // Note: MATRIX* and F16 types do not have a java_array_element_name
+  // Note: MATRIX* types do not have a java_array_element_name
   const std::string ArrayElementTypeName =
       TypeData.type->java_array_element_name
       ? std::string(TypeData.type->java_array_element_name)

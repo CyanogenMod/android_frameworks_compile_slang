@@ -31,9 +31,6 @@ foreach my $basicType (@basicTypes) {
       # There are no bool vectors or struct vectors
       next if ($vecLen > 1) && (($basicType eq "bool") || ($basicType eq "MyStruct"));
 
-      # We do not support half vectors as reduction results
-      next if ($vecLen > 1) && ($basicType eq "half");
-
       my $eltName = $basicType;
       $eltName .= $vecLen if ($vecLen > 1);
       my $resultName = ($isArray ? "array_${eltName}" : $eltName);
