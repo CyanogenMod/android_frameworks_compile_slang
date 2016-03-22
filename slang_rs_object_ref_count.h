@@ -138,6 +138,17 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
       clang::ASTContext &C,
       const clang::SourceLocation &Loc);
 
+  // Given a return statement RS that returns an rsObject, creates a temporary
+  // variable, and sets it to the original return expression using rsSetObject().
+  // Creates a new return statement that returns the temporary variable.
+  // Returns a new compound statement that contains the new variable declaration,
+  // the rsSetOjbect() call, and the new return statement.
+  static clang::CompoundStmt* CreateRetStmtWithTempVar(
+      clang::ASTContext& C,
+      clang::DeclContext* DC,
+      clang::ReturnStmt* RS,
+      const unsigned id);
+
  public:
   explicit RSObjectRefCount(clang::ASTContext &C)
       : mCtx(C), RSInitFD(false), mTempID(0) {
