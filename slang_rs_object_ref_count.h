@@ -131,10 +131,13 @@ class RSObjectRefCount : public clang::StmtVisitor<RSObjectRefCount> {
                                  DataType *DT,
                                  clang::Expr **InitExpr);
 
-  // Return a zero-initializer expr of the type DT. This processes both
-  // RS matrix type and RS object type.
-  static clang::Expr *CreateZeroInitializerForRSSpecificType(
-      DataType DT,
+  // Return an empty list initializer expression at the appropriate location.
+  // This construct can then be used to cheaply construct a zero-initializer
+  // for any RenderScript objects (like rs_allocation) or rs_matrix* types
+  // (possibly even embedded within other types). These types are expected to
+  // be zero-initialized always, and so we can use this helper to ensure that
+  // they at least have an empty initializer.
+  static clang::Expr *CreateEmptyInitListExpr(
       clang::ASTContext &C,
       const clang::SourceLocation &Loc);
 

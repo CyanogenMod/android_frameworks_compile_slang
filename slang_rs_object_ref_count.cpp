@@ -1307,9 +1307,7 @@ bool RSObjectRefCount::InitializeRSObject(clang::VarDecl *VD,
   }
 
   clang::Expr *ZeroInitializer =
-      CreateZeroInitializerForRSSpecificType(*DT,
-                                             VD->getASTContext(),
-                                             VD->getLocation());
+      CreateEmptyInitListExpr(VD->getASTContext(), VD->getLocation());
 
   if (ZeroInitializer) {
     ZeroInitializer->setType(T->getCanonicalTypeInternal());
@@ -1319,112 +1317,15 @@ bool RSObjectRefCount::InitializeRSObject(clang::VarDecl *VD,
   return DataTypeIsRSObject;
 }
 
-clang::Expr *RSObjectRefCount::CreateZeroInitializerForRSSpecificType(
-    DataType DT,
+clang::Expr *RSObjectRefCount::CreateEmptyInitListExpr(
     clang::ASTContext &C,
     const clang::SourceLocation &Loc) {
-  clang::Expr *Res = nullptr;
-  switch (DT) {
-    case DataTypeIsStruct:
-    case DataTypeRSElement:
-    case DataTypeRSType:
-    case DataTypeRSAllocation:
-    case DataTypeRSSampler:
-    case DataTypeRSScript:
-    case DataTypeRSMesh:
-    case DataTypeRSPath:
-    case DataTypeRSProgramFragment:
-    case DataTypeRSProgramVertex:
-    case DataTypeRSProgramRaster:
-    case DataTypeRSProgramStore:
-    case DataTypeRSFont: {
-      //    (ImplicitCastExpr 'nullptr_t'
-      //      (IntegerLiteral 0)))
-      llvm::APInt Zero(C.getTypeSize(C.IntTy), 0);
-      clang::Expr *Int0 = clang::IntegerLiteral::Create(C, Zero, C.IntTy, Loc);
-      clang::Expr *CastToNull =
-          clang::ImplicitCastExpr::Create(C,
-                                          C.NullPtrTy,
-                                          clang::CK_IntegralToPointer,
-                                          Int0,
-                                          nullptr,
-                                          clang::VK_RValue);
 
-      llvm::SmallVector<clang::Expr*, 1>InitList;
-      InitList.push_back(CastToNull);
-
-      Res = new(C) clang::InitListExpr(C, Loc, InitList, Loc);
-      break;
-    }
-    case DataTypeRSMatrix2x2:
-    case DataTypeRSMatrix3x3:
-    case DataTypeRSMatrix4x4: {
-      // RS matrix is not completely an RS object. They hold data by themselves.
-      // (InitListExpr rs_matrix2x2
-      //   (InitListExpr float[4]
-      //     (FloatingLiteral 0)
-      //     (FloatingLiteral 0)
-      //     (FloatingLiteral 0)
-      //     (FloatingLiteral 0)))
-      clang::QualType FloatTy = C.FloatTy;
-      // Constructor sets value to 0.0f by default
-      llvm::APFloat Val(C.getFloatTypeSemantics(FloatTy));
-      clang::FloatingLiteral *Float0Val =
-          clang::FloatingLiteral::Create(C,
-                                         Val,
-                                         /* isExact = */true,
-                                         FloatTy,
-                                         Loc);
-
-      unsigned N = 0;
-      if (DT == DataTypeRSMatrix2x2) {
-        N = 2;
-      } else if (DT == DataTypeRSMatrix3x3) {
-        N = 3;
-      } else if (DT == DataTypeRSMatrix4x4) {
-        N = 4;
-      }
-      unsigned N_2 = N * N;
-
-      // Assume we are going to be allocating 16 elements, since 4x4 is max.
-      llvm::SmallVector<clang::Expr*, 16> InitVals;
-      for (unsigned i = 0; i < N_2; i++)
-        InitVals.push_back(Float0Val);
-      clang::Expr *InitExpr =
-          new(C) clang::InitListExpr(C, Loc, InitVals, Loc);
-      InitExpr->setType(C.getConstantArrayType(FloatTy,
-                                               llvm::APInt(32, N_2),
-                                               clang::ArrayType::Normal,
-                                               /* EltTypeQuals = */0));
-      llvm::SmallVector<clang::Expr*, 1> InitExprVec;
-      InitExprVec.push_back(InitExpr);
-
-      Res = new(C) clang::InitListExpr(C, Loc, InitExprVec, Loc);
-      break;
-    }
-    case DataTypeUnknown:
-    case DataTypeFloat16:
-    case DataTypeFloat32:
-    case DataTypeFloat64:
-    case DataTypeSigned8:
-    case DataTypeSigned16:
-    case DataTypeSigned32:
-    case DataTypeSigned64:
-    case DataTypeUnsigned8:
-    case DataTypeUnsigned16:
-    case DataTypeUnsigned32:
-    case DataTypeUnsigned64:
-    case DataTypeBoolean:
-    case DataTypeUnsigned565:
-    case DataTypeUnsigned5551:
-    case DataTypeUnsigned4444:
-    case DataTypeMax: {
-      slangAssert(false && "Not RS object type!");
-    }
-    // No default case will enable compiler detecting the missing cases
-  }
-
-  return Res;
+  // We can cheaply construct a zero initializer by just creating an empty
+  // initializer list. Clang supports this extension to C(99), and will create
+  // any necessary constructs to zero out the entire variable.
+  llvm::SmallVector<clang::Expr*, 1> EmptyInitList;
+  return new(C) clang::InitListExpr(C, Loc, EmptyInitList, Loc);
 }
 
 clang::CompoundStmt* RSObjectRefCount::CreateRetStmtWithTempVar(
@@ -1459,9 +1360,8 @@ clang::CompoundStmt* RSObjectRefCount::CreateRetStmtWithTempVar(
       clang::SC_None                         // Storage class
   );
   const clang::Type *T = RetTy.getTypePtr();
-  DataType DT = RSExportPrimitiveType::GetRSSpecificType(T);
   clang::Expr *ZeroInitializer =
-      RSObjectRefCount::CreateZeroInitializerForRSSpecificType(DT, C, Loc);
+      RSObjectRefCount::CreateEmptyInitListExpr(C, Loc);
   ZeroInitializer->setType(T->getCanonicalTypeInternal());
   RSRetValDecl->setInit(ZeroInitializer);
   clang::Decl* Decls[] = { RSRetValDecl };

@@ -129,6 +129,10 @@ bool ParseArguments(const llvm::ArrayRef<const char *> &ArgsIn,
   DiagOpts.IgnoreWarnings = Args.hasArg(OPT_w);
   DiagOpts.Warnings = Args.getAllArgValues(OPT_W);
 
+  // Always turn off warnings for empty initializers, since we really want to
+  // employ/encourage this extension for zero-initialization of structures.
+  DiagOpts.Warnings.push_back("no-gnu-empty-initializer");
+
   for (llvm::opt::ArgList::const_iterator it = Args.begin(), ie = Args.end();
        it != ie; ++it) {
     const llvm::opt::Arg *A = *it;
