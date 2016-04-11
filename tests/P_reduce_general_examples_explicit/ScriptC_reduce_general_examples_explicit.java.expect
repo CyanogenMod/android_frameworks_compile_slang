@@ -51,53 +51,113 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
     // until the asynchronously-launched operation has completed.
     public static class resultArray256_uint {
         public long[] get() {
-            int[] outArray = new int[256];
-            mOut.copyTo(outArray);
-            long[] result = new long[256];
-            for (int Idx = 0; Idx < 256; ++Idx) {
-                result[Idx] = ((long) ((outArray[Idx]) & 0xffffffffL));
+            if (!mGotResult) {
+                int[] outArray = new int[256];
+                mOut.copyTo(outArray);
+                long[] result = new long[256];
+                for (int Idx = 0; Idx < 256; ++Idx) {
+                    result[Idx] = ((long) ((outArray[Idx]) & 0xffffffffL));
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray256_uint(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private long[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_float {
         public float get() {
-            float[] outArray = new float[1];
-            mOut.copyTo(outArray);
-            return outArray[0];
+            if (!mGotResult) {
+                float[] outArray = new float[1];
+                mOut.copyTo(outArray);
+                mResult = outArray[0];
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_float(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private float mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_int {
         public int get() {
-            int[] outArray = new int[1];
-            mOut.copyTo(outArray);
-            return outArray[0];
+            if (!mGotResult) {
+                int[] outArray = new int[1];
+                mOut.copyTo(outArray);
+                mResult = outArray[0];
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_int(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private int mResult;
     }
 
     private final static int mExportReduceNewIdx_addint_init = 0;
@@ -111,7 +171,9 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_addint_init(ain1, null);
+        result_int result = reduce_addint_init(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "int val"
@@ -142,7 +204,9 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_addint_comb(ain1, null);
+        result_int result = reduce_addint_comb(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "int val"
@@ -173,7 +237,9 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_addint_init_comb(ain1, null);
+        result_int result = reduce_addint_init_comb(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "int val"
@@ -216,7 +282,9 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
         ain2.setAutoPadding(true);
         ain2.copyFrom(in2);
 
-        return reduce_dp_init(ain1, ain2, null);
+        result_float result = reduce_dp_init(ain1, ain2, null);
+        result.mTempIns = new Allocation[]{ain1, ain2};
+        return result;
     }
 
     // ain1 = "float in1"
@@ -266,7 +334,9 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_histogram_init(ain1, null);
+        resultArray256_uint result = reduce_histogram_init(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uchar in"

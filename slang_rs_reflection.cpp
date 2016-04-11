@@ -1435,6 +1435,7 @@ void RSReflectionJava::genExportReduceNewArrayVariant(const RSExportReduceNew *E
   slangAssert(Ins.size() == Args.size());
   std::string In1Length;
   std::string InputAllocationOutgoingArgumentList;
+  std::vector<std::string> InputAllocationNames;
   for (size_t InIdx = 0, InEnd = Ins.size(); InIdx < InEnd; ++InIdx) {
     const std::string &ArgName = Args[InIdx].second;
     genNullArrayCheck(ArgName);
@@ -1466,10 +1467,26 @@ void RSReflectionJava::genExportReduceNewArrayVariant(const RSExportReduceNew *E
     if (!InputAllocationOutgoingArgumentList.empty())
       InputAllocationOutgoingArgumentList += ", ";
     InputAllocationOutgoingArgumentList += TempName;
+    // ... and keep track of it for setting result.mTempIns
+    InputAllocationNames.push_back(TempName);
   }
 
   mOut << "\n";
-  mOut.indent() << "return " << MethodName << "(" << InputAllocationOutgoingArgumentList << ", null);\n";
+  mOut.indent() << ResultTypeName << " result = " << MethodName << "(" << InputAllocationOutgoingArgumentList << ", null);\n";
+  if (!InputAllocationNames.empty()) {
+    mOut.indent() << "result.mTempIns = new Allocation[]{";
+    bool EmittedFirst = false;
+    for (const std::string &InputAllocationName : InputAllocationNames) {
+      if (!EmittedFirst) {
+        EmittedFirst = true;
+      } else {
+        mOut << ", ";
+      }
+      mOut << InputAllocationName;
+    }
+    mOut << "};\n";
+  }
+  mOut.indent() << "return result;\n";
   endFunction();
 }
 
@@ -1629,11 +1646,12 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
     return;
 
   const std::string ClassName = GetReduceNewResultTypeName(ResultType);
+  const std::string GetMethodReturnTypeName = GetTypeName(ResultType);
   mOut.indent() << "// To obtain the result, invoke get(), which blocks\n";
   mOut.indent() << "// until the asynchronously-launched operation has completed.\n";
   mOut.indent() << "public static class " << ClassName;
   mOut.startBlock();
-  startFunction(AM_Public, false, GetTypeName(ResultType).c_str(), "get", 0);
+  startFunction(AM_Public, false, GetMethodReturnTypeName.c_str(), "get", 0);
 
   RSReflectionTypeData TypeData;
   ResultType->convertToRTD(&TypeData);
@@ -1655,6 +1673,9 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
   else if (ReflectedScalarTypeName != ArrayElementTypeName)
     MFA = MapFromAllocationPromote;
 
+  mOut.indent() << "if (!mGotResult)";
+  mOut.startBlock();
+
   if (TypeData.vecSize == 1) { // result type is non-vector
     // <ArrayElementType>[] outArray = new <ArrayElementType>[1];
     // mOut.copyTo(outArray);
@@ -1662,22 +1683,22 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
                   << "[" << std::max(TypeData.arraySize, 1U) << "];\n";
     mOut.indent() << "mOut.copyTo(outArray);\n";
     if (TypeData.arraySize == 0) { // result type is non-array non-vector
-      // return outArray[0]; // but there are several special cases
+      // mResult = outArray[0]; // but there are several special cases
       if (MFA == MapFromAllocationPositive)
         genReduceNewResultRangeCheck(mOut, "outArray[0]");
-      mOut.indent() << "return "
+      mOut.indent() << "mResult = "
                     << genReduceNewResultMapping(MFA, ArrayElementTypeName, ReflectedScalarTypeName,
                                                  "outArray[0]")
                     << ";\n";
     } else { // result type is array of non-vector
       if (MFA == MapFromAllocationTrivial) {
-        // return outArray;
-        mOut.indent() << "return outArray;\n";
+        // mResult = outArray;
+        mOut.indent() << "mResult = outArray;\n";
       } else {
         // <ResultType> result = new <UnbracketedResultType>[<ArrayElementCount>];
         // for (unsigned Idx = 0; Idx < <ArrayElementCount>; ++Idx)
         //   result[Idx] = <Transform>(outArray[Idx]);
-        // return result; // but there are several special cases
+        // mResult = result; // but there are several special cases
         if (MFA != MapFromAllocationPositive) {
           mOut.indent() << GetTypeName(ResultType) << " result = new "
                         << UnbracketedResultTypeName
@@ -1694,7 +1715,7 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
                         << ";\n";
         }
         mOut.endBlock();
-        mOut.indent() << "return " << (MFA == MapFromAllocationPositive ? "outArray" : "result") << ";\n";
+        mOut.indent() << "mResult = " << (MFA == MapFromAllocationPositive ? "outArray" : "result") << ";\n";
       }
     }
   } else { // result type is vector or array of vector
@@ -1712,8 +1733,8 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
       mOut.endBlock();
     }
     if (TypeData.arraySize == 0) { // result type is vector
-      // return new <ResultType>(outArray[0], outArray[1] ...); // but there are several special cases
-      mOut.indent() << "return "
+      // mResult = new <ResultType>(outArray[0], outArray[1] ...); // but there are several special cases
+      mOut.indent() << "mResult = "
                     << genReduceNewResultVectorMapping(MFA,
                                                        ArrayElementTypeName, ReflectedScalarTypeName,
                                                        GetTypeName(ResultType), VectorElementCount,
@@ -1724,7 +1745,7 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
       // for (unsigned Idx = 0; Idx < <ArrayElementCount>; ++Idx)
       //   result[Idx] = new <UnbracketedResultType>(outArray[<ArrayElementCount>*Idx+0],
       //                                             outArray[<ArrayElementCount>*Idx+1]...);
-      // return result; // but there are several special cases
+      // mResult = result; // but there are several special cases
       mOut.indent() << GetTypeName(ResultType) << " result = new "
                     << UnbracketedResultTypeName
                     << "[" << TypeData.arraySize << "];\n";
@@ -1737,18 +1758,41 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
                                                        "outArray", (std::to_string(VectorElementCount) + "*Idx").c_str())
                     << ";\n";
       mOut.endBlock();
-      mOut.indent() << "return result;\n";
+      mOut.indent() << "mResult = result;\n";
     }
   }
 
+  mOut.indent() << "mOut.destroy();\n";
+  mOut.indent() << "mOut = null;  // make Java object eligible for garbage collection\n";
+  mOut.indent() << "if (mTempIns != null)";
+  mOut.startBlock();
+  mOut.indent() << "for (Allocation tempIn : mTempIns)";
+  mOut.startBlock();
+  mOut.indent() << "tempIn.destroy();\n";
+  mOut.endBlock();
+  mOut.indent() << "mTempIns = null;  // make Java objects eligible for garbage collection\n";
+  mOut.endBlock();
+  mOut.indent() << "mGotResult = true;\n";
+  mOut.endBlock();
+
+  mOut.indent() << "return mResult;\n";
   endFunction();
+
   startFunction(AM_Private, false, nullptr, ClassName, 1, "Allocation", "out");
   // TODO: Generate allocation type check and size check?  Or move
   // responsibility for instantiating the Allocation here, instead of
   // the reduce_* method?
+  mOut.indent() << "mTempIns = null;\n";
   mOut.indent() << "mOut = out;\n";
+  mOut.indent() << "mGotResult = false;\n";
   endFunction();
+  mOut.indent() << "private Allocation[] mTempIns;\n";
   mOut.indent() << "private Allocation mOut;\n";
+  // TODO: If result is reference type rather than primitive type, we
+  // could omit mGotResult and use mResult==null to indicate that we
+  // haven't obtained the result yet.
+  mOut.indent() << "private boolean mGotResult;\n";
+  mOut.indent() << "private " << GetMethodReturnTypeName << " mResult;\n";
   mOut.endBlock();
 }
 

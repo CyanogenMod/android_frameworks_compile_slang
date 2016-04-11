@@ -111,1245 +111,2605 @@ public class ScriptC_reduce_general_result extends ScriptC {
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_bool {
         public boolean[] get() {
-            byte[] outArray = new byte[7];
-            mOut.copyTo(outArray);
-            boolean[] result = new boolean[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = outArray[Idx] != 0;
+            if (!mGotResult) {
+                byte[] outArray = new byte[7];
+                mOut.copyTo(outArray);
+                boolean[] result = new boolean[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = outArray[Idx] != 0;
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_bool(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private boolean[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_char {
         public byte[] get() {
-            byte[] outArray = new byte[7];
-            mOut.copyTo(outArray);
-            return outArray;
+            if (!mGotResult) {
+                byte[] outArray = new byte[7];
+                mOut.copyTo(outArray);
+                mResult = outArray;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  resultArray7_char(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private byte[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_char2 {
         public Byte2[] get() {
-            byte[] outArray = new byte[14];
-            mOut.copyTo(outArray);
-            Byte2[] result = new Byte2[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Byte2(outArray[2*Idx+0], outArray[2*Idx+1]);
+            if (!mGotResult) {
+                byte[] outArray = new byte[14];
+                mOut.copyTo(outArray);
+                Byte2[] result = new Byte2[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Byte2(outArray[2*Idx+0], outArray[2*Idx+1]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_char2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Byte2[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_char4 {
         public Byte4[] get() {
-            byte[] outArray = new byte[28];
-            mOut.copyTo(outArray);
-            Byte4[] result = new Byte4[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Byte4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+            if (!mGotResult) {
+                byte[] outArray = new byte[28];
+                mOut.copyTo(outArray);
+                Byte4[] result = new Byte4[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Byte4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_char4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Byte4[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_double {
         public double[] get() {
-            double[] outArray = new double[7];
-            mOut.copyTo(outArray);
-            return outArray;
+            if (!mGotResult) {
+                double[] outArray = new double[7];
+                mOut.copyTo(outArray);
+                mResult = outArray;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  resultArray7_double(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private double[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_double2 {
         public Double2[] get() {
-            double[] outArray = new double[14];
-            mOut.copyTo(outArray);
-            Double2[] result = new Double2[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Double2(outArray[2*Idx+0], outArray[2*Idx+1]);
+            if (!mGotResult) {
+                double[] outArray = new double[14];
+                mOut.copyTo(outArray);
+                Double2[] result = new Double2[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Double2(outArray[2*Idx+0], outArray[2*Idx+1]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_double2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Double2[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_double4 {
         public Double4[] get() {
-            double[] outArray = new double[28];
-            mOut.copyTo(outArray);
-            Double4[] result = new Double4[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Double4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+            if (!mGotResult) {
+                double[] outArray = new double[28];
+                mOut.copyTo(outArray);
+                Double4[] result = new Double4[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Double4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_double4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Double4[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_float {
         public float[] get() {
-            float[] outArray = new float[7];
-            mOut.copyTo(outArray);
-            return outArray;
+            if (!mGotResult) {
+                float[] outArray = new float[7];
+                mOut.copyTo(outArray);
+                mResult = outArray;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  resultArray7_float(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private float[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_float2 {
         public Float2[] get() {
-            float[] outArray = new float[14];
-            mOut.copyTo(outArray);
-            Float2[] result = new Float2[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Float2(outArray[2*Idx+0], outArray[2*Idx+1]);
+            if (!mGotResult) {
+                float[] outArray = new float[14];
+                mOut.copyTo(outArray);
+                Float2[] result = new Float2[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Float2(outArray[2*Idx+0], outArray[2*Idx+1]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_float2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Float2[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_float4 {
         public Float4[] get() {
-            float[] outArray = new float[28];
-            mOut.copyTo(outArray);
-            Float4[] result = new Float4[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Float4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+            if (!mGotResult) {
+                float[] outArray = new float[28];
+                mOut.copyTo(outArray);
+                Float4[] result = new Float4[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Float4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_float4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Float4[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_half {
         public short[] get() {
-            short[] outArray = new short[7];
-            mOut.copyTo(outArray);
-            return outArray;
+            if (!mGotResult) {
+                short[] outArray = new short[7];
+                mOut.copyTo(outArray);
+                mResult = outArray;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  resultArray7_half(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private short[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_half2 {
         public Short2[] get() {
-            short[] outArray = new short[14];
-            mOut.copyTo(outArray);
-            Short2[] result = new Short2[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Short2(outArray[2*Idx+0], outArray[2*Idx+1]);
+            if (!mGotResult) {
+                short[] outArray = new short[14];
+                mOut.copyTo(outArray);
+                Short2[] result = new Short2[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Short2(outArray[2*Idx+0], outArray[2*Idx+1]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_half2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short2[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_half4 {
         public Short4[] get() {
-            short[] outArray = new short[28];
-            mOut.copyTo(outArray);
-            Short4[] result = new Short4[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Short4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+            if (!mGotResult) {
+                short[] outArray = new short[28];
+                mOut.copyTo(outArray);
+                Short4[] result = new Short4[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Short4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_half4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short4[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_int {
         public int[] get() {
-            int[] outArray = new int[7];
-            mOut.copyTo(outArray);
-            return outArray;
+            if (!mGotResult) {
+                int[] outArray = new int[7];
+                mOut.copyTo(outArray);
+                mResult = outArray;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  resultArray7_int(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private int[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_int2 {
         public Int2[] get() {
-            int[] outArray = new int[14];
-            mOut.copyTo(outArray);
-            Int2[] result = new Int2[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Int2(outArray[2*Idx+0], outArray[2*Idx+1]);
+            if (!mGotResult) {
+                int[] outArray = new int[14];
+                mOut.copyTo(outArray);
+                Int2[] result = new Int2[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Int2(outArray[2*Idx+0], outArray[2*Idx+1]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_int2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Int2[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_int4 {
         public Int4[] get() {
-            int[] outArray = new int[28];
-            mOut.copyTo(outArray);
-            Int4[] result = new Int4[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Int4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+            if (!mGotResult) {
+                int[] outArray = new int[28];
+                mOut.copyTo(outArray);
+                Int4[] result = new Int4[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Int4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_int4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Int4[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_long {
         public long[] get() {
-            long[] outArray = new long[7];
-            mOut.copyTo(outArray);
-            return outArray;
+            if (!mGotResult) {
+                long[] outArray = new long[7];
+                mOut.copyTo(outArray);
+                mResult = outArray;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  resultArray7_long(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private long[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_long2 {
         public Long2[] get() {
-            long[] outArray = new long[14];
-            mOut.copyTo(outArray);
-            Long2[] result = new Long2[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Long2(outArray[2*Idx+0], outArray[2*Idx+1]);
+            if (!mGotResult) {
+                long[] outArray = new long[14];
+                mOut.copyTo(outArray);
+                Long2[] result = new Long2[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Long2(outArray[2*Idx+0], outArray[2*Idx+1]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_long2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long2[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_long4 {
         public Long4[] get() {
-            long[] outArray = new long[28];
-            mOut.copyTo(outArray);
-            Long4[] result = new Long4[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Long4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+            if (!mGotResult) {
+                long[] outArray = new long[28];
+                mOut.copyTo(outArray);
+                Long4[] result = new Long4[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Long4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_long4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long4[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_short {
         public short[] get() {
-            short[] outArray = new short[7];
-            mOut.copyTo(outArray);
-            return outArray;
+            if (!mGotResult) {
+                short[] outArray = new short[7];
+                mOut.copyTo(outArray);
+                mResult = outArray;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  resultArray7_short(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private short[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_short2 {
         public Short2[] get() {
-            short[] outArray = new short[14];
-            mOut.copyTo(outArray);
-            Short2[] result = new Short2[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Short2(outArray[2*Idx+0], outArray[2*Idx+1]);
+            if (!mGotResult) {
+                short[] outArray = new short[14];
+                mOut.copyTo(outArray);
+                Short2[] result = new Short2[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Short2(outArray[2*Idx+0], outArray[2*Idx+1]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_short2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short2[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_short4 {
         public Short4[] get() {
-            short[] outArray = new short[28];
-            mOut.copyTo(outArray);
-            Short4[] result = new Short4[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Short4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+            if (!mGotResult) {
+                short[] outArray = new short[28];
+                mOut.copyTo(outArray);
+                Short4[] result = new Short4[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Short4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_short4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short4[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_uchar {
         public short[] get() {
-            byte[] outArray = new byte[7];
-            mOut.copyTo(outArray);
-            short[] result = new short[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = ((short) ((outArray[Idx]) & (short) 0xff));
+            if (!mGotResult) {
+                byte[] outArray = new byte[7];
+                mOut.copyTo(outArray);
+                short[] result = new short[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = ((short) ((outArray[Idx]) & (short) 0xff));
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_uchar(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private short[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_uchar2 {
         public Short2[] get() {
-            byte[] outArray = new byte[14];
-            mOut.copyTo(outArray);
-            Short2[] result = new Short2[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Short2(((short) ((outArray[2*Idx+0]) & (short) 0xff)), ((short) ((outArray[2*Idx+1]) & (short) 0xff)));
+            if (!mGotResult) {
+                byte[] outArray = new byte[14];
+                mOut.copyTo(outArray);
+                Short2[] result = new Short2[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Short2(((short) ((outArray[2*Idx+0]) & (short) 0xff)), ((short) ((outArray[2*Idx+1]) & (short) 0xff)));
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_uchar2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short2[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_uchar4 {
         public Short4[] get() {
-            byte[] outArray = new byte[28];
-            mOut.copyTo(outArray);
-            Short4[] result = new Short4[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Short4(((short) ((outArray[4*Idx+0]) & (short) 0xff)), ((short) ((outArray[4*Idx+1]) & (short) 0xff)), ((short) ((outArray[4*Idx+2]) & (short) 0xff)), ((short) ((outArray[4*Idx+3]) & (short) 0xff)));
+            if (!mGotResult) {
+                byte[] outArray = new byte[28];
+                mOut.copyTo(outArray);
+                Short4[] result = new Short4[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Short4(((short) ((outArray[4*Idx+0]) & (short) 0xff)), ((short) ((outArray[4*Idx+1]) & (short) 0xff)), ((short) ((outArray[4*Idx+2]) & (short) 0xff)), ((short) ((outArray[4*Idx+3]) & (short) 0xff)));
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_uchar4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short4[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_uint {
         public long[] get() {
-            int[] outArray = new int[7];
-            mOut.copyTo(outArray);
-            long[] result = new long[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = ((long) ((outArray[Idx]) & 0xffffffffL));
+            if (!mGotResult) {
+                int[] outArray = new int[7];
+                mOut.copyTo(outArray);
+                long[] result = new long[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = ((long) ((outArray[Idx]) & 0xffffffffL));
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_uint(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private long[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_uint2 {
         public Long2[] get() {
-            int[] outArray = new int[14];
-            mOut.copyTo(outArray);
-            Long2[] result = new Long2[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Long2(((long) ((outArray[2*Idx+0]) & 0xffffffffL)), ((long) ((outArray[2*Idx+1]) & 0xffffffffL)));
+            if (!mGotResult) {
+                int[] outArray = new int[14];
+                mOut.copyTo(outArray);
+                Long2[] result = new Long2[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Long2(((long) ((outArray[2*Idx+0]) & 0xffffffffL)), ((long) ((outArray[2*Idx+1]) & 0xffffffffL)));
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_uint2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long2[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_uint4 {
         public Long4[] get() {
-            int[] outArray = new int[28];
-            mOut.copyTo(outArray);
-            Long4[] result = new Long4[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Long4(((long) ((outArray[4*Idx+0]) & 0xffffffffL)), ((long) ((outArray[4*Idx+1]) & 0xffffffffL)), ((long) ((outArray[4*Idx+2]) & 0xffffffffL)), ((long) ((outArray[4*Idx+3]) & 0xffffffffL)));
+            if (!mGotResult) {
+                int[] outArray = new int[28];
+                mOut.copyTo(outArray);
+                Long4[] result = new Long4[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Long4(((long) ((outArray[4*Idx+0]) & 0xffffffffL)), ((long) ((outArray[4*Idx+1]) & 0xffffffffL)), ((long) ((outArray[4*Idx+2]) & 0xffffffffL)), ((long) ((outArray[4*Idx+3]) & 0xffffffffL)));
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_uint4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long4[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_ulong {
         public long[] get() {
-            long[] outArray = new long[7];
-            mOut.copyTo(outArray);
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                if (outArray[Idx] < 0)
-                    throw new RSRuntimeException("Result is not representible in Java");
+            if (!mGotResult) {
+                long[] outArray = new long[7];
+                mOut.copyTo(outArray);
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    if (outArray[Idx] < 0)
+                        throw new RSRuntimeException("Result is not representible in Java");
+                }
+
+                mResult = outArray;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return outArray;
+            return mResult;
         }
 
         private  resultArray7_ulong(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private long[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_ulong2 {
         public Long2[] get() {
-            long[] outArray = new long[14];
-            mOut.copyTo(outArray);
-            for (int Idx = 0; Idx < 14; ++Idx) {
-                if (outArray[Idx] < 0)
-                    throw new RSRuntimeException("Result is not representible in Java");
+            if (!mGotResult) {
+                long[] outArray = new long[14];
+                mOut.copyTo(outArray);
+                for (int Idx = 0; Idx < 14; ++Idx) {
+                    if (outArray[Idx] < 0)
+                        throw new RSRuntimeException("Result is not representible in Java");
+                }
+
+                Long2[] result = new Long2[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Long2(outArray[2*Idx+0], outArray[2*Idx+1]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            Long2[] result = new Long2[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Long2(outArray[2*Idx+0], outArray[2*Idx+1]);
-            }
-
-            return result;
+            return mResult;
         }
 
         private  resultArray7_ulong2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long2[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_ulong4 {
         public Long4[] get() {
-            long[] outArray = new long[28];
-            mOut.copyTo(outArray);
-            for (int Idx = 0; Idx < 28; ++Idx) {
-                if (outArray[Idx] < 0)
-                    throw new RSRuntimeException("Result is not representible in Java");
+            if (!mGotResult) {
+                long[] outArray = new long[28];
+                mOut.copyTo(outArray);
+                for (int Idx = 0; Idx < 28; ++Idx) {
+                    if (outArray[Idx] < 0)
+                        throw new RSRuntimeException("Result is not representible in Java");
+                }
+
+                Long4[] result = new Long4[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Long4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            Long4[] result = new Long4[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Long4(outArray[4*Idx+0], outArray[4*Idx+1], outArray[4*Idx+2], outArray[4*Idx+3]);
-            }
-
-            return result;
+            return mResult;
         }
 
         private  resultArray7_ulong4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long4[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_ushort {
         public int[] get() {
-            short[] outArray = new short[7];
-            mOut.copyTo(outArray);
-            int[] result = new int[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = ((int) ((outArray[Idx]) & 0xffff));
+            if (!mGotResult) {
+                short[] outArray = new short[7];
+                mOut.copyTo(outArray);
+                int[] result = new int[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = ((int) ((outArray[Idx]) & 0xffff));
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_ushort(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private int[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_ushort2 {
         public Int2[] get() {
-            short[] outArray = new short[14];
-            mOut.copyTo(outArray);
-            Int2[] result = new Int2[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Int2(((int) ((outArray[2*Idx+0]) & 0xffff)), ((int) ((outArray[2*Idx+1]) & 0xffff)));
+            if (!mGotResult) {
+                short[] outArray = new short[14];
+                mOut.copyTo(outArray);
+                Int2[] result = new Int2[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Int2(((int) ((outArray[2*Idx+0]) & 0xffff)), ((int) ((outArray[2*Idx+1]) & 0xffff)));
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_ushort2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Int2[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class resultArray7_ushort4 {
         public Int4[] get() {
-            short[] outArray = new short[28];
-            mOut.copyTo(outArray);
-            Int4[] result = new Int4[7];
-            for (int Idx = 0; Idx < 7; ++Idx) {
-                result[Idx] = new Int4(((int) ((outArray[4*Idx+0]) & 0xffff)), ((int) ((outArray[4*Idx+1]) & 0xffff)), ((int) ((outArray[4*Idx+2]) & 0xffff)), ((int) ((outArray[4*Idx+3]) & 0xffff)));
+            if (!mGotResult) {
+                short[] outArray = new short[28];
+                mOut.copyTo(outArray);
+                Int4[] result = new Int4[7];
+                for (int Idx = 0; Idx < 7; ++Idx) {
+                    result[Idx] = new Int4(((int) ((outArray[4*Idx+0]) & 0xffff)), ((int) ((outArray[4*Idx+1]) & 0xffff)), ((int) ((outArray[4*Idx+2]) & 0xffff)), ((int) ((outArray[4*Idx+3]) & 0xffff)));
+                }
+
+                mResult = result;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return result;
+            return mResult;
         }
 
         private  resultArray7_ushort4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Int4[] mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_bool {
         public boolean get() {
-            byte[] outArray = new byte[1];
-            mOut.copyTo(outArray);
-            return outArray[0] != 0;
+            if (!mGotResult) {
+                byte[] outArray = new byte[1];
+                mOut.copyTo(outArray);
+                mResult = outArray[0] != 0;
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_bool(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private boolean mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_char {
         public byte get() {
-            byte[] outArray = new byte[1];
-            mOut.copyTo(outArray);
-            return outArray[0];
+            if (!mGotResult) {
+                byte[] outArray = new byte[1];
+                mOut.copyTo(outArray);
+                mResult = outArray[0];
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_char(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private byte mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_char2 {
         public Byte2 get() {
-            byte[] outArray = new byte[2];
-            mOut.copyTo(outArray);
-            return new Byte2(outArray[0], outArray[1]);
+            if (!mGotResult) {
+                byte[] outArray = new byte[2];
+                mOut.copyTo(outArray);
+                mResult = new Byte2(outArray[0], outArray[1]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_char2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Byte2 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_char4 {
         public Byte4 get() {
-            byte[] outArray = new byte[4];
-            mOut.copyTo(outArray);
-            return new Byte4(outArray[0], outArray[1], outArray[2], outArray[3]);
+            if (!mGotResult) {
+                byte[] outArray = new byte[4];
+                mOut.copyTo(outArray);
+                mResult = new Byte4(outArray[0], outArray[1], outArray[2], outArray[3]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_char4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Byte4 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_double {
         public double get() {
-            double[] outArray = new double[1];
-            mOut.copyTo(outArray);
-            return outArray[0];
+            if (!mGotResult) {
+                double[] outArray = new double[1];
+                mOut.copyTo(outArray);
+                mResult = outArray[0];
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_double(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private double mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_double2 {
         public Double2 get() {
-            double[] outArray = new double[2];
-            mOut.copyTo(outArray);
-            return new Double2(outArray[0], outArray[1]);
+            if (!mGotResult) {
+                double[] outArray = new double[2];
+                mOut.copyTo(outArray);
+                mResult = new Double2(outArray[0], outArray[1]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_double2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Double2 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_double4 {
         public Double4 get() {
-            double[] outArray = new double[4];
-            mOut.copyTo(outArray);
-            return new Double4(outArray[0], outArray[1], outArray[2], outArray[3]);
+            if (!mGotResult) {
+                double[] outArray = new double[4];
+                mOut.copyTo(outArray);
+                mResult = new Double4(outArray[0], outArray[1], outArray[2], outArray[3]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_double4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Double4 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_float {
         public float get() {
-            float[] outArray = new float[1];
-            mOut.copyTo(outArray);
-            return outArray[0];
+            if (!mGotResult) {
+                float[] outArray = new float[1];
+                mOut.copyTo(outArray);
+                mResult = outArray[0];
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_float(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private float mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_float2 {
         public Float2 get() {
-            float[] outArray = new float[2];
-            mOut.copyTo(outArray);
-            return new Float2(outArray[0], outArray[1]);
+            if (!mGotResult) {
+                float[] outArray = new float[2];
+                mOut.copyTo(outArray);
+                mResult = new Float2(outArray[0], outArray[1]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_float2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Float2 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_float4 {
         public Float4 get() {
-            float[] outArray = new float[4];
-            mOut.copyTo(outArray);
-            return new Float4(outArray[0], outArray[1], outArray[2], outArray[3]);
+            if (!mGotResult) {
+                float[] outArray = new float[4];
+                mOut.copyTo(outArray);
+                mResult = new Float4(outArray[0], outArray[1], outArray[2], outArray[3]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_float4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Float4 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_half {
         public short get() {
-            short[] outArray = new short[1];
-            mOut.copyTo(outArray);
-            return outArray[0];
+            if (!mGotResult) {
+                short[] outArray = new short[1];
+                mOut.copyTo(outArray);
+                mResult = outArray[0];
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_half(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private short mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_half2 {
         public Short2 get() {
-            short[] outArray = new short[2];
-            mOut.copyTo(outArray);
-            return new Short2(outArray[0], outArray[1]);
+            if (!mGotResult) {
+                short[] outArray = new short[2];
+                mOut.copyTo(outArray);
+                mResult = new Short2(outArray[0], outArray[1]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_half2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short2 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_half4 {
         public Short4 get() {
-            short[] outArray = new short[4];
-            mOut.copyTo(outArray);
-            return new Short4(outArray[0], outArray[1], outArray[2], outArray[3]);
+            if (!mGotResult) {
+                short[] outArray = new short[4];
+                mOut.copyTo(outArray);
+                mResult = new Short4(outArray[0], outArray[1], outArray[2], outArray[3]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_half4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short4 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_int {
         public int get() {
-            int[] outArray = new int[1];
-            mOut.copyTo(outArray);
-            return outArray[0];
+            if (!mGotResult) {
+                int[] outArray = new int[1];
+                mOut.copyTo(outArray);
+                mResult = outArray[0];
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_int(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private int mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_int2 {
         public Int2 get() {
-            int[] outArray = new int[2];
-            mOut.copyTo(outArray);
-            return new Int2(outArray[0], outArray[1]);
+            if (!mGotResult) {
+                int[] outArray = new int[2];
+                mOut.copyTo(outArray);
+                mResult = new Int2(outArray[0], outArray[1]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_int2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Int2 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_int4 {
         public Int4 get() {
-            int[] outArray = new int[4];
-            mOut.copyTo(outArray);
-            return new Int4(outArray[0], outArray[1], outArray[2], outArray[3]);
+            if (!mGotResult) {
+                int[] outArray = new int[4];
+                mOut.copyTo(outArray);
+                mResult = new Int4(outArray[0], outArray[1], outArray[2], outArray[3]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_int4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Int4 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_long {
         public long get() {
-            long[] outArray = new long[1];
-            mOut.copyTo(outArray);
-            return outArray[0];
+            if (!mGotResult) {
+                long[] outArray = new long[1];
+                mOut.copyTo(outArray);
+                mResult = outArray[0];
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_long(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private long mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_long2 {
         public Long2 get() {
-            long[] outArray = new long[2];
-            mOut.copyTo(outArray);
-            return new Long2(outArray[0], outArray[1]);
+            if (!mGotResult) {
+                long[] outArray = new long[2];
+                mOut.copyTo(outArray);
+                mResult = new Long2(outArray[0], outArray[1]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_long2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long2 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_long4 {
         public Long4 get() {
-            long[] outArray = new long[4];
-            mOut.copyTo(outArray);
-            return new Long4(outArray[0], outArray[1], outArray[2], outArray[3]);
+            if (!mGotResult) {
+                long[] outArray = new long[4];
+                mOut.copyTo(outArray);
+                mResult = new Long4(outArray[0], outArray[1], outArray[2], outArray[3]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_long4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long4 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_short {
         public short get() {
-            short[] outArray = new short[1];
-            mOut.copyTo(outArray);
-            return outArray[0];
+            if (!mGotResult) {
+                short[] outArray = new short[1];
+                mOut.copyTo(outArray);
+                mResult = outArray[0];
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_short(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private short mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_short2 {
         public Short2 get() {
-            short[] outArray = new short[2];
-            mOut.copyTo(outArray);
-            return new Short2(outArray[0], outArray[1]);
+            if (!mGotResult) {
+                short[] outArray = new short[2];
+                mOut.copyTo(outArray);
+                mResult = new Short2(outArray[0], outArray[1]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_short2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short2 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_short4 {
         public Short4 get() {
-            short[] outArray = new short[4];
-            mOut.copyTo(outArray);
-            return new Short4(outArray[0], outArray[1], outArray[2], outArray[3]);
+            if (!mGotResult) {
+                short[] outArray = new short[4];
+                mOut.copyTo(outArray);
+                mResult = new Short4(outArray[0], outArray[1], outArray[2], outArray[3]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_short4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short4 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_uchar {
         public short get() {
-            byte[] outArray = new byte[1];
-            mOut.copyTo(outArray);
-            return ((short) ((outArray[0]) & (short) 0xff));
+            if (!mGotResult) {
+                byte[] outArray = new byte[1];
+                mOut.copyTo(outArray);
+                mResult = ((short) ((outArray[0]) & (short) 0xff));
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_uchar(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private short mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_uchar2 {
         public Short2 get() {
-            byte[] outArray = new byte[2];
-            mOut.copyTo(outArray);
-            return new Short2(((short) ((outArray[0]) & (short) 0xff)), ((short) ((outArray[1]) & (short) 0xff)));
+            if (!mGotResult) {
+                byte[] outArray = new byte[2];
+                mOut.copyTo(outArray);
+                mResult = new Short2(((short) ((outArray[0]) & (short) 0xff)), ((short) ((outArray[1]) & (short) 0xff)));
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_uchar2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short2 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_uchar4 {
         public Short4 get() {
-            byte[] outArray = new byte[4];
-            mOut.copyTo(outArray);
-            return new Short4(((short) ((outArray[0]) & (short) 0xff)), ((short) ((outArray[1]) & (short) 0xff)), ((short) ((outArray[2]) & (short) 0xff)), ((short) ((outArray[3]) & (short) 0xff)));
+            if (!mGotResult) {
+                byte[] outArray = new byte[4];
+                mOut.copyTo(outArray);
+                mResult = new Short4(((short) ((outArray[0]) & (short) 0xff)), ((short) ((outArray[1]) & (short) 0xff)), ((short) ((outArray[2]) & (short) 0xff)), ((short) ((outArray[3]) & (short) 0xff)));
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_uchar4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Short4 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_uint {
         public long get() {
-            int[] outArray = new int[1];
-            mOut.copyTo(outArray);
-            return ((long) ((outArray[0]) & 0xffffffffL));
+            if (!mGotResult) {
+                int[] outArray = new int[1];
+                mOut.copyTo(outArray);
+                mResult = ((long) ((outArray[0]) & 0xffffffffL));
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_uint(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private long mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_uint2 {
         public Long2 get() {
-            int[] outArray = new int[2];
-            mOut.copyTo(outArray);
-            return new Long2(((long) ((outArray[0]) & 0xffffffffL)), ((long) ((outArray[1]) & 0xffffffffL)));
+            if (!mGotResult) {
+                int[] outArray = new int[2];
+                mOut.copyTo(outArray);
+                mResult = new Long2(((long) ((outArray[0]) & 0xffffffffL)), ((long) ((outArray[1]) & 0xffffffffL)));
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_uint2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long2 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_uint4 {
         public Long4 get() {
-            int[] outArray = new int[4];
-            mOut.copyTo(outArray);
-            return new Long4(((long) ((outArray[0]) & 0xffffffffL)), ((long) ((outArray[1]) & 0xffffffffL)), ((long) ((outArray[2]) & 0xffffffffL)), ((long) ((outArray[3]) & 0xffffffffL)));
+            if (!mGotResult) {
+                int[] outArray = new int[4];
+                mOut.copyTo(outArray);
+                mResult = new Long4(((long) ((outArray[0]) & 0xffffffffL)), ((long) ((outArray[1]) & 0xffffffffL)), ((long) ((outArray[2]) & 0xffffffffL)), ((long) ((outArray[3]) & 0xffffffffL)));
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_uint4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long4 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_ulong {
         public long get() {
-            long[] outArray = new long[1];
-            mOut.copyTo(outArray);
-            if (outArray[0] < 0)
-                throw new RSRuntimeException("Result is not representible in Java");
-            return outArray[0];
+            if (!mGotResult) {
+                long[] outArray = new long[1];
+                mOut.copyTo(outArray);
+                if (outArray[0] < 0)
+                    throw new RSRuntimeException("Result is not representible in Java");
+                mResult = outArray[0];
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_ulong(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private long mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_ulong2 {
         public Long2 get() {
-            long[] outArray = new long[2];
-            mOut.copyTo(outArray);
-            for (int Idx = 0; Idx < 2; ++Idx) {
-                if (outArray[Idx] < 0)
-                    throw new RSRuntimeException("Result is not representible in Java");
+            if (!mGotResult) {
+                long[] outArray = new long[2];
+                mOut.copyTo(outArray);
+                for (int Idx = 0; Idx < 2; ++Idx) {
+                    if (outArray[Idx] < 0)
+                        throw new RSRuntimeException("Result is not representible in Java");
+                }
+
+                mResult = new Long2(outArray[0], outArray[1]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return new Long2(outArray[0], outArray[1]);
+            return mResult;
         }
 
         private  result_ulong2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long2 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_ulong4 {
         public Long4 get() {
-            long[] outArray = new long[4];
-            mOut.copyTo(outArray);
-            for (int Idx = 0; Idx < 4; ++Idx) {
-                if (outArray[Idx] < 0)
-                    throw new RSRuntimeException("Result is not representible in Java");
+            if (!mGotResult) {
+                long[] outArray = new long[4];
+                mOut.copyTo(outArray);
+                for (int Idx = 0; Idx < 4; ++Idx) {
+                    if (outArray[Idx] < 0)
+                        throw new RSRuntimeException("Result is not representible in Java");
+                }
+
+                mResult = new Long4(outArray[0], outArray[1], outArray[2], outArray[3]);
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
             }
 
-            return new Long4(outArray[0], outArray[1], outArray[2], outArray[3]);
+            return mResult;
         }
 
         private  result_ulong4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Long4 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_ushort {
         public int get() {
-            short[] outArray = new short[1];
-            mOut.copyTo(outArray);
-            return ((int) ((outArray[0]) & 0xffff));
+            if (!mGotResult) {
+                short[] outArray = new short[1];
+                mOut.copyTo(outArray);
+                mResult = ((int) ((outArray[0]) & 0xffff));
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_ushort(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private int mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_ushort2 {
         public Int2 get() {
-            short[] outArray = new short[2];
-            mOut.copyTo(outArray);
-            return new Int2(((int) ((outArray[0]) & 0xffff)), ((int) ((outArray[1]) & 0xffff)));
+            if (!mGotResult) {
+                short[] outArray = new short[2];
+                mOut.copyTo(outArray);
+                mResult = new Int2(((int) ((outArray[0]) & 0xffff)), ((int) ((outArray[1]) & 0xffff)));
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_ushort2(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Int2 mResult;
     }
 
     // To obtain the result, invoke get(), which blocks
     // until the asynchronously-launched operation has completed.
     public static class result_ushort4 {
         public Int4 get() {
-            short[] outArray = new short[4];
-            mOut.copyTo(outArray);
-            return new Int4(((int) ((outArray[0]) & 0xffff)), ((int) ((outArray[1]) & 0xffff)), ((int) ((outArray[2]) & 0xffff)), ((int) ((outArray[3]) & 0xffff)));
+            if (!mGotResult) {
+                short[] outArray = new short[4];
+                mOut.copyTo(outArray);
+                mResult = new Int4(((int) ((outArray[0]) & 0xffff)), ((int) ((outArray[1]) & 0xffff)), ((int) ((outArray[2]) & 0xffff)), ((int) ((outArray[3]) & 0xffff)));
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_ushort4(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private Int4 mResult;
     }
 
     private final static int mExportReduceNewIdx_my_half = 0;
@@ -1363,7 +2723,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_half(ain1, null);
+        result_half result = reduce_my_half(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "half val"
@@ -1398,7 +2760,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_half2(ain1, null);
+        result_half2 result = reduce_my_half2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "half2 val"
@@ -1433,7 +2797,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_half4(ain1, null);
+        result_half4 result = reduce_my_half4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "half4 val"
@@ -1464,7 +2830,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_half(ain1, null);
+        resultArray7_half result = reduce_my_array_half(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "half val"
@@ -1499,7 +2867,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_half2(ain1, null);
+        resultArray7_half2 result = reduce_my_array_half2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "half2 val"
@@ -1534,7 +2904,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_half4(ain1, null);
+        resultArray7_half4 result = reduce_my_array_half4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "half4 val"
@@ -1565,7 +2937,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_float(ain1, null);
+        result_float result = reduce_my_float(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "float val"
@@ -1600,7 +2974,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_float2(ain1, null);
+        result_float2 result = reduce_my_float2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "float2 val"
@@ -1635,7 +3011,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_float4(ain1, null);
+        result_float4 result = reduce_my_float4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "float4 val"
@@ -1666,7 +3044,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_float(ain1, null);
+        resultArray7_float result = reduce_my_array_float(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "float val"
@@ -1701,7 +3081,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_float2(ain1, null);
+        resultArray7_float2 result = reduce_my_array_float2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "float2 val"
@@ -1736,7 +3118,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_float4(ain1, null);
+        resultArray7_float4 result = reduce_my_array_float4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "float4 val"
@@ -1767,7 +3151,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_double(ain1, null);
+        result_double result = reduce_my_double(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "double val"
@@ -1802,7 +3188,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_double2(ain1, null);
+        result_double2 result = reduce_my_double2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "double2 val"
@@ -1837,7 +3225,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_double4(ain1, null);
+        result_double4 result = reduce_my_double4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "double4 val"
@@ -1868,7 +3258,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_double(ain1, null);
+        resultArray7_double result = reduce_my_array_double(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "double val"
@@ -1903,7 +3295,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_double2(ain1, null);
+        resultArray7_double2 result = reduce_my_array_double2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "double2 val"
@@ -1938,7 +3332,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_double4(ain1, null);
+        resultArray7_double4 result = reduce_my_array_double4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "double4 val"
@@ -1969,7 +3365,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_char(ain1, null);
+        result_char result = reduce_my_char(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "char val"
@@ -2004,7 +3402,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_char2(ain1, null);
+        result_char2 result = reduce_my_char2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "char2 val"
@@ -2039,7 +3439,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_char4(ain1, null);
+        result_char4 result = reduce_my_char4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "char4 val"
@@ -2070,7 +3472,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_char(ain1, null);
+        resultArray7_char result = reduce_my_array_char(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "char val"
@@ -2105,7 +3509,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_char2(ain1, null);
+        resultArray7_char2 result = reduce_my_array_char2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "char2 val"
@@ -2140,7 +3546,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_char4(ain1, null);
+        resultArray7_char4 result = reduce_my_array_char4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "char4 val"
@@ -2171,7 +3579,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_short(ain1, null);
+        result_short result = reduce_my_short(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "short val"
@@ -2206,7 +3616,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_short2(ain1, null);
+        result_short2 result = reduce_my_short2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "short2 val"
@@ -2241,7 +3653,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_short4(ain1, null);
+        result_short4 result = reduce_my_short4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "short4 val"
@@ -2272,7 +3686,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_short(ain1, null);
+        resultArray7_short result = reduce_my_array_short(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "short val"
@@ -2307,7 +3723,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_short2(ain1, null);
+        resultArray7_short2 result = reduce_my_array_short2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "short2 val"
@@ -2342,7 +3760,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_short4(ain1, null);
+        resultArray7_short4 result = reduce_my_array_short4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "short4 val"
@@ -2373,7 +3793,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_int(ain1, null);
+        result_int result = reduce_my_int(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "int val"
@@ -2408,7 +3830,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_int2(ain1, null);
+        result_int2 result = reduce_my_int2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "int2 val"
@@ -2443,7 +3867,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_int4(ain1, null);
+        result_int4 result = reduce_my_int4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "int4 val"
@@ -2474,7 +3900,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_int(ain1, null);
+        resultArray7_int result = reduce_my_array_int(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "int val"
@@ -2509,7 +3937,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_int2(ain1, null);
+        resultArray7_int2 result = reduce_my_array_int2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "int2 val"
@@ -2544,7 +3974,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_int4(ain1, null);
+        resultArray7_int4 result = reduce_my_array_int4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "int4 val"
@@ -2575,7 +4007,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_long(ain1, null);
+        result_long result = reduce_my_long(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "long val"
@@ -2610,7 +4044,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_long2(ain1, null);
+        result_long2 result = reduce_my_long2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "long2 val"
@@ -2645,7 +4081,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_long4(ain1, null);
+        result_long4 result = reduce_my_long4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "long4 val"
@@ -2676,7 +4114,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_long(ain1, null);
+        resultArray7_long result = reduce_my_array_long(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "long val"
@@ -2711,7 +4151,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_long2(ain1, null);
+        resultArray7_long2 result = reduce_my_array_long2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "long2 val"
@@ -2746,7 +4188,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_long4(ain1, null);
+        resultArray7_long4 result = reduce_my_array_long4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "long4 val"
@@ -2777,7 +4221,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_uchar(ain1, null);
+        result_uchar result = reduce_my_uchar(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uchar val"
@@ -2812,7 +4258,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_uchar2(ain1, null);
+        result_uchar2 result = reduce_my_uchar2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uchar2 val"
@@ -2847,7 +4295,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_uchar4(ain1, null);
+        result_uchar4 result = reduce_my_uchar4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uchar4 val"
@@ -2878,7 +4328,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_uchar(ain1, null);
+        resultArray7_uchar result = reduce_my_array_uchar(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uchar val"
@@ -2913,7 +4365,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_uchar2(ain1, null);
+        resultArray7_uchar2 result = reduce_my_array_uchar2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uchar2 val"
@@ -2948,7 +4402,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_uchar4(ain1, null);
+        resultArray7_uchar4 result = reduce_my_array_uchar4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uchar4 val"
@@ -2979,7 +4435,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_ushort(ain1, null);
+        result_ushort result = reduce_my_ushort(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ushort val"
@@ -3014,7 +4472,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_ushort2(ain1, null);
+        result_ushort2 result = reduce_my_ushort2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ushort2 val"
@@ -3049,7 +4509,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_ushort4(ain1, null);
+        result_ushort4 result = reduce_my_ushort4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ushort4 val"
@@ -3080,7 +4542,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_ushort(ain1, null);
+        resultArray7_ushort result = reduce_my_array_ushort(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ushort val"
@@ -3115,7 +4579,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_ushort2(ain1, null);
+        resultArray7_ushort2 result = reduce_my_array_ushort2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ushort2 val"
@@ -3150,7 +4616,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_ushort4(ain1, null);
+        resultArray7_ushort4 result = reduce_my_array_ushort4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ushort4 val"
@@ -3181,7 +4649,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_uint(ain1, null);
+        result_uint result = reduce_my_uint(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uint val"
@@ -3216,7 +4686,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_uint2(ain1, null);
+        result_uint2 result = reduce_my_uint2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uint2 val"
@@ -3251,7 +4723,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_uint4(ain1, null);
+        result_uint4 result = reduce_my_uint4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uint4 val"
@@ -3282,7 +4756,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_uint(ain1, null);
+        resultArray7_uint result = reduce_my_array_uint(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uint val"
@@ -3317,7 +4793,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_uint2(ain1, null);
+        resultArray7_uint2 result = reduce_my_array_uint2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uint2 val"
@@ -3352,7 +4830,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_uint4(ain1, null);
+        resultArray7_uint4 result = reduce_my_array_uint4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "uint4 val"
@@ -3383,7 +4863,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_ulong(ain1, null);
+        result_ulong result = reduce_my_ulong(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ulong val"
@@ -3418,7 +4900,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_ulong2(ain1, null);
+        result_ulong2 result = reduce_my_ulong2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ulong2 val"
@@ -3453,7 +4937,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_ulong4(ain1, null);
+        result_ulong4 result = reduce_my_ulong4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ulong4 val"
@@ -3484,7 +4970,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_ulong(ain1, null);
+        resultArray7_ulong result = reduce_my_array_ulong(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ulong val"
@@ -3519,7 +5007,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_ulong2(ain1, null);
+        resultArray7_ulong2 result = reduce_my_array_ulong2(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ulong2 val"
@@ -3554,7 +5044,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_ulong4(ain1, null);
+        resultArray7_ulong4 result = reduce_my_array_ulong4(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "ulong4 val"
@@ -3585,7 +5077,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_bool(ain1, null);
+        result_bool result = reduce_my_bool(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "bool val"
@@ -3616,7 +5110,9 @@ public class ScriptC_reduce_general_result extends ScriptC {
         ain1.setAutoPadding(true);
         ain1.copyFrom(in1);
 
-        return reduce_my_array_bool(ain1, null);
+        resultArray7_bool result = reduce_my_array_bool(ain1, null);
+        result.mTempIns = new Allocation[]{ain1};
+        return result;
     }
 
     // ain1 = "bool val"

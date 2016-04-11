@@ -47,16 +47,36 @@ public class ScriptC_reduce_general_struct extends ScriptC {
     // until the asynchronously-launched operation has completed.
     public static class result_int {
         public int get() {
-            int[] outArray = new int[1];
-            mOut.copyTo(outArray);
-            return outArray[0];
+            if (!mGotResult) {
+                int[] outArray = new int[1];
+                mOut.copyTo(outArray);
+                mResult = outArray[0];
+                mOut.destroy();
+                mOut = null;  // make Java object eligible for garbage collection
+                if (mTempIns != null) {
+                    for (Allocation tempIn : mTempIns) {
+                        tempIn.destroy();
+                    }
+
+                    mTempIns = null;  // make Java objects eligible for garbage collection
+                }
+
+                mGotResult = true;
+            }
+
+            return mResult;
         }
 
         private  result_int(Allocation out) {
+            mTempIns = null;
             mOut = out;
+            mGotResult = false;
         }
 
+        private Allocation[] mTempIns;
         private Allocation mOut;
+        private boolean mGotResult;
+        private int mResult;
     }
 
     private final static int mExportReduceNewIdx_inStruct = 0;
