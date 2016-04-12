@@ -274,6 +274,11 @@ class RSContext {
     std::vector<RSExportType *> Return;
     std::copy_if(mExportReduceNewResultType.begin(), mExportReduceNewResultType.end(), std::back_inserter(Return), Filt);
     std::sort(Return.begin(), Return.end(), Comp);
+    auto ReturnNewEndIter = std::unique(Return.begin(), Return.end(),
+                                        [Comp](const RSExportType *a, const RSExportType *b) {
+                                          return !Comp(a, b) && !Comp(b, a);
+                                        });
+    Return.erase(ReturnNewEndIter, Return.end());
     return Return;
   }
 
