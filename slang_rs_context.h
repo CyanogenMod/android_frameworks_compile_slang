@@ -117,6 +117,7 @@ class RSContext {
   ExportFuncList mExportFuncs;
   std::map<llvm::StringRef, unsigned> mExportForEachMap;
   ExportForEachVector mExportForEach;
+  ExportForEachVector::iterator mFirstOldStyleKernel;
   ExportReduceList mExportReduce;
   ExportReduceNewList mExportReduceNew;
   ExportReduceNewResultTypeSet mExportReduceNewResultType;

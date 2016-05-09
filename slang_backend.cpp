@@ -429,17 +429,19 @@ bool Backend::HandleTopLevelDecl(clang::DeclGroupRef D) {
       }
     }
 
-    if (getTargetAPI() >= SLANG_N_TARGET_API) {
+    if (getTargetAPI() >= SLANG_FEATURE_SINGLE_SOURCE_API) {
       if (FD && FD->hasBody() &&
           !Slang::IsLocInRSHeaderFile(FD->getLocation(), mSourceMgr)) {
-        bool isKernel = RSExportForEach::isRSForEachFunc(getTargetAPI(), FD);
-        if (isKernel) {
-          // Log kernels by their names, and assign them slot numbers.
+        if (FD->hasAttr<clang::KernelAttr>()) {
+          // Log functions with attribute "kernel" by their names, and assign
+          // them slot numbers. Any other function cannot be used in a
+          // rsForEach() or rsForEachWithOptions() call, including old-style
+          // kernel functions which are defined without the "kernel" attribute.
           mContext->addForEach(FD);
         }
         // Look for any kernel launch calls and translate them into using the
         // internal API.
-        // Report a compiler on kernel launches inside a kernel.
+        // Report a compiler error on kernel launches inside a kernel.
         mForEachHandler.handleForEachCalls(FD, getTargetAPI());
       }
     }

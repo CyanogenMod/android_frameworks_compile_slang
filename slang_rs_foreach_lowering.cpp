@@ -17,6 +17,7 @@
 #include "slang_rs_foreach_lowering.h"
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "slang_rs_context.h"
 #include "slang_rs_export_foreach.h"
@@ -129,8 +130,9 @@ const clang::FunctionDecl* RSForEachLowering::matchKernelLaunchCall(
   // Verifies that kernel is indeed a "kernel" function.
   *slot = mCtxt->getForEachSlotNumber(kernel);
   if (*slot == -1) {
-    mCtxt->ReportError(CE->getExprLoc(), "%0 applied to non kernel function %1")
-            << funcName << kernel->getName();
+    mCtxt->ReportError(CE->getExprLoc(),
+         "%0 applied to function %1 defined without \"kernel\" attribute")
+         << funcName << kernel->getName();
     return nullptr;
   }
 
@@ -383,7 +385,7 @@ void RSForEachLowering::handleForEachCalls(clang::FunctionDecl* FD,
                                            unsigned int targetAPI) {
   slangAssert(FD && FD->hasBody());
 
-  mInsideKernel = RSExportForEach::isRSForEachFunc(targetAPI, FD);
+  mInsideKernel = FD->hasAttr<clang::KernelAttr>();
   VisitStmt(FD->getBody());
 }
 

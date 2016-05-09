@@ -73,6 +73,7 @@ RSContext::RSContext(clang::Preprocessor &PP,
 
   // Reserve slot 0 for the root kernel.
   mExportForEach.push_back(nullptr);
+  mFirstOldStyleKernel = mExportForEach.end();
 }
 
 bool RSContext::processExportVar(const clang::VarDecl *VD) {
@@ -125,12 +126,25 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     if (EFE == nullptr) {
       return false;
     }
-    const llvm::StringRef& funcName = FD->getName();
-    if (funcName.equals("root")) {
+
+    // The root function should be at index 0 in the list
+    if (FD->getName().equals("root")) {
       mExportForEach[0] = EFE;
-    } else {
-      mExportForEach.push_back(EFE);
+      return true;
     }
+
+    // New-style kernels with attribute "kernel" should come first in the list
+    if (FD->hasAttr<clang::KernelAttr>()) {
+      mFirstOldStyleKernel = mExportForEach.insert(mFirstOldStyleKernel, EFE) + 1;
+      slangAssert((mTargetAPI < SLANG_FEATURE_SINGLE_SOURCE_API ||
+                   getForEachSlotNumber(FD->getName()) ==
+                   mFirstOldStyleKernel - mExportForEach.begin() - 1) &&
+                  "Inconsistent slot number assignment");
+      return true;
+    }
+
+    // Old-style kernels should appear in the end of the list
+    mFirstOldStyleKernel = mExportForEach.insert(mFirstOldStyleKernel, EFE);
     return true;
   }
 
