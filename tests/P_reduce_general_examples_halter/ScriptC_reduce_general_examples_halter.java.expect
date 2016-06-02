@@ -115,7 +115,7 @@ public class ScriptC_reduce_general_examples_halter extends ScriptC {
         private Int2 mResult;
     }
 
-    private final static int mExportReduceNewIdx_fz = 0;
+    private final static int mExportReduceIdx_fz = 0;
     // in1 = "inVal"
     public result_int reduce_fz(int[] in1) {
         // Verify that "in1" is non-null.
@@ -144,11 +144,11 @@ public class ScriptC_reduce_general_examples_halter extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_fz, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_fz, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_fz2 = 1;
+    private final static int mExportReduceIdx_fz2 = 1;
     // in1 = "inVal"
     public result_int2 reduce_fz2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -177,7 +177,7 @@ public class ScriptC_reduce_general_examples_halter extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32_2, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_fz2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_fz2, new Allocation[]{ain1}, aout, sc);
         return new result_int2(aout);
     }
 

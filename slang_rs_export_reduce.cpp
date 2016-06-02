@@ -20,7 +20,6 @@
 #include <sstream>
 #include <string>
 
-#include "clang/AST/Attr.h"
 #include "clang/AST/ASTContext.h"
 
 #include "slang_assert.h"
@@ -32,169 +31,16 @@
 
 #include "bcinfo/MetadataExtractor.h"
 
-namespace {
-
-bool haveReduceInTargetAPI(unsigned int TargetAPI) {
-  return TargetAPI == RS_DEVELOPMENT_API;
-}
-
-} // end anonymous namespace
-
-
 namespace slang {
 
-// Validate the parameters to a reduce kernel, and set up the
-// exportable object if the kernel is valid.
-//
-// This checks that the passed function declaration of a reduce kernel is
-// a function which satisfies all the requirements for a reduce
-// kernel. Namely, we check for:
-//  - correct target API
-//  - correct parameter count
-//  - non void return type
-//  - return type and parameter types match
-//  - no pointer types in signature.
-//
-// We try to report useful errors to the user.
-//
-// On success, this function returns true and sets the fields mIns and
-// mType to point to the arguments and to the kernel type.
-//
-// If an error was detected, this function returns false.
-bool RSExportReduce::validateAndConstructParams(
-    RSContext *Context, const clang::FunctionDecl *FD) {
-  slangAssert(Context && FD);
-  bool Valid = true;
+const char RSExportReduce::KeyReduce[] = "reduce";
+const char RSExportReduce::KeyInitializer[] = "initializer";
+const char RSExportReduce::KeyAccumulator[] = "accumulator";
+const char RSExportReduce::KeyCombiner[] = "combiner";
+const char RSExportReduce::KeyOutConverter[] = "outconverter";
+const char RSExportReduce::KeyHalter[] = "halter";
 
-  clang::ASTContext &ASTCtx = FD->getASTContext();
-
-  // Validate API version.
-  if (!haveReduceInTargetAPI(Context->getTargetAPI())) {
-    Context->ReportError(FD->getLocation(),
-                         "Reduce-style kernel %0() unsupported in SDK level %1")
-      << FD->getName() << Context->getTargetAPI();
-    Valid = false;
-  }
-
-  // Validate parameter count.
-  if (FD->getNumParams() != 2) {
-    Context->ReportError(FD->getLocation(),
-                         "Reduce-style kernel %0() must take 2 parameters "
-                         "(found %1).")
-      << FD->getName() << FD->getNumParams();
-    Valid = false;
-  }
-
-  // Validate return type.
-  const clang::QualType ReturnTy = FD->getReturnType().getCanonicalType();
-
-  if (ReturnTy->isVoidType()) {
-    Context->ReportError(FD->getLocation(),
-                         "Reduce-style kernel %0() cannot return void")
-      << FD->getName();
-    Valid = false;
-  } else if (ReturnTy->isPointerType()) {
-    Context->ReportError(FD->getLocation(),
-                         "Reduce-style kernel %0() cannot return a pointer "
-                         "type: %1")
-      << FD->getName() << ReturnTy.getAsString();
-    Valid = false;
-  }
-
-  // Validate parameter types.
-  if (FD->getNumParams() == 0) {
-    return false;
-  }
-
-  const clang::ParmVarDecl &FirstParam = *FD->getParamDecl(0);
-  const clang::QualType FirstParamTy = FirstParam.getType().getCanonicalType();
-
-  for (auto PVD = FD->param_begin(), PE = FD->param_end(); PVD != PE; ++PVD) {
-    const clang::ParmVarDecl &Param = **PVD;
-    const clang::QualType ParamTy = Param.getType().getCanonicalType();
-
-    // Check that the parameter is not a pointer.
-    if (ParamTy->isPointerType()) {
-      Context->ReportError(Param.getLocation(),
-                           "Reduce-style kernel %0() cannot have "
-                           "parameter '%1' of pointer type: '%2'")
-        << FD->getName() << Param.getName() << ParamTy.getAsString();
-      Valid = false;
-    }
-
-    // Check for type mismatch between this parameter and the return type.
-    if (!ASTCtx.hasSameUnqualifiedType(ReturnTy, ParamTy)) {
-      Context->ReportError(FD->getLocation(),
-                           "Reduce-style kernel %0() return type '%1' is not "
-                           "the same type as parameter '%2' (type '%3')")
-        << FD->getName() << ReturnTy.getAsString() << Param.getName()
-        << ParamTy.getAsString();
-      Valid = false;
-    }
-
-    // Check for type mismatch between parameters. It is sufficient to check
-    // for a mismatch with the type of the first argument.
-    if (ParamTy != FirstParamTy) {
-      Context->ReportError(FirstParam.getLocation(),
-                           "In reduce-style kernel %0(): parameter '%1' "
-                           "(type '%2') does not have the same type as "
-                           "parameter '%3' (type '%4')")
-        << FD->getName() << FirstParam.getName() << FirstParamTy.getAsString()
-        << Param.getName() << ParamTy.getAsString();
-      Valid = false;
-    }
-  }
-
-  if (Valid) {
-    // If the validation was successful, then populate the fields of
-    // the exportable.
-    if (!(mType = RSExportType::Create(Context, ReturnTy.getTypePtr(),
-                                       NotLegacyKernelArgument))) {
-      // There was an error exporting the type for the reduce kernel.
-      return false;
-    }
-
-    slangAssert(mIns.size() == 2 && FD->param_end() - FD->param_begin() == 2);
-    std::copy(FD->param_begin(), FD->param_end(), mIns.begin());
-  }
-
-  return Valid;
-}
-
-RSExportReduce *RSExportReduce::Create(RSContext *Context,
-                                       const clang::FunctionDecl *FD) {
-  slangAssert(Context && FD);
-  llvm::StringRef Name = FD->getName();
-
-  slangAssert(!Name.empty() && "Function must have a name");
-
-  RSExportReduce *RE = new RSExportReduce(Context, Name);
-
-  if (!RE->validateAndConstructParams(Context, FD)) {
-    // Don't delete RE here - owned by Context.
-    return nullptr;
-  }
-
-  return RE;
-}
-
-bool RSExportReduce::isRSReduceFunc(unsigned int /* targetAPI */,
-                                    const clang::FunctionDecl *FD) {
-  slangAssert(FD);
-  clang::KernelAttr *KernelAttrOrNull = FD->getAttr<clang::KernelAttr>();
-  return KernelAttrOrNull && KernelAttrOrNull->getKernelKind().equals("reduce");
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-
-const char RSExportReduceNew::KeyReduce[] = "reduce";
-const char RSExportReduceNew::KeyInitializer[] = "initializer";
-const char RSExportReduceNew::KeyAccumulator[] = "accumulator";
-const char RSExportReduceNew::KeyCombiner[] = "combiner";
-const char RSExportReduceNew::KeyOutConverter[] = "outconverter";
-const char RSExportReduceNew::KeyHalter[] = "halter";
-
-bool RSExportReduceNew::matchName(const llvm::StringRef &Candidate) const {
+bool RSExportReduce::matchName(const llvm::StringRef &Candidate) const {
   return
       Candidate.equals(mNameInitializer)  ||
       Candidate.equals(mNameAccumulator)  ||
@@ -203,28 +49,28 @@ bool RSExportReduceNew::matchName(const llvm::StringRef &Candidate) const {
       Candidate.equals(mNameHalter);
 }
 
-RSExportReduceNew *RSExportReduceNew::Create(RSContext *Context,
-                                             const clang::SourceLocation Location,
-                                             const llvm::StringRef &NameReduce,
-                                             const llvm::StringRef &NameInitializer,
-                                             const llvm::StringRef &NameAccumulator,
-                                             const llvm::StringRef &NameCombiner,
-                                             const llvm::StringRef &NameOutConverter,
-                                             const llvm::StringRef &NameHalter) {
+RSExportReduce *RSExportReduce::Create(RSContext *Context,
+                                       const clang::SourceLocation Location,
+                                       const llvm::StringRef &NameReduce,
+                                       const llvm::StringRef &NameInitializer,
+                                       const llvm::StringRef &NameAccumulator,
+                                       const llvm::StringRef &NameCombiner,
+                                       const llvm::StringRef &NameOutConverter,
+                                       const llvm::StringRef &NameHalter) {
   slangAssert(Context);
-  RSExportReduceNew *RNE = new RSExportReduceNew(Context,
-                                                 Location,
-                                                 NameReduce,
-                                                 NameInitializer,
-                                                 NameAccumulator,
-                                                 NameCombiner,
-                                                 NameOutConverter,
-                                                 NameHalter);
+  RSExportReduce *RNE = new RSExportReduce(Context,
+                                           Location,
+                                           NameReduce,
+                                           NameInitializer,
+                                           NameAccumulator,
+                                           NameCombiner,
+                                           NameOutConverter,
+                                           NameHalter);
 
   return RNE;
 }
 
-const char *RSExportReduceNew::getKey(FnIdent Kind) {
+const char *RSExportReduce::getKey(FnIdent Kind) {
   switch (Kind) {
     default:
       slangAssert(!"Unknown FnIdent");
@@ -245,7 +91,7 @@ const char *RSExportReduceNew::getKey(FnIdent Kind) {
 // This data is needed during analyzeTranslationUnit() but not afterwards.
 // Breaking it out into a struct makes it easy for analyzeTranslationUnit()
 // to call a number of helper functions that all need access to this data.
-struct RSExportReduceNew::StateOfAnalyzeTranslationUnit {
+struct RSExportReduce::StateOfAnalyzeTranslationUnit {
 
   typedef std::function<std::string (const char *Key, const std::string &Name)> DiagnosticDescriptionType;
 
@@ -312,8 +158,8 @@ struct RSExportReduceNew::StateOfAnalyzeTranslationUnit {
 };
 
 // does update S.Ok
-clang::FunctionDecl *RSExportReduceNew::lookupFunction(StateOfAnalyzeTranslationUnit &S,
-                                                       const char *Kind, const llvm::StringRef &Name) {
+clang::FunctionDecl *RSExportReduce::lookupFunction(StateOfAnalyzeTranslationUnit &S,
+                                                    const char *Kind, const llvm::StringRef &Name) {
   if (Name.empty())
     return nullptr;
 
@@ -361,7 +207,7 @@ clang::FunctionDecl *RSExportReduceNew::lookupFunction(StateOfAnalyzeTranslation
 }
 
 // updates S.Ok; and, depending on Kind, possibly S.FnAccumulatorOk or S.FnOutConverterOk
-void RSExportReduceNew::notOk(StateOfAnalyzeTranslationUnit &S, FnIdent Kind) {
+void RSExportReduce::notOk(StateOfAnalyzeTranslationUnit &S, FnIdent Kind) {
     S.Ok = false;
     if (Kind == FN_IDENT_ACCUMULATOR) {
       S.FnAccumulatorOk = false;
@@ -371,8 +217,8 @@ void RSExportReduceNew::notOk(StateOfAnalyzeTranslationUnit &S, FnIdent Kind) {
 }
 
 // updates S.Ok; and, depending on Kind, possibly S.FnAccumulatorOk or S.FnOutConverterOk
-void RSExportReduceNew::checkVoidReturn(StateOfAnalyzeTranslationUnit &S,
-                                        FnIdent Kind, clang::FunctionDecl *Fn) {
+void RSExportReduce::checkVoidReturn(StateOfAnalyzeTranslationUnit &S,
+                                     FnIdent Kind, clang::FunctionDecl *Fn) {
   slangAssert(Fn);
   const clang::QualType ReturnTy = Fn->getReturnType().getCanonicalType();
   if (!ReturnTy->isVoidType()) {
@@ -384,9 +230,9 @@ void RSExportReduceNew::checkVoidReturn(StateOfAnalyzeTranslationUnit &S,
 }
 
 // updates S.Ok; and, depending on Kind, possibly S.FnAccumulatorOk or S.FnOutConverterOk
-void RSExportReduceNew::checkPointeeConstQualified(StateOfAnalyzeTranslationUnit &S,
-                                                   FnIdent Kind, const llvm::StringRef &Name,
-                                                   const clang::ParmVarDecl *Param, bool ExpectedQualification) {
+void RSExportReduce::checkPointeeConstQualified(StateOfAnalyzeTranslationUnit &S,
+                                                FnIdent Kind, const llvm::StringRef &Name,
+                                                const clang::ParmVarDecl *Param, bool ExpectedQualification) {
   const clang::QualType ParamQType = Param->getType();
   slangAssert(ParamQType->isPointerType());
   const clang::QualType PointeeQType = ParamQType->getPointeeType();
@@ -401,7 +247,7 @@ void RSExportReduceNew::checkPointeeConstQualified(StateOfAnalyzeTranslationUnit
 }
 
 // Process "void mNameInitializer(compType *accum)"
-void RSExportReduceNew::analyzeInitializer(StateOfAnalyzeTranslationUnit &S) {
+void RSExportReduce::analyzeInitializer(StateOfAnalyzeTranslationUnit &S) {
   if (!S.FnInitializer) // initializer is always optional
     return;
 
@@ -445,7 +291,7 @@ void RSExportReduceNew::analyzeInitializer(StateOfAnalyzeTranslationUnit &S) {
 }
 
 // Process "void mNameAccumulator(compType *accum, in1Type in1, …, inNType inN[, specialarguments])"
-void RSExportReduceNew::analyzeAccumulator(StateOfAnalyzeTranslationUnit &S) {
+void RSExportReduce::analyzeAccumulator(StateOfAnalyzeTranslationUnit &S) {
   slangAssert(S.FnAccumulator);
 
   // Must return void
@@ -584,7 +430,7 @@ void RSExportReduceNew::analyzeAccumulator(StateOfAnalyzeTranslationUnit &S) {
 }
 
 // Process "void combinename(compType *accum, const compType *val)"
-void RSExportReduceNew::analyzeCombiner(StateOfAnalyzeTranslationUnit &S) {
+void RSExportReduce::analyzeCombiner(StateOfAnalyzeTranslationUnit &S) {
   if (S.FnCombiner) {
     // Must return void
     checkVoidReturn(S, FN_IDENT_COMBINER, S.FnCombiner);
@@ -676,7 +522,7 @@ void RSExportReduceNew::analyzeCombiner(StateOfAnalyzeTranslationUnit &S) {
 }
 
 // Process "void outconvertname(resultType *result, const compType *accum)"
-void RSExportReduceNew::analyzeOutConverter(StateOfAnalyzeTranslationUnit &S) {
+void RSExportReduce::analyzeOutConverter(StateOfAnalyzeTranslationUnit &S) {
   if (!S.FnOutConverter) // outconverter is always optional
     return;
 
@@ -754,7 +600,7 @@ void RSExportReduceNew::analyzeOutConverter(StateOfAnalyzeTranslationUnit &S) {
   }
 }
 
-void RSExportReduceNew::analyzeHalter(StateOfAnalyzeTranslationUnit &S) {
+void RSExportReduce::analyzeHalter(StateOfAnalyzeTranslationUnit &S) {
   if (!S.FnHalter) // halter is always optional
     return;
 
@@ -822,7 +668,7 @@ void RSExportReduceNew::analyzeHalter(StateOfAnalyzeTranslationUnit &S) {
   checkPointeeConstQualified(S, FN_IDENT_HALTER, mNameHalter, FnHalterParam, true);
 }
 
-void RSExportReduceNew::analyzeResultType(StateOfAnalyzeTranslationUnit &S) {
+void RSExportReduce::analyzeResultType(StateOfAnalyzeTranslationUnit &S) {
   if (!(S.FnAccumulatorOk && S.FnOutConverterOk)) {
     // No idea what the result type is
     slangAssert(!S.Ok);
@@ -896,12 +742,12 @@ void RSExportReduceNew::analyzeResultType(StateOfAnalyzeTranslationUnit &S) {
   }
 
   if (mResultType)
-    S.RSC.insertExportReduceNewResultType(mResultType);
+    S.RSC.insertExportReduceResultType(mResultType);
   else
     S.Ok = false;
 }
 
-bool RSExportReduceNew::analyzeTranslationUnit() {
+bool RSExportReduce::analyzeTranslationUnit() {
 
   RSContext &RSC = *getRSContext();
   clang::Preprocessor &PP = RSC.getPreprocessor();

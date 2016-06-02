@@ -77,7 +77,7 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         private int mResult;
     }
 
-    private final static int mExportReduceNewIdx_my_half = 0;
+    private final static int mExportReduceIdx_my_half = 0;
     // in1 = "val"
     public result_int reduce_my_half(int[] in1) {
         // Verify that "in1" is non-null.
@@ -106,11 +106,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_half, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_half, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_half2 = 1;
+    private final static int mExportReduceIdx_my_half2 = 1;
     // in1 = "val"
     public result_int reduce_my_half2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -139,11 +139,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_half2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_half2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_half4 = 2;
+    private final static int mExportReduceIdx_my_half4 = 2;
     // in1 = "val"
     public result_int reduce_my_half4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -172,11 +172,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_half4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_half4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_half = 3;
+    private final static int mExportReduceIdx_my_array_half = 3;
     // in1 = "val"
     public result_int reduce_my_array_half(int[] in1) {
         // Verify that "in1" is non-null.
@@ -205,11 +205,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_half, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_half, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_half2 = 4;
+    private final static int mExportReduceIdx_my_array_half2 = 4;
     // in1 = "val"
     public result_int reduce_my_array_half2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -238,11 +238,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_half2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_half2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_half4 = 5;
+    private final static int mExportReduceIdx_my_array_half4 = 5;
     // in1 = "val"
     public result_int reduce_my_array_half4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -271,11 +271,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_half4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_half4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_float = 6;
+    private final static int mExportReduceIdx_my_float = 6;
     // in1 = "val"
     public result_int reduce_my_float(int[] in1) {
         // Verify that "in1" is non-null.
@@ -304,11 +304,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_float, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_float, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_float2 = 7;
+    private final static int mExportReduceIdx_my_float2 = 7;
     // in1 = "val"
     public result_int reduce_my_float2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -337,11 +337,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_float2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_float2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_float4 = 8;
+    private final static int mExportReduceIdx_my_float4 = 8;
     // in1 = "val"
     public result_int reduce_my_float4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -370,11 +370,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_float4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_float4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_float = 9;
+    private final static int mExportReduceIdx_my_array_float = 9;
     // in1 = "val"
     public result_int reduce_my_array_float(int[] in1) {
         // Verify that "in1" is non-null.
@@ -403,11 +403,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_float, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_float, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_float2 = 10;
+    private final static int mExportReduceIdx_my_array_float2 = 10;
     // in1 = "val"
     public result_int reduce_my_array_float2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -436,11 +436,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_float2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_float2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_float4 = 11;
+    private final static int mExportReduceIdx_my_array_float4 = 11;
     // in1 = "val"
     public result_int reduce_my_array_float4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -469,11 +469,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_float4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_float4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_double = 12;
+    private final static int mExportReduceIdx_my_double = 12;
     // in1 = "val"
     public result_int reduce_my_double(int[] in1) {
         // Verify that "in1" is non-null.
@@ -502,11 +502,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_double, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_double, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_double2 = 13;
+    private final static int mExportReduceIdx_my_double2 = 13;
     // in1 = "val"
     public result_int reduce_my_double2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -535,11 +535,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_double2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_double2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_double4 = 14;
+    private final static int mExportReduceIdx_my_double4 = 14;
     // in1 = "val"
     public result_int reduce_my_double4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -568,11 +568,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_double4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_double4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_double = 15;
+    private final static int mExportReduceIdx_my_array_double = 15;
     // in1 = "val"
     public result_int reduce_my_array_double(int[] in1) {
         // Verify that "in1" is non-null.
@@ -601,11 +601,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_double, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_double, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_double2 = 16;
+    private final static int mExportReduceIdx_my_array_double2 = 16;
     // in1 = "val"
     public result_int reduce_my_array_double2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -634,11 +634,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_double2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_double2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_double4 = 17;
+    private final static int mExportReduceIdx_my_array_double4 = 17;
     // in1 = "val"
     public result_int reduce_my_array_double4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -667,11 +667,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_double4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_double4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_char = 18;
+    private final static int mExportReduceIdx_my_char = 18;
     // in1 = "val"
     public result_int reduce_my_char(int[] in1) {
         // Verify that "in1" is non-null.
@@ -700,11 +700,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_char, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_char, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_char2 = 19;
+    private final static int mExportReduceIdx_my_char2 = 19;
     // in1 = "val"
     public result_int reduce_my_char2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -733,11 +733,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_char2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_char2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_char4 = 20;
+    private final static int mExportReduceIdx_my_char4 = 20;
     // in1 = "val"
     public result_int reduce_my_char4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -766,11 +766,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_char4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_char4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_char = 21;
+    private final static int mExportReduceIdx_my_array_char = 21;
     // in1 = "val"
     public result_int reduce_my_array_char(int[] in1) {
         // Verify that "in1" is non-null.
@@ -799,11 +799,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_char, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_char, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_char2 = 22;
+    private final static int mExportReduceIdx_my_array_char2 = 22;
     // in1 = "val"
     public result_int reduce_my_array_char2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -832,11 +832,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_char2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_char2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_char4 = 23;
+    private final static int mExportReduceIdx_my_array_char4 = 23;
     // in1 = "val"
     public result_int reduce_my_array_char4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -865,11 +865,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_char4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_char4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_short = 24;
+    private final static int mExportReduceIdx_my_short = 24;
     // in1 = "val"
     public result_int reduce_my_short(int[] in1) {
         // Verify that "in1" is non-null.
@@ -898,11 +898,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_short, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_short, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_short2 = 25;
+    private final static int mExportReduceIdx_my_short2 = 25;
     // in1 = "val"
     public result_int reduce_my_short2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -931,11 +931,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_short2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_short2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_short4 = 26;
+    private final static int mExportReduceIdx_my_short4 = 26;
     // in1 = "val"
     public result_int reduce_my_short4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -964,11 +964,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_short4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_short4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_short = 27;
+    private final static int mExportReduceIdx_my_array_short = 27;
     // in1 = "val"
     public result_int reduce_my_array_short(int[] in1) {
         // Verify that "in1" is non-null.
@@ -997,11 +997,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_short, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_short, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_short2 = 28;
+    private final static int mExportReduceIdx_my_array_short2 = 28;
     // in1 = "val"
     public result_int reduce_my_array_short2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1030,11 +1030,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_short2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_short2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_short4 = 29;
+    private final static int mExportReduceIdx_my_array_short4 = 29;
     // in1 = "val"
     public result_int reduce_my_array_short4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1063,11 +1063,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_short4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_short4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_int = 30;
+    private final static int mExportReduceIdx_my_int = 30;
     // in1 = "val"
     public result_int reduce_my_int(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1096,11 +1096,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_int, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_int, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_int2 = 31;
+    private final static int mExportReduceIdx_my_int2 = 31;
     // in1 = "val"
     public result_int reduce_my_int2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1129,11 +1129,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_int2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_int2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_int4 = 32;
+    private final static int mExportReduceIdx_my_int4 = 32;
     // in1 = "val"
     public result_int reduce_my_int4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1162,11 +1162,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_int4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_int4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_int = 33;
+    private final static int mExportReduceIdx_my_array_int = 33;
     // in1 = "val"
     public result_int reduce_my_array_int(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1195,11 +1195,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_int, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_int, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_int2 = 34;
+    private final static int mExportReduceIdx_my_array_int2 = 34;
     // in1 = "val"
     public result_int reduce_my_array_int2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1228,11 +1228,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_int2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_int2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_int4 = 35;
+    private final static int mExportReduceIdx_my_array_int4 = 35;
     // in1 = "val"
     public result_int reduce_my_array_int4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1261,11 +1261,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_int4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_int4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_long = 36;
+    private final static int mExportReduceIdx_my_long = 36;
     // in1 = "val"
     public result_int reduce_my_long(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1294,11 +1294,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_long, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_long, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_long2 = 37;
+    private final static int mExportReduceIdx_my_long2 = 37;
     // in1 = "val"
     public result_int reduce_my_long2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1327,11 +1327,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_long2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_long2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_long4 = 38;
+    private final static int mExportReduceIdx_my_long4 = 38;
     // in1 = "val"
     public result_int reduce_my_long4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1360,11 +1360,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_long4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_long4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_long = 39;
+    private final static int mExportReduceIdx_my_array_long = 39;
     // in1 = "val"
     public result_int reduce_my_array_long(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1393,11 +1393,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_long, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_long, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_long2 = 40;
+    private final static int mExportReduceIdx_my_array_long2 = 40;
     // in1 = "val"
     public result_int reduce_my_array_long2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1426,11 +1426,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_long2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_long2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_long4 = 41;
+    private final static int mExportReduceIdx_my_array_long4 = 41;
     // in1 = "val"
     public result_int reduce_my_array_long4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1459,11 +1459,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_long4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_long4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_uchar = 42;
+    private final static int mExportReduceIdx_my_uchar = 42;
     // in1 = "val"
     public result_int reduce_my_uchar(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1492,11 +1492,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_uchar, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_uchar, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_uchar2 = 43;
+    private final static int mExportReduceIdx_my_uchar2 = 43;
     // in1 = "val"
     public result_int reduce_my_uchar2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1525,11 +1525,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_uchar2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_uchar2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_uchar4 = 44;
+    private final static int mExportReduceIdx_my_uchar4 = 44;
     // in1 = "val"
     public result_int reduce_my_uchar4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1558,11 +1558,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_uchar4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_uchar4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_uchar = 45;
+    private final static int mExportReduceIdx_my_array_uchar = 45;
     // in1 = "val"
     public result_int reduce_my_array_uchar(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1591,11 +1591,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_uchar, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_uchar, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_uchar2 = 46;
+    private final static int mExportReduceIdx_my_array_uchar2 = 46;
     // in1 = "val"
     public result_int reduce_my_array_uchar2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1624,11 +1624,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_uchar2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_uchar2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_uchar4 = 47;
+    private final static int mExportReduceIdx_my_array_uchar4 = 47;
     // in1 = "val"
     public result_int reduce_my_array_uchar4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1657,11 +1657,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_uchar4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_uchar4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_ushort = 48;
+    private final static int mExportReduceIdx_my_ushort = 48;
     // in1 = "val"
     public result_int reduce_my_ushort(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1690,11 +1690,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_ushort, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_ushort, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_ushort2 = 49;
+    private final static int mExportReduceIdx_my_ushort2 = 49;
     // in1 = "val"
     public result_int reduce_my_ushort2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1723,11 +1723,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_ushort2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_ushort2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_ushort4 = 50;
+    private final static int mExportReduceIdx_my_ushort4 = 50;
     // in1 = "val"
     public result_int reduce_my_ushort4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1756,11 +1756,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_ushort4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_ushort4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_ushort = 51;
+    private final static int mExportReduceIdx_my_array_ushort = 51;
     // in1 = "val"
     public result_int reduce_my_array_ushort(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1789,11 +1789,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_ushort, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_ushort, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_ushort2 = 52;
+    private final static int mExportReduceIdx_my_array_ushort2 = 52;
     // in1 = "val"
     public result_int reduce_my_array_ushort2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1822,11 +1822,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_ushort2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_ushort2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_ushort4 = 53;
+    private final static int mExportReduceIdx_my_array_ushort4 = 53;
     // in1 = "val"
     public result_int reduce_my_array_ushort4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1855,11 +1855,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_ushort4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_ushort4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_uint = 54;
+    private final static int mExportReduceIdx_my_uint = 54;
     // in1 = "val"
     public result_int reduce_my_uint(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1888,11 +1888,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_uint, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_uint, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_uint2 = 55;
+    private final static int mExportReduceIdx_my_uint2 = 55;
     // in1 = "val"
     public result_int reduce_my_uint2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1921,11 +1921,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_uint2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_uint2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_uint4 = 56;
+    private final static int mExportReduceIdx_my_uint4 = 56;
     // in1 = "val"
     public result_int reduce_my_uint4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1954,11 +1954,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_uint4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_uint4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_uint = 57;
+    private final static int mExportReduceIdx_my_array_uint = 57;
     // in1 = "val"
     public result_int reduce_my_array_uint(int[] in1) {
         // Verify that "in1" is non-null.
@@ -1987,11 +1987,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_uint, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_uint, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_uint2 = 58;
+    private final static int mExportReduceIdx_my_array_uint2 = 58;
     // in1 = "val"
     public result_int reduce_my_array_uint2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2020,11 +2020,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_uint2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_uint2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_uint4 = 59;
+    private final static int mExportReduceIdx_my_array_uint4 = 59;
     // in1 = "val"
     public result_int reduce_my_array_uint4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2053,11 +2053,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_uint4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_uint4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_ulong = 60;
+    private final static int mExportReduceIdx_my_ulong = 60;
     // in1 = "val"
     public result_int reduce_my_ulong(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2086,11 +2086,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_ulong, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_ulong, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_ulong2 = 61;
+    private final static int mExportReduceIdx_my_ulong2 = 61;
     // in1 = "val"
     public result_int reduce_my_ulong2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2119,11 +2119,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_ulong2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_ulong2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_ulong4 = 62;
+    private final static int mExportReduceIdx_my_ulong4 = 62;
     // in1 = "val"
     public result_int reduce_my_ulong4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2152,11 +2152,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_ulong4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_ulong4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_ulong = 63;
+    private final static int mExportReduceIdx_my_array_ulong = 63;
     // in1 = "val"
     public result_int reduce_my_array_ulong(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2185,11 +2185,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_ulong, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_ulong, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_ulong2 = 64;
+    private final static int mExportReduceIdx_my_array_ulong2 = 64;
     // in1 = "val"
     public result_int reduce_my_array_ulong2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2218,11 +2218,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_ulong2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_ulong2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_ulong4 = 65;
+    private final static int mExportReduceIdx_my_array_ulong4 = 65;
     // in1 = "val"
     public result_int reduce_my_array_ulong4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2251,11 +2251,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_ulong4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_ulong4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_bool = 66;
+    private final static int mExportReduceIdx_my_bool = 66;
     // in1 = "val"
     public result_int reduce_my_bool(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2284,11 +2284,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_bool, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_bool, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_bool = 67;
+    private final static int mExportReduceIdx_my_array_bool = 67;
     // in1 = "val"
     public result_int reduce_my_array_bool(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2317,11 +2317,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_bool, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_bool, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_rs_matrix2x2 = 68;
+    private final static int mExportReduceIdx_my_rs_matrix2x2 = 68;
     // in1 = "val"
     public result_int reduce_my_rs_matrix2x2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2350,11 +2350,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_rs_matrix2x2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_rs_matrix2x2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_rs_matrix2x2 = 69;
+    private final static int mExportReduceIdx_my_array_rs_matrix2x2 = 69;
     // in1 = "val"
     public result_int reduce_my_array_rs_matrix2x2(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2383,11 +2383,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_rs_matrix2x2, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_rs_matrix2x2, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_rs_matrix3x3 = 70;
+    private final static int mExportReduceIdx_my_rs_matrix3x3 = 70;
     // in1 = "val"
     public result_int reduce_my_rs_matrix3x3(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2416,11 +2416,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_rs_matrix3x3, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_rs_matrix3x3, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_rs_matrix3x3 = 71;
+    private final static int mExportReduceIdx_my_array_rs_matrix3x3 = 71;
     // in1 = "val"
     public result_int reduce_my_array_rs_matrix3x3(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2449,11 +2449,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_rs_matrix3x3, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_rs_matrix3x3, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_rs_matrix4x4 = 72;
+    private final static int mExportReduceIdx_my_rs_matrix4x4 = 72;
     // in1 = "val"
     public result_int reduce_my_rs_matrix4x4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2482,11 +2482,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_rs_matrix4x4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_rs_matrix4x4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_rs_matrix4x4 = 73;
+    private final static int mExportReduceIdx_my_array_rs_matrix4x4 = 73;
     // in1 = "val"
     public result_int reduce_my_array_rs_matrix4x4(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2515,11 +2515,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_rs_matrix4x4, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_rs_matrix4x4, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_rs_for_each_strategy_t = 74;
+    private final static int mExportReduceIdx_my_rs_for_each_strategy_t = 74;
     // in1 = "val"
     public result_int reduce_my_rs_for_each_strategy_t(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2548,11 +2548,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_rs_for_each_strategy_t, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_rs_for_each_strategy_t, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_rs_for_each_strategy_t = 75;
+    private final static int mExportReduceIdx_my_array_rs_for_each_strategy_t = 75;
     // in1 = "val"
     public result_int reduce_my_array_rs_for_each_strategy_t(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2581,11 +2581,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_rs_for_each_strategy_t, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_rs_for_each_strategy_t, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_rs_script_call_t = 76;
+    private final static int mExportReduceIdx_my_rs_script_call_t = 76;
     // in1 = "val"
     public result_int reduce_my_rs_script_call_t(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2614,11 +2614,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_rs_script_call_t, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_rs_script_call_t, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_rs_script_call_t = 77;
+    private final static int mExportReduceIdx_my_array_rs_script_call_t = 77;
     // in1 = "val"
     public result_int reduce_my_array_rs_script_call_t(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2647,11 +2647,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_rs_script_call_t, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_rs_script_call_t, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_rs_time_t = 78;
+    private final static int mExportReduceIdx_my_rs_time_t = 78;
     // in1 = "val"
     public result_int reduce_my_rs_time_t(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2680,11 +2680,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_rs_time_t, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_rs_time_t, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_rs_time_t = 79;
+    private final static int mExportReduceIdx_my_array_rs_time_t = 79;
     // in1 = "val"
     public result_int reduce_my_array_rs_time_t(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2713,11 +2713,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_rs_time_t, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_rs_time_t, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_rs_tm = 80;
+    private final static int mExportReduceIdx_my_rs_tm = 80;
     // in1 = "val"
     public result_int reduce_my_rs_tm(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2746,11 +2746,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_rs_tm, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_rs_tm, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_rs_tm = 81;
+    private final static int mExportReduceIdx_my_array_rs_tm = 81;
     // in1 = "val"
     public result_int reduce_my_array_rs_tm(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2779,11 +2779,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_rs_tm, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_rs_tm, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_MyEnum = 82;
+    private final static int mExportReduceIdx_my_MyEnum = 82;
     // in1 = "val"
     public result_int reduce_my_MyEnum(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2812,11 +2812,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_MyEnum, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_MyEnum, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_MyEnum = 83;
+    private final static int mExportReduceIdx_my_array_MyEnum = 83;
     // in1 = "val"
     public result_int reduce_my_array_MyEnum(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2845,11 +2845,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_MyEnum, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_MyEnum, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_MyPtrArray = 84;
+    private final static int mExportReduceIdx_my_MyPtrArray = 84;
     // in1 = "val"
     public result_int reduce_my_MyPtrArray(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2878,11 +2878,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_MyPtrArray, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_MyPtrArray, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_MyPtrArray = 85;
+    private final static int mExportReduceIdx_my_array_MyPtrArray = 85;
     // in1 = "val"
     public result_int reduce_my_array_MyPtrArray(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2911,11 +2911,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_MyPtrArray, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_MyPtrArray, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_MyPtrFn = 86;
+    private final static int mExportReduceIdx_my_MyPtrFn = 86;
     // in1 = "val"
     public result_int reduce_my_MyPtrFn(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2944,11 +2944,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_MyPtrFn, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_MyPtrFn, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_MyPtrFn = 87;
+    private final static int mExportReduceIdx_my_array_MyPtrFn = 87;
     // in1 = "val"
     public result_int reduce_my_array_MyPtrFn(int[] in1) {
         // Verify that "in1" is non-null.
@@ -2977,11 +2977,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_MyPtrFn, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_MyPtrFn, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_MyPtrIncomplete = 88;
+    private final static int mExportReduceIdx_my_MyPtrIncomplete = 88;
     // in1 = "val"
     public result_int reduce_my_MyPtrIncomplete(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3010,11 +3010,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_MyPtrIncomplete, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_MyPtrIncomplete, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_MyPtrIncomplete = 89;
+    private final static int mExportReduceIdx_my_array_MyPtrIncomplete = 89;
     // in1 = "val"
     public result_int reduce_my_array_MyPtrIncomplete(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3043,11 +3043,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_MyPtrIncomplete, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_MyPtrIncomplete, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_MyPtrShort = 90;
+    private final static int mExportReduceIdx_my_MyPtrShort = 90;
     // in1 = "val"
     public result_int reduce_my_MyPtrShort(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3076,11 +3076,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_MyPtrShort, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_MyPtrShort, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_MyPtrShort = 91;
+    private final static int mExportReduceIdx_my_array_MyPtrShort = 91;
     // in1 = "val"
     public result_int reduce_my_array_MyPtrShort(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3109,11 +3109,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_MyPtrShort, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_MyPtrShort, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_MyPtrVoid = 92;
+    private final static int mExportReduceIdx_my_MyPtrVoid = 92;
     // in1 = "val"
     public result_int reduce_my_MyPtrVoid(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3142,11 +3142,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_MyPtrVoid, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_MyPtrVoid, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_MyPtrVoid = 93;
+    private final static int mExportReduceIdx_my_array_MyPtrVoid = 93;
     // in1 = "val"
     public result_int reduce_my_array_MyPtrVoid(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3175,11 +3175,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_MyPtrVoid, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_MyPtrVoid, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_MyStruct = 94;
+    private final static int mExportReduceIdx_my_MyStruct = 94;
     // in1 = "val"
     public result_int reduce_my_MyStruct(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3208,11 +3208,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_MyStruct, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_MyStruct, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_MyStruct = 95;
+    private final static int mExportReduceIdx_my_array_MyStruct = 95;
     // in1 = "val"
     public result_int reduce_my_array_MyStruct(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3241,11 +3241,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_MyStruct, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_MyStruct, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_MyUnion = 96;
+    private final static int mExportReduceIdx_my_MyUnion = 96;
     // in1 = "val"
     public result_int reduce_my_MyUnion(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3274,11 +3274,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_MyUnion, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_MyUnion, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_MyUnion = 97;
+    private final static int mExportReduceIdx_my_array_MyUnion = 97;
     // in1 = "val"
     public result_int reduce_my_array_MyUnion(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3307,11 +3307,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_MyUnion, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_MyUnion, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_MyBlob = 98;
+    private final static int mExportReduceIdx_my_MyBlob = 98;
     // in1 = "val"
     public result_int reduce_my_MyBlob(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3340,11 +3340,11 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_MyBlob, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_MyBlob, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_my_array_MyBlob = 99;
+    private final static int mExportReduceIdx_my_array_MyBlob = 99;
     // in1 = "val"
     public result_int reduce_my_array_MyBlob(int[] in1) {
         // Verify that "in1" is non-null.
@@ -3373,7 +3373,7 @@ public class ScriptC_reduce_general_accumulator extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_my_array_MyBlob, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_my_array_MyBlob, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 

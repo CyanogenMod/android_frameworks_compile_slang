@@ -221,7 +221,7 @@ Backend::Backend(RSContext *Context, clang::DiagnosticsEngine *DiagEngine,
       mIsFilterscript(IsFilterscript), mExportVarMetadata(nullptr),
       mExportFuncMetadata(nullptr), mExportForEachNameMetadata(nullptr),
       mExportForEachSignatureMetadata(nullptr),
-      mExportReduceNewMetadata(nullptr),
+      mExportReduceMetadata(nullptr),
       mExportTypeMetadata(nullptr), mRSObjectSlotsMetadata(nullptr),
       mRefCount(mContext->getASTContext()),
       mASTChecker(Context, Context->getTargetAPI(), IsFilterscript),
@@ -771,21 +771,21 @@ void Backend::dumpExportForEachInfo(llvm::Module *M) {
   }
 }
 
-void Backend::dumpExportReduceNewInfo(llvm::Module *M) {
-  if (!mExportReduceNewMetadata) {
-    mExportReduceNewMetadata =
-      M->getOrInsertNamedMetadata(RS_EXPORT_REDUCE_NEW_MN);
+void Backend::dumpExportReduceInfo(llvm::Module *M) {
+  if (!mExportReduceMetadata) {
+    mExportReduceMetadata =
+      M->getOrInsertNamedMetadata(RS_EXPORT_REDUCE_MN);
   }
 
-  llvm::SmallVector<llvm::Metadata *, 6> ExportReduceNewInfo;
-  // Add operand to ExportReduceNewInfo, padding out missing operands with
+  llvm::SmallVector<llvm::Metadata *, 6> ExportReduceInfo;
+  // Add operand to ExportReduceInfo, padding out missing operands with
   // nullptr.
-  auto addOperand = [&ExportReduceNewInfo](uint32_t Idx, llvm::Metadata *N) {
-    while (Idx > ExportReduceNewInfo.size())
-      ExportReduceNewInfo.push_back(nullptr);
-    ExportReduceNewInfo.push_back(N);
+  auto addOperand = [&ExportReduceInfo](uint32_t Idx, llvm::Metadata *N) {
+    while (Idx > ExportReduceInfo.size())
+      ExportReduceInfo.push_back(nullptr);
+    ExportReduceInfo.push_back(N);
   };
-  // Add string operand to ExportReduceNewInfo, padding out missing operands
+  // Add string operand to ExportReduceInfo, padding out missing operands
   // with nullptr.
   // If string is empty, then do not add it unless Always is true.
   auto addString = [&addOperand, this](uint32_t Idx, const std::string &S,
@@ -795,10 +795,10 @@ void Backend::dumpExportReduceNewInfo(llvm::Module *M) {
   };
 
   // Add the description of the reduction kernels to the metadata node.
-  for (auto I = mContext->export_reduce_new_begin(),
-            E = mContext->export_reduce_new_end();
+  for (auto I = mContext->export_reduce_begin(),
+            E = mContext->export_reduce_end();
        I != E; ++I) {
-    ExportReduceNewInfo.clear();
+    ExportReduceInfo.clear();
 
     int Idx = 0;
 
@@ -819,8 +819,8 @@ void Backend::dumpExportReduceNewInfo(llvm::Module *M) {
     addString(Idx++, (*I)->getNameOutConverter(), false);
     addString(Idx++, (*I)->getNameHalter(), false);
 
-    mExportReduceNewMetadata->addOperand(
-      llvm::MDTuple::get(mLLVMContext, ExportReduceNewInfo));
+    mExportReduceMetadata->addOperand(
+      llvm::MDTuple::get(mLLVMContext, ExportReduceInfo));
   }
 }
 
@@ -901,8 +901,8 @@ void Backend::HandleTranslationUnitPost(llvm::Module *M) {
   if (mContext->hasExportForEach())
     dumpExportForEachInfo(M);
 
-  if (mContext->hasExportReduceNew())
-    dumpExportReduceNewInfo(M);
+  if (mContext->hasExportReduce())
+    dumpExportReduceInfo(M);
 
   if (mContext->hasExportType())
     dumpExportTypeInfo(M);

@@ -1,1 +1,0 @@
-reduce_api_unsupported.rs:9:39: error: Reduce-style kernel addFoo() unsupported in SDK level 23

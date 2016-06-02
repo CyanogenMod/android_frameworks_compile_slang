@@ -56,7 +56,6 @@ namespace slang {
   class RSExportFunc;
   class RSExportForEach;
   class RSExportReduce;
-  class RSExportReduceNew;
   class RSExportType;
 
 class RSContext {
@@ -70,10 +69,9 @@ class RSContext {
   typedef std::list<RSExportFunc*> ExportFuncList;
   typedef std::vector<RSExportForEach*> ExportForEachVector;
   typedef std::list<RSExportReduce*> ExportReduceList;
-  typedef std::list<RSExportReduceNew*> ExportReduceNewList;
 
   // WARNING: Sorted by pointer value, resulting in unpredictable order
-  typedef std::unordered_set<RSExportType*> ExportReduceNewResultTypeSet;
+  typedef std::unordered_set<RSExportType*> ExportReduceResultTypeSet;
 
   typedef llvm::StringMap<RSExportType*> ExportTypeMap;
 
@@ -119,8 +117,7 @@ class RSContext {
   ExportForEachVector mExportForEach;
   ExportForEachVector::iterator mFirstOldStyleKernel;
   ExportReduceList mExportReduce;
-  ExportReduceNewList mExportReduceNew;
-  ExportReduceNewResultTypeSet mExportReduceNewResultType;
+  ExportReduceResultTypeSet mExportReduceResultType;
   ExportTypeMap mExportTypes;
 
   clang::QualType mAllocationType;
@@ -252,28 +249,19 @@ class RSContext {
     return mExportReduce.end();
   }
   inline bool hasExportReduce() const { return !mExportReduce.empty(); }
-
-  typedef ExportReduceNewList::const_iterator const_export_reduce_new_iterator;
-  const_export_reduce_new_iterator export_reduce_new_begin() const {
-    return mExportReduceNew.begin();
-  }
-  const_export_reduce_new_iterator export_reduce_new_end() const {
-    return mExportReduceNew.end();
-  }
-  inline bool hasExportReduceNew() const { return !mExportReduceNew.empty(); }
-  void addExportReduceNew(RSExportReduceNew *ReduceNew) {
-    mExportReduceNew.push_back(ReduceNew);
+  void addExportReduce(RSExportReduce *Reduce) {
+    mExportReduce.push_back(Reduce);
   }
   bool processReducePragmas(Backend *BE);
   void markUsedByReducePragma(clang::FunctionDecl *FD, CheckName Check);
 
   // If the type has already been inserted, has no effect.
-  void insertExportReduceNewResultType(RSExportType *Type) { mExportReduceNewResultType.insert(Type); }
+  void insertExportReduceResultType(RSExportType *Type) { mExportReduceResultType.insert(Type); }
 
   template <class FilterIn, class Compare>
-  std::vector<RSExportType *> getReduceNewResultTypes(FilterIn Filt, Compare Comp) const {
+  std::vector<RSExportType *> getReduceResultTypes(FilterIn Filt, Compare Comp) const {
     std::vector<RSExportType *> Return;
-    std::copy_if(mExportReduceNewResultType.begin(), mExportReduceNewResultType.end(), std::back_inserter(Return), Filt);
+    std::copy_if(mExportReduceResultType.begin(), mExportReduceResultType.end(), std::back_inserter(Return), Filt);
     std::sort(Return.begin(), Return.end(), Comp);
     auto ReturnNewEndIter = std::unique(Return.begin(), Return.end(),
                                         [Comp](const RSExportType *a, const RSExportType *b) {

@@ -67,7 +67,6 @@
 #define RS_EXPORT_FUNC_INDEX_PREFIX "mExportFuncIdx_"
 #define RS_EXPORT_FOREACH_INDEX_PREFIX "mExportForEachIdx_"
 #define RS_EXPORT_REDUCE_INDEX_PREFIX "mExportReduceIdx_"
-#define RS_EXPORT_REDUCE_NEW_INDEX_PREFIX "mExportReduceNewIdx_"
 
 #define RS_EXPORT_VAR_ALLOCATION_PREFIX "mAlloction_"
 #define RS_EXPORT_VAR_DATA_STORAGE_PREFIX "mData_"
@@ -241,7 +240,7 @@ std::string GetTypeName(const RSExportType *ET, unsigned Style = TypeNameDefault
   return "";
 }
 
-std::string GetReduceNewResultTypeName(const RSExportType *ET) {
+std::string GetReduceResultTypeName(const RSExportType *ET) {
   switch (ET->getClass()) {
     case RSExportType::ExportClassConstantArray: {
       const RSExportConstantArrayType *const CAT = static_cast<const RSExportConstantArrayType *>(ET);
@@ -257,8 +256,8 @@ std::string GetReduceNewResultTypeName(const RSExportType *ET) {
   }
 }
 
-std::string GetReduceNewResultTypeName(const RSExportReduceNew *ER) {
-  return GetReduceNewResultTypeName(ER->getResultType());
+std::string GetReduceResultTypeName(const RSExportReduce *ER) {
+  return GetReduceResultTypeName(ER->getResultType());
 }
 
 } // end anonymous namespace
@@ -395,7 +394,7 @@ RSReflectionJava::RSReflectionJava(const RSContext *Context,
                            mRSSourceFileName.c_str())),
       mEmbedBitcodeInJava(EmbedBitcodeInJava), mNextExportVarSlot(0),
       mNextExportFuncSlot(0), mNextExportForEachSlot(0),
-      mNextExportReduceSlot(0), mNextExportReduceNewSlot(0), mLastError(""),
+      mNextExportReduceSlot(0), mLastError(""),
       mGeneratedFileNames(GeneratedFileNames), mFieldIndex(0) {
   slangAssert(mGeneratedFileNames && "Must supply GeneratedFileNames");
   slangAssert(!mPackageName.empty() && mPackageName != "-");
@@ -435,25 +434,19 @@ bool RSReflectionJava::genScriptClass(const std::string &ClassName,
     }
   }
 
-  // Reflect exported reduce functions
+  // Reflect exported new-style reduce functions
+  for (const RSExportType *ResultType : mRSContext->getReduceResultTypes(
+           // FilterIn
+           exportableReduce,
+
+           // Compare
+           [](const RSExportType *A, const RSExportType *B)
+           { return GetReduceResultTypeName(A) < GetReduceResultTypeName(B); }))
+    genExportReduceResultType(ResultType);
   for (auto I = mRSContext->export_reduce_begin(),
             E = mRSContext->export_reduce_end();
        I != E; ++I)
     genExportReduce(*I);
-
-  // Reflect exported new-style reduce functions
-  for (const RSExportType *ResultType : mRSContext->getReduceNewResultTypes(
-           // FilterIn
-           exportableReduceNew,
-
-           // Compare
-           [](const RSExportType *A, const RSExportType *B)
-           { return GetReduceNewResultTypeName(A) < GetReduceNewResultTypeName(B); }))
-    genExportReduceNewResultType(ResultType);
-  for (auto I = mRSContext->export_reduce_new_begin(),
-            E = mRSContext->export_reduce_new_end();
-       I != E; ++I)
-    genExportReduceNew(*I);
 
   // Reflect exported functions (invokable)
   for (auto I = mRSContext->export_funcs_begin(),
@@ -480,8 +473,7 @@ void RSReflectionJava::genScriptClassConstructor() {
                 "rs");
 
   const bool haveReduceExportables =
-    mRSContext->export_reduce_begin()     != mRSContext->export_reduce_end() ||
-    mRSContext->export_reduce_new_begin() != mRSContext->export_reduce_new_end();
+    mRSContext->export_reduce_begin() != mRSContext->export_reduce_end();
 
   if (getEmbedBitcodeInJava()) {
     // Call new single argument Java-only constructor
@@ -566,23 +558,16 @@ void RSReflectionJava::genScriptClassConstructor() {
             E = mRSContext->export_reduce_end();
        I != E; I++) {
     const RSExportReduce *ER = *I;
-    genTypeInstance(ER->getType());
-  }
-
-  for (auto I = mRSContext->export_reduce_new_begin(),
-            E = mRSContext->export_reduce_new_end();
-       I != E; I++) {
-    const RSExportReduceNew *ER = *I;
 
     const RSExportType *RT = ER->getResultType();
     slangAssert(RT != nullptr);
-    if (!exportableReduceNew(RT))
+    if (!exportableReduce(RT))
       continue;
 
     genTypeInstance(RT);
 
-    const RSExportReduceNew::InTypeVec &InTypes = ER->getAccumulatorInTypes();
-    for (RSExportReduceNew::InTypeIter BI = InTypes.begin(), EI = InTypes.end();
+    const RSExportReduce::InTypeVec &InTypes = ER->getAccumulatorInTypes();
+    for (RSExportReduce::InTypeIter BI = InTypes.begin(), EI = InTypes.end();
          BI != EI; BI++) {
       slangAssert(*BI != nullptr);
       genTypeInstance(*BI);
@@ -844,15 +829,6 @@ void RSReflectionJava::genNullArrayCheck(const std::string &ArrayName) {
   mOut.indent() << "}\n";
 }
 
-void RSReflectionJava::genNullOrEmptyArrayCheck(const std::string &ArrayName) {
-  genNullArrayCheck(ArrayName);
-  mOut.indent() << "// Verify that \"" << ArrayName << "\" is non-empty.\n";
-  mOut.indent() << "if (" << ArrayName << ".length == 0) {\n";
-  mOut.indent() << "    throw new RSIllegalArgumentException(\"Array \\\""
-                << ArrayName << "\\\" is zero-length!\");\n";
-  mOut.indent() << "}\n";
-}
-
 void RSReflectionJava::genVectorLengthCompatibilityCheck(const std::string &ArrayName,
                                                          unsigned VecSize) {
   mOut.indent() << "// Verify that the array length is a multiple of the vector size.\n";
@@ -862,19 +838,6 @@ void RSReflectionJava::genVectorLengthCompatibilityCheck(const std::string &Arra
                 << "\\\" is not a multiple of " << std::to_string(VecSize)
                 << " in length!\");\n";
   mOut.indent() << "}\n";
-}
-
-void RSReflectionJava::gen1DCheck(const std::string &Name) {
-  // TODO: Check that t0.getArrayCount() == 0, when / if this API is
-  // un-hidden.
-  mOut.indent() << "Type t0 = " << Name << ".getType();\n";
-  mOut.indent() << "// Verify " << Name << " is 1D\n";
-  mOut.indent() << "if (t0.getY() != 0  ||\n";
-  mOut.indent() << "    t0.hasFaces()   ||\n";
-  mOut.indent() << "    t0.hasMipmaps()) {\n";
-  mOut.indent() << "    throw new RSIllegalArgumentException(\"Parameter "
-                << Name << " is not 1D!\");\n";
-  mOut.indent() << "}\n\n";
 }
 
 void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
@@ -1059,213 +1022,10 @@ void RSReflectionJava::genExportForEach(const RSExportForEach *EF) {
   endFunction();
 }
 
-void RSReflectionJava::genExportReduce(const RSExportReduce *ER) {
-  // Generate the reflected function index.
-  mOut.indent() << "private final static int " << RS_EXPORT_REDUCE_INDEX_PREFIX
-                << ER->getName() << " = " << getNextExportReduceSlot()
-                << ";\n";
-
-  // Two variants of reduce_* entry points get generated:
-  // Array variant:
-  //   ty' reduce_foo(ty[] input)
-  //   ty' reduce_foo(ty[] input, int x1, int x2)
-  // Allocation variant:
-  //   void reduce_foo(Allocation ain, Allocation aout)
-  //   void reduce_foo(Allocation ain, Allocation aout, Script.LaunchOptions sc)
-
-  const RSExportType *Type = ER->getType();
-  const std::string Name = ER->getName();
-
-  genExportReduceArrayVariant(Type, Name);
-  genExportReduceAllocationVariant(Type, Name);
-}
-
-void RSReflectionJava::genExportReduceAllocationVariant(const RSExportType *Type,
-                                                        const std::string &KernelName) {
-  const std::string FuncName = "reduce_" + KernelName;
-
-  // void reduce_foo(Allocation ain, Allocation aout)
-  startFunction(AM_Public, false, "void", FuncName, 2,
-                "Allocation", "ain",
-                "Allocation", "aout");
-  mOut.indent() << FuncName << "(ain, aout, null);\n";
-  endFunction();
-
-  // void reduce_foo(Allocation ain, Allocation aout, Script.LaunchOptions sc)
-  startFunction(AM_Public, false, "void", FuncName, 3,
-                "Allocation", "ain",
-                "Allocation", "aout",
-                "Script.LaunchOptions", "sc");
-
-  // Type checking
-  genTypeCheck(Type, "ain");
-  genTypeCheck(Type, "aout");
-
-  // Check that the input is 1D
-  gen1DCheck("ain");
-
-  // Call backend
-
-  // Script.reduce has the signature
-  //
-  // protected void
-  // reduce(int slot, Allocation ain, Allocation aout, Script.LaunchOptions sc)
-  mOut.indent() << "reduce("
-                << RS_EXPORT_REDUCE_INDEX_PREFIX << KernelName
-                << ", ain, aout, sc);\n";
-
-  endFunction();
-}
-
-void RSReflectionJava::genExportReduceArrayVariant(const RSExportType *Type,
-                                                   const std::string &KernelName) {
-  // Determine if the array variant can be generated. Some type
-  // classes cannot be reflected in Java.
-  auto Class = Type->getClass();
-  if (Class != RSExportType::ExportClassPrimitive &&
-      Class != RSExportType::ExportClassVector) {
-    return;
-  }
-
-  RSReflectionTypeData TypeData;
-  Type->convertToRTD(&TypeData);
-
-  // Check if the type supports reading back from an Allocation and
-  // returning as a first class Java type. If not, the helper cannot
-  // be generated.
-  if (!TypeData.type->java_name || !TypeData.type->java_array_element_name ||
-      (TypeData.vecSize > 1 && !TypeData.type->rs_java_vector_prefix)) {
-    return;
-  }
-
-  const std::string FuncName = "reduce_" + KernelName;
-  const std::string TypeName = GetTypeName(Type);
-  const std::string ReflectedScalarType = TypeData.type->java_name;
-  const std::string ArrayElementType = TypeData.type->java_array_element_name;
-  const std::string ArrayType = ArrayElementType + "[]";
-  const std::string ElementName = Type->getElementName();
-
-  const uint32_t VecSize = TypeData.vecSize;
-
-  std::string InLength = "in.length";
-  // Adjust the length so that it corresponds to the number of
-  // elements in the allocation.
-  if (VecSize > 1) {
-    InLength += " / " + std::to_string(VecSize);
-  }
-
-  // TypeName reduce_foo(ArrayElementType[] in)
-  startFunction(AM_Public, false, TypeName.c_str(), FuncName, 1,
-                ArrayType.c_str(), "in");
-  genNullOrEmptyArrayCheck("in");
-  if (VecSize > 1) {
-    genVectorLengthCompatibilityCheck("in", VecSize);
-  }
-  mOut.indent() << "return " << FuncName << "(in, 0, "
-                << InLength << ");\n";
-  endFunction();
-
-  // TypeName reduce_foo(ArrayElementType[] in, int x1, int x2)
-
-  startFunction(AM_Public, false, TypeName.c_str(), FuncName, 3,
-                ArrayType.c_str(), "in",
-                "int", "x1",
-                "int", "x2");
-
-  genNullOrEmptyArrayCheck("in");
-  if (VecSize > 1) {
-    genVectorLengthCompatibilityCheck("in", VecSize);
-  }
-  // Check that 0 <= x1 and x1 < x2 and x2 <= InLength
-  mOut.indent() << "// Bounds check passed x1 and x2\n";
-  mOut.indent() << "if (x1 < 0 || x1 >= x2 || x2 > " << InLength << ") {\n";
-  mOut.indent() << "    throw new RSRuntimeException("
-                << "\"Input bounds are invalid!\");\n";
-  mOut.indent() << "}\n";
-
-  // Create a temporary input allocation.
-  mOut.indent() << "Allocation ain = Allocation.createSized("
-                << SAVED_RS_REFERENCE << ", "
-                << RS_ELEM_PREFIX << ElementName << ", "
-                << "x2 - x1);\n";
-  mOut.indent() << "ain.setAutoPadding(true);\n";
-  mOut.indent() << "ain.copy1DRangeFrom(x1, x2 - x1, in);\n";
-
-  // Create a temporary output allocation.
-  mOut.indent() << "Allocation aout = Allocation.createSized("
-                << SAVED_RS_REFERENCE << ", "
-                << RS_ELEM_PREFIX << ElementName << ", "
-                << "1);\n";
-  mOut.indent() << "aout.setAutoPadding(true);\n";
-
-  mOut.indent() << FuncName << "(ain, aout, null);\n";
-
-  if (VecSize > 1) {
-    // An allocation with vector elements is represented as an array
-    // of primitives, so we have to extract the output from the
-    // element array and rebuild the vector.
-    //
-    // E.g. for int2
-    //
-    // Allocation outArray = new int[2];
-    // aout.copyTo(outArray);
-    // int elem0 = outArray[0];
-    // int elem1 = outArray[1];
-    // return new Int2(elem0, elem1);
-
-    mOut.indent() << ArrayType << " outArray = new "
-                  << ArrayElementType << "[" << VecSize << "];\n";
-
-    mOut.indent() << "aout.copy1DRangeTo(0, 1, outArray);\n";
-
-    for (unsigned Elem = 0; Elem < VecSize; ++Elem) {
-      mOut.indent() << ReflectedScalarType << " elem" << Elem << " = ";
-      std::string Index = "outArray[" + std::to_string(Elem) + "]";
-
-      if (ReflectedScalarType == ArrayElementType) {
-        mOut << Index << ";\n";
-      } else {
-        mOut << ZeroExtendValue(Index, ArrayElementType, ReflectedScalarType) << ";\n";
-      }
-    }
-
-    mOut.indent() << "return new " << TypeName << "(";
-    for (unsigned Elem = 0; Elem < VecSize; ++Elem) {
-      if (Elem > 0) mOut << ", ";
-      mOut << "elem" << Elem;
-    }
-    mOut << ");\n";
-  } else {
-    // Scalar handling.
-    //
-    // E.g. for int
-    // Allocation outArray = new int[1];
-    // aout.copyTo(outArray);
-    // return outArray[0];
-    mOut.indent() << ArrayType << " outArray = new " << ArrayElementType
-                  << "[1];\n";
-    mOut.indent() << "aout.copyTo(outArray);\n";
-
-    if (ReflectedScalarType == "boolean") {
-      mOut.indent() << "return outArray[0] != 0;\n";
-    } else if (ReflectedScalarType == ArrayElementType) {
-      mOut.indent() << "return outArray[0];\n";
-    } else {
-      mOut.indent() << "return "
-                    << ZeroExtendValue("outArray[0]",
-                                       ArrayElementType,
-                                       ReflectedScalarType)
-                    << ";\n";
-    }
-  }
-
-  endFunction();
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Reductions with certain legal result types can only be reflected for NDK, not for Java.
-bool RSReflectionJava::exportableReduceNew(const RSExportType *ResultType) {
+bool RSReflectionJava::exportableReduce(const RSExportType *ResultType) {
   const RSExportType *CheckType = ResultType;
   if (ResultType->getClass() == RSExportType::ExportClassConstantArray)
     CheckType = static_cast<const RSExportConstantArrayType *>(ResultType)->getElementType();
@@ -1289,9 +1049,9 @@ enum MappingComment { MappingCommentWithoutType, MappingCommentWithCType };
 //   MappingComment      = whether or not InputMappingComment should contain type
 //   ER                  = description of the reduction
 //   InIdx               = which input (numbered from zero)
-void getReduceNewInputStrings(std::string &InputParamName, std::string &InputMappingComment,
-                              const std::string &NamePrefix, MappingComment Mapping,
-                              const RSExportReduceNew *ER, size_t InIdx) {
+void getReduceInputStrings(std::string &InputParamName, std::string &InputMappingComment,
+                           const std::string &NamePrefix, MappingComment Mapping,
+                           const RSExportReduce *ER, size_t InIdx) {
   InputParamName = NamePrefix + std::to_string(InIdx+1);
   std::string TypeString;
   if (Mapping == MappingCommentWithCType) {
@@ -1315,13 +1075,13 @@ void getReduceNewInputStrings(std::string &InputParamName, std::string &InputMap
 
 } // end anonymous namespace
 
-void RSReflectionJava::genExportReduceNew(const RSExportReduceNew *ER) {
-  if (!exportableReduceNew(ER->getResultType()))
+void RSReflectionJava::genExportReduce(const RSExportReduce *ER) {
+  if (!exportableReduce(ER->getResultType()))
     return;
 
   // Generate the reflected function index.
-  mOut.indent() << "private final static int " << RS_EXPORT_REDUCE_NEW_INDEX_PREFIX
-                << ER->getNameReduce() << " = " << getNextExportReduceNewSlot()
+  mOut.indent() << "private final static int " << RS_EXPORT_REDUCE_INDEX_PREFIX
+                << ER->getNameReduce() << " = " << getNextExportReduceSlot()
                 << ";\n";
 
   /****** remember resultSvType generation **********************************************************/
@@ -1333,11 +1093,11 @@ void RSReflectionJava::genExportReduceNew(const RSExportReduceNew *ER) {
   //   result_<resultSvType> reduce_<name>(Allocation in1, ..., Allocation inN)
   //   result_<resultSvType> reduce_<name>(Allocation in1, ..., Allocation inN, Script.LaunchOptions sc)
 
-  genExportReduceNewArrayVariant(ER);
-  genExportReduceNewAllocationVariant(ER);
+  genExportReduceArrayVariant(ER);
+  genExportReduceAllocationVariant(ER);
 }
 
-void RSReflectionJava::genExportReduceNewArrayVariant(const RSExportReduceNew *ER) {
+void RSReflectionJava::genExportReduceArrayVariant(const RSExportReduce *ER) {
   // Analysis of result type.  Returns early if result type is not
   // suitable for array method reflection.
   const RSExportType *const ResultType = ER->getResultType();
@@ -1369,7 +1129,7 @@ void RSReflectionJava::genExportReduceNewArrayVariant(const RSExportReduceNew *E
     slangAssert(false);
     return;
   }
-  const std::string ResultTypeName = GetReduceNewResultTypeName(ER);
+  const std::string ResultTypeName = GetReduceResultTypeName(ER);
 
   // Analysis of inputs.  Returns early if some input type is not
   // suitable for array method reflection.
@@ -1414,7 +1174,7 @@ void RSReflectionJava::genExportReduceNewArrayVariant(const RSExportReduceNew *E
     }
 
     std::string InputParamName, InputComment;
-    getReduceNewInputStrings(InputParamName, InputComment, "in", MappingCommentWithoutType, ER, InIdx);
+    getReduceInputStrings(InputParamName, InputComment, "in", MappingCommentWithoutType, ER, InIdx);
     if (InTypeData.vecSize > 1)
       InputComment += (", flattened " + std::to_string(InTypeData.vecSize) + "-vectors");
     InComments.push_back(InputComment);
@@ -1490,7 +1250,7 @@ void RSReflectionJava::genExportReduceNewArrayVariant(const RSExportReduceNew *E
   endFunction();
 }
 
-void RSReflectionJava::genExportReduceNewAllocationVariant(const RSExportReduceNew *ER) {
+void RSReflectionJava::genExportReduceAllocationVariant(const RSExportReduce *ER) {
   const auto &Ins = ER->getAccumulatorIns();
   const auto &InTypes = ER->getAccumulatorInTypes();
   const RSExportType *ResultType = ER->getResultType();
@@ -1499,13 +1259,13 @@ void RSReflectionJava::genExportReduceNewAllocationVariant(const RSExportReduceN
   ArgTy Args;
   for (size_t InIdx = 0, InEnd = Ins.size(); InIdx < InEnd; ++InIdx) {
     std::string InputParamName, InputComment;
-    getReduceNewInputStrings(InputParamName, InputComment, "ain", MappingCommentWithCType, ER, InIdx);
+    getReduceInputStrings(InputParamName, InputComment, "ain", MappingCommentWithCType, ER, InIdx);
     InComments.push_back(InputComment);
     Args.push_back(std::make_pair("Allocation", InputParamName));
   }
 
   const std::string MethodName = "reduce_" + ER->getNameReduce();
-  const std::string ResultTypeName = GetReduceNewResultTypeName(ER);
+  const std::string ResultTypeName = GetReduceResultTypeName(ER);
 
   // result_<resultSvType> reduce_<name>(Allocation in1, ..., Allocation inN)
 
@@ -1554,7 +1314,7 @@ void RSReflectionJava::genExportReduceNewAllocationVariant(const RSExportReduceN
                 << OutputAllocLength << ");\n";
   mOut.indent() << OutputAllocName << ".setAutoPadding(true);\n";
   // Call the underlying reduce entry point
-  mOut.indent() << "reduce(" << RS_EXPORT_REDUCE_NEW_INDEX_PREFIX << ER->getNameReduce()
+  mOut.indent() << "reduce(" << RS_EXPORT_REDUCE_INDEX_PREFIX << ER->getNameReduce()
                 << ", new Allocation[]{" << In0Name;
   for (size_t InIdx = 1, InEnd = Ins.size(); InIdx < InEnd; ++InIdx)
     mOut << ", " << Args[InIdx].second;
@@ -1581,10 +1341,10 @@ enum MapFromAllocation {
 // ReflectedScalarTypeName = type of mapped value
 // InVal                   = input value that must be mapped
 //
-std::string genReduceNewResultMapping(MapFromAllocation MFA,
-                                      const std::string &ArrayElementTypeName,
-                                      const std::string &ReflectedScalarTypeName,
-                                      const char *InVal) {
+std::string genReduceResultMapping(MapFromAllocation MFA,
+                                   const std::string &ArrayElementTypeName,
+                                   const std::string &ReflectedScalarTypeName,
+                                   const char *InVal) {
   switch (MFA) {
     default:
       slangAssert(!"Unknown MapFromAllocation");
@@ -1611,12 +1371,12 @@ std::string genReduceNewResultMapping(MapFromAllocation MFA,
 // InArray                 = input array containing vector elements
 // InIdx                   = index of first vector element within InArray (or nullptr, if 0)
 //
-std::string genReduceNewResultVectorMapping(MapFromAllocation MFA,
-                                            const std::string &ArrayElementTypeName,
-                                            const std::string &ReflectedScalarTypeName,
-                                            const std::string &VectorTypeName,
-                                            unsigned VectorElementCount,
-                                            const char *InArray, const char *InIdx = nullptr) {
+std::string genReduceResultVectorMapping(MapFromAllocation MFA,
+                                         const std::string &ArrayElementTypeName,
+                                         const std::string &ReflectedScalarTypeName,
+                                         const std::string &VectorTypeName,
+                                         unsigned VectorElementCount,
+                                         const char *InArray, const char *InIdx = nullptr) {
   std::string result = "new " + VectorTypeName + "(";
   for (unsigned VectorElementIdx = 0; VectorElementIdx < VectorElementCount; ++VectorElementIdx) {
     if (VectorElementIdx)
@@ -1627,25 +1387,25 @@ std::string genReduceNewResultVectorMapping(MapFromAllocation MFA,
       ArrayElementName += std::string(InIdx) + "+";
     ArrayElementName += std::to_string(VectorElementIdx) + "]";
 
-    result += genReduceNewResultMapping(MFA, ArrayElementTypeName, ReflectedScalarTypeName,
-                                        ArrayElementName.c_str());
+    result += genReduceResultMapping(MFA, ArrayElementTypeName, ReflectedScalarTypeName,
+                                     ArrayElementName.c_str());
   }
   result += ")";
   return result;
 }
 
-void genReduceNewResultRangeCheck(GeneratedFile &Out, const char *InVal) {
+void genReduceResultRangeCheck(GeneratedFile &Out, const char *InVal) {
   Out.indent() << "if (" << InVal << " < 0)\n";
   Out.indent() << "    throw new RSRuntimeException(\"Result is not representible in Java\");\n";
 }
 
 } // end anonymous namespace
 
-void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultType) {
-  if (!exportableReduceNew(ResultType))
+void RSReflectionJava::genExportReduceResultType(const RSExportType *ResultType) {
+  if (!exportableReduce(ResultType))
     return;
 
-  const std::string ClassName = GetReduceNewResultTypeName(ResultType);
+  const std::string ClassName = GetReduceResultTypeName(ResultType);
   const std::string GetMethodReturnTypeName = GetTypeName(ResultType);
   mOut.indent() << "// To obtain the result, invoke get(), which blocks\n";
   mOut.indent() << "// until the asynchronously-launched operation has completed.\n";
@@ -1685,10 +1445,10 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
     if (TypeData.arraySize == 0) { // result type is non-array non-vector
       // mResult = outArray[0]; // but there are several special cases
       if (MFA == MapFromAllocationPositive)
-        genReduceNewResultRangeCheck(mOut, "outArray[0]");
+        genReduceResultRangeCheck(mOut, "outArray[0]");
       mOut.indent() << "mResult = "
-                    << genReduceNewResultMapping(MFA, ArrayElementTypeName, ReflectedScalarTypeName,
-                                                 "outArray[0]")
+                    << genReduceResultMapping(MFA, ArrayElementTypeName, ReflectedScalarTypeName,
+                                              "outArray[0]")
                     << ";\n";
     } else { // result type is array of non-vector
       if (MFA == MapFromAllocationTrivial) {
@@ -1707,10 +1467,10 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
         mOut.indent() << "for (int Idx = 0; Idx < " << TypeData.arraySize << "; ++Idx)";
         mOut.startBlock();
         if (MFA == MapFromAllocationPositive) {
-          genReduceNewResultRangeCheck(mOut, "outArray[Idx]");
+          genReduceResultRangeCheck(mOut, "outArray[Idx]");
         } else {
           mOut.indent() << "result[Idx] = "
-                        << genReduceNewResultMapping(MFA, ArrayElementTypeName, ReflectedScalarTypeName,
+                        << genReduceResultMapping(MFA, ArrayElementTypeName, ReflectedScalarTypeName,
                                                      "outArray[Idx]")
                         << ";\n";
         }
@@ -1729,16 +1489,16 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
     if (MFA == MapFromAllocationPositive) {
       mOut.indent() << "for (int Idx = 0; Idx < " << OutArrayElementCount << "; ++Idx)";
       mOut.startBlock();
-      genReduceNewResultRangeCheck(mOut, "outArray[Idx]");
+      genReduceResultRangeCheck(mOut, "outArray[Idx]");
       mOut.endBlock();
     }
     if (TypeData.arraySize == 0) { // result type is vector
       // mResult = new <ResultType>(outArray[0], outArray[1] ...); // but there are several special cases
       mOut.indent() << "mResult = "
-                    << genReduceNewResultVectorMapping(MFA,
-                                                       ArrayElementTypeName, ReflectedScalarTypeName,
-                                                       GetTypeName(ResultType), VectorElementCount,
-                                                       "outArray")
+                    << genReduceResultVectorMapping(MFA,
+                                                    ArrayElementTypeName, ReflectedScalarTypeName,
+                                                    GetTypeName(ResultType), VectorElementCount,
+                                                    "outArray")
                     << ";\n";
     } else { // result type is array of vector
       // <ResultType> result = new <UnbracketedResultType>[<ArrayElementCount>];
@@ -1752,10 +1512,10 @@ void RSReflectionJava::genExportReduceNewResultType(const RSExportType *ResultTy
       mOut.indent() << "for (int Idx = 0; Idx < " << TypeData.arraySize << "; ++Idx)";
       mOut.startBlock();
       mOut.indent() << "result[Idx] = "
-                    << genReduceNewResultVectorMapping(MFA,
-                                                       ArrayElementTypeName, ReflectedScalarTypeName,
-                                                       UnbracketedResultTypeName, VectorElementCount,
-                                                       "outArray", (std::to_string(VectorElementCount) + "*Idx").c_str())
+                    << genReduceResultVectorMapping(MFA,
+                                                    ArrayElementTypeName, ReflectedScalarTypeName,
+                                                    UnbracketedResultTypeName, VectorElementCount,
+                                                    "outArray", (std::to_string(VectorElementCount) + "*Idx").c_str())
                     << ";\n";
       mOut.endBlock();
       mOut.indent() << "mResult = result;\n";

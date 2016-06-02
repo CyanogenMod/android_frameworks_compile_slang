@@ -1,4 +1,0 @@
-reduce_ptr_param.rs:5:51: error: Reduce-style kernel kernel() cannot have parameter 'arg1' of pointer type: 'int *'
-reduce_ptr_param.rs:5:39: error: Reduce-style kernel kernel() return type 'int' is not the same type as parameter 'arg1' (type 'int *')
-reduce_ptr_param.rs:5:62: error: Reduce-style kernel kernel() cannot have parameter 'arg2' of pointer type: 'int *'
-reduce_ptr_param.rs:5:39: error: Reduce-style kernel kernel() return type 'int' is not the same type as parameter 'arg2' (type 'int *')

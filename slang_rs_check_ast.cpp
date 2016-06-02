@@ -167,7 +167,7 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
     llvm::StringRef KernelKind =
       FD->getAttr<clang::KernelAttr>()->getKernelKind();
 
-    if (!KernelKind.empty() && !KernelKind.equals("reduce")) {
+    if (!KernelKind.empty()) {
       Context->ReportError(FD->getLocation(),
                            "Unknown kernel attribute argument '%0' "
                            "in declaration of function '%1'")
@@ -197,8 +197,7 @@ void RSCheckAST::ValidateFunctionDecl(clang::FunctionDecl *FD) {
   }
 
   bool saveKernel = mInKernel;
-  mInKernel = RSExportForEach::isRSForEachFunc(mTargetAPI, FD) ||
-              RSExportReduce::isRSReduceFunc(mTargetAPI, FD);
+  mInKernel = RSExportForEach::isRSForEachFunc(mTargetAPI, FD);
 
   if (clang::Stmt *Body = FD->getBody()) {
     Visit(Body);

@@ -1,2 +1,0 @@
-reduce_ret_type_mismatch.rs:5:42: error: Reduce-style kernel kernel() return type 'double' is not the same type as parameter 'arg1' (type 'float')
-reduce_ret_type_mismatch.rs:5:42: error: Reduce-style kernel kernel() return type 'double' is not the same type as parameter 'arg2' (type 'float')

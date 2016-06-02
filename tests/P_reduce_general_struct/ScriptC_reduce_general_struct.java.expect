@@ -79,7 +79,7 @@ public class ScriptC_reduce_general_struct extends ScriptC {
         private int mResult;
     }
 
-    private final static int mExportReduceNewIdx_inStruct = 0;
+    private final static int mExportReduceIdx_inStruct = 0;
     // ain1 = "/* struct <> */ val"
     public result_int reduce_inStruct(Allocation ain1) {
         return reduce_inStruct(ain1, null);
@@ -93,7 +93,7 @@ public class ScriptC_reduce_general_struct extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_inStruct, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_inStruct, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 

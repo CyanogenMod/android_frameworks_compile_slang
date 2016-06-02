@@ -145,17 +145,17 @@ class RSReducePragmaHandler : public RSPragmaHandler {
 
     // Grab "reduce(name)" ("reduce" is already known to be the first
     // token) and all the "keyword(value)" contributions
-    KeywordValueMapType KeywordValueMap({std::make_pair(RSExportReduceNew::KeyReduce, ""),
-                                         std::make_pair(RSExportReduceNew::KeyInitializer, ""),
-                                         std::make_pair(RSExportReduceNew::KeyAccumulator, ""),
-                                         std::make_pair(RSExportReduceNew::KeyCombiner, ""),
-                                         std::make_pair(RSExportReduceNew::KeyOutConverter, "")});
+    KeywordValueMapType KeywordValueMap({std::make_pair(RSExportReduce::KeyReduce, ""),
+                                         std::make_pair(RSExportReduce::KeyInitializer, ""),
+                                         std::make_pair(RSExportReduce::KeyAccumulator, ""),
+                                         std::make_pair(RSExportReduce::KeyCombiner, ""),
+                                         std::make_pair(RSExportReduce::KeyOutConverter, "")});
     if (mContext->getTargetAPI() >= SLANG_FEATURE_GENERAL_REDUCTION_HALTER_API) {
       // Halter functionality has not been released, nor has its
       // specification been finalized with partners.  We do not have a
       // specification that extends through the full RenderScript
       // software stack, either.
-      KeywordValueMap.insert(std::make_pair(RSExportReduceNew::KeyHalter, ""));
+      KeywordValueMap.insert(std::make_pair(RSExportReduce::KeyHalter, ""));
     }
     while (PragmaToken.is(clang::tok::identifier)) {
       if (!ProcessKeywordAndValue(PP, PragmaToken, KeywordValueMap))
@@ -173,11 +173,11 @@ class RSReducePragmaHandler : public RSPragmaHandler {
     }
 
     // Make sure we have an accumulator
-    if (KeywordValueMap[RSExportReduceNew::KeyAccumulator].empty()) {
+    if (KeywordValueMap[RSExportReduce::KeyAccumulator].empty()) {
       PP.Diag(PragmaLocation, PP.getDiagnostics().getCustomDiagID(
                                 clang::DiagnosticsEngine::Error,
                                 "missing '%0' for '#pragma rs %1'"))
-          << RSExportReduceNew::KeyAccumulator << getName();
+          << RSExportReduce::KeyAccumulator << getName();
       return;
     }
 
@@ -185,15 +185,15 @@ class RSReducePragmaHandler : public RSPragmaHandler {
     // worried there might be a VERY large number of pragmas, then we
     // could do something more efficient than walking a list to search
     // for duplicates.)
-    for (auto I = mContext->export_reduce_new_begin(),
-              E = mContext->export_reduce_new_end();
+    for (auto I = mContext->export_reduce_begin(),
+              E = mContext->export_reduce_end();
          I != E; ++I) {
-      if ((*I)->getNameReduce() == KeywordValueMap[RSExportReduceNew::KeyReduce]) {
+      if ((*I)->getNameReduce() == KeywordValueMap[RSExportReduce::KeyReduce]) {
         PP.Diag(PragmaLocation, PP.getDiagnostics().getCustomDiagID(
                                   clang::DiagnosticsEngine::Error,
                                   "reduction kernel '%0' declared multiple "
                                   "times (first one is at %1)"))
-            << KeywordValueMap[RSExportReduceNew::KeyReduce]
+            << KeywordValueMap[RSExportReduce::KeyReduce]
             << (*I)->getLocation().printToString(PP.getSourceManager());
         return;
       }
@@ -211,19 +211,19 @@ class RSReducePragmaHandler : public RSPragmaHandler {
     }
 
     // Handle backward reference from pragma (see Backend::HandleTopLevelDecl for forward reference).
-    MarkUsed(PP, KeywordValueMap[RSExportReduceNew::KeyInitializer]);
-    MarkUsed(PP, KeywordValueMap[RSExportReduceNew::KeyAccumulator]);
-    MarkUsed(PP, KeywordValueMap[RSExportReduceNew::KeyCombiner]);
-    MarkUsed(PP, KeywordValueMap[RSExportReduceNew::KeyOutConverter]);
-    MarkUsed(PP, KeywordValueMap[RSExportReduceNew::KeyHalter]);
+    MarkUsed(PP, KeywordValueMap[RSExportReduce::KeyInitializer]);
+    MarkUsed(PP, KeywordValueMap[RSExportReduce::KeyAccumulator]);
+    MarkUsed(PP, KeywordValueMap[RSExportReduce::KeyCombiner]);
+    MarkUsed(PP, KeywordValueMap[RSExportReduce::KeyOutConverter]);
+    MarkUsed(PP, KeywordValueMap[RSExportReduce::KeyHalter]);
 
-    mContext->addExportReduceNew(RSExportReduceNew::Create(mContext, PragmaLocation,
-                                                           KeywordValueMap[RSExportReduceNew::KeyReduce],
-                                                           KeywordValueMap[RSExportReduceNew::KeyInitializer],
-                                                           KeywordValueMap[RSExportReduceNew::KeyAccumulator],
-                                                           KeywordValueMap[RSExportReduceNew::KeyCombiner],
-                                                           KeywordValueMap[RSExportReduceNew::KeyOutConverter],
-                                                           KeywordValueMap[RSExportReduceNew::KeyHalter]));
+    mContext->addExportReduce(RSExportReduce::Create(mContext, PragmaLocation,
+                                                     KeywordValueMap[RSExportReduce::KeyReduce],
+                                                     KeywordValueMap[RSExportReduce::KeyInitializer],
+                                                     KeywordValueMap[RSExportReduce::KeyAccumulator],
+                                                     KeywordValueMap[RSExportReduce::KeyCombiner],
+                                                     KeywordValueMap[RSExportReduce::KeyOutConverter],
+                                                     KeywordValueMap[RSExportReduce::KeyHalter]));
   }
 
  private:
@@ -573,7 +573,7 @@ void AddPragmaHandlers(clang::Preprocessor &PP, RSContext *RsContext) {
 
   // For #pragma rs reduce
   PP.AddPragmaHandler(
-      "rs", new RSReducePragmaHandler(RSExportReduceNew::KeyReduce, RsContext));
+      "rs", new RSReducePragmaHandler(RSExportReduce::KeyReduce, RsContext));
 
   // For #pragma rs set_reflect_license
   PP.AddPragmaHandler(

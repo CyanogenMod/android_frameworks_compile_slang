@@ -160,7 +160,7 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
         private int mResult;
     }
 
-    private final static int mExportReduceNewIdx_addint_init = 0;
+    private final static int mExportReduceIdx_addint_init = 0;
     // in1 = "val"
     public result_int reduce_addint_init(int[] in1) {
         // Verify that "in1" is non-null.
@@ -189,11 +189,11 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_addint_init, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_addint_init, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_addint_comb = 1;
+    private final static int mExportReduceIdx_addint_comb = 1;
     // in1 = "val"
     public result_int reduce_addint_comb(int[] in1) {
         // Verify that "in1" is non-null.
@@ -222,11 +222,11 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_addint_comb, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_addint_comb, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_addint_init_comb = 2;
+    private final static int mExportReduceIdx_addint_init_comb = 2;
     // in1 = "val"
     public result_int reduce_addint_init_comb(int[] in1) {
         // Verify that "in1" is non-null.
@@ -255,11 +255,11 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __I32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_addint_init_comb, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_addint_init_comb, new Allocation[]{ain1}, aout, sc);
         return new result_int(aout);
     }
 
-    private final static int mExportReduceNewIdx_dp_init = 3;
+    private final static int mExportReduceIdx_dp_init = 3;
     // in1 = "in1"
     // in2 = "in2"
     public result_float reduce_dp_init(float[] in1, float[] in2) {
@@ -319,11 +319,11 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
 
         Allocation aout = Allocation.createSized(mRSLocal, __F32, 1);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_dp_init, new Allocation[]{ain1, ain2}, aout, sc);
+        reduce(mExportReduceIdx_dp_init, new Allocation[]{ain1, ain2}, aout, sc);
         return new result_float(aout);
     }
 
-    private final static int mExportReduceNewIdx_histogram_init = 4;
+    private final static int mExportReduceIdx_histogram_init = 4;
     // in1 = "in"
     public resultArray256_uint reduce_histogram_init(byte[] in1) {
         // Verify that "in1" is non-null.
@@ -352,7 +352,7 @@ public class ScriptC_reduce_general_examples_explicit extends ScriptC {
         }
         Allocation aout = Allocation.createSized(mRSLocal, __U32, 256);
         aout.setAutoPadding(true);
-        reduce(mExportReduceNewIdx_histogram_init, new Allocation[]{ain1}, aout, sc);
+        reduce(mExportReduceIdx_histogram_init, new Allocation[]{ain1}, aout, sc);
         return new resultArray256_uint(aout);
     }
 

@@ -28,8 +28,7 @@ class RSExportable {
     EX_TYPE,
     EX_VAR,
     EX_FOREACH,
-    EX_REDUCE,
-    EX_REDUCE_NEW
+    EX_REDUCE
   };
 
  private:

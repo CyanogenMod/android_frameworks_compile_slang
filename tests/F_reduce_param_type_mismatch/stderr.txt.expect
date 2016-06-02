@@ -1,2 +1,0 @@
-reduce_param_type_mismatch.rs:5:39: error: Reduce-style kernel kernel1() return type 'int' is not the same type as parameter 'arg2' (type 'float')
-reduce_param_type_mismatch.rs:5:51: error: In reduce-style kernel kernel1(): parameter 'arg1' (type 'int') does not have the same type as parameter 'arg2' (type 'float')

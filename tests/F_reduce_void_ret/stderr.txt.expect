@@ -1,3 +1,0 @@
-reduce_void_ret.rs:5:40: error: Reduce-style kernel kernel() cannot return void
-reduce_void_ret.rs:5:40: error: Reduce-style kernel kernel() return type 'void' is not the same type as parameter 'arg1' (type 'int')
-reduce_void_ret.rs:5:40: error: Reduce-style kernel kernel() return type 'void' is not the same type as parameter 'arg2' (type 'int')

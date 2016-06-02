@@ -31,7 +31,6 @@
 #include "slang_rs_export_var.h"
 #include "slang_rs_export_foreach.h"
 #include "slang_rs_export_func.h"
-#include "slang_rs_export_reduce.h"
 #include "slang_rs_reflect_utils.h"
 #include "slang_version.h"
 
@@ -45,7 +44,6 @@ const char kRsTypeItemClassName[] = "Item";
 const char kRsElemPrefix[] = "__rs_elem_";
 // The name of the Allocation type that is reflected in C++
 const char kAllocationSp[] = "android::RSC::sp<android::RSC::Allocation>";
-const char kConstRsScriptCall[] = "const RsScriptCall";
 
 static const char *GetMatrixTypeName(const RSExportMatrixType *EMT) {
   static const char *MatrixTypeCNameMap[] = {
@@ -118,23 +116,13 @@ static std::string GetTypeName(const RSExportType *ET, bool PreIdentifier = true
   return "";
 }
 
-static bool canExportReduceArrayVariant(const RSExportType *Type) {
-  // FIXME: No half types available for C++ reflection yet
-  if (Type->getElementName().find("F16") == 0) {
-    return false;
-  }
-  return Type->getClass() == RSExportType::ExportClassPrimitive ||
-    Type->getClass() == RSExportType::ExportClassVector;
-}
-
 RSReflectionCpp::RSReflectionCpp(const RSContext *Context,
                                  const string &OutputDirectory,
                                  const string &RSSourceFileName,
                                  const string &BitCodeFileName)
     : mRSContext(Context), mRSSourceFilePath(RSSourceFileName),
       mBitCodeFilePath(BitCodeFileName), mOutputDirectory(OutputDirectory),
-      mNextExportVarSlot(0), mNextExportFuncSlot(0), mNextExportForEachSlot(0),
-      mNextExportReduceSlot(0) {
+      mNextExportVarSlot(0), mNextExportFuncSlot(0), mNextExportForEachSlot(0) {
   mCleanedRSFileName = RootNameFromRSFileName(mRSSourceFilePath);
   mClassName = "ScriptC_" + mCleanedRSFileName;
 }
@@ -174,7 +162,6 @@ bool RSReflectionCpp::writeHeaderFile() {
 
   genFieldsToStoreExportVariableValues();
   genTypeInstancesUsedInForEach();
-  genTypeInstancesUsedInReduce();
   genFieldsForAllocationTypeVerification();
 
   mOut.decreaseIndent();
@@ -187,7 +174,6 @@ bool RSReflectionCpp::writeHeaderFile() {
 
   genExportVariablesGetterAndSetter();
   genForEachDeclarations();
-  genReduceDeclarations();
   genExportFunctionDeclarations();
 
   mOut.endBlock(true);
@@ -213,15 +199,6 @@ void RSReflectionCpp::genTypeInstancesUsedInForEach() {
 
       genTypeInstanceFromPointer(*BI);
     }
-  }
-}
-
-// Ensure that the type of the reduce kernel is reflected.
-void RSReflectionCpp::genTypeInstancesUsedInReduce() {
-  for (auto I = mRSContext->export_reduce_begin(),
-            E = mRSContext->export_reduce_end();
-       I != E; ++I) {
-    genTypeInstance((*I)->getType());
   }
 }
 
@@ -317,21 +294,6 @@ void RSReflectionCpp::genForEachDeclarations() {
   }
 }
 
-void RSReflectionCpp::genReduceDeclarations() {
-  bool CommentAdded = false;
-  for (auto I = mRSContext->export_reduce_begin(),
-            E = mRSContext->export_reduce_end(); I != E; I++) {
-    if (!CommentAdded) {
-      mOut.comment("For each reduce kernel of the script, there is an entry "
-                   "point to call the reduce kernel.");
-      CommentAdded = true;
-    }
-
-    makeReduceSignatureAllocationVariant(false, *I);
-    makeReduceSignatureArrayVariant(false, *I);
-  }
-}
-
 void RSReflectionCpp::genExportFunctionDeclarations() {
   for (RSContext::const_export_func_iterator
            I = mRSContext->export_funcs_begin(),
@@ -422,103 +384,6 @@ void RSReflectionCpp::genExportForEachBodies() {
 
     // FIXME (no support for usrData with C++ kernels)
     mOut << "NULL, 0);\n";
-    mOut.endBlock();
-  }
-}
-
-// reduce_* implementation
-void RSReflectionCpp::genExportReduceBodies() {
-  for (auto I = mRSContext->export_reduce_begin(),
-            E = mRSContext->export_reduce_end();
-       I != E; ++I) {
-    const RSExportReduce &Reduce = **I;
-    const RSExportType *Type = Reduce.getType();
-
-    // Allocation variant
-    //
-    // void reduce_foo(sp<Allocation> ain, sp<Allocation> aout,
-    //                 const RsScriptCall *sc);
-    makeReduceSignatureAllocationVariant(true, &Reduce);
-    mOut.startBlock();
-
-    // Type check
-    genTypeCheck(Type, "ain");
-    genTypeCheck(Type, "aout");
-
-    // Dimension check
-    gen1DCheck("ain");
-
-    const uint32_t Slot = getNextExportReduceSlot();
-
-    // Call into RenderScript.
-    mOut.indent() << "reduce(" << Slot << ", "
-                  << "ain, aout, sc);\n";
-    mOut.endBlock();
-
-    if (!canExportReduceArrayVariant(Type)) {
-      continue;
-    }
-
-    // Array variant
-    //
-    // Ty reduce_foo(const ElemTy[] in, uint32_t x1, uint32_t x2, uint32_t inLen);
-    // "Ty" could be different from "ElemTy" in the case of vectors.
-    makeReduceSignatureArrayVariant(true, &Reduce);
-    mOut.startBlock();
-
-    const std::string ReturnType = GetTypeName(Type);
-    const std::string DefaultReturnValue = ReturnType + "()";
-
-    genNullOrEmptyArrayCheck("in", "inLen", DefaultReturnValue);
-
-    RSReflectionTypeData TypeData;
-    Type->convertToRTD(&TypeData);
-    const uint32_t VecSize = TypeData.vecSize;
-    std::string InLength = "inLen";
-    // Adjust the length so that it corresponds to the number of elements in the allocation.
-    if (VecSize > 1) {
-      InLength += " / " + std::to_string(VecSize);
-    }
-    genVectorLengthCompatibilityCheck("inLen", VecSize, DefaultReturnValue);
-
-    mOut.indent() << "if (x1 >= x2 || x2 > " << InLength << ")";
-    mOut.startBlock();
-    mOut.indent() << "mRS->throwError(RS_ERROR_RUNTIME_ERROR, "
-                  << "\"Input bounds are invalid\");\n";
-    mOut.indent() << "return " << DefaultReturnValue << ";\n";
-    mOut.endBlock();
-
-    mOut.indent() << kAllocationSp
-                  << " ain = android::RSC::Allocation::createSized(mRS, "
-                  << kRsElemPrefix << Type->getElementName() << ", "
-                  << "x2 - x1);\n";
-
-    mOut.indent() << "ain->setAutoPadding(true);\n";
-
-    mOut.indent() << kAllocationSp
-                  << " aout = android::RSC::Allocation::createSized(mRS, "
-                  << kRsElemPrefix << Type->getElementName() << ", 1);\n";
-
-    mOut.indent() << "aout->setAutoPadding(true);\n";
-
-    const std::string ArrayElementType = TypeData.type->c_name;
-
-    std::string StartOffset = "x1";
-    if (VecSize > 1) {
-      StartOffset += " * " + std::to_string(VecSize);
-    }
-    mOut.indent() << "ain->copy1DRangeFrom(0, x2 - x1, &in[" << StartOffset << "]);\n";
-    mOut.indent() << "reduce_" << Reduce.getName() << "(ain, aout);\n";
-    mOut.indent() << ArrayElementType << " outArray[" << VecSize << "];\n";
-
-    mOut.indent() << "aout->copy1DRangeTo(0, 1, &outArray[0]);\n";
-
-    mOut.indent() << "return " << ReturnType << "(";
-    for (uint32_t VecElem = 0; VecElem < VecSize; ++VecElem) {
-      if (VecElem > 0) mOut << ", ";
-      mOut << "outArray[" << VecElem << "]";
-    }
-    mOut << ");\n";
     mOut.endBlock();
   }
 }
@@ -629,7 +494,6 @@ bool RSReflectionCpp::writeImplementationFile() {
 
   // Function bodies
   genExportForEachBodies();
-  genExportReduceBodies();
   genExportFunctionBodies();
 
   mOut.closeFile();
@@ -864,131 +728,6 @@ void RSReflectionCpp::makeFunctionSignature(bool isDefinition,
   }
 }
 
-void RSReflectionCpp::makeReduceSignatureAllocationVariant(bool IsDefinition,
-                                                           const RSExportReduce *ER) {
-  // void reduce_foo(sp<Allocation> ain, sp<Allocation> aout,
-  //                 const RsScriptCall *sc = nullptr);
-  std::string FunctionStart = "void ";
-  if (IsDefinition) {
-    FunctionStart += mClassName +  "::";
-  }
-  FunctionStart += "reduce_" + ER->getName() + "(";
-
-  ArgumentList Arguments{
-    Argument(kAllocationSp, "ain"),
-    Argument(kAllocationSp, "aout"),
-    Argument(kConstRsScriptCall, "*sc", IsDefinition ? "" : "nullptr")
-  };
-
-  mOut.indent() << FunctionStart;
-
-  genArguments(Arguments, FunctionStart.length());
-
-  if (IsDefinition) {
-    mOut << ")";
-  } else {
-    mOut << ");\n\n";
-  }
-}
-
-void RSReflectionCpp::makeReduceSignatureArrayVariant(bool IsDefinition,
-                                                      const RSExportReduce *ER) {
-  // Ty reduce_foo(const ElemTy[] in, uint32_t x1, uint32_t x2, size_t inLen);
-  // "Ty" could be different from "ElemTy" in the case of vectors.
-
-  const RSExportType *Type = ER->getType();
-  if (!canExportReduceArrayVariant(Type)) {
-      return;
-  }
-
-  RSReflectionTypeData TypeData;
-  Type->convertToRTD(&TypeData);
-
-  const std::string ReturnType = GetTypeName(Type);
-  std::string FunctionStart = ReturnType + " ";
-  if (IsDefinition) {
-    FunctionStart += mClassName +  "::";
-  }
-  FunctionStart += "reduce_" + ER->getName() + "(";
-
-  const std::string ArrayElementType = TypeData.type->c_name;
-
-  ArgumentList Arguments{
-    Argument("const " + ArrayElementType, "in[]"),
-    Argument("uint32_t", "x1"),
-    Argument("uint32_t", "x2"),
-    Argument("size_t", "inLen")
-  };
-
-  mOut.indent() << FunctionStart;
-  genArguments(Arguments, FunctionStart.size());
-
-  if (IsDefinition) {
-    mOut << ")";
-  } else {
-    mOut << ");\n\n";
-  }
-
-  if (!IsDefinition) {
-    // We reflect three more variants in the header. First, there is
-    //
-    //   Ty reduce_foo(const ElemTy[] in, size_t inLen);
-    //
-    // Note the inLen is the number of primitive elements in the array, as opposed to the
-    // bounds whose units are allocation elements. The other variants use templates to infer
-    // the array length statically:
-    //
-    //   template<size_t inLen> Ty reduce_foo(const ElemTy (&in)[inLen]);
-    //   template<size_t inLen> Ty reduce_foo(const ElemTy (&in)[inLen], uint32_t x1, uint32_t x2);
-
-    // Generate inLen variant
-    const uint32_t VecSize = TypeData.vecSize;
-    std::string X2 = "inLen";
-
-    const std::string FunctionName = ER->getName();
-
-    auto ForwardReduce = [this, &FunctionName](const std::string &x1,
-                                               const std::string &x2,
-                                               const std::string &inLen) {
-      this->mOut.indent() << "    return reduce_" << FunctionName << "(in, "
-                          << x1 << ", " << x2 << ", " << inLen << ");\n";
-      this->mOut.indent() << "}\n\n";
-    };
-
-    const std::string DefaultValue = ReturnType + "()";
-
-    ArgumentList InLenVariantArguments{
-      Argument("const " + ArrayElementType, "in[]"), Argument("size_t", "inLen")
-    };
-    mOut.indent() << FunctionStart;
-    genArguments(InLenVariantArguments, FunctionStart.size());
-    mOut << ") {\n";
-    if (VecSize > 1) {
-      genVectorLengthCompatibilityCheck("inLen", VecSize, DefaultValue, 2);
-      X2 += " / " + std::to_string(VecSize);
-    }
-    ForwardReduce("0", X2, "inLen");
-
-    // Generate template variants
-    ArgumentList TemplateVariantArguments{
-      Argument("const " + ArrayElementType, "(&in)[inLen]")
-    };
-
-    mOut.indent() << "template<size_t inLen>\n";
-    mOut.indent() << FunctionStart;
-    genArguments(TemplateVariantArguments, FunctionStart.size());
-    mOut << ") {\n        return reduce_" << FunctionName << "(in, inLen);\n    }\n\n";
-
-    TemplateVariantArguments.push_back(Argument("uint32_t", "x1"));
-    TemplateVariantArguments.push_back(Argument("uint32_t", "x2"));
-    mOut.indent() << "template<size_t inLen>\n";
-    mOut.indent() << FunctionStart;
-    genArguments(TemplateVariantArguments, FunctionStart.size());
-    mOut << ") {\n";
-    ForwardReduce("x1", "x2", "inLen");
-  }
-}
-
 void RSReflectionCpp::genArguments(const ArgumentList &Arguments, int Offset) {
   bool FirstArg = true;
 
@@ -1144,60 +883,6 @@ void RSReflectionCpp::genTypeCheck(const RSExportType *ET,
     mOut.indent() << "return;\n";
     mOut.endBlock();
   }
-}
-
-// Ensure that the input is 1 dimensional.
-void RSReflectionCpp::gen1DCheck(const std::string &VarName) {
-  mOut.indent() << "// check that " << VarName << " is 1d\n";
-  mOut.indent() << "sp<const Type> t0 = " << VarName << "->getType();\n";
-  mOut.indent() << "if (t0->getY() != 0 ||\n";
-  mOut.indent() << "    t0->hasFaces()  ||\n";
-  mOut.indent() << "    t0->hasMipmaps())";
-  mOut.startBlock();
-  mOut.indent() << "mRS->throwError(RS_ERROR_INVALID_PARAMETER, "
-                << "\"" << VarName << " is not 1D!\");\n";
-  mOut.indent() << "return;\n";
-  mOut.endBlock();
-}
-
-// Generates code to ensure that the supplied array length is a multiple of the vector size.
-void RSReflectionCpp::genVectorLengthCompatibilityCheck(const std::string &Length,
-                                                        unsigned VecSize,
-                                                        const std::string &ValueToReturn,
-                                                        unsigned IndentLevels) {
-  auto Indenter = [this, IndentLevels]() -> std::ofstream& {
-    GeneratedFile &Out = this->mOut;
-    for (unsigned Level = 0; Level < IndentLevels; ++Level) {
-      Out.indent();
-    }
-    return Out;
-  };
-
-  Indenter() << "// Verify that the array length is a multiple of the vector size.\n";
-  Indenter() << "if (" << Length << " % " << std::to_string(VecSize) << " != 0) {\n";
-  Indenter() << "    mRS->throwError(RS_ERROR_INVALID_PARAMETER, "
-             << "\"Input array length is not a multiple of "
-             << std::to_string(VecSize) << "\");\n";
-  Indenter() << "    return " << ValueToReturn << ";\n";
-  Indenter() << "}\n\n";
-}
-
-// Generates code to ensure that the supplied array is non-null and nonzero in length.
-void RSReflectionCpp::genNullOrEmptyArrayCheck(const std::string &ArrayName,
-                                               const std::string &Length,
-                                               const std::string &ValueToReturn) {
-  mOut.indent() << "// Verify that the array is non-null and non-empty.\n";
-  mOut.indent() << "if (" << ArrayName << " == nullptr) {\n";
-  mOut.indent() << "    mRS->throwError(RS_ERROR_INVALID_PARAMETER, "
-                << "\"Input array is null\");\n";
-  mOut.indent() << "    return " << ValueToReturn << ";\n";
-  mOut.indent() << "}\n\n";
-
-  mOut.indent() << "if (" << Length << " == 0) {\n";
-  mOut.indent() << "    mRS->throwError(RS_ERROR_INVALID_PARAMETER, "
-                << "\"Input array is zero-length\");\n";
-  mOut.indent() << "    return " << ValueToReturn << ";\n";
-  mOut.indent() << "}\n\n";
 }
 
 void RSReflectionCpp::genTypeInstanceFromPointer(const RSExportType *ET) {

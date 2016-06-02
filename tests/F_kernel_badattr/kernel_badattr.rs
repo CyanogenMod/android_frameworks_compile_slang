@@ -12,3 +12,7 @@ int __attribute__((kernel(7))) kernel2(int arg) {
 int __attribute__((kernel("reduce", 1))) kernel3(int arg) {
   return 0;
 }
+
+int __attribute__((kernel("reduce"))) kernel4(int arg) {
+  return 0;
+}

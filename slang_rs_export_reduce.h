@@ -34,54 +34,6 @@ namespace slang {
 class RSExportReduce : public RSExportable {
  public:
   typedef llvm::SmallVectorImpl<const clang::ParmVarDecl*> InVec;
-  typedef InVec::const_iterator InIter;
-
- private:
-  // Function name
-  std::string mName;
-  // Input and output type
-  RSExportType *mType;
-  // Inputs
-  llvm::SmallVector<const clang::ParmVarDecl *, 2> mIns;
-
-  RSExportReduce(RSContext *Context, const llvm::StringRef &Name)
-    : RSExportable(Context, RSExportable::EX_REDUCE),
-      mName(Name.data(), Name.size()), mType(nullptr), mIns(2) {
-  }
-
-  RSExportReduce(const RSExportReduce &) = delete;
-  RSExportReduce &operator=(const RSExportReduce &) = delete;
-
-  // Given a reduce kernel declaration, validate the parameters to the
-  // reduce kernel.
-  bool validateAndConstructParams(RSContext *Context,
-                                  const clang::FunctionDecl *FD);
-
- public:
-  static RSExportReduce *Create(RSContext *Context,
-                                const clang::FunctionDecl *FD);
-
-  const std::string &getName() const {
-    return mName;
-  }
-
-  const InVec &getIns() const {
-    return mIns;
-  }
-
-  const RSExportType *getType() const {
-    return mType;
-  }
-
-  static bool isRSReduceFunc(unsigned int targetAPI,
-                             const clang::FunctionDecl *FD);
-
-};  // RSExportReduce
-
-// Base class for reflecting control-side reduce
-class RSExportReduceNew : public RSExportable {
- public:
-  typedef llvm::SmallVectorImpl<const clang::ParmVarDecl*> InVec;
   typedef llvm::SmallVectorImpl<const RSExportType*> InTypeVec;
 
   typedef InVec::const_iterator InIter;
@@ -125,15 +77,15 @@ class RSExportReduceNew : public RSExportable {
   // result information
   RSExportType *mResultType;
 
-  RSExportReduceNew(RSContext *Context,
-                    const clang::SourceLocation Location,
-                    const llvm::StringRef &NameReduce,
-                    const llvm::StringRef &NameInitializer,
-                    const llvm::StringRef &NameAccumulator,
-                    const llvm::StringRef &NameCombiner,
-                    const llvm::StringRef &NameOutConverter,
-                    const llvm::StringRef &NameHalter)
-    : RSExportable(Context, RSExportable::EX_REDUCE_NEW),
+  RSExportReduce(RSContext *Context,
+                 const clang::SourceLocation Location,
+                 const llvm::StringRef &NameReduce,
+                 const llvm::StringRef &NameInitializer,
+                 const llvm::StringRef &NameAccumulator,
+                 const llvm::StringRef &NameCombiner,
+                 const llvm::StringRef &NameOutConverter,
+                 const llvm::StringRef &NameHalter)
+    : RSExportable(Context, RSExportable::EX_REDUCE),
       mLocation(Location),
       mNameReduce(NameReduce),
       mNameInitializer(NameInitializer),
@@ -146,8 +98,8 @@ class RSExportReduceNew : public RSExportable {
       mResultType(nullptr) {
   }
 
-  RSExportReduceNew(const RSExportReduceNew &) = delete;
-  void operator=(const RSExportReduceNew &) = delete;
+  RSExportReduce(const RSExportReduce &) = delete;
+  void operator=(const RSExportReduce &) = delete;
 
   struct StateOfAnalyzeTranslationUnit;
 
@@ -178,14 +130,14 @@ class RSExportReduceNew : public RSExportable {
   static const char KeyOutConverter[];
   static const char KeyHalter[];
 
-  static RSExportReduceNew *Create(RSContext *Context,
-                                   const clang::SourceLocation Location,
-                                   const llvm::StringRef &NameReduce,
-                                   const llvm::StringRef &NameInitializer,
-                                   const llvm::StringRef &NameAccumulator,
-                                   const llvm::StringRef &NameCombiner,
-                                   const llvm::StringRef &NameOutConverter,
-                                   const llvm::StringRef &NameHalter);
+  static RSExportReduce *Create(RSContext *Context,
+                                const clang::SourceLocation Location,
+                                const llvm::StringRef &NameReduce,
+                                const llvm::StringRef &NameInitializer,
+                                const llvm::StringRef &NameAccumulator,
+                                const llvm::StringRef &NameCombiner,
+                                const llvm::StringRef &NameOutConverter,
+                                const llvm::StringRef &NameHalter);
 
   const clang::SourceLocation &getLocation() const { return mLocation; }
 
@@ -209,7 +161,7 @@ class RSExportReduceNew : public RSExportable {
   bool matchName(const llvm::StringRef &Candidate) const;
 
   bool analyzeTranslationUnit();
-};  // RSExportReduceNew
+};  // RSExportReduce
 
 }  // namespace slang
 

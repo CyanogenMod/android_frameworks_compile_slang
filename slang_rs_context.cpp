@@ -148,15 +148,6 @@ bool RSContext::processExportFunc(const clang::FunctionDecl *FD) {
     return true;
   }
 
-  // Reduce kernel
-  if (RSExportReduce::isRSReduceFunc(mTargetAPI, FD)) {
-    if (auto *ER = RSExportReduce::Create(this, FD)) {
-      mExportReduce.push_back(ER);
-      return true;
-    }
-    return false;
-  }
-
   // Invokable
   if (auto *EF = RSExportFunc::Create(this, FD)) {
     mExportFuncs.push_back(EF);
@@ -319,7 +310,7 @@ bool RSContext::processReducePragmas(Backend *BE) {
     BE->HandleTopLevelDecl(clang::DeclGroupRef(DummyVar));
 
   bool valid = true;
-  for (auto I = export_reduce_new_begin(), E = export_reduce_new_end(); I != E; ++I) {
+  for (auto I = export_reduce_begin(), E = export_reduce_end(); I != E; ++I) {
     if (! (*I)->analyzeTranslationUnit())
       valid = false;
   }
@@ -337,7 +328,7 @@ void RSContext::markUsedByReducePragma(clang::FunctionDecl *FD, CheckName Check)
     // names mentioned in a reduce pragma and searchable in O(c) or
     // O(log(n)) time rather than the currently-implemented O(n) search.
     auto NameMatches = [this, FD]() {
-      for (auto I = export_reduce_new_begin(), E = export_reduce_new_end(); I != E; ++I) {
+      for (auto I = export_reduce_begin(), E = export_reduce_end(); I != E; ++I) {
         if ((*I)->matchName(FD->getName()))
           return true;
       }
